@@ -451,8 +451,7 @@ function HomePage({ creations, setPage, setDetailId }) {
           <div className="hero-eyebrow">AI-Native Creative Platform</div>
           <h1 className="hero-title">Revault<em>AI</em></h1>
           <p className="hero-sub">
-            Home to creators shaping the AI-native era. Publish, share, and
-            monetize your AI-generated work without the noise.
+            A curated vault for AI-native films and cinematic prompts. No algorithm. No noise. Just signal.
           </p>
           <div className="hero-actions">
             <button className="btn-primary" onClick={() => setPage("explore")}>
@@ -470,7 +469,7 @@ function HomePage({ creations, setPage, setDetailId }) {
       <section className="section">
         <div className="section-header">
           <div>
-            <div className="section-label">Premium</div>
+            <div className="section-label">Curated</div>
             <div className="section-title">Exclusive prompts</div>
           </div>
           <span className="section-link" onClick={() => setPage("explore")}>
@@ -487,7 +486,7 @@ function HomePage({ creations, setPage, setDetailId }) {
       <section className="section">
         <div className="section-header">
           <div>
-            <div className="section-label">Open Access</div>
+            <div className="section-label">Open Archive</div>
             <div className="section-title">Free creations</div>
           </div>
           <span className="section-link" onClick={() => setPage("explore")}>
@@ -504,8 +503,8 @@ function HomePage({ creations, setPage, setDetailId }) {
       <section className="manifesto">
         <div className="manifesto-rule" />
         <p className="manifesto-quote">
-          "The AI era requires new creative infrastructure. Not more feeds,
-          but deeper vaults. Not more noise, but singular signal."
+          "The AI era doesn't need more content. It needs curation.
+          RevaultAI is built for signal over noise &mdash; where AI-native work is treated as craft, not feed."
         </p>
         <p className="manifesto-sub">
           RevaultAI is built for creators who believe AI is a medium, not just
@@ -620,7 +619,7 @@ function CreatorsPage({ setPage, setCreatorUser }) {
               <div className="creator-badges">
                 {c.badges.map((b) => <Badge key={b} type={b} />)}
               </div>
-              <div className="creator-tools">{c.tools_used.join(" · ")}</div>
+              <div className="creator-tools">{c.tools_used.join(" \u00b7 ")}</div>
             </div>
           ))}
         </div>
@@ -643,7 +642,6 @@ function ProfilePage({ username, creations, setPage, setDetailId }) {
     );
   }
 
-  // Show all creations including Pending on the creator's own profile
   const ownCreations = creations.filter((c) => c.creator.username === username);
   const filtered = ownCreations.filter((c) => {
     if (filter === "Premium") return c.is_premium;
@@ -675,7 +673,7 @@ function ProfilePage({ username, creations, setPage, setDetailId }) {
           </div>
           <div className="profile-bio">{creator.bio}</div>
           <div className="creator-tools" style={{ marginTop: 12 }}>
-            {creator.tools_used.join(" · ")}
+            {creator.tools_used.join(" \u00b7 ")}
           </div>
         </div>
       </div>
@@ -845,10 +843,7 @@ function AdminPage({ creations, setCreations, notify }) {
       <section className="section">
         <div style={{ marginBottom: 64 }}>
           <div className="section-label">Pending Review</div>
-          <div
-            className="section-title"
-            style={{ marginBottom: 24 }}
-          >
+          <div className="section-title" style={{ marginBottom: 24 }}>
             Premium Submissions
           </div>
           {pending.length === 0 ? (
@@ -875,37 +870,20 @@ function AdminPage({ creations, setCreations, notify }) {
               <tbody>
                 {pending.map((c) => (
                   <tr key={c.id}>
-                    <td
-                      style={{
-                        fontFamily: "'Cormorant Garamond', serif",
-                        fontSize: 18,
-                      }}
-                    >
+                    <td style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18 }}>
                       {c.title}
                     </td>
                     <td style={{ color: "var(--muted)" }}>
                       {c.creator.display_name}
                     </td>
-                    <td
-                      style={{
-                        color: "var(--muted)",
-                        fontFamily: "'DM Mono', monospace",
-                        fontSize: 11,
-                      }}
-                    >
+                    <td style={{ color: "var(--muted)", fontFamily: "'DM Mono', monospace", fontSize: 11 }}>
                       {c.category}
                     </td>
                     <td>
-                      <button
-                        className="btn-approve"
-                        onClick={() => approve(c.id)}
-                      >
+                      <button className="btn-approve" onClick={() => approve(c.id)}>
                         Approve
                       </button>
-                      <button
-                        className="btn-reject"
-                        onClick={() => reject(c.id)}
-                      >
+                      <button className="btn-reject" onClick={() => reject(c.id)}>
                         Reject
                       </button>
                     </td>
@@ -918,10 +896,7 @@ function AdminPage({ creations, setCreations, notify }) {
 
         <div>
           <div className="section-label">Spotlight Control</div>
-          <div
-            className="section-title"
-            style={{ marginBottom: 8 }}
-          >
+          <div className="section-title" style={{ marginBottom: 8 }}>
             Manage Spotlight
           </div>
           <p
@@ -947,29 +922,18 @@ function AdminPage({ creations, setCreations, notify }) {
             <tbody>
               {eligible.map((c) => (
                 <tr key={c.id}>
-                  <td
-                    style={{
-                      fontFamily: "'Cormorant Garamond', serif",
-                      fontSize: 18,
-                    }}
-                  >
+                  <td style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18 }}>
                     {c.title}
                   </td>
                   <td style={{ color: "var(--muted)" }}>
                     {c.creator.display_name}
                   </td>
                   <td>
-                    {c.is_premium ? (
-                      <Badge type="Premium" />
-                    ) : (
-                      <Badge type="Open" />
-                    )}
+                    {c.is_premium ? <Badge type="Premium" /> : <Badge type="Open" />}
                   </td>
                   <td>
                     <div
-                      className={
-                        "spotlight-toggle" + (c.spotlight ? " active" : "")
-                      }
+                      className={"spotlight-toggle" + (c.spotlight ? " active" : "")}
                       onClick={() => toggleSpotlight(c.id)}
                     >
                       <div className="spotlight-dot" />
@@ -1017,8 +981,7 @@ function SubmitPage({ setCreations, notify, setPage }) {
       id: "u" + Date.now(),
       title: form.title.trim(),
       creator: { username: "you", display_name: "You" },
-      hero_image:
-        "https://images.unsplash.com/photo-1465101162946-4377e57745c3?w=700&q=80",
+      hero_image: "https://images.unsplash.com/photo-1465101162946-4377e57745c3?w=700&q=80",
       tools_used: toolList.length > 0 ? toolList : ["Unknown"],
       category: form.category,
       is_premium: form.isPremium,
@@ -1090,9 +1053,7 @@ function SubmitPage({ setCreations, notify, setPage }) {
             >
               {["Sci-Fi", "Abstract", "Noir", "Dark Fantasy", "Thriller", "Documentary"].map(
                 (o) => (
-                  <option key={o} value={o}>
-                    {o}
-                  </option>
+                  <option key={o} value={o}>{o}</option>
                 )
               )}
             </select>
