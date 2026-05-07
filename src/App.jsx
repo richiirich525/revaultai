@@ -260,18 +260,40 @@ const CSS = `
   .profile-handle { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); margin-bottom: 12px; }
   .profile-bio { font-size: 14px; color: var(--muted); max-width: 480px; line-height: 1.7; }
 
+  /* ── DETAIL / GALLERY PAGE ── */
+  .detail-stage { padding: 20px 48px 0; display: flex; flex-direction: column; align-items: center; }
+  .detail-hero-wrap { width: 100%; max-width: 1180px; position: relative; border: 1px solid var(--border); border-radius: 3px; overflow: hidden; box-shadow: 0 8px 48px rgba(123,63,228,0.08), 0 2px 16px rgba(0,0,0,0.5); }
   .detail-hero { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; }
-  .detail-body { padding: 48px; }
-  .detail-title { font-family: 'Cormorant Garamond', serif; font-size: 52px; font-weight: 300; color: var(--text); margin-bottom: 8px; }
-  .detail-meta { display: flex; align-items: center; gap: 20px; margin-bottom: 40px; flex-wrap: wrap; }
-  .detail-divider { color: var(--border); }
-  .prompt-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; padding: 28px; }
-  .prompt-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.2em; color: var(--accent); text-transform: uppercase; margin-bottom: 16px; }
-  .prompt-text { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--text); line-height: 1.8; }
-  .prompt-fade { position: relative; overflow: hidden; max-height: 120px; }
-  .prompt-fade::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 80px; background: linear-gradient(transparent, var(--bg2)); }
-  .unlock-area { margin-top: 24px; text-align: center; }
-  .unlock-label { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+  .detail-editorial { width: 100%; max-width: 720px; margin: 0 auto; padding: 48px 0 0; }
+  .detail-eyebrow { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.22em; color: var(--accent); text-transform: uppercase; margin-bottom: 14px; display: flex; align-items: center; gap: 12px; }
+  .detail-eyebrow-line { flex: 1; height: 1px; background: var(--border); }
+  .detail-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(36px, 5vw, 60px); font-weight: 300; color: var(--text); line-height: 1.0; letter-spacing: -0.01em; margin-bottom: 20px; }
+  .detail-meta { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; flex-wrap: wrap; }
+  .detail-divider { color: var(--border); font-size: 10px; }
+  .detail-creator-link { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.06em; color: var(--accent); cursor: pointer; transition: opacity 0.2s; }
+  .detail-creator-link:hover { opacity: 0.75; }
+  .detail-tools { display: flex; gap: 8px; flex-wrap: wrap; margin: 20px 0 36px; }
+  .detail-tool-tag { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.12em; color: var(--muted); background: transparent; border: 1px solid var(--border); padding: 4px 10px; border-radius: 2px; text-transform: uppercase; }
+  .detail-description { font-size: 15px; color: var(--muted); line-height: 1.75; margin-bottom: 36px; font-style: italic; }
+  .detail-rule { width: 100%; height: 1px; background: var(--border); margin-bottom: 36px; }
+  .prompt-box { background: transparent; border: 1px solid var(--border); border-radius: 3px; padding: 28px 32px; }
+  .prompt-label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.22em; color: var(--accent); text-transform: uppercase; margin-bottom: 18px; display: flex; align-items: center; gap: 10px; }
+  .prompt-label-line { flex: 1; height: 1px; background: rgba(123,63,228,0.2); }
+  .prompt-text { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text); line-height: 1.9; }
+  .prompt-fade { position: relative; overflow: hidden; max-height: 100px; }
+  .prompt-fade::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 60px; background: linear-gradient(transparent, var(--bg)); }
+  .unlock-area { margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--border); display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+  .unlock-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: var(--muted); }
+  .btn-unlock-restrained { background: transparent; border: 1px solid rgba(123,63,228,0.4); color: var(--accent); padding: 10px 24px; border-radius: 3px; font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; }
+  .btn-unlock-restrained:hover { background: var(--accent-dim); border-color: var(--accent); }
+  .detail-page-footer { padding: 64px 48px 48px; }
+  @media (max-width: 680px) {
+    .detail-stage { padding: 12px 16px 0; }
+    .detail-editorial { padding: 32px 16px 0; }
+    .detail-title { font-size: 32px; }
+    .detail-page-footer { padding: 40px 16px 32px; }
+    .prompt-box { padding: 20px; }
+  }
 
   .admin-table { width: 100%; border-collapse: collapse; }
   .admin-table th { text-align: left; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.15em; color: var(--muted); text-transform: uppercase; padding: 12px 16px; border-bottom: 1px solid var(--border); }
@@ -732,60 +754,86 @@ function DetailPage({ id, creations, setPage, setCreatorUser, notify }) {
       <div className="back-btn" onClick={() => setPage("explore")}>
         &larr; Explore
       </div>
-      <img
-        className="detail-hero"
-        src={creation.hero_image}
-        alt={creation.title}
-      />
-      <div className="detail-body">
-        <h1 className="detail-title">{creation.title}</h1>
-        <div className="detail-meta">
-          <span
-            style={{ fontSize: 14, color: "var(--accent)", cursor: "pointer" }}
-            onClick={() => {
-              setCreatorUser(creation.creator.username);
-              setPage("profile");
-            }}
-          >
-            {creation.creator.display_name}
-          </span>
-          <span className="detail-divider">|</span>
-          {creation.is_premium ? <Badge type="Premium" /> : <Badge type="Open" />}
-          {isPending && <Badge type="review" />}
-          <span className="detail-divider">|</span>
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            {creation.tools_used.map((t) => (
-              <span key={t} className="tool-tag">{t}</span>
-            ))}
-          </div>
+
+      {/* ── HERO IMAGE ── */}
+      <div className="detail-stage">
+        <div className="detail-hero-wrap">
+          <img
+            className="detail-hero"
+            src={creation.hero_image}
+            alt={creation.title}
+          />
         </div>
 
-        <div className="prompt-box">
-          <div className="prompt-label">Prompt</div>
-          {isPending ? (
-            <p className="prompt-text" style={{ color: "var(--muted)" }}>
-              This creation is under review. The prompt will be available once
-              approved by the RevaultAI team.
-            </p>
-          ) : !creation.is_premium || unlocked ? (
-            <p className="prompt-text">{creation.prompt_full}</p>
-          ) : (
-            <>
-              <div className="prompt-fade">
-                <p className="prompt-text">{creation.prompt_preview}</p>
-              </div>
-              <div className="unlock-area">
-                <p className="unlock-label">
-                  Unlock the full prompt to replicate or remix this creation.
-                </p>
-                <button className="btn-primary" onClick={handleUnlock}>
-                  Unlock Prompt &mdash; $4.99
-                </button>
-              </div>
-            </>
-          )}
+        {/* ── EDITORIAL BLOCK ── */}
+        <div className="detail-editorial">
+
+          {/* Eyebrow: category + medium */}
+          <div className="detail-eyebrow">
+            {creation.category}
+            <div className="detail-eyebrow-line" />
+            {creation.is_premium ? <Badge type="Premium" /> : <Badge type="Open" />}
+            {isPending && <Badge type="review" />}
+          </div>
+
+          {/* Title */}
+          <h1 className="detail-title">{creation.title}</h1>
+
+          {/* Creator meta */}
+          <div className="detail-meta">
+            <span
+              className="detail-creator-link"
+              onClick={() => {
+                setCreatorUser(creation.creator.username);
+                setPage("profile");
+              }}
+            >
+              {creation.creator.display_name}
+            </span>
+          </div>
+
+          {/* Tools */}
+          <div className="detail-tools">
+            {creation.tools_used.map((t) => (
+              <span key={t} className="detail-tool-tag">{t}</span>
+            ))}
+          </div>
+
+          <div className="detail-rule" />
+
+          {/* Prompt box */}
+          <div className="prompt-box">
+            <div className="prompt-label">
+              Production Note
+              <div className="prompt-label-line" />
+            </div>
+            {isPending ? (
+              <p className="prompt-text" style={{ color: "var(--muted)", fontStyle: "italic" }}>
+                This creation is under review. The prompt will be available
+                once approved by the RevaultAI team.
+              </p>
+            ) : !creation.is_premium || unlocked ? (
+              <p className="prompt-text">{creation.prompt_full}</p>
+            ) : (
+              <>
+                <div className="prompt-fade">
+                  <p className="prompt-text">{creation.prompt_preview}</p>
+                </div>
+                <div className="unlock-area">
+                  <span className="unlock-label">
+                    Full prompt available to vault members.
+                  </span>
+                  <button className="btn-unlock-restrained" onClick={handleUnlock}>
+                    Unlock for $4.99
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+
         </div>
       </div>
+      <div className="detail-page-footer" />
     </div>
   );
 }
