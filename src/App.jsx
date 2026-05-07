@@ -185,12 +185,12 @@ const CSS = `
   .page { min-height: 100vh; padding-top: 80px; }
   .container { max-width: 1280px; margin: 0 auto; padding: 0 48px; }
 
-  .hero { min-height: 88vh; display: flex; flex-direction: column; justify-content: center; padding: 80px 48px 64px; position: relative; overflow: hidden; }
+  .hero { min-height: 82vh; display: flex; flex-direction: column; justify-content: center; padding: 56px 48px 48px; position: relative; overflow: hidden; }
   .hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 60% 60% at 70% 40%, rgba(123,63,228,0.10) 0%, transparent 70%); pointer-events: none; }
-  .hero-eyebrow { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.2em; color: var(--accent); text-transform: uppercase; margin-bottom: 28px; }
-  .hero-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(72px, 10vw, 140px); font-weight: 300; line-height: 0.92; letter-spacing: -0.02em; color: var(--text); margin-bottom: 36px; }
+  .hero-eyebrow { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.2em; color: var(--accent); text-transform: uppercase; margin-bottom: 20px; }
+  .hero-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(72px, 10vw, 140px); font-weight: 300; line-height: 0.92; letter-spacing: -0.02em; color: var(--text); margin-bottom: 28px; }
   .hero-title em { font-style: italic; color: rgba(232,230,240,0.5); }
-  .hero-sub { font-size: 16px; font-weight: 400; color: var(--muted); max-width: 440px; line-height: 1.7; margin-bottom: 52px; }
+  .hero-sub { font-size: 16px; font-weight: 400; color: var(--muted); max-width: 440px; line-height: 1.7; margin-bottom: 36px; }
   .hero-actions { display: flex; gap: 16px; align-items: center; }
   .btn-primary { background: var(--accent); color: white; padding: 14px 32px; border-radius: 4px; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer; border: none; transition: all 0.2s; font-family: 'Syne', sans-serif; }
   .btn-primary:hover { opacity: 0.88; box-shadow: 0 8px 32px var(--accent-glow); }
@@ -198,8 +198,9 @@ const CSS = `
   .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
   .hero-grid { position: absolute; right: 0; top: 0; bottom: 0; width: 50%; opacity: 0.06; background-image: linear-gradient(rgba(123,63,228,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(123,63,228,0.5) 1px, transparent 1px); background-size: 40px 40px; pointer-events: none; }
 
-  .section { padding: 80px 48px; }
-  .section-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 48px; }
+  .section { padding: 56px 48px; }
+  .section + .section { background: var(--bg2); }
+  .section-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 32px; }
   .section-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.2em; color: var(--accent); text-transform: uppercase; margin-bottom: 8px; }
   .section-title { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 400; color: var(--text); }
   .section-link { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); cursor: pointer; transition: color 0.2s; }
@@ -220,7 +221,7 @@ const CSS = `
   .badge-review { background: rgba(255,165,0,0.08); border: 1px solid rgba(255,165,0,0.25); color: rgba(255,165,0,0.7); }
   .badge-founding { display: inline-flex; align-items: center; background: var(--accent-dim); border: 1px solid rgba(123,63,228,0.3); color: var(--accent); padding: 2px 8px; border-radius: 2px; font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; }
 
-  .creation-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2px; }
+  .creation-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1px; }
   .creation-card { background: var(--bg2); cursor: pointer; border: 1px solid transparent; transition: border-color 0.25s; position: relative; overflow: hidden; }
   .creation-card:hover { border-color: var(--border-hover); }
   .creation-card:hover .creation-thumb img { transform: scale(1.04); }
@@ -233,11 +234,11 @@ const CSS = `
   .creation-title { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 400; color: var(--text); margin-bottom: 4px; }
   .creation-creator { font-size: 11px; color: var(--muted); }
 
-  .manifesto { padding: 120px 48px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); text-align: center; position: relative; overflow: hidden; }
+  .manifesto { padding: 72px 48px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); text-align: center; position: relative; overflow: hidden; background: var(--bg2); }
   .manifesto::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 50% 80% at 50% 50%, rgba(123,63,228,0.06), transparent); pointer-events: none; }
-  .manifesto-quote { font-family: 'Cormorant Garamond', serif; font-size: clamp(28px, 4vw, 52px); font-weight: 300; line-height: 1.4; color: var(--text); max-width: 860px; margin: 0 auto 36px; font-style: italic; }
-  .manifesto-sub { font-size: 13px; color: var(--muted); letter-spacing: 0.08em; max-width: 480px; margin: 0 auto; line-height: 1.7; }
-  .manifesto-rule { width: 48px; height: 1px; background: var(--accent); margin: 0 auto 48px; }
+  .manifesto-quote { font-family: 'Cormorant Garamond', serif; font-size: clamp(24px, 3.2vw, 42px); font-weight: 300; line-height: 1.45; color: var(--text); max-width: 640px; margin: 0 auto 24px; font-style: italic; }
+  .manifesto-sub { font-size: 13px; color: var(--muted); letter-spacing: 0.08em; max-width: 380px; margin: 0 auto; line-height: 1.7; }
+  .manifesto-rule { width: 36px; height: 1px; background: var(--accent); margin: 0 auto 36px; }
 
   .filter-bar { display: flex; gap: 2px; margin-bottom: 48px; flex-wrap: wrap; }
   .filter-btn { padding: 10px 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--muted); transition: all 0.2s; border-radius: 2px; font-family: 'Syne', sans-serif; }
