@@ -7,7 +7,7 @@ const SEED_CREATIONS = [
     id: "c1",
     title: "Meridian Collapse",
     creator: { username: "solara", display_name: "Solara Chen" },
-    hero_image: "https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?w=700&q=80",
+    hero_image: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1200&q=90",
     tools_used: ["Sora", "Runway"],
     category: "Sci-Fi",
     is_premium: true,
@@ -20,7 +20,7 @@ const SEED_CREATIONS = [
     id: "c2",
     title: "The Quiet Epoch",
     creator: { username: "nvoid", display_name: "Nullvoid" },
-    hero_image: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=700&q=80",
+    hero_image: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=1200&q=90",
     tools_used: ["Kling", "MidJourney"],
     category: "Abstract",
     is_premium: false,
@@ -33,7 +33,7 @@ const SEED_CREATIONS = [
     id: "c3",
     title: "After the Signal",
     creator: { username: "mira_kd", display_name: "Mira Kade" },
-    hero_image: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=700&q=80",
+    hero_image: "https://images.unsplash.com/photo-1545987796-200677ee1011?w=1200&q=90",
     tools_used: ["Sora", "Stable Diffusion"],
     category: "Noir",
     is_premium: true,
@@ -46,7 +46,7 @@ const SEED_CREATIONS = [
     id: "c4",
     title: "Velvet Recursion",
     creator: { username: "solara", display_name: "Solara Chen" },
-    hero_image: "https://images.unsplash.com/photo-1545156521-77bd85671d30?w=700&q=80",
+    hero_image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200&q=90",
     tools_used: ["Runway", "After Effects"],
     category: "Abstract",
     is_premium: true,
@@ -59,7 +59,7 @@ const SEED_CREATIONS = [
     id: "c5",
     title: "Bone Garden",
     creator: { username: "lumen_x", display_name: "Lumen X" },
-    hero_image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=700&q=80",
+    hero_image: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1200&q=90",
     tools_used: ["MidJourney", "Kling"],
     category: "Dark Fantasy",
     is_premium: false,
@@ -72,7 +72,7 @@ const SEED_CREATIONS = [
     id: "c6",
     title: "Low Earth Memory",
     creator: { username: "mira_kd", display_name: "Mira Kade" },
-    hero_image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=700&q=80",
+    hero_image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200&q=90",
     tools_used: ["Sora"],
     category: "Sci-Fi",
     is_premium: false,
@@ -85,20 +85,20 @@ const SEED_CREATIONS = [
     id: "c7",
     title: "Threshold Protocol",
     creator: { username: "nvoid", display_name: "Nullvoid" },
-    hero_image: "https://images.unsplash.com/photo-1509023464722-18d996393ca8?w=700&q=80",
+    hero_image: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=1200&q=90",
     tools_used: ["Runway", "Stable Diffusion"],
     category: "Thriller",
     is_premium: true,
-    premium_status: "Pending",
-    prompt_preview: "Under review.",
-    prompt_full: "[PENDING REVIEW]",
+    premium_status: "Approved",
+    prompt_preview: "A figure stands at the threshold of a server room, data streams flickering across glass walls, the boundary between human and machine dissolving...",
+    prompt_full: "A figure stands at the threshold of a server room, data streams flickering across glass walls, the boundary between human and machine dissolving. Overhead fluorescent flicker synced to heartbeat. Camera holds on the threshold -- neither entering nor retreating. Palette: clinical white, deep shadow, electric teal. Sound design: low-frequency hum, distorted breath, silence. Shot in extreme slow motion, 240fps, anamorphic compression.",
     spotlight: false,
   },
   {
     id: "c8",
     title: "Fold and Dissolve",
     creator: { username: "lumen_x", display_name: "Lumen X" },
-    hero_image: "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=700&q=80",
+    hero_image: "https://images.unsplash.com/photo-1509909756405-be0199881695?w=1200&q=90",
     tools_used: ["MidJourney"],
     category: "Abstract",
     is_premium: false,
@@ -114,7 +114,7 @@ const CREATORS = [
     username: "solara",
     display_name: "Solara Chen",
     bio: "Crafting narrative AI films at the edge of perception. Former cinematographer turned AI director.",
-    profile_image: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=300&q=80",
+    profile_image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=90",
     tools_used: ["Sora", "Runway", "MidJourney", "After Effects"],
     badges: ["Founding", "Premium"],
   },
@@ -122,7 +122,7 @@ const CREATORS = [
     username: "nvoid",
     display_name: "Nullvoid",
     bio: "Systems thinker. I build worlds that collapse beautifully.",
-    profile_image: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&q=80",
+    profile_image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=90",
     tools_used: ["Kling", "Runway", "Stable Diffusion"],
     badges: ["Premium"],
   },
@@ -130,7 +130,7 @@ const CREATORS = [
     username: "mira_kd",
     display_name: "Mira Kade",
     bio: "Noir, memory, and machine vision. Every frame is a question.",
-    profile_image: "https://images.unsplash.com/photo-1494790108755-2616b612b977?w=300&q=80",
+    profile_image: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400&q=90",
     tools_used: ["Sora", "Stable Diffusion"],
     badges: ["Founding"],
   },
@@ -138,7 +138,7 @@ const CREATORS = [
     username: "lumen_x",
     display_name: "Lumen X",
     bio: "Light is the medium. AI is the brush.",
-    profile_image: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&q=80",
+    profile_image: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&q=90",
     tools_used: ["MidJourney", "Kling"],
     badges: [],
   },
@@ -173,30 +173,60 @@ const CSS = `
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 2px; }
 
-  .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 20px 48px; background: rgba(14,15,20,0.85); backdrop-filter: blur(24px); border-bottom: 1px solid var(--border); }
-  .nav-logo { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; letter-spacing: 0.08em; color: var(--text); cursor: pointer; }
+  .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 0 40px; height: 62px; background: rgba(10,11,16,0.92); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); }
+  .nav-logo { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.18em; color: var(--text); cursor: pointer; text-transform: uppercase; display: flex; align-items: center; gap: 0; }
   .nav-logo span { color: var(--accent); }
-  .nav-links { display: flex; gap: 36px; align-items: center; }
-  .nav-link { font-size: 12px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); cursor: pointer; transition: color 0.2s; }
-  .nav-link:hover, .nav-link.active { color: var(--text); }
-  .nav-cta { background: var(--accent); color: white; padding: 8px 20px; border-radius: 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer; transition: opacity 0.2s, box-shadow 0.2s; border: none; font-family: 'Syne', sans-serif; }
+  .nav-center { display: flex; gap: 40px; align-items: center; position: absolute; left: 50%; transform: translateX(-50%); }
+  .nav-link { font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); cursor: pointer; transition: color 0.2s; padding-bottom: 2px; border-bottom: 1px solid transparent; }
+  .nav-link:hover { color: var(--text); }
+  .nav-link.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .nav-right { display: flex; align-items: center; gap: 16px; }
+  .nav-signin { background: transparent; color: var(--text); padding: 7px 18px; border-radius: 3px; font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); font-family: 'Syne', sans-serif; transition: all 0.2s; }
+  .nav-signin:hover { border-color: var(--text); }
+  .nav-cta { background: var(--accent); color: white; padding: 8px 20px; border-radius: 3px; font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer; transition: opacity 0.2s, box-shadow 0.2s; border: none; font-family: 'Syne', sans-serif; }
   .nav-cta:hover { opacity: 0.88; box-shadow: 0 0 24px var(--accent-glow); }
 
   .page { min-height: 100vh; padding-top: 80px; }
   .container { max-width: 1280px; margin: 0 auto; padding: 0 48px; }
 
-  .hero { min-height: 82vh; display: flex; flex-direction: column; justify-content: center; padding: 56px 48px 48px; position: relative; overflow: hidden; }
-  .hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 60% 60% at 70% 40%, rgba(123,63,228,0.10) 0%, transparent 70%); pointer-events: none; }
-  .hero-eyebrow { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.2em; color: var(--accent); text-transform: uppercase; margin-bottom: 20px; }
+  .hero { min-height: 60vh; display: grid; grid-template-columns: 1fr 1fr; position: relative; overflow: hidden; }
+  .hero-left { display: flex; flex-direction: column; justify-content: center; padding: 48px 56px 48px 56px; position: relative; z-index: 2; }
+  .hero-right { position: relative; overflow: hidden; }
+  .hero-right img { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.75) saturate(0.85); display: block; }
+  .hero-right::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to right, var(--bg) 0%, transparent 30%); pointer-events: none; }
+  .hero-eyebrow { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.22em; color: var(--muted); text-transform: uppercase; margin-bottom: 28px; }
+  .hero-tagline { font-family: 'Syne', sans-serif; font-size: clamp(32px, 4vw, 56px); font-weight: 700; line-height: 1.1; letter-spacing: -0.01em; color: var(--text); margin-bottom: 12px; }
+  .hero-tagline-accent { font-family: 'Syne', sans-serif; font-size: clamp(32px, 4vw, 56px); font-weight: 700; line-height: 1.1; letter-spacing: -0.01em; color: var(--accent); margin-bottom: 32px; display: block; }
+  .hero-sub { font-size: 14px; font-weight: 400; color: var(--muted); max-width: 380px; line-height: 1.7; margin-bottom: 36px; }
+  .hero-link { display: inline-flex; align-items: center; gap: 8px; font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); cursor: pointer; transition: gap 0.2s; border: none; background: none; padding: 0; }
+  .hero-link:hover { gap: 12px; }
+  .hero-link-arrow { font-size: 14px; }
   .hero-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(72px, 10vw, 140px); font-weight: 300; line-height: 0.92; letter-spacing: -0.02em; color: var(--text); margin-bottom: 28px; }
   .hero-title em { font-style: italic; color: rgba(232,230,240,0.5); }
-  .hero-sub { font-size: 16px; font-weight: 400; color: var(--muted); max-width: 440px; line-height: 1.7; margin-bottom: 36px; }
   .hero-actions { display: flex; gap: 16px; align-items: center; }
   .btn-primary { background: var(--accent); color: white; padding: 14px 32px; border-radius: 4px; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer; border: none; transition: all 0.2s; font-family: 'Syne', sans-serif; }
   .btn-primary:hover { opacity: 0.88; box-shadow: 0 8px 32px var(--accent-glow); }
   .btn-ghost { background: transparent; color: var(--text); padding: 13px 32px; border-radius: 4px; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer; border: 1px solid var(--border-hover); transition: all 0.2s; font-family: 'Syne', sans-serif; }
   .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
-  .hero-grid { position: absolute; right: 0; top: 0; bottom: 0; width: 50%; opacity: 0.06; background-image: linear-gradient(rgba(123,63,228,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(123,63,228,0.5) 1px, transparent 1px); background-size: 40px 40px; pointer-events: none; }
+
+  .section-sublabel { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  /* ── ABOUT PAGE ── */
+  .about-hero { padding: 80px 48px 56px; border-bottom: 1px solid var(--border); }
+  .about-hero-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.2em; color: var(--accent); text-transform: uppercase; margin-bottom: 20px; }
+  .about-hero-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(48px, 7vw, 96px); font-weight: 300; line-height: 0.95; letter-spacing: -0.02em; color: var(--text); margin-bottom: 32px; max-width: 800px; }
+  .about-hero-title em { font-style: italic; color: var(--accent); }
+  .about-hero-body { font-size: 16px; color: var(--muted); max-width: 640px; line-height: 1.75; }
+  .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; margin: 0 48px; }
+  .about-block { padding: 48px; background: var(--bg2); }
+  .about-block-label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.2em; color: var(--accent); text-transform: uppercase; margin-bottom: 16px; }
+  .about-block-title { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 400; color: var(--text); margin-bottom: 14px; }
+  .about-block-body { font-size: 13px; color: var(--muted); line-height: 1.75; }
+  .about-values { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; margin: 1px 48px 0; }
+  .about-value { padding: 36px 40px; background: var(--bg2); }
+  .about-value-num { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--accent); margin-bottom: 16px; letter-spacing: 0.1em; }
+  .about-value-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 400; color: var(--text); margin-bottom: 10px; }
+  .about-value-body { font-size: 12px; color: var(--muted); line-height: 1.7; }
 
   .section { padding: 56px 48px; }
   .section + .section { background: var(--bg2); }
@@ -206,11 +236,17 @@ const CSS = `
   .section-link { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); cursor: pointer; transition: color 0.2s; }
   .section-link:hover { color: var(--accent); }
 
-  .spotlight-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
+  .spotlight-section-wrap { padding: 72px 48px; }
+  .spotlight-section-header { text-align: center; margin-bottom: 40px; }
+  .spotlight-section-header .section-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.2em; color: var(--accent); text-transform: uppercase; margin-bottom: 6px; }
+  .spotlight-section-header .section-sublabel { font-size: 12px; color: var(--muted); }
+  .spotlight-section-viewall { display: block; text-align: center; margin-top: 28px; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); cursor: pointer; transition: color 0.2s; }
+  .spotlight-section-viewall:hover { color: var(--accent); }
+  .spotlight-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; max-width: 1180px; margin: 0 auto; }
   .spotlight-card { position: relative; aspect-ratio: 3/4; overflow: hidden; cursor: pointer; }
-  .spotlight-card img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94); }
-  .spotlight-card:hover img { transform: scale(1.04); }
-  .spotlight-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(14,15,20,0.92) 0%, rgba(14,15,20,0.2) 50%, transparent 100%); }
+  .spotlight-card img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.8s cubic-bezier(0.25,0.46,0.45,0.94); filter: brightness(0.88) saturate(0.9); }
+  .spotlight-card:hover img { transform: scale(1.06); filter: brightness(0.96) saturate(1); }
+  .spotlight-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(8,9,13,0.97) 0%, rgba(8,9,13,0.45) 45%, rgba(8,9,13,0.1) 75%, transparent 100%); }
   .spotlight-info { position: absolute; bottom: 0; left: 0; right: 0; padding: 28px 24px; }
   .spotlight-cat { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.2em; color: var(--accent); text-transform: uppercase; margin-bottom: 6px; }
   .spotlight-title { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 400; color: var(--text); margin-bottom: 6px; line-height: 1.1; }
@@ -221,13 +257,17 @@ const CSS = `
   .badge-review { background: rgba(255,165,0,0.08); border: 1px solid rgba(255,165,0,0.25); color: rgba(255,165,0,0.7); }
   .badge-founding { display: inline-flex; align-items: center; background: var(--accent-dim); border: 1px solid rgba(123,63,228,0.3); color: var(--accent); padding: 2px 8px; border-radius: 2px; font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; }
 
-  .creation-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1px; }
-  .creation-card { background: var(--bg2); cursor: pointer; border: 1px solid transparent; transition: border-color 0.25s; position: relative; overflow: hidden; }
-  .creation-card:hover { border-color: var(--border-hover); }
-  .creation-card:hover .creation-thumb img { transform: scale(1.04); }
-  .creation-thumb { position: relative; aspect-ratio: 16/9; overflow: hidden; }
-  .creation-thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s cubic-bezier(0.25,0.46,0.45,0.94); }
-  .creation-badge { position: absolute; top: 12px; right: 12px; }
+  .creation-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; }
+  .creation-card { background: var(--bg2); cursor: pointer; border: 1px solid transparent; transition: border-color 0.3s, box-shadow 0.3s; position: relative; overflow: hidden; }
+  .creation-card:hover { border-color: var(--border-hover); box-shadow: 0 4px 32px rgba(0,0,0,0.5); }
+  .creation-card:hover .creation-thumb img { transform: scale(1.05); filter: brightness(0.95) saturate(1.05); }
+  .creation-thumb { position: relative; aspect-ratio: 4/3; overflow: hidden; }
+  .creation-thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.7s cubic-bezier(0.25,0.46,0.45,0.94), filter 0.7s ease; filter: brightness(0.82) saturate(0.85); }
+  .creation-thumb::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 40%, rgba(8,9,13,0.88) 100%); pointer-events: none; }
+  .creation-info { position: absolute; bottom: 0; left: 0; right: 0; padding: 16px 14px; }
+  .creation-info-title { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text); margin-bottom: 2px; }
+  .creation-info-creator { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.08em; color: var(--muted); text-transform: uppercase; }
+  .creation-badge { position: absolute; top: 10px; right: 10px; z-index: 1; }
   .creation-body { padding: 20px; }
   .creation-tools { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
   .tool-tag { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.1em; color: var(--muted); background: var(--bg3); padding: 3px 8px; border-radius: 2px; }
@@ -262,8 +302,9 @@ const CSS = `
 
   /* ── DETAIL / GALLERY PAGE ── */
   .detail-stage { padding: 20px 48px 0; display: flex; flex-direction: column; align-items: center; }
-  .detail-hero-wrap { width: 100%; max-width: 1180px; position: relative; border: 1px solid var(--border); border-radius: 3px; overflow: hidden; box-shadow: 0 8px 48px rgba(123,63,228,0.08), 0 2px 16px rgba(0,0,0,0.5); }
-  .detail-hero { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; }
+  .detail-hero-wrap { width: 100%; max-width: 1180px; position: relative; border: 1px solid var(--border); border-radius: 3px; overflow: hidden; box-shadow: 0 16px 72px rgba(0,0,0,0.7), 0 4px 24px rgba(123,63,228,0.08); }
+  .detail-hero { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; filter: brightness(0.9) saturate(0.88); transition: filter 0.4s ease; }
+  .detail-hero-wrap:hover .detail-hero { filter: brightness(0.96) saturate(0.96); }
   .detail-editorial { width: 100%; max-width: 720px; margin: 0 auto; padding: 48px 0 0; }
   .detail-eyebrow { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.22em; color: var(--accent); text-transform: uppercase; margin-bottom: 14px; display: flex; align-items: center; gap: 12px; }
   .detail-eyebrow-line { flex: 1; height: 1px; background: var(--border); }
@@ -363,13 +404,19 @@ function Notification({ msg, onClose }) {
   return <div className="notif">&#10022; {msg}</div>;
 }
 
-function Nav({ page, setPage }) {
+function Nav({ page, setPage, notify }) {
   return (
     <nav className="nav">
       <div className="nav-logo" onClick={() => setPage("home")}>
-        Revault<span>AI</span>
+        REVAULT<span>AI</span>
       </div>
-      <div className="nav-links">
+      <div className="nav-center">
+        <div
+          className={"nav-link" + (page === "home" ? " active" : "")}
+          onClick={() => setPage("home")}
+        >
+          Home
+        </div>
         <div
           className={"nav-link" + (page === "explore" ? " active" : "")}
           onClick={() => setPage("explore")}
@@ -382,8 +429,16 @@ function Nav({ page, setPage }) {
         >
           Creators
         </div>
-        <button className="nav-cta" onClick={() => setPage("submit")}>
-          Submit Work
+        <div
+          className={"nav-link" + (page === "submit" ? " active" : "")}
+          onClick={() => setPage("submit")}
+        >
+          Submit
+        </div>
+      </div>
+      <div className="nav-right">
+        <button className="nav-signin" onClick={() => notify("Sign in is coming soon.")}>
+          Sign In
         </button>
       </div>
     </nav>
@@ -396,12 +451,10 @@ function SpotlightSection({ creations, onView }) {
   );
   if (items.length === 0) return null;
   return (
-    <section className="section">
-      <div className="section-header">
-        <div>
-          <div className="section-label">Spotlight</div>
-          <div className="section-title">Curated this week</div>
-        </div>
+    <div className="spotlight-section-wrap">
+      <div className="spotlight-section-header">
+        <div className="section-label">Spotlight</div>
+        <div className="section-sublabel">Handpicked creations from exceptional artists.</div>
       </div>
       <div className="spotlight-grid">
         {items.map((item) => (
@@ -422,7 +475,10 @@ function SpotlightSection({ creations, onView }) {
           </div>
         ))}
       </div>
-    </section>
+      <span className="spotlight-section-viewall" onClick={() => onView && onView(items[0]?.id)}>
+        View All &#8594;
+      </span>
+    </div>
   );
 }
 
@@ -439,15 +495,10 @@ function CreationCard({ creation, onClick }) {
               ? <Badge type="Premium" />
               : <Badge type="Open" />}
         </div>
-      </div>
-      <div className="creation-body">
-        <div className="creation-tools">
-          {creation.tools_used.slice(0, 3).map((t) => (
-            <span key={t} className="tool-tag">{t}</span>
-          ))}
+        <div className="creation-info">
+          <div className="creation-info-title">{creation.title}</div>
+          <div className="creation-info-creator">by {creation.creator.display_name}</div>
         </div>
-        <div className="creation-title">{creation.title}</div>
-        <div className="creation-creator">by {creation.creator.display_name}</div>
       </div>
     </div>
   );
@@ -469,21 +520,22 @@ function HomePage({ creations, setPage, setDetailId }) {
   return (
     <div className="page">
       <section className="hero">
-        <div className="hero-grid" />
-        <div className="container">
+        <div className="hero-left">
           <div className="hero-eyebrow">AI-Native Creative Platform</div>
-          <h1 className="hero-title">Revault<em>AI</em></h1>
+          <div className="hero-tagline">The AI era doesn't<br />need more content.</div>
+          <span className="hero-tagline-accent">It needs curation.</span>
           <p className="hero-sub">
-            A curated vault for AI-native films and cinematic prompts. No algorithm. No noise. Just signal.
+            RevaultAI is a curated archive of the world's best AI-generated creations.
           </p>
-          <div className="hero-actions">
-            <button className="btn-primary" onClick={() => setPage("explore")}>
-              Explore
-            </button>
-            <button className="btn-ghost" onClick={() => setPage("submit")}>
-              Create
-            </button>
-          </div>
+          <button className="hero-link" onClick={() => setPage("explore")}>
+            Explore the Archive <span className="hero-link-arrow">&#8594;</span>
+          </button>
+        </div>
+        <div className="hero-right">
+          <img
+            src="https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?w=1400&q=90"
+            alt="Cinematic AI visual"
+          />
         </div>
       </section>
 
@@ -493,14 +545,14 @@ function HomePage({ creations, setPage, setDetailId }) {
         <div className="section-header">
           <div>
             <div className="section-label">Curated</div>
-            <div className="section-title">Exclusive prompts</div>
+            <div className="section-sublabel">Premium creations from top-tier artists.</div>
           </div>
           <span className="section-link" onClick={() => setPage("explore")}>
-            View all
+            View All &#8594;
           </span>
         </div>
         <div className="creation-grid">
-          {premiumCreations.slice(0, 3).map((c) => (
+          {premiumCreations.slice(0, 4).map((c) => (
             <CreationCard key={c.id} creation={c} onClick={goDetail} />
           ))}
         </div>
@@ -510,14 +562,14 @@ function HomePage({ creations, setPage, setDetailId }) {
         <div className="section-header">
           <div>
             <div className="section-label">Open Archive</div>
-            <div className="section-title">Free creations</div>
+            <div className="section-sublabel">Free access to outstanding AI creations.</div>
           </div>
           <span className="section-link" onClick={() => setPage("explore")}>
-            View all
+            View All &#8594;
           </span>
         </div>
         <div className="creation-grid">
-          {openCreations.slice(0, 3).map((c) => (
+          {openCreations.slice(0, 4).map((c) => (
             <CreationCard key={c.id} creation={c} onClick={goDetail} />
           ))}
         </div>
@@ -755,7 +807,6 @@ function DetailPage({ id, creations, setPage, setCreatorUser, notify }) {
         &larr; Explore
       </div>
 
-      {/* ── HERO IMAGE ── */}
       <div className="detail-stage">
         <div className="detail-hero-wrap">
           <img
@@ -765,10 +816,7 @@ function DetailPage({ id, creations, setPage, setCreatorUser, notify }) {
           />
         </div>
 
-        {/* ── EDITORIAL BLOCK ── */}
         <div className="detail-editorial">
-
-          {/* Eyebrow: category + medium */}
           <div className="detail-eyebrow">
             {creation.category}
             <div className="detail-eyebrow-line" />
@@ -776,10 +824,8 @@ function DetailPage({ id, creations, setPage, setCreatorUser, notify }) {
             {isPending && <Badge type="review" />}
           </div>
 
-          {/* Title */}
           <h1 className="detail-title">{creation.title}</h1>
 
-          {/* Creator meta */}
           <div className="detail-meta">
             <span
               className="detail-creator-link"
@@ -792,7 +838,6 @@ function DetailPage({ id, creations, setPage, setCreatorUser, notify }) {
             </span>
           </div>
 
-          {/* Tools */}
           <div className="detail-tools">
             {creation.tools_used.map((t) => (
               <span key={t} className="detail-tool-tag">{t}</span>
@@ -801,7 +846,6 @@ function DetailPage({ id, creations, setPage, setCreatorUser, notify }) {
 
           <div className="detail-rule" />
 
-          {/* Prompt box */}
           <div className="prompt-box">
             <div className="prompt-label">
               Production Note
@@ -830,7 +874,6 @@ function DetailPage({ id, creations, setPage, setCreatorUser, notify }) {
               </>
             )}
           </div>
-
         </div>
       </div>
       <div className="detail-page-footer" />
@@ -1030,7 +1073,7 @@ function SubmitPage({ setCreations, notify, setPage }) {
       id: "u" + Date.now(),
       title: form.title.trim(),
       creator: { username: "you", display_name: "You" },
-      hero_image: "https://images.unsplash.com/photo-1465101162946-4377e57745c3?w=700&q=80",
+      hero_image: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1200&q=90",
       tools_used: toolList.length > 0 ? toolList : ["Unknown"],
       category: form.category,
       is_premium: form.isPremium,
@@ -1235,7 +1278,7 @@ export default function App() {
   return (
     <>
       <style>{CSS}</style>
-      <Nav page={page} setPage={setPage} />
+      <Nav page={page} setPage={setPage} notify={notify} />
       {renderPage()}
       {notifMsg && (
         <Notification
