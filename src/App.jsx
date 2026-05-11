@@ -634,28 +634,76 @@ function AuthModal({ onClose, notify }) {
 
 // ─── NAV ──────────────────────────────────────────────────────────────────────
 
+function isAdmin(user) {
+  const adminEmails = ["richardgarland999@gmail.com"];
+
+  return (
+    !!user?.email &&
+    adminEmails.includes(user.email.toLowerCase())
+  );
+}
+
 function Nav({ page, setPage, user, onSignInClick, onSignOut }) {
   const initial = user?.email ? user.email[0].toUpperCase() : null;
+
   return (
     <nav className="nav">
       <div className="nav-logo" onClick={() => setPage("home")}>
         REVAULT<span>AI</span>
       </div>
+
       <div className="nav-center">
-        <div className={"nav-link" + (page === "home"     ? " active" : "")} onClick={() => setPage("home")}>Home</div>
-        <div className={"nav-link" + (page === "explore"  ? " active" : "")} onClick={() => setPage("explore")}>Explore</div>
-        <div className={"nav-link" + (page === "creators" ? " active" : "")} onClick={() => setPage("creators")}>Creators</div>
-        <div className={"nav-link" + (page === "submit"   ? " active" : "")} onClick={() => setPage("submit")}>Submit</div>
+        <div
+          className={"nav-link" + (page === "home" ? " active" : "")}
+          onClick={() => setPage("home")}
+        >
+          Home
+        </div>
+
+        <div
+          className={"nav-link" + (page === "explore" ? " active" : "")}
+          onClick={() => setPage("explore")}
+        >
+          Explore
+        </div>
+
+        <div
+          className={"nav-link" + (page === "creators" ? " active" : "")}
+          onClick={() => setPage("creators")}
+        >
+          Creators
+        </div>
+
+        <div
+          className={"nav-link" + (page === "submit" ? " active" : "")}
+          onClick={() => setPage("submit")}
+        >
+          Submit
+        </div>
+
+        {user && isAdmin(user) && (
+          <div
+            className={"nav-link" + (page === "admin" ? " active" : "")}
+            onClick={() => setPage("admin")}
+          >
+            Admin
+          </div>
+        )}
       </div>
+
       <div className="nav-right">
         {user ? (
           <div className="nav-user">
             <div className="nav-user-avatar">{initial}</div>
             <span className="nav-user-email">{user.email}</span>
-            <button className="nav-signout" onClick={onSignOut}>Sign Out</button>
+            <button className="nav-signout" onClick={onSignOut}>
+              Sign Out
+            </button>
           </div>
         ) : (
-          <button className="nav-signin" onClick={onSignInClick}>Sign In</button>
+          <button className="nav-signin" onClick={onSignInClick}>
+            Sign In
+          </button>
         )}
       </div>
     </nav>
