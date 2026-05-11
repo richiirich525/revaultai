@@ -1,4 +1,7 @@
 import { useState, useEffect, useRef } from "react";
+import { supabase } from "./lib/supabase.js";
+import { fetchCreations, insertCreation, fetchPurchasedIds, createCheckoutSession } from "./lib/db.js";
+import { fetchProfile, upsertProfile, defaultProfile } from "./lib/profiles.js";
 
 // ─── SEED DATA ────────────────────────────────────────────────────────────────
 
@@ -210,6 +213,38 @@ const CSS = `
   .nav-right { display: flex; align-items: center; gap: 16px; }
   .nav-signin { background: transparent; color: var(--text); padding: 7px 18px; border-radius: 3px; font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); font-family: 'Syne', sans-serif; transition: all 0.2s; }
   .nav-signin:hover { border-color: var(--text); }
+  .nav-user { display: flex; align-items: center; gap: 10px; }
+  .nav-user-email { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.08em; color: var(--muted); max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .nav-user-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--accent-dim); border: 1px solid var(--accent); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; flex-shrink: 0; }
+  .nav-signout { background: transparent; color: var(--muted); padding: 6px 14px; border-radius: 3px; font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; border: 1px solid var(--border); font-family: 'Syne', sans-serif; transition: all 0.2s; }
+  .nav-signout:hover { border-color: rgba(248,113,113,0.4); color: #F87171; }
+
+  /* ── AUTH MODAL ── */
+  .auth-overlay { position: fixed; inset: 0; z-index: 200; background: rgba(8,9,13,0.88); backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center; padding: 24px; animation: fadeIn 0.18s ease; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .auth-modal { background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; width: 100%; max-width: 420px; overflow: hidden; box-shadow: 0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(123,63,228,0.08); animation: slideUp 0.22s ease; }
+  @keyframes slideUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .auth-header { padding: 32px 36px 0; }
+  .auth-logo { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.18em; color: var(--text); text-transform: uppercase; margin-bottom: 24px; }
+  .auth-logo span { color: var(--accent); }
+  .auth-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); }
+  .auth-tab { flex: 1; padding: 10px 0; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; text-align: center; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.2s; background: none; border-left: none; border-right: none; border-top: none; }
+  .auth-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .auth-tab:hover:not(.active) { color: var(--text); }
+  .auth-body { padding: 28px 36px 32px; }
+  .auth-field { margin-bottom: 20px; }
+  .auth-label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.18em; color: var(--accent); text-transform: uppercase; display: block; margin-bottom: 8px; }
+  .auth-input { width: 100%; background: var(--bg3); border: 1px solid var(--border); color: var(--text); padding: 11px 14px; border-radius: 3px; font-family: 'Syne', sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s; }
+  .auth-input:focus { border-color: var(--accent); }
+  .auth-input::placeholder { color: var(--muted); }
+  .auth-submit { width: 100%; background: var(--accent); color: white; padding: 12px; border-radius: 3px; font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer; border: none; transition: all 0.2s; margin-top: 8px; }
+  .auth-submit:hover { opacity: 0.88; box-shadow: 0 6px 24px var(--accent-glow); }
+  .auth-submit:disabled { opacity: 0.45; cursor: not-allowed; }
+  .auth-error { font-family: 'DM Mono', monospace; font-size: 11px; color: #F87171; margin-top: 14px; line-height: 1.5; padding: 10px 14px; background: rgba(248,113,113,0.06); border: 1px solid rgba(248,113,113,0.2); border-radius: 3px; }
+  .auth-success { font-family: 'DM Mono', monospace; font-size: 11px; color: #4ADE80; margin-top: 14px; line-height: 1.5; padding: 10px 14px; background: rgba(74,222,128,0.06); border: 1px solid rgba(74,222,128,0.2); border-radius: 3px; }
+  .auth-close { position: absolute; top: 16px; right: 18px; background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer; line-height: 1; padding: 4px 8px; border-radius: 2px; transition: color 0.2s; }
+  .auth-close:hover { color: var(--text); }
+  .auth-modal-wrap { position: relative; }
 
   /* ── PAGE / LAYOUT ── */
   .page { min-height: 100vh; padding-top: 62px; }
@@ -411,6 +446,25 @@ const CSS = `
   .toggle-label { font-size: 13px; color: var(--text); }
   .toggle-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
 
+  /* ── VIDEO UPLOAD ── */
+  .upload-drop { border: 1px dashed var(--border); border-radius: 4px; padding: 32px 24px; text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; position: relative; }
+  .upload-drop:hover, .upload-drop.dragover { border-color: var(--accent); background: var(--accent-dim); }
+  .upload-drop input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .upload-drop-icon { font-size: 28px; margin-bottom: 10px; opacity: 0.5; }
+  .upload-drop-label { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: var(--muted); text-transform: uppercase; }
+  .upload-drop-hint { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.08em; color: var(--muted); margin-top: 6px; opacity: 0.6; }
+  .upload-file-info { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--bg3); border: 1px solid var(--border); border-radius: 3px; margin-top: 12px; }
+  .upload-file-name { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .upload-file-size { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); flex-shrink: 0; }
+  .upload-file-clear { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; padding: 0 4px; line-height: 1; transition: color 0.2s; flex-shrink: 0; }
+  .upload-file-clear:hover { color: #F87171; }
+  .upload-progress-wrap { margin-top: 12px; }
+  .upload-progress-bar-bg { height: 3px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
+  .upload-progress-bar { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.25s ease; }
+  .upload-progress-label { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 8px; display: flex; justify-content: space-between; }
+  .upload-success { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: rgba(74,222,128,0.06); border: 1px solid rgba(74,222,128,0.2); border-radius: 3px; margin-top: 12px; font-family: 'DM Mono', monospace; font-size: 10px; color: #4ADE80; letter-spacing: 0.08em; }
+  .upload-error { padding: 10px 14px; background: rgba(248,113,113,0.06); border: 1px solid rgba(248,113,113,0.2); border-radius: 3px; margin-top: 12px; font-family: 'DM Mono', monospace; font-size: 10px; color: #F87171; letter-spacing: 0.06em; line-height: 1.6; }
+
   /* ── PAGE HEADER / NAV CHROME ── */
   .page-hdr { padding: 60px 48px 48px; border-bottom: 1px solid var(--border); }
   .page-hdr-eyebrow { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.2em; color: var(--accent); text-transform: uppercase; margin-bottom: 10px; }
@@ -453,20 +507,156 @@ function Notification({ msg, onClose }) {
   return <div className="notif">&#10022; {msg}</div>;
 }
 
-function Nav({ page, setPage, notify }) {
+// ─── AUTH MODAL ───────────────────────────────────────────────────────────────
+
+function AuthModal({ onClose, notify }) {
+  const [tab, setTab]         = useState("signin");
+  const [email, setEmail]     = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError]     = useState(null);
+  const [success, setSuccess] = useState(null);
+
+  function reset() { setError(null); setSuccess(null); }
+
+  async function handleSignIn(e) {
+    e.preventDefault();
+    reset(); setLoading(true);
+    const { error: err } = await supabase.auth.signInWithPassword({ email, password });
+    setLoading(false);
+    if (err) { setError(err.message); return; }
+    notify("Welcome back to RevaultAI.");
+    onClose();
+  }
+
+  async function handleSignUp(e) {
+    e.preventDefault();
+    reset(); setLoading(true);
+    const { error: err } = await supabase.auth.signUp({ email, password });
+    setLoading(false);
+    if (err) { setError(err.message); return; }
+    setSuccess("Account created. Check your email to confirm your address.");
+  }
+
+  function handleOverlayClick(e) {
+    if (e.target === e.currentTarget) onClose();
+  }
+
+  return (
+    <div className="auth-overlay" onClick={handleOverlayClick}>
+      <div className="auth-modal-wrap">
+        <div className="auth-modal">
+          <button className="auth-close" onClick={onClose}>&#10005;</button>
+          <div className="auth-header">
+            <div className="auth-logo">REVAULT<span>AI</span></div>
+            <div className="auth-tabs">
+              <button
+                className={"auth-tab" + (tab === "signin" ? " active" : "")}
+                onClick={() => { setTab("signin"); reset(); }}
+              >Sign In</button>
+              <button
+                className={"auth-tab" + (tab === "signup" ? " active" : "")}
+                onClick={() => { setTab("signup"); reset(); }}
+              >Create Account</button>
+            </div>
+          </div>
+          <div className="auth-body">
+            {tab === "signin" ? (
+              <form onSubmit={handleSignIn}>
+                <div className="auth-field">
+                  <label className="auth-label">Email</label>
+                  <input
+                    className="auth-input"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    autoFocus
+                  />
+                </div>
+                <div className="auth-field">
+                  <label className="auth-label">Password</label>
+                  <input
+                    className="auth-input"
+                    type="password"
+                    placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                {error   && <div className="auth-error">{error}</div>}
+                {success && <div className="auth-success">{success}</div>}
+                <button className="auth-submit" type="submit" disabled={loading}>
+                  {loading ? "Signing in..." : "Sign In"}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleSignUp}>
+                <div className="auth-field">
+                  <label className="auth-label">Email</label>
+                  <input
+                    className="auth-input"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    autoFocus
+                  />
+                </div>
+                <div className="auth-field">
+                  <label className="auth-label">Password</label>
+                  <input
+                    className="auth-input"
+                    type="password"
+                    placeholder="Min. 6 characters"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    minLength={6}
+                  />
+                </div>
+                {error   && <div className="auth-error">{error}</div>}
+                {success && <div className="auth-success">{success}</div>}
+                <button className="auth-submit" type="submit" disabled={loading || !!success}>
+                  {loading ? "Creating account..." : "Create Account"}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── NAV ──────────────────────────────────────────────────────────────────────
+
+function Nav({ page, setPage, user, onSignInClick, onSignOut }) {
+  const initial = user?.email ? user.email[0].toUpperCase() : null;
   return (
     <nav className="nav">
       <div className="nav-logo" onClick={() => setPage("home")}>
         REVAULT<span>AI</span>
       </div>
       <div className="nav-center">
-        <div className={"nav-link" + (page === "home" ? " active" : "")} onClick={() => setPage("home")}>Home</div>
-        <div className={"nav-link" + (page === "explore" ? " active" : "")} onClick={() => setPage("explore")}>Explore</div>
+        <div className={"nav-link" + (page === "home"     ? " active" : "")} onClick={() => setPage("home")}>Home</div>
+        <div className={"nav-link" + (page === "explore"  ? " active" : "")} onClick={() => setPage("explore")}>Explore</div>
         <div className={"nav-link" + (page === "creators" ? " active" : "")} onClick={() => setPage("creators")}>Creators</div>
-        <div className={"nav-link" + (page === "submit" ? " active" : "")} onClick={() => setPage("submit")}>Submit</div>
+        <div className={"nav-link" + (page === "submit"   ? " active" : "")} onClick={() => setPage("submit")}>Submit</div>
       </div>
       <div className="nav-right">
-        <button className="nav-signin" onClick={() => notify("Sign in is coming soon.")}>Sign In</button>
+        {user ? (
+          <div className="nav-user">
+            <div className="nav-user-avatar">{initial}</div>
+            <span className="nav-user-email">{user.email}</span>
+            <button className="nav-signout" onClick={onSignOut}>Sign Out</button>
+          </div>
+        ) : (
+          <button className="nav-signin" onClick={onSignInClick}>Sign In</button>
+        )}
       </div>
     </nav>
   );
@@ -795,9 +985,9 @@ function ProfilePage({ username, creations, setPage, setDetailId, followedCreato
   );
 }
 
-function DetailPage({ id, creations, setPage, setCreatorUser, notify }) {
+function DetailPage({ id, creations, user, purchasedIds, setPage, setCreatorUser, notify }) {
   const creation = creations.find((c) => c.id === id);
-  const [unlocked, setUnlocked] = useState(false);
+  const [checkingOut, setCheckingOut] = useState(false);
 
   if (!creation) {
     return (
@@ -807,13 +997,22 @@ function DetailPage({ id, creations, setPage, setCreatorUser, notify }) {
     );
   }
 
-  const isPending = creation.premium_status === "Pending";
-  const hasVideo = !!creation.video_url;
-  const posterImg = creation.thumbnail_image || creation.hero_image;
+  const isPending  = creation.premium_status === "Pending";
+  const hasVideo   = !!creation.video_url;
+  const posterImg  = creation.thumbnail_image || creation.hero_image;
+  const purchased  = purchasedIds.has(creation.id);
+  const unlocked   = !creation.is_premium || purchased;
+  const priceLabel = creation.price_cents
+    ? "$" + (creation.price_cents / 100).toFixed(2)
+    : "$4.99";
 
-  function handleUnlock() {
-    notify("Redirecting to Stripe Checkout... (demo mode -- access granted)");
-    setTimeout(() => setUnlocked(true), 1400);
+  async function handleBuy() {
+    if (!user) { notify("Sign in to purchase."); return; }
+    setCheckingOut(true);
+    const { url, error } = await createCheckoutSession(creation.id, user.id);
+    setCheckingOut(false);
+    if (error) { notify("Checkout error: " + error.message); return; }
+    window.location.href = url;
   }
 
   return (
@@ -822,18 +1021,11 @@ function DetailPage({ id, creations, setPage, setCreatorUser, notify }) {
       {/* ==== CINEMA STAGE ==== */}
       <div className="detail-cinema">
         <div className="detail-cinema-inner">
-          {/* floating back button overlaid on media */}
           <div className="detail-back" onClick={() => setPage("explore")}>
             &larr; Archive
           </div>
-
-          {hasVideo ? (
-            <video
-              src={creation.video_url}
-              poster={posterImg}
-              controls
-              playsInline
-            />
+          {hasVideo && unlocked ? (
+            <video src={creation.video_url} poster={posterImg} controls playsInline />
           ) : (
             <img className="detail-still" src={posterImg} alt={creation.title} />
           )}
@@ -843,8 +1035,6 @@ function DetailPage({ id, creations, setPage, setCreatorUser, notify }) {
       {/* ==== EDITORIAL STRIP ==== */}
       <div className="detail-editorial-strip">
         <div className="detail-editorial-inner">
-
-          {/* LEFT: title + creator + tools */}
           <div className="detail-editorial-left">
             <div className="detail-eyebrow">
               <div className="detail-eyebrow-line" />
@@ -865,20 +1055,17 @@ function DetailPage({ id, creations, setPage, setCreatorUser, notify }) {
               {creation.tools_used.map((t) => (
                 <span key={t} className="detail-tool-tag">{t}</span>
               ))}
-              {hasVideo && (
+              {hasVideo && unlocked && (
                 <span className="detail-tool-tag detail-tool-tag-video">&#9654; Film</span>
               )}
             </div>
           </div>
-
-          {/* RIGHT: badges */}
           <div className="detail-editorial-right">
             <div className="detail-badges-row">
               {creation.is_premium ? <Badge type="Premium" /> : <Badge type="Open" />}
               {isPending && <Badge type="review" />}
             </div>
           </div>
-
         </div>
       </div>
 
@@ -892,19 +1079,40 @@ function DetailPage({ id, creations, setPage, setCreatorUser, notify }) {
         <div className="prompt-box">
           {isPending ? (
             <p className="prompt-text" style={{ color: "var(--muted)", fontStyle: "italic" }}>
-              This creation is under review. The prompt will be available once approved by the RevaultAI team.
+              This creation is under review. The prompt will be available once approved.
             </p>
-          ) : !creation.is_premium || unlocked ? (
-            <p className="prompt-text">{creation.prompt_full}</p>
+          ) : unlocked ? (
+            <>
+              <p className="prompt-text">{creation.prompt_full}</p>
+              {hasVideo && (
+                <div className="unlock-area" style={{ borderTop: "1px solid var(--border)", marginTop: 24, paddingTop: 20 }}>
+                  <a
+                    href={creation.video_url}
+                    download
+                    className="btn-unlock-restrained"
+                    style={{ textDecoration: "none", display: "inline-block" }}
+                  >
+                    &#11015; Download Film
+                  </a>
+                </div>
+              )}
+            </>
           ) : (
             <>
               <div className="prompt-fade">
                 <p className="prompt-text">{creation.prompt_preview}</p>
               </div>
               <div className="unlock-area">
-                <span className="unlock-label">Full prompt available to vault members.</span>
-                <button className="btn-unlock-restrained" onClick={handleUnlock}>
-                  Unlock for $4.99
+                <span className="unlock-label">
+                  Full prompt {hasVideo ? "and film download" : ""} available after purchase.
+                </span>
+                <button
+                  className="btn-unlock-restrained"
+                  onClick={handleBuy}
+                  disabled={checkingOut}
+                  style={{ opacity: checkingOut ? 0.6 : 1 }}
+                >
+                  {checkingOut ? "Redirecting..." : "Unlock for " + priceLabel}
                 </button>
               </div>
             </>
@@ -1007,58 +1215,170 @@ function AdminPage({ creations, setCreations, notify }) {
   );
 }
 
-function SubmitPage({ setCreations, notify, setPage }) {
+function SubmitPage({ setCreations, notify, setPage, user, profile }) {
   const [form, setForm] = useState({
-    title: "",
-    videoUrl: "",
-    tools: "",
-    category: "Abstract",
-    prompt: "",
+    title:     "",
+    tools:     "",
+    category:  "Abstract",
+    prompt:    "",
     isPremium: false,
   });
-  const [submitting, setSubmitting] = useState(false);
+
+  // ── upload state ────────────────────────────────────────────────────────────
+  const [videoFile,    setVideoFile]    = useState(null);   // File object
+  const [uploadState,  setUploadState]  = useState("idle"); // idle | uploading | done | error
+  const [uploadPct,    setUploadPct]    = useState(0);
+  const [uploadResult, setUploadResult] = useState(null);   // { video_url, preview_video, thumbnail_image }
+  const [uploadError,  setUploadError]  = useState(null);
+  const [dragover,     setDragover]     = useState(false);
+  const [submitting,   setSubmitting]   = useState(false);
 
   function updateField(key, value) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  function handleSubmit() {
+  function formatBytes(bytes) {
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  }
+
+  function pickFile(file) {
+    if (!file) return;
+    const allowed = ["video/mp4", "video/quicktime", "video/webm"];
+    if (!allowed.includes(file.type)) {
+      setUploadError("Only MP4, MOV, or WebM files are accepted.");
+      return;
+    }
+    if (file.size > 500 * 1024 * 1024) {
+      setUploadError("File exceeds the 500 MB limit.");
+      return;
+    }
+    setVideoFile(file);
+    setUploadState("idle");
+    setUploadResult(null);
+    setUploadError(null);
+    setUploadPct(0);
+  }
+
+  function clearFile() {
+    setVideoFile(null);
+    setUploadState("idle");
+    setUploadResult(null);
+    setUploadError(null);
+    setUploadPct(0);
+  }
+
+  async function uploadToR2() {
+    if (!videoFile) return;
+    setUploadState("uploading");
+    setUploadError(null);
+    setUploadPct(0);
+
+    const formData = new FormData();
+    formData.append("video", videoFile);
+
+    try {
+      // XHR lets us track real progress; fetch does not expose upload progress
+      const result = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", "/api/upload");
+
+        xhr.upload.addEventListener("progress", (e) => {
+          if (e.lengthComputable) {
+            setUploadPct(Math.round((e.loaded / e.total) * 100));
+          }
+        });
+
+        xhr.addEventListener("load", () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              resolve(JSON.parse(xhr.responseText));
+            } catch {
+              reject(new Error("Invalid response from upload server."));
+            }
+          } else {
+            let msg = "Upload failed.";
+            try { msg = JSON.parse(xhr.responseText).error || msg; } catch {}
+            reject(new Error(msg));
+          }
+        });
+
+        xhr.addEventListener("error",  () => reject(new Error("Network error during upload.")));
+        xhr.addEventListener("abort",  () => reject(new Error("Upload was cancelled.")));
+        xhr.send(formData);
+      });
+
+      setUploadPct(100);
+      setUploadResult(result);
+      setUploadState("done");
+    } catch (err) {
+      setUploadError(err.message);
+      setUploadState("error");
+    }
+  }
+
+  async function handleSubmit() {
     if (!form.title.trim() || !form.prompt.trim()) {
       notify("Please fill in the Title and Prompt fields.");
       return;
     }
-    setSubmitting(true);
+    if (videoFile && uploadState !== "done") {
+      notify("Please wait for your video to finish uploading.");
+      return;
+    }
 
+    setSubmitting(true);
     const toolList = form.tools.split(",").map((t) => t.trim()).filter(Boolean);
 
+    const fallbackThumb = "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1200&q=90";
+
     const newCreation = {
-      id: "u" + Date.now(),
-      title: form.title.trim(),
-      creator: { username: "you", display_name: "You" },
-      hero_image: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1200&q=90",
-      thumbnail_image: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1200&q=90",
-      video_url: form.videoUrl.trim(),
-      preview_video: form.videoUrl.trim(),
-      tools_used: toolList.length > 0 ? toolList : ["Unknown"],
-      category: form.category,
-      is_premium: form.isPremium,
-      premium_status: form.isPremium ? "Pending" : null,
-      prompt_preview: form.isPremium ? form.prompt.trim().slice(0, 120) + "..." : null,
-      prompt_full: form.prompt.trim(),
-      spotlight: false,
+      id:              "u" + Date.now(),   // temp id, replaced by DB uuid on insert
+      title:           form.title.trim(),
+      creator: {
+        username:     profile?.username     ?? user?.email?.split("@")[0] ?? "you",
+        display_name: profile?.display_name ?? user?.email?.split("@")[0] ?? "You",
+      },
+      hero_image:      uploadResult?.thumbnail_image || fallbackThumb,
+      thumbnail_image: uploadResult?.thumbnail_image || fallbackThumb,
+      video_url:       uploadResult?.video_url       || "",
+      preview_video:   uploadResult?.preview_video   || "",
+      tools_used:      toolList.length > 0 ? toolList : ["Unknown"],
+      category:        form.category,
+      is_premium:      form.isPremium,
+      premium_status:  form.isPremium ? "Pending" : null,
+      prompt_preview:  form.isPremium ? form.prompt.trim().slice(0, 120) + "..." : null,
+      prompt_full:     form.prompt.trim(),
+      spotlight:       false,
     };
 
+    // ── Optimistic update ────────────────────────────────────────────────────
     setCreations((prev) => [newCreation, ...prev]);
 
-    setTimeout(() => {
-      setSubmitting(false);
-      setPage("explore");
+    // ── Persist to Supabase ──────────────────────────────────────────────────
+    const { data: saved, error } = await insertCreation(newCreation, user);
+
+    if (error) {
+      console.error("[RevaultAI] Supabase insert failed:", error.message);
+      // Replace temp optimistic item with a note about the failure;
+      // the creation still exists in local state so the user isn't stuck.
+      notify("Saved locally -- could not reach the database. Check your connection.");
+    } else if (saved) {
+      // Swap temp id for the real DB uuid so links work correctly
+      setCreations((prev) =>
+        prev.map((c) => (c.id === newCreation.id ? saved : c))
+      );
+    }
+
+    setSubmitting(false);
+    setPage("explore");
+    if (!error) {
       notify(
         form.isPremium
-          ? "Submitted! Your creation will be reviewed by the RevaultAI team before going public."
+          ? "Submitted! Your creation will be reviewed before going public."
           : "Creation submitted and now live on RevaultAI."
       );
-    }, 600);
+    }
   }
 
   return (
@@ -1070,28 +1390,108 @@ function SubmitPage({ setCreations, notify, setPage }) {
       </div>
       <section className="section">
         <div style={{ maxWidth: 640 }}>
+
+          {/* Title */}
           <div className="form-group">
             <label className="form-label">Title *</label>
             <input className="form-input" placeholder="Name your creation" value={form.title} onChange={(e) => updateField("title", e.target.value)} />
           </div>
+
+          {/* Video upload */}
           <div className="form-group">
-            <label className="form-label">Video URL</label>
-            <input className="form-input" placeholder="https://..." value={form.videoUrl} onChange={(e) => updateField("videoUrl", e.target.value)} />
+            <label className="form-label">Film / Video</label>
+
+            {!videoFile ? (
+              <div
+                className={"upload-drop" + (dragover ? " dragover" : "")}
+                onDragOver={(e) => { e.preventDefault(); setDragover(true); }}
+                onDragLeave={() => setDragover(false)}
+                onDrop={(e) => { e.preventDefault(); setDragover(false); pickFile(e.dataTransfer.files[0]); }}
+              >
+                <input
+                  type="file"
+                  accept="video/mp4,video/quicktime,video/webm"
+                  onChange={(e) => pickFile(e.target.files[0])}
+                />
+                <div className="upload-drop-icon">&#9654;</div>
+                <div className="upload-drop-label">Drop your film here or click to browse</div>
+                <div className="upload-drop-hint">MP4, MOV, WebM &middot; max 500 MB</div>
+              </div>
+            ) : (
+              <>
+                <div className="upload-file-info">
+                  <span className="upload-file-name">{videoFile.name}</span>
+                  <span className="upload-file-size">{formatBytes(videoFile.size)}</span>
+                  {uploadState !== "uploading" && (
+                    <button className="upload-file-clear" onClick={clearFile}>&#10005;</button>
+                  )}
+                </div>
+
+                {uploadState === "idle" && (
+                  <button
+                    className="btn-primary"
+                    style={{ marginTop: 12, padding: "10px 24px", fontSize: 11 }}
+                    onClick={uploadToR2}
+                  >
+                    Upload to Vault
+                  </button>
+                )}
+
+                {uploadState === "uploading" && (
+                  <div className="upload-progress-wrap">
+                    <div className="upload-progress-bar-bg">
+                      <div className="upload-progress-bar" style={{ width: uploadPct + "%" }} />
+                    </div>
+                    <div className="upload-progress-label">
+                      <span>Uploading...</span>
+                      <span>{uploadPct}%</span>
+                    </div>
+                  </div>
+                )}
+
+                {uploadState === "done" && (
+                  <div className="upload-success">
+                    &#10003;&nbsp; Upload complete
+                  </div>
+                )}
+
+                {uploadState === "error" && (
+                  <>
+                    <div className="upload-error">{uploadError}</div>
+                    <button
+                      className="btn-primary"
+                      style={{ marginTop: 10, padding: "9px 20px", fontSize: 11 }}
+                      onClick={uploadToR2}
+                    >
+                      Retry Upload
+                    </button>
+                  </>
+                )}
+              </>
+            )}
           </div>
+
+          {/* Tools */}
           <div className="form-group">
             <label className="form-label">Tools Used</label>
             <input className="form-input" placeholder="Sora, Runway, MidJourney" value={form.tools} onChange={(e) => updateField("tools", e.target.value)} />
           </div>
+
+          {/* Category */}
           <div className="form-group">
             <label className="form-label">Category</label>
             <select className="form-select" value={form.category} onChange={(e) => updateField("category", e.target.value)}>
               {CATEGORIES.map((o) => <option key={o} value={o}>{o}</option>)}
             </select>
           </div>
+
+          {/* Prompt */}
           <div className="form-group">
             <label className="form-label">Prompt *</label>
             <textarea className="form-textarea" placeholder="Describe your full prompt in detail..." value={form.prompt} onChange={(e) => updateField("prompt", e.target.value)} />
           </div>
+
+          {/* Premium toggle */}
           <div className="form-group">
             <div className="toggle-row">
               <div className={"toggle" + (form.isPremium ? " on" : "")} onClick={() => updateField("isPremium", !form.isPremium)}>
@@ -1105,9 +1505,16 @@ function SubmitPage({ setCreations, notify, setPage }) {
               </div>
             </div>
           </div>
-          <button className="btn-primary" onClick={handleSubmit} disabled={submitting} style={{ opacity: submitting ? 0.6 : 1 }}>
+
+          <button
+            className="btn-primary"
+            onClick={handleSubmit}
+            disabled={submitting || uploadState === "uploading"}
+            style={{ opacity: (submitting || uploadState === "uploading") ? 0.6 : 1 }}
+          >
             {submitting ? "Submitting..." : "Submit Creation"}
           </button>
+
         </div>
       </section>
     </div>
@@ -1117,14 +1524,138 @@ function SubmitPage({ setCreations, notify, setPage }) {
 // ─── ROOT APP ─────────────────────────────────────────────────────────────────
 
 export default function App() {
-  const [creations, setCreations] = useState(SEED_CREATIONS.map((c) => ({ ...c })));
-  const [page, setPage] = useState("home");
-  const [detailId, setDetailId] = useState(null);
-  const [creatorUser, setCreatorUser] = useState(null);
-  const [notifMsg, setNotifMsg] = useState(null);
+  const [creations, setCreations]               = useState(SEED_CREATIONS.map((c) => ({ ...c })));
+  const [dbLoaded,  setDbLoaded]                = useState(false);
+  const [page, setPage]                         = useState("home");
+  const [detailId, setDetailId]                 = useState(null);
+  const [creatorUser, setCreatorUser]           = useState(null);
+  const [notifMsg, setNotifMsg]                 = useState(null);
   const [followedCreators, setFollowedCreators] = useState(new Set());
+  const [user, setUser]                         = useState(null);
+  const [profile, setProfile]                   = useState(null);
+  const [authOpen, setAuthOpen]                 = useState(false);
+  const [purchasedIds, setPurchasedIds]         = useState(new Set());
+
+  // ── Supabase auth listener + profile load/create ───────────────────────────
+  useEffect(() => {
+    // Restore session on mount
+    supabase.auth.getSession().then(({ data }) => {
+      const u = data.session?.user ?? null;
+      setUser(u);
+      if (u) loadOrCreateProfile(u);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      const u = session?.user ?? null;
+      setUser(u);
+      if (u) {
+        loadOrCreateProfile(u);
+      } else {
+        setProfile(null);
+        setPurchasedIds(new Set());
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  async function loadOrCreateProfile(u) {
+    const { data, error } = await fetchProfile(u.id);
+
+    if (error) {
+      console.warn("[RevaultAI] Could not fetch profile:", error.message);
+      return;
+    }
+
+    if (data) {
+      setProfile(data);
+    } else {
+      // No row yet -- insert a default profile derived from the email
+      const def = defaultProfile(u);
+      const { data: created, error: upsertErr } = await upsertProfile(u, def);
+      if (upsertErr) {
+        console.warn("[RevaultAI] Could not create default profile:", upsertErr.message);
+        // Use the in-memory default so the rest of the app still works
+        setProfile({ id: u.id, ...def });
+      } else {
+        setProfile(created);
+      }
+    }
+  }
+
+  // ── Load creations from Supabase, keep seed data as fallback ───────────────
+  useEffect(() => {
+    async function load() {
+      const { data, error } = await fetchCreations();
+      if (error) {
+        console.warn("[RevaultAI] Could not load creations from Supabase:", error.message);
+        setDbLoaded(false);
+        return;
+      }
+      if (data && data.length > 0) {
+        setCreations([...data, ...SEED_CREATIONS.map((c) => ({ ...c }))]);
+      }
+      setDbLoaded(true);
+    }
+    load();
+  }, []);
+
+  // ── Reload purchased ids whenever user changes ──────────────────────────────
+  useEffect(() => {
+    async function loadPurchases() {
+      if (!user?.id) {
+        setPurchasedIds(new Set());
+        return;
+      }
+      const { data } = await fetchPurchasedIds(user.id);
+      if (data) setPurchasedIds(data);
+    }
+    loadPurchases();
+  }, [user]);
+
+  // ── Handle Stripe success redirect ─────────────────────────────────────────
+  useEffect(() => {
+    async function handlePurchaseReturn() {
+      const params    = new URLSearchParams(window.location.search);
+      const sessionId = params.get("session_id");
+      if (!sessionId) return;
+
+      // Clean the URL immediately so a refresh does not re-trigger
+      window.history.replaceState({}, "", window.location.pathname);
+
+      setPage("purchase-success");
+
+      const res  = await fetch("/api/verify-session", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ session_id: sessionId }),
+      });
+      const json = await res.json();
+
+      if (!res.ok) {
+        // notify is not stable here yet; use setNotifMsg directly
+        setNotifMsg("Purchase verification failed: " + (json.error || "Unknown error"));
+        return;
+      }
+
+      // Re-fetch purchased ids for whoever is signed in at this point.
+      // user may still be null if auth hasn't resolved; the purchases
+      // useEffect above will catch it once user state settles.
+      const userId = json.user_id;
+      if (userId) {
+        const { data: ids } = await fetchPurchasedIds(userId);
+        if (ids) setPurchasedIds(ids);
+      }
+    }
+    handlePurchaseReturn();
+  }, []); // runs once on mount, before any navigation
 
   function notify(msg) { setNotifMsg(msg); }
+
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    notify("Signed out of RevaultAI.");
+  }
 
   function toggleFollow(creator) {
     setFollowedCreators((prev) => {
@@ -1159,6 +1690,19 @@ export default function App() {
             setDetailId={setDetailId}
             followedCreators={followedCreators}
             toggleFollow={toggleFollow}
+            dbProfile={null}
+          />
+        );
+      case "myprofile":
+        return (
+          <ProfilePage
+            username={profile?.username ?? ""}
+            creations={creations}
+            setPage={setPage}
+            setDetailId={setDetailId}
+            followedCreators={followedCreators}
+            toggleFollow={toggleFollow}
+            dbProfile={profile}
           />
         );
       case "detail":
@@ -1166,15 +1710,50 @@ export default function App() {
           <DetailPage
             id={detailId}
             creations={creations}
+            user={user}
+            purchasedIds={purchasedIds}
             setPage={setPage}
             setCreatorUser={setCreatorUser}
             notify={notify}
           />
         );
       case "admin":
+        if (!isAdmin(user)) {
+          return (
+            <div className="page">
+              <div className="empty-state">
+                <div className="empty-text">Not authorized.</div>
+              </div>
+            </div>
+          );
+        }
         return <AdminPage creations={creations} setCreations={setCreations} notify={notify} />;
       case "submit":
-        return <SubmitPage setCreations={setCreations} notify={notify} setPage={setPage} />;
+        return <SubmitPage setCreations={setCreations} notify={notify} setPage={setPage} user={user} profile={profile} />;
+      case "mycreations":
+        return (
+          <MyCreationsPage
+            creations={creations}
+            user={user}
+            setPage={setPage}
+            setDetailId={setDetailId}
+            setCreations={setCreations}
+            notify={notify}
+            onSignInClick={() => setAuthOpen(true)}
+          />
+        );
+      case "purchase-success":
+        return (
+          <div className="page">
+            <div className="empty-state" style={{ paddingTop: 120 }}>
+              <div className="empty-text" style={{ color: "var(--text)", fontSize: 18, marginBottom: 12 }}>
+                Purchase confirmed.
+              </div>
+              <div className="empty-text" style={{ marginBottom: 32 }}>Your creation is now unlocked.</div>
+              <button className="btn-primary" onClick={() => setPage("explore")}>Back to Archive</button>
+            </div>
+          </div>
+        );
       default:
         return null;
     }
@@ -1183,8 +1762,20 @@ export default function App() {
   return (
     <>
       <style>{CSS}</style>
-      <Nav page={page} setPage={setPage} notify={notify} />
+      <Nav
+        page={page}
+        setPage={setPage}
+        user={user}
+        onSignInClick={() => setAuthOpen(true)}
+        onSignOut={handleSignOut}
+      />
       {renderPage()}
+      {authOpen && (
+        <AuthModal
+          onClose={() => setAuthOpen(false)}
+          notify={notify}
+        />
+      )}
       {notifMsg && (
         <Notification key={notifMsg} msg={notifMsg} onClose={() => setNotifMsg(null)} />
       )}
