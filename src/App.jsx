@@ -194,7 +194,8 @@ const CSS = `
   .nav-signin:hover { border-color: var(--text); }
   .nav-user { display: flex; align-items: center; gap: 10px; }
   .nav-user-email { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.08em; color: var(--muted); max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .nav-user-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--accent-dim); border: 1px solid var(--accent); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; flex-shrink: 0; }
+  .nav-user-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--accent-dim); border: 1px solid var(--accent); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; flex-shrink: 0; cursor: pointer; overflow: hidden; }
+  .nav-user-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
   .nav-signout { background: transparent; color: var(--muted); padding: 6px 14px; border-radius: 3px; font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; border: 1px solid var(--border); font-family: 'Syne', sans-serif; transition: all 0.2s; }
   .nav-signout:hover { border-color: rgba(248,113,113,0.4); color: #F87171; }
   .auth-overlay { position: fixed; inset: 0; z-index: 200; background: rgba(8,9,13,0.88); backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center; padding: 24px; animation: fadeIn 0.18s ease; }
@@ -369,6 +370,7 @@ const CSS = `
   .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); }
   .form-textarea { min-height: 140px; resize: vertical; line-height: 1.6; }
   .form-select option { background: var(--bg2); }
+  .form-hint { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 6px; letter-spacing: 0.06em; line-height: 1.5; }
   .toggle-row { display: flex; align-items: center; gap: 16px; }
   .toggle { width: 44px; height: 24px; background: var(--bg3); border-radius: 12px; position: relative; cursor: pointer; transition: background 0.2s; border: 1px solid var(--border); flex-shrink: 0; }
   .toggle.on { background: var(--accent); border-color: var(--accent); }
@@ -409,6 +411,24 @@ const CSS = `
   .footer { padding: 48px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
   .footer-logo { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 400; color: var(--muted); }
   .footer-copy { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.1em; }
+  .settings-layout { display: grid; grid-template-columns: 220px 1fr; gap: 0; min-height: calc(100vh - 62px); }
+  .settings-sidebar { border-right: 1px solid var(--border); padding: 48px 0; background: var(--bg2); }
+  .settings-sidebar-title { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.22em; color: var(--muted); text-transform: uppercase; padding: 0 28px 16px; }
+  .settings-nav-item { display: block; width: 100%; text-align: left; padding: 11px 28px; font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); cursor: pointer; background: none; border: none; transition: color 0.2s, background 0.2s; border-left: 2px solid transparent; }
+  .settings-nav-item:hover { color: var(--text); background: rgba(255,255,255,0.02); }
+  .settings-nav-item.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-dim); }
+  .settings-main { padding: 48px 56px; max-width: 680px; }
+  .settings-section-title { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 300; color: var(--text); margin-bottom: 6px; }
+  .settings-section-sub { font-size: 13px; color: var(--muted); margin-bottom: 40px; line-height: 1.6; }
+  .settings-divider { height: 1px; background: var(--border); margin: 36px 0; }
+  .settings-avatar-row { display: flex; align-items: center; gap: 24px; margin-bottom: 32px; padding: 24px; background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; }
+  .settings-avatar-preview { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border); flex-shrink: 0; background: var(--bg3); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 700; color: var(--accent); overflow: hidden; }
+  .settings-avatar-preview img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+  .settings-avatar-info { flex: 1; }
+  .settings-avatar-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.14em; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
+  .settings-avatar-hint { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .settings-save-row { display: flex; align-items: center; gap: 16px; margin-top: 8px; }
+  .settings-save-error { font-family: 'DM Mono', monospace; font-size: 11px; color: #F87171; padding: 10px 14px; background: rgba(248,113,113,0.06); border: 1px solid rgba(248,113,113,0.2); border-radius: 3px; line-height: 1.5; }
   @media (max-width: 760px) {
     .nav { padding: 0 20px; height: auto; min-height: 62px; flex-wrap: wrap; }
     .nav-center { position: static; transform: none; width: 100%; order: 3; gap: 20px; justify-content: center; padding: 12px 0; border-top: 1px solid var(--border); margin-top: 12px; }
@@ -461,6 +481,14 @@ const CSS = `
     .btn-approve, .btn-reject { font-size: 9px; padding: 5px 10px; margin-right: 6px; }
     .container { padding: 0 24px; }
     .empty-state { padding: 60px 24px; }
+    .settings-layout { grid-template-columns: 1fr; }
+    .settings-sidebar { border-right: none; border-bottom: 1px solid var(--border); padding: 24px 0 8px; }
+    .settings-sidebar-title { padding: 0 20px 12px; }
+    .settings-nav-item { padding: 10px 20px; }
+    .settings-main { padding: 32px 24px; max-width: 100%; }
+    .settings-section-title { font-size: 28px; }
+    .settings-avatar-row { flex-direction: column; align-items: flex-start; gap: 16px; padding: 18px; }
+    .settings-save-row { flex-direction: column; align-items: flex-start; }
   }
 `;
 
@@ -602,8 +630,10 @@ function isAdmin(user) {
   return (!!user?.email && adminEmails.includes(user.email.toLowerCase()));
 }
 
-function Nav({ page, setPage, user, onSignInClick, onSignOut }) {
+function Nav({ page, setPage, user, profile, onSignInClick, onSignOut }) {
   const initial = user?.email ? user.email[0].toUpperCase() : null;
+  const avatarSrc = profile?.profile_image ?? null;
+
   return (
     <nav className="nav">
       <div className="nav-logo" onClick={() => setPage("home")}>REVAULT<span>AI</span></div>
@@ -615,11 +645,20 @@ function Nav({ page, setPage, user, onSignInClick, onSignOut }) {
         {user && isAdmin(user) && (
           <div className={"nav-link" + (page === "admin" ? " active" : "")} onClick={() => setPage("admin")}>Admin</div>
         )}
+        {user && (
+          <div className={"nav-link" + (page === "settings" ? " active" : "")} onClick={() => setPage("settings")}>Profile</div>
+        )}
       </div>
       <div className="nav-right">
         {user ? (
           <div className="nav-user">
-            <div className="nav-user-avatar">{initial}</div>
+            <div className="nav-user-avatar" onClick={() => setPage("settings")} title="Profile Settings">
+              {avatarSrc ? (
+                <img src={avatarSrc} alt={profile?.display_name ?? "avatar"} />
+              ) : (
+                initial
+              )}
+            </div>
             <span className="nav-user-email">{user.email}</span>
             <button className="nav-signout" onClick={onSignOut}>Sign Out</button>
           </div>
@@ -628,6 +667,173 @@ function Nav({ page, setPage, user, onSignInClick, onSignOut }) {
         )}
       </div>
     </nav>
+  );
+}
+
+function SettingsPage({ user, profile, setProfile, notify }) {
+  const [form, setForm] = useState({
+    display_name: profile?.display_name ?? "",
+    username: profile?.username ?? "",
+    bio: profile?.bio ?? "",
+    profile_image: profile?.profile_image ?? "",
+  });
+  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState(null);
+
+  // Keep form in sync if profile loads after mount
+  useEffect(() => {
+    if (profile) {
+      setForm({
+        display_name: profile.display_name ?? "",
+        username: profile.username ?? "",
+        bio: profile.bio ?? "",
+        profile_image: profile.profile_image ?? "",
+      });
+    }
+  }, [profile?.id]);
+
+  function updateField(key, value) {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  async function handleSave() {
+    if (!form.display_name.trim()) {
+      setFormError("Display name is required.");
+      return;
+    }
+    if (!form.username.trim()) {
+      setFormError("Username is required.");
+      return;
+    }
+    // Basic username validation: lowercase letters, numbers, underscores only
+    if (!/^[a-z0-9_]{2,32}$/.test(form.username.trim())) {
+      setFormError("Username must be 2-32 characters: lowercase letters, numbers, and underscores only.");
+      return;
+    }
+    setFormError(null);
+    setSaving(true);
+    const updatedProfile = {
+      display_name: form.display_name.trim(),
+      username: form.username.trim(),
+      bio: form.bio.trim(),
+      profile_image: form.profile_image.trim(),
+    };
+    const { data, error } = await upsertProfile(user, updatedProfile);
+    setSaving(false);
+    if (error) {
+      setFormError("Save failed: " + error.message);
+      return;
+    }
+    if (data) {
+      setProfile(data);
+    } else {
+      // If upsertProfile returns no data row, merge locally
+      setProfile((prev) => ({ ...prev, ...updatedProfile }));
+    }
+    notify("Profile saved.");
+  }
+
+  const avatarPreview = form.profile_image.trim();
+  const initials = form.display_name ? form.display_name[0].toUpperCase() : (user?.email ? user.email[0].toUpperCase() : "?");
+
+  return (
+    <div className="page">
+      <div className="settings-layout">
+        <aside className="settings-sidebar">
+          <div className="settings-sidebar-title">Settings</div>
+          <button className="settings-nav-item active">Creator Profile</button>
+        </aside>
+        <div className="settings-main">
+          <div className="settings-section-title">Creator Profile</div>
+          <div className="settings-section-sub">Your public identity on RevaultAI. This is what other users see on your creator page and submissions.</div>
+
+          <div className="settings-avatar-row">
+            <div className="settings-avatar-preview">
+              {avatarPreview ? (
+                <img src={avatarPreview} alt="avatar preview" onError={(e) => { e.target.style.display = "none"; }} />
+              ) : (
+                initials
+              )}
+            </div>
+            <div className="settings-avatar-info">
+              <div className="settings-avatar-label">Avatar Preview</div>
+              <div className="settings-avatar-hint">Enter an image URL below to update your avatar. Changes are reflected immediately after saving.</div>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Display Name *</label>
+            <input
+              className="form-input"
+              type="text"
+              placeholder="Your public name"
+              value={form.display_name}
+              onChange={(e) => updateField("display_name", e.target.value)}
+              maxLength={64}
+            />
+            <div className="form-hint">Shown on your creator profile and next to your creations.</div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Username *</label>
+            <input
+              className="form-input"
+              type="text"
+              placeholder="your_username"
+              value={form.username}
+              onChange={(e) => updateField("username", e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
+              maxLength={32}
+            />
+            <div className="form-hint">2-32 characters. Lowercase letters, numbers, and underscores only.</div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Bio</label>
+            <textarea
+              className="form-textarea"
+              placeholder="Tell the RevaultAI community about your creative practice..."
+              value={form.bio}
+              onChange={(e) => updateField("bio", e.target.value)}
+              maxLength={400}
+              style={{ minHeight: 100 }}
+            />
+            <div className="form-hint">{form.bio.length}/400 characters.</div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Avatar URL</label>
+            <input
+              className="form-input"
+              type="url"
+              placeholder="https://example.com/your-photo.jpg"
+              value={form.profile_image}
+              onChange={(e) => updateField("profile_image", e.target.value)}
+            />
+            <div className="form-hint">Direct link to a publicly accessible image. Recommended: square, at least 200x200px.</div>
+          </div>
+
+          <div className="settings-divider" />
+
+          {formError && (
+            <div className="settings-save-error" style={{ marginBottom: 16 }}>{formError}</div>
+          )}
+
+          <div className="settings-save-row">
+            <button
+              className="btn-primary"
+              onClick={handleSave}
+              disabled={saving}
+              style={{ opacity: saving ? 0.6 : 1 }}
+            >
+              {saving ? "Saving..." : "Save Profile"}
+            </button>
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--muted)", letterSpacing: "0.08em" }}>
+              {user?.email}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -1484,6 +1690,15 @@ export default function App() {
       case "creators": return <CreatorsPage setPage={setPage} setCreatorUser={setCreatorUser} followedCreators={followedCreators} />;
       case "profile": return <ProfilePage username={creatorUser} creations={creations} setPage={setPage} setDetailId={setDetailId} followedCreators={followedCreators} toggleFollow={toggleFollow} />;
       case "detail": return <DetailPage id={detailId} creations={creations} user={user} purchasedIds={purchasedIds} setPage={setPage} setCreatorUser={setCreatorUser} notify={notify} />;
+      case "settings":
+        if (!user) {
+          return (
+            <div className="page">
+              <div className="empty-state"><div className="empty-text">Sign in to access profile settings.</div></div>
+            </div>
+          );
+        }
+        return <SettingsPage user={user} profile={profile} setProfile={setProfile} notify={notify} />;
       case "admin":
         if (!isAdmin(user)) {
           return (
@@ -1513,7 +1728,7 @@ export default function App() {
   return (
     <>
       <style>{CSS}</style>
-      <Nav page={page} setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} onSignOut={handleSignOut} />
+      <Nav page={page} setPage={setPage} user={user} profile={profile} onSignInClick={() => setAuthOpen(true)} onSignOut={handleSignOut} />
       {renderPage()}
       {authOpen && <AuthModal onClose={() => setAuthOpen(false)} notify={notify} />}
       {notifMsg && <Notification key={notifMsg} msg={notifMsg} onClose={() => setNotifMsg(null)} />}
