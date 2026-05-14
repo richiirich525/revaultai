@@ -3,7 +3,7 @@ import { supabase } from "./lib/supabase.js";
 import { fetchCreations, insertCreation, fetchPurchasedIds, createCheckoutSession } from "./lib/db.js";
 import { fetchProfile, upsertProfile, defaultProfile } from "./lib/profiles.js";
 
-// ─── SEED DATA ────────────────────────────────────────────────────────────────
+// --- SEED DATA ------------------------------------------------------------
 
 const SEED_CREATIONS = [
   {
@@ -173,36 +173,15 @@ const CREATORS = [
 
 const CATEGORIES = ["Abstract", "Action", "Animation", "Crime", "Documentary", "Drama", "Horror", "News", "Noir", "Romance", "Sci-Fi/Fantasy", "Sports", "Thriller", "Western"];
 
-// ─── STYLES ───────────────────────────────────────────────────────────────────
-
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Mono:wght@300;400&family=Syne:wght@400;500;600;700;800&display=swap');
-
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg: #0E0F14;
-    --bg2: #13141A;
-    --bg3: #1A1B23;
-    --border: rgba(255,255,255,0.06);
-    --border-hover: rgba(123,63,228,0.35);
-    --text: #E8E6F0;
-    --muted: #6B6878;
-    --accent: #7B3FE4;
-    --accent-dim: rgba(123,63,228,0.15);
-    --accent-glow: rgba(123,63,228,0.4);
-    --premium: #C49A3C;
-    --premium-dim: rgba(196,154,60,0.12);
-  }
-
+  :root { --bg: #0E0F14; --bg2: #13141A; --bg3: #1A1B23; --border: rgba(255,255,255,0.06); --border-hover: rgba(123,63,228,0.35); --text: #E8E6F0; --muted: #6B6878; --accent: #7B3FE4; --accent-dim: rgba(123,63,228,0.15); --accent-glow: rgba(123,63,228,0.4); --premium: #C49A3C; --premium-dim: rgba(196,154,60,0.12); }
   html { scroll-behavior: smooth; }
   body { background: var(--bg); color: var(--text); font-family: 'Syne', sans-serif; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
-
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 2px; }
-
-  /* ── NAV ── */
   .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 0 40px; height: 62px; background: rgba(10,11,16,0.92); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); }
   .nav-logo { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.18em; color: var(--text); cursor: pointer; text-transform: uppercase; display: flex; align-items: center; gap: 0; }
   .nav-logo span { color: var(--accent); }
@@ -218,8 +197,6 @@ const CSS = `
   .nav-user-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--accent-dim); border: 1px solid var(--accent); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; flex-shrink: 0; }
   .nav-signout { background: transparent; color: var(--muted); padding: 6px 14px; border-radius: 3px; font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; border: 1px solid var(--border); font-family: 'Syne', sans-serif; transition: all 0.2s; }
   .nav-signout:hover { border-color: rgba(248,113,113,0.4); color: #F87171; }
-
-  /* ── AUTH MODAL ── */
   .auth-overlay { position: fixed; inset: 0; z-index: 200; background: rgba(8,9,13,0.88); backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center; padding: 24px; animation: fadeIn 0.18s ease; }
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   .auth-modal { background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; width: 100%; max-width: 420px; overflow: hidden; box-shadow: 0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(123,63,228,0.08); animation: slideUp 0.22s ease; }
@@ -245,22 +222,15 @@ const CSS = `
   .auth-close { position: absolute; top: 16px; right: 18px; background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer; line-height: 1; padding: 4px 8px; border-radius: 2px; transition: color 0.2s; }
   .auth-close:hover { color: var(--text); }
   .auth-modal-wrap { position: relative; }
-
-  /* ── PAGE / LAYOUT ── */
+  .auth-link { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.08em; color: var(--accent); cursor: pointer; transition: opacity 0.2s; margin-top: 12px; display: inline-block; }
+  .auth-link:hover { opacity: 0.75; }
   .page { min-height: 100vh; padding-top: 62px; }
   .container { max-width: 1280px; margin: 0 auto; padding: 0 48px; }
-
-  /* ── HERO ── */
   .hero { min-height: 60vh; display: grid; grid-template-columns: 1fr 1fr; position: relative; overflow: hidden; }
   .hero-left { display: flex; flex-direction: column; justify-content: center; padding: 48px 56px; position: relative; z-index: 2; }
   .hero-right { position: relative; overflow: hidden; }
   .hero-right img { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.75) saturate(0.85); display: block; animation: heroKenBurns 18s ease-in-out infinite alternate; transform-origin: center center; will-change: transform; }
-  @keyframes heroKenBurns {
-    0%   { transform: scale(1.0) translate(0%, 0%); }
-    33%  { transform: scale(1.06) translate(-1.2%, 0.8%); }
-    66%  { transform: scale(1.04) translate(1.0%, -0.6%); }
-    100% { transform: scale(1.08) translate(-0.6%, 1.0%); }
-  }
+  @keyframes heroKenBurns { 0% { transform: scale(1.0) translate(0%, 0%); } 33% { transform: scale(1.06) translate(-1.2%, 0.8%); } 66% { transform: scale(1.04) translate(1.0%, -0.6%); } 100% { transform: scale(1.08) translate(-0.6%, 1.0%); } }
   .hero-right::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to right, var(--bg) 0%, transparent 30%); pointer-events: none; z-index: 1; }
   .hero-right::before { content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: 0.032; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-size: 160px 160px; mix-blend-mode: overlay; }
   .hero-eyebrow { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.22em; color: var(--muted); text-transform: uppercase; margin-bottom: 28px; }
@@ -270,14 +240,10 @@ const CSS = `
   .hero-link { display: inline-flex; align-items: center; gap: 8px; font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); cursor: pointer; transition: gap 0.2s; border: none; background: none; padding: 0; }
   .hero-link:hover { gap: 12px; }
   .hero-link-arrow { font-size: 14px; }
-
-  /* ── BUTTONS ── */
   .btn-primary { background: var(--accent); color: white; padding: 14px 32px; border-radius: 4px; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer; border: none; transition: all 0.2s; font-family: 'Syne', sans-serif; }
   .btn-primary:hover { opacity: 0.88; box-shadow: 0 8px 32px var(--accent-glow); }
   .btn-ghost { background: transparent; color: var(--text); padding: 13px 32px; border-radius: 4px; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer; border: 1px solid var(--border-hover); transition: all 0.2s; font-family: 'Syne', sans-serif; }
   .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
-
-  /* ── SECTIONS ── */
   .section-sublabel { font-size: 12px; color: var(--muted); margin-top: 2px; }
   .section { padding: 56px 48px; }
   .section + .section { background: var(--bg2); }
@@ -286,8 +252,6 @@ const CSS = `
   .section-title { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 400; color: var(--text); }
   .section-link { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); cursor: pointer; transition: color 0.2s; }
   .section-link:hover { color: var(--accent); }
-
-  /* ── SPOTLIGHT ── */
   .spotlight-section-wrap { padding: 72px 48px; }
   .spotlight-section-header { text-align: center; margin-bottom: 40px; }
   .spotlight-section-header .section-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.2em; color: var(--accent); text-transform: uppercase; margin-bottom: 6px; }
@@ -303,15 +267,11 @@ const CSS = `
   .spotlight-cat { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.2em; color: var(--accent); text-transform: uppercase; margin-bottom: 6px; }
   .spotlight-title { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 400; color: var(--text); margin-bottom: 6px; line-height: 1.1; }
   .spotlight-creator { font-size: 11px; color: var(--muted); }
-
-  /* ── BADGES ── */
   .badge-premium { display: inline-flex; align-items: center; gap: 4px; background: var(--premium-dim); border: 1px solid rgba(196,154,60,0.3); color: var(--premium); padding: 2px 8px; border-radius: 2px; font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; }
   .badge-open { display: inline-flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); color: var(--muted); padding: 2px 8px; border-radius: 2px; font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; }
   .badge-review { background: rgba(255,165,0,0.08); border: 1px solid rgba(255,165,0,0.25); color: rgba(255,165,0,0.7); }
   .badge-founding { display: inline-flex; align-items: center; background: var(--accent-dim); border: 1px solid rgba(123,63,228,0.3); color: var(--accent); padding: 2px 8px; border-radius: 2px; font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; }
   .badge-following { display: inline-flex; align-items: center; background: rgba(74,222,128,0.08); border: 1px solid rgba(74,222,128,0.25); color: #4ADE80; padding: 2px 8px; border-radius: 2px; font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; }
-
-  /* ── CREATION CARDS ── */
   .creation-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; }
   .creation-card { background: var(--bg2); cursor: pointer; border: 1px solid transparent; transition: border-color 0.3s, box-shadow 0.3s; position: relative; overflow: hidden; }
   .creation-card:hover { border-color: var(--border-hover); box-shadow: 0 4px 32px rgba(0,0,0,0.5); }
@@ -326,15 +286,11 @@ const CSS = `
   .creation-info-creator { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.08em; color: var(--muted); text-transform: uppercase; }
   .creation-badge { position: absolute; top: 10px; right: 10px; z-index: 3; }
   .video-indicator { position: absolute; top: 10px; left: 10px; z-index: 3; display: flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.12); border-radius: 2px; padding: 2px 7px; font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: 0.1em; color: rgba(255,255,255,0.6); text-transform: uppercase; }
-
-  /* ── MANIFESTO ── */
   .manifesto { padding: 72px 48px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); text-align: center; position: relative; overflow: hidden; background: var(--bg2); }
   .manifesto::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 50% 80% at 50% 50%, rgba(123,63,228,0.06), transparent); pointer-events: none; }
   .manifesto-quote { font-family: 'Cormorant Garamond', serif; font-size: clamp(24px, 3.2vw, 42px); font-weight: 300; line-height: 1.45; color: var(--text); max-width: 640px; margin: 0 auto 24px; font-style: italic; }
   .manifesto-sub { font-size: 13px; color: var(--muted); letter-spacing: 0.08em; max-width: 380px; margin: 0 auto; line-height: 1.7; }
   .manifesto-rule { width: 36px; height: 1px; background: var(--accent); margin: 0 auto 36px; }
-
-  /* ── FILTER / LOAD ── */
   .filter-bar { display: flex; gap: 2px; margin-bottom: 48px; flex-wrap: wrap; }
   .filter-btn { padding: 10px 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--muted); transition: all 0.2s; border-radius: 2px; font-family: 'Syne', sans-serif; }
   .filter-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
@@ -342,8 +298,6 @@ const CSS = `
   .load-more { text-align: center; padding: 48px 0; }
   .btn-load { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 12px 36px; border-radius: 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; font-family: 'Syne', sans-serif; }
   .btn-load:hover { border-color: var(--accent); color: var(--accent); }
-
-  /* ── CREATORS / PROFILE ── */
   .creator-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 2px; }
   .creator-card { background: var(--bg2); padding: 28px; cursor: pointer; border: 1px solid transparent; transition: border-color 0.25s; position: relative; }
   .creator-card:hover { border-color: var(--border-hover); }
@@ -363,29 +317,19 @@ const CSS = `
   .btn-follow.unfollowed:hover { opacity: 0.88; box-shadow: 0 0 20px var(--accent-glow); }
   .btn-follow.followed { background: transparent; color: #4ADE80; border: 1px solid rgba(74,222,128,0.35); }
   .btn-follow.followed:hover { background: rgba(74,222,128,0.06); }
-
-  /* ── DETAIL / CINEMATIC FILM PAGE ── */
   .detail-page { background: var(--bg); }
-
-  /* -- cinema stage: full-bleed black above the fold -- */
   .detail-cinema { width: 100%; background: #000; position: relative; }
   .detail-cinema-inner { width: 100%; max-width: 1440px; margin: 0 auto; position: relative; }
   .detail-cinema video { width: 100%; aspect-ratio: 16/9; display: block; background: #000; }
   .detail-cinema img.detail-still { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; filter: brightness(0.88) saturate(0.88); transition: filter 0.5s ease; }
   .detail-cinema:hover img.detail-still { filter: brightness(0.96) saturate(0.96); }
-  /* subtle bottom fade from media into bg */
   .detail-cinema-inner::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 120px; background: linear-gradient(transparent, #000); pointer-events: none; }
-
-  /* -- nav chrome inside cinema -- */
   .detail-back { display: inline-flex; align-items: center; gap: 8px; position: absolute; top: 20px; left: 24px; z-index: 10; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(232,230,240,0.55); cursor: pointer; transition: color 0.2s; background: rgba(0,0,0,0.38); border: 1px solid rgba(255,255,255,0.08); border-radius: 2px; padding: 6px 14px; backdrop-filter: blur(6px); }
   .detail-back:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
-
-  /* -- editorial strip below cinema -- */
   .detail-editorial-strip { background: var(--bg); border-bottom: 1px solid var(--border); }
   .detail-editorial-inner { max-width: 1180px; margin: 0 auto; padding: 36px 48px 32px; display: flex; align-items: flex-start; justify-content: space-between; gap: 48px; }
   .detail-editorial-left { flex: 1; min-width: 0; }
   .detail-editorial-right { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; flex-shrink: 0; padding-top: 6px; }
-
   .detail-eyebrow { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.22em; color: var(--accent); text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
   .detail-eyebrow-line { width: 28px; height: 1px; background: var(--accent); opacity: 0.4; flex-shrink: 0; }
   .detail-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(32px, 4vw, 58px); font-weight: 300; color: var(--text); line-height: 1.0; letter-spacing: -0.01em; margin-bottom: 16px; }
@@ -398,8 +342,6 @@ const CSS = `
   .detail-tools-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 14px; }
   .detail-tool-tag { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.12em; color: var(--muted); background: transparent; border: 1px solid var(--border); padding: 3px 9px; border-radius: 2px; text-transform: uppercase; }
   .detail-tool-tag-video { color: var(--accent); border-color: rgba(123,63,228,0.3); }
-
-  /* -- production note section (secondary, below the fold) -- */
   .detail-body { max-width: 1180px; margin: 0 auto; padding: 48px 48px 80px; }
   .detail-rule { width: 100%; height: 1px; background: var(--border); margin-bottom: 40px; }
   .detail-section-label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.22em; color: var(--accent); text-transform: uppercase; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
@@ -412,16 +354,7 @@ const CSS = `
   .unlock-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: var(--muted); }
   .btn-unlock-restrained { background: transparent; border: 1px solid rgba(123,63,228,0.4); color: var(--accent); padding: 10px 24px; border-radius: 3px; font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; }
   .btn-unlock-restrained:hover { background: var(--accent-dim); border-color: var(--accent); }
-
-  @media (max-width: 860px) {
-    .detail-editorial-inner { flex-direction: column; gap: 20px; padding: 28px 24px 24px; }
-    .detail-editorial-right { align-items: flex-start; }
-    .detail-body { padding: 32px 24px 56px; }
-    .detail-title { font-size: 32px; }
-    .prompt-box { padding: 20px 22px; }
-  }
-
-  /* ── ADMIN ── */
+  @media (max-width: 860px) { .detail-editorial-inner { flex-direction: column; gap: 20px; padding: 28px 24px 24px; } .detail-editorial-right { align-items: flex-start; } .detail-body { padding: 32px 24px 56px; } .detail-title { font-size: 32px; } .prompt-box { padding: 20px 22px; } }
   .admin-table { width: 100%; border-collapse: collapse; }
   .admin-table th { text-align: left; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.15em; color: var(--muted); text-transform: uppercase; padding: 12px 16px; border-bottom: 1px solid var(--border); }
   .admin-table td { padding: 16px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text); vertical-align: middle; }
@@ -430,8 +363,6 @@ const CSS = `
   .btn-approve:hover { background: rgba(74,222,128,0.2); }
   .btn-reject { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.25); color: #F87171; padding: 6px 14px; border-radius: 2px; font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; font-family: 'Syne', sans-serif; }
   .btn-reject:hover { background: rgba(248,113,113,0.18); }
-
-  /* ── FORMS ── */
   .form-group { margin-bottom: 28px; }
   .form-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.15em; color: var(--accent); text-transform: uppercase; display: block; margin-bottom: 10px; }
   .form-input, .form-select, .form-textarea { width: 100%; background: var(--bg2); border: 1px solid var(--border); color: var(--text); padding: 12px 16px; border-radius: 4px; font-family: 'Syne', sans-serif; font-size: 14px; transition: border-color 0.2s; outline: none; }
@@ -445,8 +376,6 @@ const CSS = `
   .toggle.on .toggle-knob { transform: translateX(20px); }
   .toggle-label { font-size: 13px; color: var(--text); }
   .toggle-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
-
-  /* ── VIDEO UPLOAD ── */
   .upload-drop { border: 1px dashed var(--border); border-radius: 4px; padding: 32px 24px; text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; position: relative; }
   .upload-drop:hover, .upload-drop.dragover { border-color: var(--accent); background: var(--accent-dim); }
   .upload-drop input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
@@ -464,20 +393,14 @@ const CSS = `
   .upload-progress-label { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 8px; display: flex; justify-content: space-between; }
   .upload-success { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: rgba(74,222,128,0.06); border: 1px solid rgba(74,222,128,0.2); border-radius: 3px; margin-top: 12px; font-family: 'DM Mono', monospace; font-size: 10px; color: #4ADE80; letter-spacing: 0.08em; }
   .upload-error { padding: 10px 14px; background: rgba(248,113,113,0.06); border: 1px solid rgba(248,113,113,0.2); border-radius: 3px; margin-top: 12px; font-family: 'DM Mono', monospace; font-size: 10px; color: #F87171; letter-spacing: 0.06em; line-height: 1.6; }
-
-  /* ── PAGE HEADER / NAV CHROME ── */
   .page-hdr { padding: 60px 48px 48px; border-bottom: 1px solid var(--border); }
   .page-hdr-eyebrow { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.2em; color: var(--accent); text-transform: uppercase; margin-bottom: 10px; }
   .page-hdr-title { font-family: 'Cormorant Garamond', serif; font-size: 56px; font-weight: 300; color: var(--text); }
   .page-hdr-sub { font-size: 14px; color: var(--muted); margin-top: 10px; max-width: 480px; line-height: 1.7; }
   .back-btn { display: inline-flex; align-items: center; gap: 8px; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); cursor: pointer; transition: color 0.2s; padding: 24px 48px; }
   .back-btn:hover { color: var(--accent); }
-
-  /* ── NOTIFICATION ── */
   .notif { position: fixed; bottom: 32px; right: 32px; background: var(--bg3); border: 1px solid var(--accent); border-radius: 6px; padding: 14px 20px; font-size: 13px; color: var(--text); z-index: 999; animation: slideIn 0.3s ease; max-width: 340px; line-height: 1.5; }
   @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-  /* ── MISC ── */
   .empty-state { padding: 80px 48px; text-align: center; }
   .empty-text { font-size: 14px; color: var(--muted); }
   .spotlight-toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; font-family: 'DM Mono', monospace; letter-spacing: 0.1em; cursor: pointer; color: var(--muted); text-transform: uppercase; }
@@ -486,15 +409,66 @@ const CSS = `
   .footer { padding: 48px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
   .footer-logo { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 400; color: var(--muted); }
   .footer-copy { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.1em; }
+  @media (max-width: 760px) {
+    .nav { padding: 0 20px; height: auto; min-height: 62px; flex-wrap: wrap; }
+    .nav-center { position: static; transform: none; width: 100%; order: 3; gap: 20px; justify-content: center; padding: 12px 0; border-top: 1px solid var(--border); margin-top: 12px; }
+    .nav-link { font-size: 10px; }
+    .nav-user-email { display: none; }
+    .nav-logo { font-size: 12px; }
+    .nav-signin { padding: 6px 14px; font-size: 10px; }
+    .nav-signout { padding: 5px 12px; font-size: 9px; }
+    .hero { grid-template-columns: 1fr; min-height: auto; }
+    .hero-left { padding: 32px 24px; }
+    .hero-right { min-height: 300px; }
+    .hero-tagline, .hero-tagline-accent { font-size: 28px; }
+    .hero-eyebrow { font-size: 9px; margin-bottom: 20px; }
+    .hero-sub { font-size: 13px; margin-bottom: 28px; }
+    .section { padding: 40px 24px; }
+    .section-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .section-title { font-size: 28px; }
+    .spotlight-section-wrap { padding: 48px 24px; }
+    .creation-grid { grid-template-columns: 1fr; gap: 16px; }
+    .spotlight-grid { grid-template-columns: 1fr; gap: 16px; }
+    .creator-grid { grid-template-columns: 1fr; gap: 16px; }
+    .creation-thumb { aspect-ratio: 16/9; }
+    .spotlight-card { aspect-ratio: 16/9; }
+    .auth-modal { max-width: 100%; margin: 0 16px; }
+    .auth-header { padding: 24px 24px 0; }
+    .auth-body { padding: 20px 24px 24px; }
+    .auth-tabs { flex-wrap: wrap; }
+    .auth-tab { font-size: 9px; padding: 8px 0; }
+    .page-hdr { padding: 40px 24px 32px; }
+    .page-hdr-title { font-size: 36px; }
+    .back-btn { padding: 16px 24px; }
+    .profile-header { flex-direction: column; padding: 40px 24px 32px; gap: 20px; }
+    .profile-name { font-size: 32px; }
+    .profile-avatar { width: 80px; height: 80px; }
+    .detail-back { font-size: 9px; padding: 5px 12px; }
+    .detail-editorial-inner { flex-direction: column; gap: 20px; padding: 28px 24px 24px; }
+    .detail-editorial-right { align-items: flex-start; }
+    .detail-body { padding: 32px 24px 56px; }
+    .detail-title { font-size: 28px; }
+    .prompt-box { padding: 20px 18px; }
+    .manifesto { padding: 48px 24px; }
+    .manifesto-quote { font-size: 20px; }
+    .filter-bar { gap: 8px; }
+    .filter-btn { padding: 8px 16px; font-size: 10px; }
+    .footer { flex-direction: column; gap: 16px; padding: 32px 24px; text-align: center; }
+    .form-group { margin-bottom: 20px; }
+    .form-input, .form-select, .form-textarea { font-size: 16px; padding: 12px 14px; }
+    .admin-table { font-size: 11px; }
+    .admin-table th, .admin-table td { padding: 10px 8px; }
+    .btn-approve, .btn-reject { font-size: 9px; padding: 5px 10px; margin-right: 6px; }
+    .container { padding: 0 24px; }
+    .empty-state { padding: 60px 24px; }
+  }
 `;
 
-// ─── SHARED COMPONENTS ────────────────────────────────────────────────────────
-
 function Badge({ type }) {
-  if (type === "Premium")   return <span className="badge-premium">&#9670; Premium</span>;
-  if (type === "Open")      return <span className="badge-open">Open</span>;
-  if (type === "Founding")  return <span className="badge-founding">Founding</span>;
-  if (type === "review")    return <span className="badge-open badge-review">Under Review</span>;
+  if (type === "Premium") return <span className="badge-premium">&#9670; Premium</span>;
+  if (type === "Open") return <span className="badge-open">Open</span>;
+  if (type === "Founding") return <span className="badge-founding">Founding</span>;
+  if (type === "review") return <span className="badge-open badge-review">Under Review</span>;
   if (type === "following") return <span className="badge-following">Following</span>;
   return null;
 }
@@ -507,14 +481,12 @@ function Notification({ msg, onClose }) {
   return <div className="notif">&#10022; {msg}</div>;
 }
 
-// ─── AUTH MODAL ───────────────────────────────────────────────────────────────
-
 function AuthModal({ onClose, notify }) {
-  const [tab, setTab]         = useState("signin");
-  const [email, setEmail]     = useState("");
+  const [tab, setTab] = useState("signin");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState(null);
+  const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
   function reset() { setError(null); setSuccess(null); }
@@ -532,10 +504,29 @@ function AuthModal({ onClose, notify }) {
   async function handleSignUp(e) {
     e.preventDefault();
     reset(); setLoading(true);
-    const { error: err } = await supabase.auth.signUp({ email, password });
+    const { error: err } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: `${window.location.origin}/email-confirmed` },
+    });
     setLoading(false);
     if (err) { setError(err.message); return; }
     setSuccess("Account created. Check your email to confirm your address.");
+  }
+
+  async function handleForgotPassword(e) {
+    e.preventDefault();
+    if (!email.trim()) {
+      setError("Please enter your email address.");
+      return;
+    }
+    reset(); setLoading(true);
+    const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/set-password`,
+    });
+    setLoading(false);
+    if (err) { setError(err.message); return; }
+    setSuccess("Password reset email sent. Check your inbox.");
   }
 
   function handleOverlayClick(e) {
@@ -550,79 +541,53 @@ function AuthModal({ onClose, notify }) {
           <div className="auth-header">
             <div className="auth-logo">REVAULT<span>AI</span></div>
             <div className="auth-tabs">
-              <button
-                className={"auth-tab" + (tab === "signin" ? " active" : "")}
-                onClick={() => { setTab("signin"); reset(); }}
-              >Sign In</button>
-              <button
-                className={"auth-tab" + (tab === "signup" ? " active" : "")}
-                onClick={() => { setTab("signup"); reset(); }}
-              >Create Account</button>
+              <button className={"auth-tab" + (tab === "signin" ? " active" : "")} onClick={() => { setTab("signin"); reset(); }}>Sign In</button>
+              <button className={"auth-tab" + (tab === "signup" ? " active" : "")} onClick={() => { setTab("signup"); reset(); }}>Create Account</button>
+              <button className={"auth-tab" + (tab === "forgot" ? " active" : "")} onClick={() => { setTab("forgot"); reset(); }}>Reset Password</button>
             </div>
           </div>
           <div className="auth-body">
-            {tab === "signin" ? (
+            {tab === "signin" && (
               <form onSubmit={handleSignIn}>
                 <div className="auth-field">
                   <label className="auth-label">Email</label>
-                  <input
-                    className="auth-input"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    autoFocus
-                  />
+                  <input className="auth-input" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus />
                 </div>
                 <div className="auth-field">
                   <label className="auth-label">Password</label>
-                  <input
-                    className="auth-input"
-                    type="password"
-                    placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
+                  <input className="auth-input" type="password" placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;" value={password} onChange={(e) => setPassword(e.target.value)} required />
                 </div>
-                {error   && <div className="auth-error">{error}</div>}
+                {error && <div className="auth-error">{error}</div>}
                 {success && <div className="auth-success">{success}</div>}
-                <button className="auth-submit" type="submit" disabled={loading}>
-                  {loading ? "Signing in..." : "Sign In"}
-                </button>
+                <button className="auth-submit" type="submit" disabled={loading}>{loading ? "Signing in..." : "Sign In"}</button>
+                <div className="auth-link" onClick={() => { setTab("forgot"); reset(); }}>Forgot password?</div>
               </form>
-            ) : (
+            )}
+            {tab === "signup" && (
               <form onSubmit={handleSignUp}>
                 <div className="auth-field">
                   <label className="auth-label">Email</label>
-                  <input
-                    className="auth-input"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    autoFocus
-                  />
+                  <input className="auth-input" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus />
                 </div>
                 <div className="auth-field">
                   <label className="auth-label">Password</label>
-                  <input
-                    className="auth-input"
-                    type="password"
-                    placeholder="Min. 6 characters"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={6}
-                  />
+                  <input className="auth-input" type="password" placeholder="Min. 6 characters" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
                 </div>
-                {error   && <div className="auth-error">{error}</div>}
+                {error && <div className="auth-error">{error}</div>}
                 {success && <div className="auth-success">{success}</div>}
-                <button className="auth-submit" type="submit" disabled={loading || !!success}>
-                  {loading ? "Creating account..." : "Create Account"}
-                </button>
+                <button className="auth-submit" type="submit" disabled={loading || !!success}>{loading ? "Creating account..." : "Create Account"}</button>
+              </form>
+            )}
+            {tab === "forgot" && (
+              <form onSubmit={handleForgotPassword}>
+                <div className="auth-field">
+                  <label className="auth-label">Email</label>
+                  <input className="auth-input" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus />
+                </div>
+                {error && <div className="auth-error">{error}</div>}
+                {success && <div className="auth-success">{success}</div>}
+                <button className="auth-submit" type="submit" disabled={loading || !!success}>{loading ? "Sending..." : "Send Reset Link"}</button>
+                <div className="auth-link" onClick={() => { setTab("signin"); reset(); }}>Back to sign in</div>
               </form>
             )}
           </div>
@@ -632,85 +597,40 @@ function AuthModal({ onClose, notify }) {
   );
 }
 
-// ─── NAV ──────────────────────────────────────────────────────────────────────
-
 function isAdmin(user) {
   const adminEmails = ["richardgarland999@gmail.com"];
-
-  return (
-    !!user?.email &&
-    adminEmails.includes(user.email.toLowerCase())
-  );
+  return (!!user?.email && adminEmails.includes(user.email.toLowerCase()));
 }
 
 function Nav({ page, setPage, user, onSignInClick, onSignOut }) {
   const initial = user?.email ? user.email[0].toUpperCase() : null;
-
   return (
     <nav className="nav">
-      <div className="nav-logo" onClick={() => setPage("home")}>
-        REVAULT<span>AI</span>
-      </div>
-
+      <div className="nav-logo" onClick={() => setPage("home")}>REVAULT<span>AI</span></div>
       <div className="nav-center">
-        <div
-          className={"nav-link" + (page === "home" ? " active" : "")}
-          onClick={() => setPage("home")}
-        >
-          Home
-        </div>
-
-        <div
-          className={"nav-link" + (page === "explore" ? " active" : "")}
-          onClick={() => setPage("explore")}
-        >
-          Explore
-        </div>
-
-        <div
-          className={"nav-link" + (page === "creators" ? " active" : "")}
-          onClick={() => setPage("creators")}
-        >
-          Creators
-        </div>
-
-        <div
-          className={"nav-link" + (page === "submit" ? " active" : "")}
-          onClick={() => setPage("submit")}
-        >
-          Submit
-        </div>
-
+        <div className={"nav-link" + (page === "home" ? " active" : "")} onClick={() => setPage("home")}>Home</div>
+        <div className={"nav-link" + (page === "explore" ? " active" : "")} onClick={() => setPage("explore")}>Explore</div>
+        <div className={"nav-link" + (page === "creators" ? " active" : "")} onClick={() => setPage("creators")}>Creators</div>
+        <div className={"nav-link" + (page === "submit" ? " active" : "")} onClick={() => setPage("submit")}>Submit</div>
         {user && isAdmin(user) && (
-          <div
-            className={"nav-link" + (page === "admin" ? " active" : "")}
-            onClick={() => setPage("admin")}
-          >
-            Admin
-          </div>
+          <div className={"nav-link" + (page === "admin" ? " active" : "")} onClick={() => setPage("admin")}>Admin</div>
         )}
       </div>
-
       <div className="nav-right">
         {user ? (
           <div className="nav-user">
             <div className="nav-user-avatar">{initial}</div>
             <span className="nav-user-email">{user.email}</span>
-            <button className="nav-signout" onClick={onSignOut}>
-              Sign Out
-            </button>
+            <button className="nav-signout" onClick={onSignOut}>Sign Out</button>
           </div>
         ) : (
-          <button className="nav-signin" onClick={onSignInClick}>
-            Sign In
-          </button>
+          <button className="nav-signin" onClick={onSignInClick}>Sign In</button>
         )}
       </div>
     </nav>
   );
 }
 
-// Video-aware creation card with hover preview
 function CreationCard({ creation, onClick }) {
   const isPending = creation.premium_status === "Pending";
   const videoRef = useRef(null);
@@ -731,34 +651,12 @@ function CreationCard({ creation, onClick }) {
   }
 
   return (
-    <div
-      className="creation-card"
-      onClick={() => onClick(creation.id)}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
+    <div className="creation-card" onClick={() => onClick(creation.id)} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
       <div className="creation-thumb">
         <img src={creation.thumbnail_image || creation.hero_image} alt={creation.title} />
-        {hasPreview && (
-          <video
-            ref={videoRef}
-            src={creation.preview_video}
-            muted
-            loop
-            playsInline
-            preload="metadata"
-          />
-        )}
-        {(hasPreview || !!creation.video_url) && (
-          <div className="video-indicator">&#9654; Film</div>
-        )}
-        <div className="creation-badge">
-          {isPending
-            ? <Badge type="review" />
-            : creation.is_premium
-              ? <Badge type="Premium" />
-              : <Badge type="Open" />}
-        </div>
+        {hasPreview && <video ref={videoRef} src={creation.preview_video} muted loop playsInline preload="metadata" />}
+        {(hasPreview || !!creation.video_url) && <div className="video-indicator">&#9654; Film</div>}
+        <div className="creation-badge">{isPending ? <Badge type="review" /> : creation.is_premium ? <Badge type="Premium" /> : <Badge type="Open" />}</div>
         <div className="creation-info">
           <div className="creation-info-title">{creation.title}</div>
           <div className="creation-info-creator">by {creation.creator.display_name}</div>
@@ -790,19 +688,14 @@ function SpotlightSection({ creations, onView }) {
           </div>
         ))}
       </div>
-      <span className="spotlight-section-viewall" onClick={() => onView && onView(items[0]?.id)}>
-        View All &#8594;
-      </span>
+      <span className="spotlight-section-viewall" onClick={() => onView && onView(items[0]?.id)}>View All &rarr;</span>
     </div>
   );
 }
 
-// ─── PAGES ────────────────────────────────────────────────────────────────────
-
 function HomePage({ creations, setPage, setDetailId }) {
   const premiumCreations = creations.filter((c) => c.is_premium && c.premium_status === "Approved");
   const openCreations = creations.filter((c) => !c.is_premium);
-
   function goDetail(id) { setDetailId(id); setPage("detail"); }
 
   return (
@@ -813,62 +706,45 @@ function HomePage({ creations, setPage, setDetailId }) {
           <div className="hero-tagline">The AI era doesn't<br />need more content.</div>
           <span className="hero-tagline-accent">It needs curation.</span>
           <p className="hero-sub">RevaultAI is a curated archive of the world's best AI-generated creations.</p>
-          <button className="hero-link" onClick={() => setPage("explore")}>
-            Explore the Archive <span className="hero-link-arrow">&#8594;</span>
-          </button>
+          <button className="hero-link" onClick={() => setPage("explore")}>Explore the Archive <span className="hero-link-arrow">&rarr;</span></button>
         </div>
         <div className="hero-right">
           <img src="https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?w=1400&q=90" alt="Cinematic AI visual" />
         </div>
       </section>
-
       <SpotlightSection creations={creations} onView={goDetail} />
-
       <section className="section">
         <div className="section-header">
           <div>
             <div className="section-label">Curated</div>
             <div className="section-sublabel">Premium creations from top-tier artists.</div>
           </div>
-          <span className="section-link" onClick={() => setPage("explore")}>View All &#8594;</span>
+          <span className="section-link" onClick={() => setPage("explore")}>View All &rarr;</span>
         </div>
         <div className="creation-grid">
-          {premiumCreations.slice(0, 4).map((c) => (
-            <CreationCard key={c.id} creation={c} onClick={goDetail} />
-          ))}
+          {premiumCreations.slice(0, 4).map((c) => <CreationCard key={c.id} creation={c} onClick={goDetail} />)}
         </div>
       </section>
-
       <section className="section">
         <div className="section-header">
           <div>
             <div className="section-label">Open Archive</div>
             <div className="section-sublabel">Free access to outstanding AI creations.</div>
           </div>
-          <span className="section-link" onClick={() => setPage("explore")}>View All &#8594;</span>
+          <span className="section-link" onClick={() => setPage("explore")}>View All &rarr;</span>
         </div>
         <div className="creation-grid">
-          {openCreations.slice(0, 4).map((c) => (
-            <CreationCard key={c.id} creation={c} onClick={goDetail} />
-          ))}
+          {openCreations.slice(0, 4).map((c) => <CreationCard key={c.id} creation={c} onClick={goDetail} />)}
         </div>
       </section>
-
       <section className="manifesto">
         <div className="manifesto-rule" />
-        <p className="manifesto-quote">
-          "The AI era doesn't need more content. It needs curation.
-          RevaultAI is built for signal over noise &mdash; where AI-native work is treated as craft, not feed."
-        </p>
-        <p className="manifesto-sub">
-          RevaultAI is built for creators who believe AI is a medium, not just a tool.
-          No vanity metrics. No algorithmic manipulation. Just work.
-        </p>
+        <p className="manifesto-quote">"The AI era doesn't need more content. It needs curation. RevaultAI is built for signal over noise -- where AI-native work is treated as craft, not feed."</p>
+        <p className="manifesto-sub">RevaultAI is built for creators who believe AI is a medium, not just a tool. No vanity metrics. No algorithmic manipulation. Just work.</p>
       </section>
-
       <footer className="footer">
         <div className="footer-logo">RevaultAI</div>
-        <div className="footer-copy">&copy; 2025 &mdash; The AI-native creative vault</div>
+        <div className="footer-copy">&copy; 2025 -- The AI-native creative vault</div>
       </footer>
     </div>
   );
@@ -877,14 +753,12 @@ function HomePage({ creations, setPage, setDetailId }) {
 function ExplorePage({ creations, setPage, setDetailId }) {
   const [filter, setFilter] = useState("All");
   const [visible, setVisible] = useState(8);
-
   const filtered = creations.filter((c) => {
     if (c.premium_status === "Pending") return false;
     if (filter === "Premium") return c.is_premium;
     if (filter === "Open") return !c.is_premium;
     return true;
   });
-
   function goDetail(id) { setDetailId(id); setPage("detail"); }
 
   return (
@@ -894,28 +768,18 @@ function ExplorePage({ creations, setPage, setDetailId }) {
         <div className="page-hdr-title">Explore</div>
         <div className="page-hdr-sub">All creations published by the RevaultAI community.</div>
       </div>
-
       <SpotlightSection creations={creations} onView={goDetail} />
-
       <section className="section">
         <div className="filter-bar">
           {["All", "Premium", "Open"].map((f) => (
-            <button
-              key={f}
-              className={"filter-btn" + (filter === f ? " active" : "")}
-              onClick={() => { setFilter(f); setVisible(8); }}
-            >
-              {f}
-            </button>
+            <button key={f} className={"filter-btn" + (filter === f ? " active" : "")} onClick={() => { setFilter(f); setVisible(8); }}>{f}</button>
           ))}
         </div>
         {filtered.length === 0 ? (
           <div className="empty-state"><div className="empty-text">No creations in this category yet.</div></div>
         ) : (
           <div className="creation-grid">
-            {filtered.slice(0, visible).map((c) => (
-              <CreationCard key={c.id} creation={c} onClick={goDetail} />
-            ))}
+            {filtered.slice(0, visible).map((c) => <CreationCard key={c.id} creation={c} onClick={goDetail} />)}
           </div>
         )}
         {visible < filtered.length && (
@@ -939,11 +803,7 @@ function CreatorsPage({ setPage, setCreatorUser, followedCreators }) {
       <section className="section">
         <div className="creator-grid">
           {CREATORS.map((c) => (
-            <div
-              key={c.username}
-              className="creator-card"
-              onClick={() => { setCreatorUser(c.username); setPage("profile"); }}
-            >
+            <div key={c.username} className="creator-card" onClick={() => { setCreatorUser(c.username); setPage("profile"); }}>
               <img className="creator-avatar" src={c.profile_image} alt={c.display_name} />
               <div className="creator-name">{c.display_name}</div>
               <div className="creator-handle">@{c.username}</div>
@@ -963,7 +823,6 @@ function CreatorsPage({ setPage, setCreatorUser, followedCreators }) {
 function ProfilePage({ username, creations, setPage, setDetailId, followedCreators, toggleFollow }) {
   const creator = CREATORS.find((c) => c.username === username);
   const [filter, setFilter] = useState("All");
-
   if (!creator) {
     return (
       <div className="page">
@@ -971,7 +830,6 @@ function ProfilePage({ username, creations, setPage, setDetailId, followedCreato
       </div>
     );
   }
-
   const isFollowing = followedCreators.has(username);
   const ownCreations = creations.filter((c) => c.creator.username === username);
   const filtered = ownCreations.filter((c) => {
@@ -979,7 +837,6 @@ function ProfilePage({ username, creations, setPage, setDetailId, followedCreato
     if (filter === "Open") return !c.is_premium;
     return true;
   });
-
   function goDetail(id) { setDetailId(id); setPage("detail"); }
 
   return (
@@ -994,15 +851,10 @@ function ProfilePage({ username, creations, setPage, setDetailId, followedCreato
             {creator.badges.map((b) => <Badge key={b} type={b} />)}
           </div>
           <div className="profile-bio">{creator.bio}</div>
-          <div className="creator-tools" style={{ marginTop: 12 }}>
-            {creator.tools_used.join(" \u00b7 ")}
-          </div>
+          <div className="creator-tools" style={{ marginTop: 12 }}>{creator.tools_used.join(" \u00b7 ")}</div>
           <div className="profile-actions">
-            <button
-              className={"btn-follow " + (isFollowing ? "followed" : "unfollowed")}
-              onClick={() => toggleFollow(creator)}
-            >
-              {isFollowing ? "&#10003; Following" : "+ Follow"}
+            <button className={"btn-follow " + (isFollowing ? "followed" : "unfollowed")} onClick={() => toggleFollow(creator)}>
+              {isFollowing ? "\u2713 Following" : "+ Follow"}
             </button>
           </div>
         </div>
@@ -1010,22 +862,14 @@ function ProfilePage({ username, creations, setPage, setDetailId, followedCreato
       <section className="section">
         <div className="filter-bar">
           {["All", "Premium", "Open"].map((f) => (
-            <button
-              key={f}
-              className={"filter-btn" + (filter === f ? " active" : "")}
-              onClick={() => setFilter(f)}
-            >
-              {f}
-            </button>
+            <button key={f} className={"filter-btn" + (filter === f ? " active" : "")} onClick={() => setFilter(f)}>{f}</button>
           ))}
         </div>
         {filtered.length === 0 ? (
           <div className="empty-state"><div className="empty-text">No creations in this category yet.</div></div>
         ) : (
           <div className="creation-grid">
-            {filtered.map((c) => (
-              <CreationCard key={c.id} creation={c} onClick={goDetail} />
-            ))}
+            {filtered.map((c) => <CreationCard key={c.id} creation={c} onClick={goDetail} />)}
           </div>
         )}
       </section>
@@ -1036,7 +880,6 @@ function ProfilePage({ username, creations, setPage, setDetailId, followedCreato
 function DetailPage({ id, creations, user, purchasedIds, setPage, setCreatorUser, notify }) {
   const creation = creations.find((c) => c.id === id);
   const [checkingOut, setCheckingOut] = useState(false);
-
   if (!creation) {
     return (
       <div className="page">
@@ -1044,15 +887,12 @@ function DetailPage({ id, creations, user, purchasedIds, setPage, setCreatorUser
       </div>
     );
   }
-
-  const isPending  = creation.premium_status === "Pending";
-  const hasVideo   = !!creation.video_url;
-  const posterImg  = creation.thumbnail_image || creation.hero_image;
-  const purchased  = purchasedIds.has(creation.id);
-  const unlocked   = !creation.is_premium || purchased;
-  const priceLabel = creation.price_cents
-    ? "$" + (creation.price_cents / 100).toFixed(2)
-    : "$4.99";
+  const isPending = creation.premium_status === "Pending";
+  const hasVideo = !!creation.video_url;
+  const posterImg = creation.thumbnail_image || creation.hero_image;
+  const purchased = purchasedIds.has(creation.id);
+  const unlocked = !creation.is_premium || purchased;
+  const priceLabel = creation.price_cents ? "$" + (creation.price_cents / 100).toFixed(2) : "$4.99";
 
   async function handleBuy() {
     if (!user) { notify("Sign in to purchase."); return; }
@@ -1065,13 +905,9 @@ function DetailPage({ id, creations, user, purchasedIds, setPage, setCreatorUser
 
   return (
     <div className="page detail-page">
-
-      {/* ==== CINEMA STAGE ==== */}
       <div className="detail-cinema">
         <div className="detail-cinema-inner">
-          <div className="detail-back" onClick={() => setPage("explore")}>
-            &larr; Archive
-          </div>
+          <div className="detail-back" onClick={() => setPage("explore")}>&larr; Archive</div>
           {hasVideo && unlocked ? (
             <video src={creation.video_url} poster={posterImg} controls playsInline />
           ) : (
@@ -1079,8 +915,6 @@ function DetailPage({ id, creations, user, purchasedIds, setPage, setCreatorUser
           )}
         </div>
       </div>
-
-      {/* ==== EDITORIAL STRIP ==== */}
       <div className="detail-editorial-strip">
         <div className="detail-editorial-inner">
           <div className="detail-editorial-left">
@@ -1090,22 +924,15 @@ function DetailPage({ id, creations, user, purchasedIds, setPage, setCreatorUser
             </div>
             <h1 className="detail-title">{creation.title}</h1>
             <div className="detail-creator-row">
-              <span
-                className="detail-creator-link"
-                onClick={() => { setCreatorUser(creation.creator.username); setPage("profile"); }}
-              >
+              <span className="detail-creator-link" onClick={() => { setCreatorUser(creation.creator.username); setPage("profile"); }}>
                 {creation.creator.display_name}
               </span>
               <span className="detail-creator-sep">&#183;</span>
               <span className="detail-category-tag">{creation.category}</span>
             </div>
             <div className="detail-tools-row">
-              {creation.tools_used.map((t) => (
-                <span key={t} className="detail-tool-tag">{t}</span>
-              ))}
-              {hasVideo && unlocked && (
-                <span className="detail-tool-tag detail-tool-tag-video">&#9654; Film</span>
-              )}
+              {creation.tools_used.map((t) => <span key={t} className="detail-tool-tag">{t}</span>)}
+              {hasVideo && unlocked && <span className="detail-tool-tag detail-tool-tag-video">&#9654; Film</span>}
             </div>
           </div>
           <div className="detail-editorial-right">
@@ -1116,50 +943,27 @@ function DetailPage({ id, creations, user, purchasedIds, setPage, setCreatorUser
           </div>
         </div>
       </div>
-
-      {/* ==== PRODUCTION NOTE ==== */}
       <div className="detail-body">
         <div className="detail-rule" />
-        <div className="detail-section-label">
-          Production Note
-          <div className="detail-section-label-line" />
-        </div>
+        <div className="detail-section-label">Production Note<div className="detail-section-label-line" /></div>
         <div className="prompt-box">
           {isPending ? (
-            <p className="prompt-text" style={{ color: "var(--muted)", fontStyle: "italic" }}>
-              This creation is under review. The prompt will be available once approved.
-            </p>
+            <p className="prompt-text" style={{ color: "var(--muted)", fontStyle: "italic" }}>This creation is under review. The prompt will be available once approved.</p>
           ) : unlocked ? (
             <>
               <p className="prompt-text">{creation.prompt_full}</p>
               {hasVideo && (
                 <div className="unlock-area" style={{ borderTop: "1px solid var(--border)", marginTop: 24, paddingTop: 20 }}>
-                  <a
-                    href={creation.video_url}
-                    download
-                    className="btn-unlock-restrained"
-                    style={{ textDecoration: "none", display: "inline-block" }}
-                  >
-                    &#11015; Download Film
-                  </a>
+                  <a href={creation.video_url} download className="btn-unlock-restrained" style={{ textDecoration: "none", display: "inline-block" }}>&#11015; Download Film</a>
                 </div>
               )}
             </>
           ) : (
             <>
-              <div className="prompt-fade">
-                <p className="prompt-text">{creation.prompt_preview}</p>
-              </div>
+              <div className="prompt-fade"><p className="prompt-text">{creation.prompt_preview}</p></div>
               <div className="unlock-area">
-                <span className="unlock-label">
-                  Full prompt {hasVideo ? "and film download" : ""} available after purchase.
-                </span>
-                <button
-                  className="btn-unlock-restrained"
-                  onClick={handleBuy}
-                  disabled={checkingOut}
-                  style={{ opacity: checkingOut ? 0.6 : 1 }}
-                >
+                <span className="unlock-label">Full prompt {hasVideo ? "and film download" : ""} available after purchase.</span>
+                <button className="btn-unlock-restrained" onClick={handleBuy} disabled={checkingOut} style={{ opacity: checkingOut ? 0.6 : 1 }}>
                   {checkingOut ? "Redirecting..." : "Unlock for " + priceLabel}
                 </button>
               </div>
@@ -1167,7 +971,6 @@ function DetailPage({ id, creations, user, purchasedIds, setPage, setCreatorUser
           )}
         </div>
       </div>
-
     </div>
   );
 }
@@ -1175,7 +978,6 @@ function DetailPage({ id, creations, user, purchasedIds, setPage, setCreatorUser
 function AdminPage({ creations, setCreations, notify }) {
   const pending = creations.filter((c) => c.premium_status === "Pending");
   const spotlightCount = creations.filter((c) => c.spotlight).length;
-
   function approve(id) {
     setCreations((prev) => prev.map((c) => c.id === id ? { ...c, premium_status: "Approved" } : c));
     notify("Creation approved and published on RevaultAI.");
@@ -1193,7 +995,6 @@ function AdminPage({ creations, setCreations, notify }) {
     }
     setCreations((prev) => prev.map((c) => c.id === id ? { ...c, spotlight: !c.spotlight } : c));
   }
-
   const eligible = creations.filter((c) => c.premium_status !== "Pending" && c.premium_status !== "Rejected");
 
   return (
@@ -1211,9 +1012,7 @@ function AdminPage({ creations, setCreations, notify }) {
             <div style={{ color: "var(--muted)", fontSize: 13, padding: "24px 0", fontFamily: "'DM Mono', monospace" }}>No pending submissions.</div>
           ) : (
             <table className="admin-table">
-              <thead>
-                <tr><th>Title</th><th>Creator</th><th>Category</th><th>Actions</th></tr>
-              </thead>
+              <thead><tr><th>Title</th><th>Creator</th><th>Category</th><th>Actions</th></tr></thead>
               <tbody>
                 {pending.map((c) => (
                   <tr key={c.id}>
@@ -1235,9 +1034,7 @@ function AdminPage({ creations, setCreations, notify }) {
           <div className="section-title" style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 36, fontWeight: 400, color: "var(--text)", marginBottom: 8 }}>Manage Spotlight</div>
           <p style={{ color: "var(--muted)", fontSize: 11, marginBottom: 24, fontFamily: "'DM Mono', monospace", letterSpacing: "0.1em" }}>{spotlightCount}/3 active</p>
           <table className="admin-table">
-            <thead>
-              <tr><th>Title</th><th>Creator</th><th>Type</th><th>Spotlight</th></tr>
-            </thead>
+            <thead><tr><th>Title</th><th>Creator</th><th>Type</th><th>Spotlight</th></tr></thead>
             <tbody>
               {eligible.map((c) => (
                 <tr key={c.id}>
@@ -1245,10 +1042,7 @@ function AdminPage({ creations, setCreations, notify }) {
                   <td style={{ color: "var(--muted)" }}>{c.creator.display_name}</td>
                   <td>{c.is_premium ? <Badge type="Premium" /> : <Badge type="Open" />}</td>
                   <td>
-                    <div
-                      className={"spotlight-toggle" + (c.spotlight ? " active" : "")}
-                      onClick={() => toggleSpotlight(c.id)}
-                    >
+                    <div className={"spotlight-toggle" + (c.spotlight ? " active" : "")} onClick={() => toggleSpotlight(c.id)}>
                       <div className="spotlight-dot" />
                       {c.spotlight ? "In Spotlight" : "Add to Spotlight"}
                     </div>
@@ -1264,22 +1058,14 @@ function AdminPage({ creations, setCreations, notify }) {
 }
 
 function SubmitPage({ setCreations, notify, setPage, user, profile }) {
-  const [form, setForm] = useState({
-    title:     "",
-    tools:     "",
-    category:  "Abstract",
-    prompt:    "",
-    isPremium: false,
-  });
-
-  // ── upload state ────────────────────────────────────────────────────────────
-  const [videoFile,    setVideoFile]    = useState(null);   // File object
-  const [uploadState,  setUploadState]  = useState("idle"); // idle | uploading | done | error
-  const [uploadPct,    setUploadPct]    = useState(0);
-  const [uploadResult, setUploadResult] = useState(null);   // { video_url, preview_video, thumbnail_image }
-  const [uploadError,  setUploadError]  = useState(null);
-  const [dragover,     setDragover]     = useState(false);
-  const [submitting,   setSubmitting]   = useState(false);
+  const [form, setForm] = useState({ title: "", tools: "", category: "Abstract", prompt: "", isPremium: false });
+  const [videoFile, setVideoFile] = useState(null);
+  const [uploadState, setUploadState] = useState("idle");
+  const [uploadPct, setUploadPct] = useState(0);
+  const [uploadResult, setUploadResult] = useState(null);
+  const [uploadError, setUploadError] = useState(null);
+  const [dragover, setDragover] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   function updateField(key, value) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -1321,22 +1107,18 @@ function SubmitPage({ setCreations, notify, setPage, user, profile }) {
     setUploadState("uploading");
     setUploadError(null);
     setUploadPct(0);
-
     const formData = new FormData();
     formData.append("video", videoFile);
 
     try {
-      // XHR lets us track real progress; fetch does not expose upload progress
       const result = await new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open("POST", "/api/upload");
-
         xhr.upload.addEventListener("progress", (e) => {
           if (e.lengthComputable) {
             setUploadPct(Math.round((e.loaded / e.total) * 100));
           }
         });
-
         xhr.addEventListener("load", () => {
           if (xhr.status >= 200 && xhr.status < 300) {
             try {
@@ -1350,12 +1132,10 @@ function SubmitPage({ setCreations, notify, setPage, user, profile }) {
             reject(new Error(msg));
           }
         });
-
-        xhr.addEventListener("error",  () => reject(new Error("Network error during upload.")));
-        xhr.addEventListener("abort",  () => reject(new Error("Upload was cancelled.")));
+        xhr.addEventListener("error", () => reject(new Error("Network error during upload.")));
+        xhr.addEventListener("abort", () => reject(new Error("Upload was cancelled.")));
         xhr.send(formData);
       });
-
       setUploadPct(100);
       setUploadResult(result);
       setUploadState("done");
@@ -1374,58 +1154,40 @@ function SubmitPage({ setCreations, notify, setPage, user, profile }) {
       notify("Please wait for your video to finish uploading.");
       return;
     }
-
     setSubmitting(true);
     const toolList = form.tools.split(",").map((t) => t.trim()).filter(Boolean);
-
     const fallbackThumb = "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1200&q=90";
-
     const newCreation = {
-      id:              "u" + Date.now(),   // temp id, replaced by DB uuid on insert
-      title:           form.title.trim(),
+      id: "u" + Date.now(),
+      title: form.title.trim(),
       creator: {
-        username:     profile?.username     ?? user?.email?.split("@")[0] ?? "you",
+        username: profile?.username ?? user?.email?.split("@")[0] ?? "you",
         display_name: profile?.display_name ?? user?.email?.split("@")[0] ?? "You",
       },
-      hero_image:      uploadResult?.thumbnail_image || fallbackThumb,
+      hero_image: uploadResult?.thumbnail_image || fallbackThumb,
       thumbnail_image: uploadResult?.thumbnail_image || fallbackThumb,
-      video_url:       uploadResult?.video_url       || "",
-      preview_video:   uploadResult?.preview_video   || "",
-      tools_used:      toolList.length > 0 ? toolList : ["Unknown"],
-      category:        form.category,
-      is_premium:      form.isPremium,
-      premium_status:  form.isPremium ? "Pending" : null,
-      prompt_preview:  form.isPremium ? form.prompt.trim().slice(0, 120) + "..." : null,
-      prompt_full:     form.prompt.trim(),
-      spotlight:       false,
+      video_url: uploadResult?.video_url || "",
+      preview_video: uploadResult?.preview_video || "",
+      tools_used: toolList.length > 0 ? toolList : ["Unknown"],
+      category: form.category,
+      is_premium: form.isPremium,
+      premium_status: form.isPremium ? "Pending" : null,
+      prompt_preview: form.isPremium ? form.prompt.trim().slice(0, 120) + "..." : null,
+      prompt_full: form.prompt.trim(),
+      spotlight: false,
     };
-
-    // ── Optimistic update ────────────────────────────────────────────────────
     setCreations((prev) => [newCreation, ...prev]);
-
-    // ── Persist to Supabase ──────────────────────────────────────────────────
     const { data: saved, error } = await insertCreation(newCreation, user);
-
     if (error) {
       console.error("[RevaultAI] Supabase insert failed:", error.message);
-      // Replace temp optimistic item with a note about the failure;
-      // the creation still exists in local state so the user isn't stuck.
       notify("Saved locally -- could not reach the database. Check your connection.");
     } else if (saved) {
-      // Swap temp id for the real DB uuid so links work correctly
-      setCreations((prev) =>
-        prev.map((c) => (c.id === newCreation.id ? saved : c))
-      );
+      setCreations((prev) => prev.map((c) => (c.id === newCreation.id ? saved : c)));
     }
-
     setSubmitting(false);
     setPage("explore");
     if (!error) {
-      notify(
-        form.isPremium
-          ? "Submitted! Your creation will be reviewed before going public."
-          : "Creation submitted and now live on RevaultAI."
-      );
+      notify(form.isPremium ? "Submitted! Your creation will be reviewed before going public." : "Creation submitted and now live on RevaultAI.");
     }
   }
 
@@ -1438,29 +1200,15 @@ function SubmitPage({ setCreations, notify, setPage, user, profile }) {
       </div>
       <section className="section">
         <div style={{ maxWidth: 640 }}>
-
-          {/* Title */}
           <div className="form-group">
             <label className="form-label">Title *</label>
             <input className="form-input" placeholder="Name your creation" value={form.title} onChange={(e) => updateField("title", e.target.value)} />
           </div>
-
-          {/* Video upload */}
           <div className="form-group">
             <label className="form-label">Film / Video</label>
-
             {!videoFile ? (
-              <div
-                className={"upload-drop" + (dragover ? " dragover" : "")}
-                onDragOver={(e) => { e.preventDefault(); setDragover(true); }}
-                onDragLeave={() => setDragover(false)}
-                onDrop={(e) => { e.preventDefault(); setDragover(false); pickFile(e.dataTransfer.files[0]); }}
-              >
-                <input
-                  type="file"
-                  accept="video/mp4,video/quicktime,video/webm"
-                  onChange={(e) => pickFile(e.target.files[0])}
-                />
+              <div className={"upload-drop" + (dragover ? " dragover" : "")} onDragOver={(e) => { e.preventDefault(); setDragover(true); }} onDragLeave={() => setDragover(false)} onDrop={(e) => { e.preventDefault(); setDragover(false); pickFile(e.dataTransfer.files[0]); }}>
+                <input type="file" accept="video/mp4,video/quicktime,video/webm" onChange={(e) => pickFile(e.target.files[0])} />
                 <div className="upload-drop-icon">&#9654;</div>
                 <div className="upload-drop-label">Drop your film here or click to browse</div>
                 <div className="upload-drop-hint">MP4, MOV, WebM &middot; max 500 MB</div>
@@ -1470,76 +1218,39 @@ function SubmitPage({ setCreations, notify, setPage, user, profile }) {
                 <div className="upload-file-info">
                   <span className="upload-file-name">{videoFile.name}</span>
                   <span className="upload-file-size">{formatBytes(videoFile.size)}</span>
-                  {uploadState !== "uploading" && (
-                    <button className="upload-file-clear" onClick={clearFile}>&#10005;</button>
-                  )}
+                  {uploadState !== "uploading" && <button className="upload-file-clear" onClick={clearFile}>&#10005;</button>}
                 </div>
-
-                {uploadState === "idle" && (
-                  <button
-                    className="btn-primary"
-                    style={{ marginTop: 12, padding: "10px 24px", fontSize: 11 }}
-                    onClick={uploadToR2}
-                  >
-                    Upload to Vault
-                  </button>
-                )}
-
+                {uploadState === "idle" && <button className="btn-primary" style={{ marginTop: 12, padding: "10px 24px", fontSize: 11 }} onClick={uploadToR2}>Upload to Vault</button>}
                 {uploadState === "uploading" && (
                   <div className="upload-progress-wrap">
-                    <div className="upload-progress-bar-bg">
-                      <div className="upload-progress-bar" style={{ width: uploadPct + "%" }} />
-                    </div>
-                    <div className="upload-progress-label">
-                      <span>Uploading...</span>
-                      <span>{uploadPct}%</span>
-                    </div>
+                    <div className="upload-progress-bar-bg"><div className="upload-progress-bar" style={{ width: uploadPct + "%" }} /></div>
+                    <div className="upload-progress-label"><span>Uploading...</span><span>{uploadPct}%</span></div>
                   </div>
                 )}
-
-                {uploadState === "done" && (
-                  <div className="upload-success">
-                    &#10003;&nbsp; Upload complete
-                  </div>
-                )}
-
+                {uploadState === "done" && <div className="upload-success">&#10003;&nbsp; Upload complete</div>}
                 {uploadState === "error" && (
                   <>
                     <div className="upload-error">{uploadError}</div>
-                    <button
-                      className="btn-primary"
-                      style={{ marginTop: 10, padding: "9px 20px", fontSize: 11 }}
-                      onClick={uploadToR2}
-                    >
-                      Retry Upload
-                    </button>
+                    <button className="btn-primary" style={{ marginTop: 10, padding: "9px 20px", fontSize: 11 }} onClick={uploadToR2}>Retry Upload</button>
                   </>
                 )}
               </>
             )}
           </div>
-
-          {/* Tools */}
           <div className="form-group">
             <label className="form-label">Tools Used</label>
             <input className="form-input" placeholder="Sora, Runway, MidJourney" value={form.tools} onChange={(e) => updateField("tools", e.target.value)} />
           </div>
-
-          {/* Category */}
           <div className="form-group">
             <label className="form-label">Category</label>
             <select className="form-select" value={form.category} onChange={(e) => updateField("category", e.target.value)}>
               {CATEGORIES.map((o) => <option key={o} value={o}>{o}</option>)}
             </select>
           </div>
-
-          {/* Prompt */}
           <div className="form-group">
             <label className="form-label">Prompt *</label>
             <textarea className="form-textarea" placeholder="Describe your full prompt in detail..." value={form.prompt} onChange={(e) => updateField("prompt", e.target.value)} />
           </div>
-
-          {/* Premium toggle */}
           <div className="form-group">
             <div className="toggle-row">
               <div className={"toggle" + (form.isPremium ? " on" : "")} onClick={() => updateField("isPremium", !form.isPremium)}>
@@ -1547,55 +1258,110 @@ function SubmitPage({ setCreations, notify, setPage, user, profile }) {
               </div>
               <div>
                 <div className="toggle-label">Premium Prompt</div>
-                <div className="toggle-sub">
-                  {form.isPremium ? "Prompt will be paywalled and requires admin approval." : "Prompt will be freely visible to all."}
-                </div>
+                <div className="toggle-sub">{form.isPremium ? "Prompt will be paywalled and requires admin approval." : "Prompt will be freely visible to all."}</div>
               </div>
             </div>
           </div>
-
-          <button
-            className="btn-primary"
-            onClick={handleSubmit}
-            disabled={submitting || uploadState === "uploading"}
-            style={{ opacity: (submitting || uploadState === "uploading") ? 0.6 : 1 }}
-          >
+          <button className="btn-primary" onClick={handleSubmit} disabled={submitting || uploadState === "uploading"} style={{ opacity: (submitting || uploadState === "uploading") ? 0.6 : 1 }}>
             {submitting ? "Submitting..." : "Submit Creation"}
           </button>
-
         </div>
       </section>
     </div>
   );
 }
 
-// ─── ROOT APP ─────────────────────────────────────────────────────────────────
+function SetPasswordPage({ notify, setPage }) {
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError(null);
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+    setLoading(true);
+    const { error: err } = await supabase.auth.updateUser({ password });
+    setLoading(false);
+    if (err) {
+      setError(err.message);
+      return;
+    }
+    notify("Password updated successfully. You can now sign in.");
+    setPage("home");
+  }
+
+  return (
+    <div className="page">
+      <div className="page-hdr">
+        <div className="page-hdr-title">Set New Password</div>
+        <div className="page-hdr-sub">Choose a new password for your account.</div>
+      </div>
+      <section className="section">
+        <div style={{ maxWidth: 480 }}>
+          <form onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label className="form-label">New Password</label>
+              <input className="form-input" type="password" placeholder="Min. 6 characters" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} autoFocus />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Confirm Password</label>
+              <input className="form-input" type="password" placeholder="Re-enter your password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required minLength={6} />
+            </div>
+            {error && <div className="auth-error">{error}</div>}
+            <button className="btn-primary" type="submit" disabled={loading}>{loading ? "Updating..." : "Update Password"}</button>
+          </form>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function EmailConfirmedPage({ setPage }) {
+  return (
+    <div className="page">
+      <div className="empty-state" style={{ paddingTop: 120 }}>
+        <div className="empty-text" style={{ color: "var(--text)", fontSize: 18, marginBottom: 12 }}>Email confirmed.</div>
+        <div className="empty-text" style={{ marginBottom: 32 }}>Your account is now active. You can sign in.</div>
+        <button className="btn-primary" onClick={() => setPage("home")}>Back to Home</button>
+      </div>
+    </div>
+  );
+}
 
 export default function App() {
-  const [creations, setCreations]               = useState(SEED_CREATIONS.map((c) => ({ ...c })));
-  const [dbLoaded,  setDbLoaded]                = useState(false);
-  const [page, setPage]                         = useState("home");
-  const [detailId, setDetailId]                 = useState(null);
-  const [creatorUser, setCreatorUser]           = useState(null);
-  const [notifMsg, setNotifMsg]                 = useState(null);
+  const [creations, setCreations] = useState(SEED_CREATIONS.map((c) => ({ ...c })));
+  const [dbLoaded, setDbLoaded] = useState(false);
+  const [page, setPage] = useState("home");
+  const [detailId, setDetailId] = useState(null);
+  const [creatorUser, setCreatorUser] = useState(null);
+  const [notifMsg, setNotifMsg] = useState(null);
   const [followedCreators, setFollowedCreators] = useState(new Set());
-  const [user, setUser]                         = useState(null);
-  const [profile, setProfile]                   = useState(null);
-  const [authOpen, setAuthOpen]                 = useState(false);
-  const [purchasedIds, setPurchasedIds]         = useState(new Set());
+  const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [purchasedIds, setPurchasedIds] = useState(new Set());
 
-  // ── Supabase auth listener + profile load/create ───────────────────────────
   useEffect(() => {
-    // Restore session on mount
     supabase.auth.getSession().then(({ data }) => {
       const u = data.session?.user ?? null;
       setUser(u);
       if (u) loadOrCreateProfile(u);
     });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       const u = session?.user ?? null;
       setUser(u);
+      if (event === "PASSWORD_RECOVERY") {
+        setPage("set-password");
+      }
       if (u) {
         loadOrCreateProfile(u);
       } else {
@@ -1603,27 +1369,30 @@ export default function App() {
         setPurchasedIds(new Set());
       }
     });
-
     return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash && hash.includes("type=signup")) {
+      setPage("email-confirmed");
+      window.history.replaceState({}, "", window.location.pathname);
+    }
   }, []);
 
   async function loadOrCreateProfile(u) {
     const { data, error } = await fetchProfile(u.id);
-
     if (error) {
       console.warn("[RevaultAI] Could not fetch profile:", error.message);
       return;
     }
-
     if (data) {
       setProfile(data);
     } else {
-      // No row yet -- insert a default profile derived from the email
       const def = defaultProfile(u);
       const { data: created, error: upsertErr } = await upsertProfile(u, def);
       if (upsertErr) {
         console.warn("[RevaultAI] Could not create default profile:", upsertErr.message);
-        // Use the in-memory default so the rest of the app still works
         setProfile({ id: u.id, ...def });
       } else {
         setProfile(created);
@@ -1631,7 +1400,6 @@ export default function App() {
     }
   }
 
-  // ── Load creations from Supabase, keep seed data as fallback ───────────────
   useEffect(() => {
     async function load() {
       const { data, error } = await fetchCreations();
@@ -1648,7 +1416,6 @@ export default function App() {
     load();
   }, []);
 
-  // ── Reload purchased ids whenever user changes ──────────────────────────────
   useEffect(() => {
     async function loadPurchases() {
       if (!user?.id) {
@@ -1661,34 +1428,23 @@ export default function App() {
     loadPurchases();
   }, [user]);
 
-  // ── Handle Stripe success redirect ─────────────────────────────────────────
   useEffect(() => {
     async function handlePurchaseReturn() {
-      const params    = new URLSearchParams(window.location.search);
+      const params = new URLSearchParams(window.location.search);
       const sessionId = params.get("session_id");
       if (!sessionId) return;
-
-      // Clean the URL immediately so a refresh does not re-trigger
       window.history.replaceState({}, "", window.location.pathname);
-
       setPage("purchase-success");
-
-      const res  = await fetch("/api/verify-session", {
-        method:  "POST",
+      const res = await fetch("/api/verify-session", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ session_id: sessionId }),
+        body: JSON.stringify({ session_id: sessionId }),
       });
       const json = await res.json();
-
       if (!res.ok) {
-        // notify is not stable here yet; use setNotifMsg directly
         setNotifMsg("Purchase verification failed: " + (json.error || "Unknown error"));
         return;
       }
-
-      // Re-fetch purchased ids for whoever is signed in at this point.
-      // user may still be null if auth hasn't resolved; the purchases
-      // useEffect above will catch it once user state settles.
       const userId = json.user_id;
       if (userId) {
         const { data: ids } = await fetchPurchasedIds(userId);
@@ -1696,7 +1452,7 @@ export default function App() {
       }
     }
     handlePurchaseReturn();
-  }, []); // runs once on mount, before any navigation
+  }, []);
 
   function notify(msg) { setNotifMsg(msg); }
 
@@ -1723,110 +1479,44 @@ export default function App() {
 
   function renderPage() {
     switch (page) {
-      case "home":
-        return <HomePage creations={creations} setPage={setPage} setDetailId={setDetailId} />;
-      case "explore":
-        return <ExplorePage creations={creations} setPage={setPage} setDetailId={setDetailId} />;
-      case "creators":
-        return <CreatorsPage setPage={setPage} setCreatorUser={setCreatorUser} followedCreators={followedCreators} />;
-      case "profile":
-        return (
-          <ProfilePage
-            username={creatorUser}
-            creations={creations}
-            setPage={setPage}
-            setDetailId={setDetailId}
-            followedCreators={followedCreators}
-            toggleFollow={toggleFollow}
-            dbProfile={null}
-          />
-        );
-      case "myprofile":
-        return (
-          <ProfilePage
-            username={profile?.username ?? ""}
-            creations={creations}
-            setPage={setPage}
-            setDetailId={setDetailId}
-            followedCreators={followedCreators}
-            toggleFollow={toggleFollow}
-            dbProfile={profile}
-          />
-        );
-      case "detail":
-        return (
-          <DetailPage
-            id={detailId}
-            creations={creations}
-            user={user}
-            purchasedIds={purchasedIds}
-            setPage={setPage}
-            setCreatorUser={setCreatorUser}
-            notify={notify}
-          />
-        );
+      case "home": return <HomePage creations={creations} setPage={setPage} setDetailId={setDetailId} />;
+      case "explore": return <ExplorePage creations={creations} setPage={setPage} setDetailId={setDetailId} />;
+      case "creators": return <CreatorsPage setPage={setPage} setCreatorUser={setCreatorUser} followedCreators={followedCreators} />;
+      case "profile": return <ProfilePage username={creatorUser} creations={creations} setPage={setPage} setDetailId={setDetailId} followedCreators={followedCreators} toggleFollow={toggleFollow} />;
+      case "detail": return <DetailPage id={detailId} creations={creations} user={user} purchasedIds={purchasedIds} setPage={setPage} setCreatorUser={setCreatorUser} notify={notify} />;
       case "admin":
         if (!isAdmin(user)) {
           return (
             <div className="page">
-              <div className="empty-state">
-                <div className="empty-text">Not authorized.</div>
-              </div>
+              <div className="empty-state"><div className="empty-text">Not authorized.</div></div>
             </div>
           );
         }
         return <AdminPage creations={creations} setCreations={setCreations} notify={notify} />;
-      case "submit":
-        return <SubmitPage setCreations={setCreations} notify={notify} setPage={setPage} user={user} profile={profile} />;
-      case "mycreations":
-        return (
-          <MyCreationsPage
-            creations={creations}
-            user={user}
-            setPage={setPage}
-            setDetailId={setDetailId}
-            setCreations={setCreations}
-            notify={notify}
-            onSignInClick={() => setAuthOpen(true)}
-          />
-        );
+      case "submit": return <SubmitPage setCreations={setCreations} notify={notify} setPage={setPage} user={user} profile={profile} />;
+      case "set-password": return <SetPasswordPage notify={notify} setPage={setPage} />;
+      case "email-confirmed": return <EmailConfirmedPage setPage={setPage} />;
       case "purchase-success":
         return (
           <div className="page">
             <div className="empty-state" style={{ paddingTop: 120 }}>
-              <div className="empty-text" style={{ color: "var(--text)", fontSize: 18, marginBottom: 12 }}>
-                Purchase confirmed.
-              </div>
+              <div className="empty-text" style={{ color: "var(--text)", fontSize: 18, marginBottom: 12 }}>Purchase confirmed.</div>
               <div className="empty-text" style={{ marginBottom: 32 }}>Your creation is now unlocked.</div>
               <button className="btn-primary" onClick={() => setPage("explore")}>Back to Archive</button>
             </div>
           </div>
         );
-      default:
-        return null;
+      default: return null;
     }
   }
 
   return (
     <>
       <style>{CSS}</style>
-      <Nav
-        page={page}
-        setPage={setPage}
-        user={user}
-        onSignInClick={() => setAuthOpen(true)}
-        onSignOut={handleSignOut}
-      />
+      <Nav page={page} setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} onSignOut={handleSignOut} />
       {renderPage()}
-      {authOpen && (
-        <AuthModal
-          onClose={() => setAuthOpen(false)}
-          notify={notify}
-        />
-      )}
-      {notifMsg && (
-        <Notification key={notifMsg} msg={notifMsg} onClose={() => setNotifMsg(null)} />
-      )}
+      {authOpen && <AuthModal onClose={() => setAuthOpen(false)} notify={notify} />}
+      {notifMsg && <Notification key={notifMsg} msg={notifMsg} onClose={() => setNotifMsg(null)} />}
     </>
   );
 }
