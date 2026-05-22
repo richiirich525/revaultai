@@ -41,7 +41,7 @@ function getR2Client() {
 function parseForm(req) {
   return new Promise((resolve, reject) => {
     const form = new IncomingForm({
-      maxFileSize: 500 * 1024 * 1024, // 500 MB
+      maxFileSize: 250 * 1024 * 1024, // 250 MB
       keepExtensions: true,
     });
     form.parse(req, (err, fields, files) => {
