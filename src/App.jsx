@@ -64,6 +64,7 @@ const CSS = `
   .auth-modal { background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; width: 100%; max-width: 420px; overflow: hidden; box-shadow: 0 32px 80px rgba(0,0,0,0.7); animation: slideUp 0.22s ease; }
   @keyframes slideUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
   .auth-header { padding: 32px 36px 0; } .auth-logo { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.18em; color: var(--text); text-transform: uppercase; margin-bottom: 24px; } .auth-logo span { color: var(--accent); }
+  @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
   .auth-tabs { display: flex; border-bottom: 1px solid var(--border); }
   .auth-tab { flex: 1; padding: 10px 0; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; text-align: center; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.2s; background: none; border-left: none; border-right: none; border-top: none; }
   .auth-tab.active { color: var(--accent); border-bottom-color: var(--accent); } .auth-tab:hover:not(.active) { color: var(--text); }
@@ -715,7 +716,8 @@ function SubmitPage({ setCreations, notify, setPage, user, profile }) {
               <><div className="upload-file-info"><span className="upload-file-name">{videoFile.name}</span><span className="upload-file-size">{formatBytes(videoFile.size)}</span>{uploadState !== "uploading" && <button className="upload-file-clear" onClick={clearFile}>&#10005;</button>}</div>
               {uploadState === "idle" && <button className="btn-primary" style={{ marginTop: 12, padding: "10px 24px", fontSize: 11 }} onClick={uploadToR2}>Upload to Vault</button>}
               {uploadState === "uploading" && <div className="upload-progress-wrap"><div className="upload-progress-bar-bg"><div className="upload-progress-bar" style={{ width: uploadPct + "%" }} /></div><div className="upload-progress-label"><span>Uploading...</span><span>{uploadPct}%</span></div></div>}
-              {uploadState === "done" && <div className="upload-success">&#10003;&nbsp; Upload complete</div>}
+{uploadState === "processing" && <div className="upload-progress-wrap"><div className="upload-progress-bar-bg"><div className="upload-progress-bar" style={{ width: "100%", opacity: 0.6, animation: "pulse 1.5s ease-in-out infinite" }} /></div><div className="upload-progress-label"><span>Processing video...</span><span>Please wait</span></div></div>}
+{uploadState === "done" && <div className="upload-success">&#10003;&nbsp; Upload complete</div>}
               {uploadState === "error" && <><div className="upload-error">{uploadError}</div><button className="btn-primary" style={{ marginTop: 10, padding: "9px 20px", fontSize: 11 }} onClick={uploadToR2}>Retry Upload</button></>}</>
             )}
           </div>
@@ -723,7 +725,7 @@ function SubmitPage({ setCreations, notify, setPage, user, profile }) {
           <div className="form-group"><label className="form-label">Category</label><select className="form-select" value={form.category} onChange={(e) => updateField("category", e.target.value)}>{CATEGORIES.map((o) => <option key={o} value={o}>{o}</option>)}</select></div>
           <div className="form-group"><label className="form-label">Prompt *</label><textarea className="form-textarea" placeholder="Describe your full prompt in detail..." value={form.prompt} onChange={(e) => updateField("prompt", e.target.value)} /></div>
           <div className="form-group"><div className="toggle-row"><div className={"toggle" + (form.isPremium ? " on" : "")} onClick={() => updateField("isPremium", !form.isPremium)}><div className="toggle-knob" /></div><div><div className="toggle-label">Premium Prompt</div><div className="toggle-sub">{form.isPremium ? "Prompt paywalled, requires admin approval." : "Prompt freely visible to all."}</div></div></div></div>
-          <button className="btn-primary" onClick={handleSubmit} disabled={submitting || uploadState === "uploading"} style={{ opacity: (submitting || uploadState === "uploading") ? 0.6 : 1 }}>{submitting ? "Submitting..." : "Submit Creation"}</button>
+          <button className="btn-primary" onClick={handleSubmit} disabled={submitting || uploadState === "uploading" || uploadState === "processing"} style={{ opacity: (submitting || uploadState === "uploading") ? 0.6 : 1 }}>{submitting ? "Submitting..." : "Submit Creation"}</button>
         </div>
       </section>
     </div>
