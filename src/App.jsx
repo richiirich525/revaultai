@@ -418,13 +418,25 @@ function SettingsPage({ user, profile, setProfile, notify }) {
 function CreationCard({ creation, onClick }) {
   const isPending = creation.premium_status === "Pending";
   const videoRef = useRef(null); const hasPreview = !!creation.preview_video;
-  function handleMouseEnter() { if (videoRef.current) { videoRef.current.currentTime = 0; videoRef.current.play().catch(() => {}); } }
-  function handleMouseLeave() { if (videoRef.current) { videoRef.current.pause(); videoRef.current.currentTime = 0; } }
+  function handleMouseEnter() {
+  if (videoRef.current) { videoRef.current.currentTime = 0; videoRef.current.play().catch(() => {}); }
+  const gif = document.querySelector(`[data-id="${creation.id}"] .preview-gif`);
+  if (gif) gif.style.opacity = "1";
+}
+function handleMouseLeave() {
+  if (videoRef.current) { videoRef.current.pause(); videoRef.current.currentTime = 0; }
+  const gif = document.querySelector(`[data-id="${creation.id}"] .preview-gif`);
+  if (gif) gif.style.opacity = "0";
+}
   return (
-    <div className="creation-card" onClick={() => onClick(creation.id)} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+    <div className="creation-card" data-id={creation.id} onClick={() => onClick(creation.id)} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
       <div className="creation-thumb">
         <img src={creation.thumbnail_image || creation.hero_image} alt={creation.title} />
-        {hasPreview && <video ref={videoRef} src={creation.preview_video} muted loop playsInline preload="metadata" />}
+        {hasPreview && (
+  creation.preview_video.includes("image.mux.com")
+    ? <img src={creation.preview_video} alt="preview" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0, transition: "opacity 0.4s ease", pointerEvents: "none" }} className="preview-gif" />
+    : <video ref={videoRef} src={creation.preview_video} muted loop playsInline preload="metadata" />
+)}
         {(hasPreview || !!creation.video_url) && <div className="video-indicator">&#9654; Film</div>}
         <div className="creation-badge">{isPending ? <Badge type="review" /> : creation.is_premium ? <Badge type="Premium" /> : <Badge type="Open" />}</div>
         <div className="creation-info"><div className="creation-info-title">{creation.title}</div><div className="creation-info-creator">by {creation.creator.display_name}</div></div>
