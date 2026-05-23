@@ -1,19 +1,27 @@
 /**
  * src/lib/db.js
  *
- * Thin data-access helpers for the `creations` table.
- * All Supabase calls are in one place so App.jsx stays readable.
+ * Thin data-access helpers for the creations table.
  */
 
 import { supabase } from "./supabase.js";
 
-// ─── Shape converters ─────────────────────────────────────────────────────────
+// ---------------------------------------------------------------------------
+// Shape converters
+// ---------------------------------------------------------------------------
 
 /**
- * Map a Supabase row → the creation shape the rest of the app expects.
- * Keeps field names identical to SEED_CREATIONS so nothing else needs changing.
+ * Map a Supabase row (optionally with a joined profile) to the creation shape
+ * the rest of the app expects.
+ *
+ * Priority for creator display fields:
+ *   1. Joined profile row (live, always up to date)
+ *   2. Snapshot columns stored on the creation row (creator_username, creator_name)
+ *   3. Fallback strings
  */
 export function rowToCreation(row) {
+  const profile = row.profiles ?? null;
+
   return {
     id:              row.id,
     title:           row.title,
@@ -30,26 +38,31 @@ export function rowToCreation(row) {
     prompt_preview:  row.prompt_preview,
     prompt_full:     row.prompt_full,
     creator: {
-      username:     row.creator_username,
-      display_name: row.creator_name,
+      // Always use live profile data when available
+      username:     profile?.username     ?? row.creator_username ?? "unknown",
+      display_name: profile?.display_name ?? row.creator_name     ?? "Unknown",
+      avatar_url:   profile?.avatar_url   ?? "",
     },
-    // Extras useful for profile/admin pages
     user_id:    row.user_id,
     created_at: row.created_at,
-    _fromDb:    true,  // flag so we can distinguish DB rows from seed data
+    _fromDb:    true,
   };
 }
 
 /**
- * Map the creation object + current auth user → a Supabase insert payload.
+ * Map a creation object + current auth user + current profile
+ * to a Supabase insert payload.
+ *
+ * Snapshot columns (creator_username, creator_name) are stored as a
+ * fallback in case the profile is deleted later. The live join in
+ * fetchCreations will always override these when the profile exists.
  */
-export function creationToRow(creation, user) {
+export function creationToRow(creation, user, profile) {
   return {
-    user_id:          user?.id    ?? null,
-    creator_username: user?.email?.split("@")[0] ?? "anonymous",
-    creator_name:     user?.user_metadata?.full_name
-                        ?? user?.email?.split("@")[0]
-                        ?? "Anonymous",
+    user_id:          user?.id ?? null,
+    // Use real profile values, fall back to email-derived strings
+    creator_username: profile?.username     ?? user?.email?.split("@")[0] ?? "anonymous",
+    creator_name:     profile?.display_name ?? user?.email?.split("@")[0] ?? "Anonymous",
     title:            creation.title,
     category:         creation.category,
     tools_used:       creation.tools_used,
@@ -66,16 +79,28 @@ export function creationToRow(creation, user) {
   };
 }
 
-// ─── Queries ──────────────────────────────────────────────────────────────────
+// ---------------------------------------------------------------------------
+// Queries
+// ---------------------------------------------------------------------------
 
 /**
  * Fetch all publicly visible creations, newest first.
+ * Joins profiles so creator display_name/avatar_url are always live.
  * Returns { data: Creation[], error }.
  */
 export async function fetchCreations() {
   const { data, error } = await supabase
     .from("creations")
-    .select("*")
+    .select(`
+      *,
+      profiles (
+        id,
+        username,
+        display_name,
+        bio,
+        avatar_url
+      )
+    `)
     .order("created_at", { ascending: false });
 
   if (error) return { data: null, error };
@@ -83,24 +108,61 @@ export async function fetchCreations() {
 }
 
 /**
+ * Fetch creations belonging to a specific user_id.
+ * Used for profile pages.
+ * Returns { data: Creation[], error }.
+ */
+export async function fetchCreationsByUser(userId) {
+  if (!userId) return { data: [], error: null };
+
+  const { data, error } = await supabase
+    .from("creations")
+    .select(`
+      *,
+      profiles (
+        id,
+        username,
+        display_name,
+        bio,
+        avatar_url
+      )
+    `)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error) return { data: [], error };
+  return { data: data.map(rowToCreation), error: null };
+}
+
+/**
  * Insert a new creation row.
+ * Accepts optional profile so snapshot columns are accurate.
  * Returns { data: Creation, error }.
  */
-export async function insertCreation(creation, user) {
-  const row = creationToRow(creation, user);
+export async function insertCreation(creation, user, profile) {
+  const row = creationToRow(creation, user, profile);
 
   const { data, error } = await supabase
     .from("creations")
     .insert(row)
-    .select()
+    .select(`
+      *,
+      profiles (
+        id,
+        username,
+        display_name,
+        bio,
+        avatar_url
+      )
+    `)
     .single();
 
   if (error) return { data: null, error };
   return { data: rowToCreation(data), error: null };
 }
+
 /**
- * Update premium_status on a creation (admin only -- no user_id check).
- * RLS should be configured to allow admin role, or disable RLS for service role key.
+ * Update premium_status on a creation (admin only).
  * Returns { error }.
  */
 export async function updateCreationStatus(id, status) {
@@ -122,9 +184,9 @@ export async function updateCreationSpotlight(id, spotlight) {
     .eq("id", id);
   return { error: error ?? null };
 }
+
 /**
- * Update an existing creation. Only fields the user can edit are sent.
- * RLS on the server ensures only the owner can update.
+ * Update an existing creation (owner only).
  * Returns { data: Creation, error }.
  */
 export async function updateCreation(id, fields, user) {
@@ -146,8 +208,17 @@ export async function updateCreation(id, fields, user) {
     .from("creations")
     .update(allowed)
     .eq("id", id)
-    .eq("user_id", user.id)   // RLS double-check client side
-    .select()
+    .eq("user_id", user.id)
+    .select(`
+      *,
+      profiles (
+        id,
+        username,
+        display_name,
+        bio,
+        avatar_url
+      )
+    `)
     .single();
 
   if (error) return { data: null, error };
@@ -155,7 +226,7 @@ export async function updateCreation(id, fields, user) {
 }
 
 /**
- * Delete a creation by id. RLS ensures only the owner can delete.
+ * Delete a creation by id (owner only).
  * Returns { error }.
  */
 export async function deleteCreation(id, user) {
@@ -165,7 +236,7 @@ export async function deleteCreation(id, user) {
     .from("creations")
     .delete()
     .eq("id", id)
-    .eq("user_id", user.id);  // RLS double-check client side
+    .eq("user_id", user.id);
 
   return { error: error ?? null };
 }
@@ -188,7 +259,6 @@ export async function fetchPurchasedIds(userId) {
 
 /**
  * Initiate a Stripe Checkout session for a creation.
- * Calls your server endpoint POST /api/checkout.
  * Returns { url } on success, { error } on failure.
  */
 export async function createCheckoutSession(creationId, userId) {
@@ -200,8 +270,8 @@ export async function createCheckoutSession(creationId, userId) {
   const json = await res.json();
   if (!res.ok) return { url: null, error: new Error(json.error || "Checkout failed") };
   return { url: json.url, error: null };
-  
 }
+
 export async function verifyCheckoutSession(sessionId) {
   const res = await fetch("/api/verify-session", {
     method: "POST",
