@@ -66,7 +66,7 @@ export async function fetchCreators() {
   const { data: creationRows, error: cErr } = await supabase
     .from("creations")
     .select("user_id")
-    .not("premium_status", "eq", "Pending")
+    .or("premium_status.is.null,premium_status.eq.Approved")
     .not("user_id", "is", null);
 
   if (cErr) return { data: [], error: cErr };
