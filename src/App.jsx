@@ -596,7 +596,7 @@ function DetailPage({ id, creations, user, purchasedIds, setPage, setCreatorUser
 }
 
 function AdminPage({ creations, setCreations, notify }) {
-  const pending = creations.filter((c) => c._fromDb && c.premium_status === "Pending"); const spotlightCount = creations.filter((c) => c.spotlight).length;
+  const pending = creations.filter((c) => c._fromDb && c.premium_status === "Pending"); const spotlightCount = creations.filter((c) => c._fromDb && c.spotlight).length;
   async function approve(id) {
   const item = creations.find((c) => c.id === id);
   if (!item?._fromDb) { notify("Cannot modify seed creations."); return; }
