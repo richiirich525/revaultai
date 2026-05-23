@@ -47,10 +47,9 @@ export default async function handler(req, res) {
     const { video } = mux;
 
     const asset = await video.assets.create({
-      input: [{ url: videoPublicUrl }],
-      playback_policy: ["public"],
-      mp4_support: "standard",
-    });
+  input: [{ url: videoPublicUrl }],
+  playback_policy: ["public"],
+});
 
     // Poll until ready (max 120s)
     const maxWait = 120000;
