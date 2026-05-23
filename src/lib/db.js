@@ -93,7 +93,7 @@ export async function insertCreation(creation, user, profile) {
     .insert(row);
 
   if (error) return { data: null, error };
-  return { data: null, error: null };
+  return { data: { ...creation, _fromDb: true }, error: null };
 }
 
 export async function updateCreationStatus(id, status) {
