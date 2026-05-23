@@ -6,6 +6,8 @@ import {
   insertCreation,
   fetchPurchasedIds,
   createCheckoutSession,
+  updateCreationStatus,
+  updateCreationSpotlight,
 } from "./lib/db.js";
 import {
   fetchProfile,
@@ -595,9 +597,43 @@ function DetailPage({ id, creations, user, purchasedIds, setPage, setCreatorUser
 
 function AdminPage({ creations, setCreations, notify }) {
   const pending = creations.filter((c) => c.premium_status === "Pending"); const spotlightCount = creations.filter((c) => c.spotlight).length;
-  function approve(id) { setCreations((prev) => prev.map((c) => c.id === id ? { ...c, premium_status: "Approved" } : c)); notify("Approved."); }
-  function reject(id)  { setCreations((prev) => prev.map((c) => c.id === id ? { ...c, premium_status: "Rejected" } : c)); notify("Rejected."); }
-  function toggleSpotlight(id) { const item = creations.find((c) => c.id === id); if (!item) return; if (!item.spotlight && spotlightCount >= 3) { notify("Spotlight limited to 3."); return; } setCreations((prev) => prev.map((c) => c.id === id ? { ...c, spotlight: !c.spotlight } : c)); }
+  async function approve(id) {
+  const { error } = await updateCreationStatus(id, "Approved");
+  if (error) { notify("Error: " + error.message); return; }
+  const { data } = await fetchCreations();
+  if (data) setCreations(data);
+  notify("Approved.");
+}
+async function reject(id) {
+  const { error } = await updateCreationStatus(id, "Rejected");
+  if (error) { notify("Error: " + error.message); return; }
+  const { data } = await fetchCreations();
+  if (data) setCreations(data);
+  notify("Rejected.");
+}
+async function toggleSpotlight(id) {
+  const item = creations.find((c) => c.id === id);
+  if (!item) return;
+  if (!item.spotlight && spotlightCount >= 3) { notify("Spotlight limited to 3."); return; }
+  const { error } = await updateCreationSpotlight(id, !item.spotlight);
+  if (error) { notify("Error: " + error.message); return; }
+  const { data } = await fetchCreations();
+  if (data) setCreations(data);
+}
+async function reject(id) {
+  const { error } = await updateCreationStatus(id, "Rejected");
+  if (error) { notify("Error: " + error.message); return; }
+  setCreations((prev) => prev.map((c) => c.id === id ? { ...c, premium_status: "Rejected" } : c));
+  notify("Rejected.");
+}
+async function toggleSpotlight(id) {
+  const item = creations.find((c) => c.id === id);
+  if (!item) return;
+  if (!item.spotlight && spotlightCount >= 3) { notify("Spotlight limited to 3."); return; }
+  const { error } = await updateCreationSpotlight(id, !item.spotlight);
+  if (error) { notify("Error: " + error.message); return; }
+  setCreations((prev) => prev.map((c) => c.id === id ? { ...c, spotlight: !c.spotlight } : c));
+}
   const eligible = creations.filter((c) => c.premium_status !== "Pending" && c.premium_status !== "Rejected");
   return (
     <div className="page">
