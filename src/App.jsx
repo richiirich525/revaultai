@@ -596,7 +596,7 @@ function DetailPage({ id, creations, user, purchasedIds, setPage, setCreatorUser
 }
 
 function AdminPage({ creations, setCreations, notify }) {
-  const pending = creations.filter((c) => c.premium_status === "Pending"); const spotlightCount = creations.filter((c) => c.spotlight).length;
+  const pending = creations.filter((c) => c._fromDb && c.premium_status === "Pending"); const spotlightCount = creations.filter((c) => c.spotlight).length;
   async function approve(id) {
   const item = creations.find((c) => c.id === id);
   if (!item?._fromDb) { notify("Cannot modify seed creations."); return; }
@@ -639,7 +639,7 @@ async function toggleSpotlight(id) {
   if (error) { notify("Error: " + error.message); return; }
   setCreations((prev) => prev.map((c) => c.id === id ? { ...c, spotlight: !c.spotlight } : c));
 }
-  const eligible = creations.filter((c) => c.premium_status !== "Pending" && c.premium_status !== "Rejected");
+  const eligible = creations.filter((c) => c._fromDb && c.premium_status !== "Pending" && c.premium_status !== "Rejected");
   return (
     <div className="page">
       <div className="page-hdr"><div className="page-hdr-eyebrow">Internal</div><div className="page-hdr-title">Admin</div></div>
