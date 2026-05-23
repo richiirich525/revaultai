@@ -10,18 +10,7 @@ import { supabase } from "./supabase.js";
 // Shape converters
 // ---------------------------------------------------------------------------
 
-/**
- * Map a Supabase row (optionally with a joined profile) to the creation shape
- * the rest of the app expects.
- *
- * Priority for creator display fields:
- *   1. Joined profile row (live, always up to date)
- *   2. Snapshot columns stored on the creation row (creator_username, creator_name)
- *   3. Fallback strings
- */
 export function rowToCreation(row) {
-  const profile = row.profiles ?? null;
-
   return {
     id:              row.id,
     title:           row.title,
@@ -38,10 +27,9 @@ export function rowToCreation(row) {
     prompt_preview:  row.prompt_preview,
     prompt_full:     row.prompt_full,
     creator: {
-      // Always use live profile data when available
-      username:     profile?.username     ?? row.creator_username ?? "unknown",
-      display_name: profile?.display_name ?? row.creator_name     ?? "Unknown",
-      avatar_url:   profile?.avatar_url   ?? "",
+      username:     row.creator_username ?? "unknown",
+      display_name: row.creator_name     ?? "Unknown",
+      avatar_url:   row.avatar_url       ?? "",
     },
     user_id:    row.user_id,
     created_at: row.created_at,
@@ -49,18 +37,9 @@ export function rowToCreation(row) {
   };
 }
 
-/**
- * Map a creation object + current auth user + current profile
- * to a Supabase insert payload.
- *
- * Snapshot columns (creator_username, creator_name) are stored as a
- * fallback in case the profile is deleted later. The live join in
- * fetchCreations will always override these when the profile exists.
- */
 export function creationToRow(creation, user, profile) {
   return {
     user_id:          user?.id ?? null,
-    // Use real profile values, fall back to email-derived strings
     creator_username: profile?.username     ?? user?.email?.split("@")[0] ?? "anonymous",
     creator_name:     profile?.display_name ?? user?.email?.split("@")[0] ?? "Anonymous",
     title:            creation.title,
@@ -83,50 +62,22 @@ export function creationToRow(creation, user, profile) {
 // Queries
 // ---------------------------------------------------------------------------
 
-/**
- * Fetch all publicly visible creations, newest first.
- * Joins profiles so creator display_name/avatar_url are always live.
- * Returns { data: Creation[], error }.
- */
 export async function fetchCreations() {
   const { data, error } = await supabase
     .from("creations")
-    .select(`
-      *,
-      profiles (
-        id,
-        username,
-        display_name,
-        bio,
-        avatar_url
-      )
-    `)
+    .select("*")
     .order("created_at", { ascending: false });
 
   if (error) return { data: null, error };
   return { data: data.map(rowToCreation), error: null };
 }
 
-/**
- * Fetch creations belonging to a specific user_id.
- * Used for profile pages.
- * Returns { data: Creation[], error }.
- */
 export async function fetchCreationsByUser(userId) {
   if (!userId) return { data: [], error: null };
 
   const { data, error } = await supabase
     .from("creations")
-    .select(`
-      *,
-      profiles (
-        id,
-        username,
-        display_name,
-        bio,
-        avatar_url
-      )
-    `)
+    .select("*")
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
 
@@ -134,37 +85,19 @@ export async function fetchCreationsByUser(userId) {
   return { data: data.map(rowToCreation), error: null };
 }
 
-/**
- * Insert a new creation row.
- * Accepts optional profile so snapshot columns are accurate.
- * Returns { data: Creation, error }.
- */
 export async function insertCreation(creation, user, profile) {
   const row = creationToRow(creation, user, profile);
 
   const { data, error } = await supabase
     .from("creations")
     .insert(row)
-    .select(`
-      *,
-      profiles (
-        id,
-        username,
-        display_name,
-        bio,
-        avatar_url
-      )
-    `)
+    .select("*")
     .single();
 
   if (error) return { data: null, error };
   return { data: rowToCreation(data), error: null };
 }
 
-/**
- * Update premium_status on a creation (admin only).
- * Returns { error }.
- */
 export async function updateCreationStatus(id, status) {
   const { error } = await supabase
     .from("creations")
@@ -173,10 +106,6 @@ export async function updateCreationStatus(id, status) {
   return { error: error ?? null };
 }
 
-/**
- * Update spotlight flag on a creation (admin only).
- * Returns { error }.
- */
 export async function updateCreationSpotlight(id, spotlight) {
   const { error } = await supabase
     .from("creations")
@@ -185,10 +114,6 @@ export async function updateCreationSpotlight(id, spotlight) {
   return { error: error ?? null };
 }
 
-/**
- * Update an existing creation (owner only).
- * Returns { data: Creation, error }.
- */
 export async function updateCreation(id, fields, user) {
   if (!user?.id) return { data: null, error: new Error("Not authenticated") };
 
@@ -209,26 +134,13 @@ export async function updateCreation(id, fields, user) {
     .update(allowed)
     .eq("id", id)
     .eq("user_id", user.id)
-    .select(`
-      *,
-      profiles (
-        id,
-        username,
-        display_name,
-        bio,
-        avatar_url
-      )
-    `)
+    .select("*")
     .single();
 
   if (error) return { data: null, error };
   return { data: rowToCreation(data), error: null };
 }
 
-/**
- * Delete a creation by id (owner only).
- * Returns { error }.
- */
 export async function deleteCreation(id, user) {
   if (!user?.id) return { error: new Error("Not authenticated") };
 
@@ -241,10 +153,6 @@ export async function deleteCreation(id, user) {
   return { error: error ?? null };
 }
 
-/**
- * Fetch all creation ids the current user has purchased.
- * Returns { data: Set<string>, error }.
- */
 export async function fetchPurchasedIds(userId) {
   if (!userId) return { data: new Set(), error: null };
 
@@ -257,10 +165,6 @@ export async function fetchPurchasedIds(userId) {
   return { data: new Set(data.map((r) => r.creation_id)), error: null };
 }
 
-/**
- * Initiate a Stripe Checkout session for a creation.
- * Returns { url } on success, { error } on failure.
- */
 export async function createCheckoutSession(creationId, userId) {
   const res = await fetch("/api/checkout", {
     method: "POST",
