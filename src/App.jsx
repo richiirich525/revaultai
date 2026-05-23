@@ -598,6 +598,8 @@ function DetailPage({ id, creations, user, purchasedIds, setPage, setCreatorUser
 function AdminPage({ creations, setCreations, notify }) {
   const pending = creations.filter((c) => c.premium_status === "Pending"); const spotlightCount = creations.filter((c) => c.spotlight).length;
   async function approve(id) {
+  const item = creations.find((c) => c.id === id);
+  if (!item?._fromDb) { notify("Cannot modify seed creations."); return; }
   const { error } = await updateCreationStatus(id, "Approved");
   if (error) { notify("Error: " + error.message); return; }
   const { data } = await fetchCreations();
@@ -605,6 +607,8 @@ function AdminPage({ creations, setCreations, notify }) {
   notify("Approved.");
 }
 async function reject(id) {
+  const item = creations.find((c) => c.id === id);
+  if (!item?._fromDb) { notify("Cannot modify seed creations."); return; }
   const { error } = await updateCreationStatus(id, "Rejected");
   if (error) { notify("Error: " + error.message); return; }
   const { data } = await fetchCreations();
@@ -614,6 +618,7 @@ async function reject(id) {
 async function toggleSpotlight(id) {
   const item = creations.find((c) => c.id === id);
   if (!item) return;
+  if (!item?._fromDb) { notify("Cannot modify seed creations."); return; }
   if (!item.spotlight && spotlightCount >= 3) { notify("Spotlight limited to 3."); return; }
   const { error } = await updateCreationSpotlight(id, !item.spotlight);
   if (error) { notify("Error: " + error.message); return; }
