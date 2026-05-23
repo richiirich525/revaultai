@@ -669,20 +669,58 @@ function SubmitPage({ setCreations, notify, setPage, user, profile }) {
   function pickFile(file) { if (!file) return; const allowed = ["video/mp4", "video/quicktime", "video/webm"]; if (!allowed.includes(file.type)) { setUploadError("Only MP4, MOV, or WebM files are accepted."); return; } if (file.size > 500 * 1024 * 1024) { setUploadError("File exceeds 500 MB limit."); return; } setVideoFile(file); setUploadState("idle"); setUploadResult(null); setUploadError(null); setUploadPct(0); }
   function clearFile() { setVideoFile(null); setUploadState("idle"); setUploadResult(null); setUploadError(null); setUploadPct(0); }
   async function uploadToR2() {
-  if (!videoFile) return; setUploadState("uploading"); setUploadError(null); setUploadPct(0);
-  const formData = new FormData(); formData.append("video", videoFile);
+  if (!videoFile) return;
+  setUploadState("uploading"); setUploadError(null); setUploadPct(0);
+
   const session = await supabase.auth.getSession();
   const token = session.data.session?.access_token ?? "";
+  const authHeader = { "Authorization": "Bearer " + token, "Content-Type": "application/json" };
+
+  // Step 1: get presigned URL from server
+  let uploadUrl, videoPublicUrl;
   try {
-    const result = await new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest(); xhr.open("POST", "/api/upload");
-      xhr.setRequestHeader("Authorization", "Bearer " + token);
-      xhr.upload.addEventListener("progress", (e) => { if (e.lengthComputable) setUploadPct(Math.round((e.loaded / e.total) * 100)); });
-      xhr.addEventListener("load", () => { if (xhr.status >= 200 && xhr.status < 300) { try { resolve(JSON.parse(xhr.responseText)); } catch { reject(new Error("Invalid response.")); } } else { let msg = "Upload failed."; try { msg = JSON.parse(xhr.responseText).error || msg; } catch {} reject(new Error(msg)); } });
-      xhr.addEventListener("error", () => reject(new Error("Network error."))); xhr.addEventListener("abort", () => reject(new Error("Upload cancelled."))); xhr.send(formData);
+    const res = await fetch("/api/get-upload-url", {
+      method: "POST",
+      headers: authHeader,
+      body: JSON.stringify({ fileType: videoFile.type }),
     });
-    setUploadPct(100); setUploadState("processing");
-    setUploadResult(result); setUploadState("done");
+    if (!res.ok) { const j = await res.json(); throw new Error(j.error || "Could not get upload URL."); }
+    const json = await res.json();
+    uploadUrl = json.uploadUrl;
+    videoPublicUrl = json.videoPublicUrl;
+  } catch (err) { setUploadError(err.message); setUploadState("error"); return; }
+
+  // Step 2: upload directly to R2 via presigned URL (no Vercel size limit)
+  try {
+    await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("PUT", uploadUrl);
+      xhr.setRequestHeader("Content-Type", videoFile.type);
+      xhr.upload.addEventListener("progress", (e) => {
+        if (e.lengthComputable) setUploadPct(Math.round((e.loaded / e.total) * 100));
+      });
+      xhr.addEventListener("load", () => {
+        if (xhr.status >= 200 && xhr.status < 300) resolve();
+        else reject(new Error("R2 upload failed with status " + xhr.status));
+      });
+      xhr.addEventListener("error", () => reject(new Error("Network error during upload.")));
+      xhr.send(videoFile);
+    });
+  } catch (err) { setUploadError(err.message); setUploadState("error"); return; }
+
+  setUploadPct(100);
+  setUploadState("processing");
+
+  // Step 3: send to Mux for processing
+  try {
+    const res = await fetch("/api/process-video", {
+      method: "POST",
+      headers: authHeader,
+      body: JSON.stringify({ videoPublicUrl }),
+    });
+    const result = await res.json();
+    setUploadResult(result);
+    setUploadState("done");
   } catch (err) { setUploadError(err.message); setUploadState("error"); }
 }
   async function handleSubmit() {
