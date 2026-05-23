@@ -668,18 +668,22 @@ function SubmitPage({ setCreations, notify, setPage, user, profile }) {
   function pickFile(file) { if (!file) return; const allowed = ["video/mp4", "video/quicktime", "video/webm"]; if (!allowed.includes(file.type)) { setUploadError("Only MP4, MOV, or WebM files are accepted."); return; } if (file.size > 500 * 1024 * 1024) { setUploadError("File exceeds 500 MB limit."); return; } setVideoFile(file); setUploadState("idle"); setUploadResult(null); setUploadError(null); setUploadPct(0); }
   function clearFile() { setVideoFile(null); setUploadState("idle"); setUploadResult(null); setUploadError(null); setUploadPct(0); }
   async function uploadToR2() {
-    if (!videoFile) return; setUploadState("uploading"); setUploadError(null); setUploadPct(0);
-    const formData = new FormData(); formData.append("video", videoFile);
-    try {
-      const result = await new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest(); xhr.open("POST", "/api/upload"); xhr.setRequestHeader("Authorization", "Bearer " + (await supabase.auth.getSession()).data.session?.access_token ?? "");
-        xhr.upload.addEventListener("progress", (e) => { if (e.lengthComputable) setUploadPct(Math.round((e.loaded / e.total) * 100)); });
-        xhr.addEventListener("load", () => { if (xhr.status >= 200 && xhr.status < 300) { try { resolve(JSON.parse(xhr.responseText)); } catch { reject(new Error("Invalid response.")); } } else { let msg = "Upload failed."; try { msg = JSON.parse(xhr.responseText).error || msg; } catch {} reject(new Error(msg)); } });
-        xhr.addEventListener("error", () => reject(new Error("Network error."))); xhr.addEventListener("abort", () => reject(new Error("Upload cancelled."))); xhr.send(formData);
-      });
-      setUploadPct(100); setUploadResult(result); setUploadState("done");
-    } catch (err) { setUploadError(err.message); setUploadState("error"); }
-  }
+  if (!videoFile) return; setUploadState("uploading"); setUploadError(null); setUploadPct(0);
+  const formData = new FormData(); formData.append("video", videoFile);
+  const session = await supabase.auth.getSession();
+  const token = session.data.session?.access_token ?? "";
+  try {
+    const result = await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest(); xhr.open("POST", "/api/upload");
+      xhr.setRequestHeader("Authorization", "Bearer " + token);
+      xhr.upload.addEventListener("progress", (e) => { if (e.lengthComputable) setUploadPct(Math.round((e.loaded / e.total) * 100)); });
+      xhr.addEventListener("load", () => { if (xhr.status >= 200 && xhr.status < 300) { try { resolve(JSON.parse(xhr.responseText)); } catch { reject(new Error("Invalid response.")); } } else { let msg = "Upload failed."; try { msg = JSON.parse(xhr.responseText).error || msg; } catch {} reject(new Error(msg)); } });
+      xhr.addEventListener("error", () => reject(new Error("Network error."))); xhr.addEventListener("abort", () => reject(new Error("Upload cancelled."))); xhr.send(formData);
+    });
+    setUploadPct(100); setUploadState("processing");
+    setUploadResult(result); setUploadState("done");
+  } catch (err) { setUploadError(err.message); setUploadState("error"); }
+}
   async function handleSubmit() {
     if (!form.title.trim() || !form.prompt.trim()) { notify("Please fill in Title and Prompt."); return; }
     if (videoFile && uploadState !== "done") { notify("Please wait for your video to finish uploading."); return; }
