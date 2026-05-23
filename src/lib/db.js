@@ -88,14 +88,12 @@ export async function fetchCreationsByUser(userId) {
 export async function insertCreation(creation, user, profile) {
   const row = creationToRow(creation, user, profile);
 
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from("creations")
-    .insert(row)
-    .select("*")
-    .single();
+    .insert(row);
 
   if (error) return { data: null, error };
-  return { data: rowToCreation(data), error: null };
+  return { data: null, error: null };
 }
 
 export async function updateCreationStatus(id, status) {
