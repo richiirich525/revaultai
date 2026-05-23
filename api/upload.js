@@ -3,6 +3,7 @@ import { IncomingForm } from "formidable";
 import { readFileSync } from "fs";
 import { randomUUID } from "crypto";
 import { extname } from "path";
+import { createClient } from "@supabase/supabase-js";
 
 // Vercel serverless — disable default body parser so formidable can read the stream
 export const config = {
@@ -12,13 +13,6 @@ export const config = {
 };
 
 // --- R2 client ---------------------------------------------------------------
-// Required env vars (set these in Vercel dashboard → Settings → Environment Variables):
-//   R2_ACCOUNT_ID        — Cloudflare account ID
-//   R2_ACCESS_KEY_ID     — R2 API token Access Key ID
-//   R2_SECRET_ACCESS_KEY — R2 API token Secret Access Key
-//   R2_BUCKET_NAME       — bucket name (e.g. "revaultai-videos")
-//   R2_PUBLIC_URL        — public base URL for the bucket (e.g. "https://pub-xxx.r2.dev")
-
 function getR2Client() {
   const accountId = process.env.R2_ACCOUNT_ID;
   const accessKeyId = process.env.R2_ACCESS_KEY_ID;
@@ -58,20 +52,42 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  // Check env vars upfront and return a clear error if missing
+  // --- Auth check: require a valid Supabase session -------------------------
+  const authHeader = req.headers.authorization ?? "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
+
+  if (!token) {
+    return res.status(401).json({ error: "Unauthorized: sign in to upload." });
+  }
+
+  try {
+    const supabase = createClient(
+      process.env.VITE_SUPABASE_URL,
+      process.env.VITE_SUPABASE_ANON_KEY
+    );
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    if (error || !user) {
+      return res.status(401).json({ error: "Unauthorized: invalid or expired session." });
+    }
+  } catch (err) {
+    return res.status(401).json({ error: "Unauthorized: could not verify session." });
+  }
+  // --------------------------------------------------------------------------
+
+  // Check env vars upfront
   const bucket = process.env.R2_BUCKET_NAME;
   const publicUrl = process.env.R2_PUBLIC_URL;
 
   if (!bucket) {
     console.error("[upload] R2_BUCKET_NAME is not set");
     return res.status(500).json({
-      error: "Server misconfiguration: R2_BUCKET_NAME is not set. Add it in Vercel environment variables.",
+      error: "Server misconfiguration: R2_BUCKET_NAME is not set.",
     });
   }
   if (!publicUrl) {
     console.error("[upload] R2_PUBLIC_URL is not set");
     return res.status(500).json({
-      error: "Server misconfiguration: R2_PUBLIC_URL is not set. Add it in Vercel environment variables.",
+      error: "Server misconfiguration: R2_PUBLIC_URL is not set.",
     });
   }
 
@@ -93,7 +109,6 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Could not parse upload: " + err.message });
   }
 
-  // formidable v2 wraps files in arrays; support both v1 and v2
   const rawFile = files.video;
   const videoFile = Array.isArray(rawFile) ? rawFile[0] : rawFile;
 
@@ -132,10 +147,6 @@ export default async function handler(req, res) {
         Key: key,
         Body: fileBuffer,
         ContentType: mimeType,
-        // Make the object publicly readable.
-        // If your bucket uses a custom domain / public access policy instead,
-        // remove the ACL line — Cloudflare R2 ignores ACLs by default.
-        // ACL: "public-read",
       })
     );
   } catch (err) {
@@ -148,12 +159,10 @@ export default async function handler(req, res) {
 
   const videoPublicUrl = `${publicUrl.replace(/\/$/, "")}/${key}`;
 
-  // Return the URLs the client expects
   return res.status(200).json({
     success: true,
     video_url: videoPublicUrl,
     preview_video: videoPublicUrl,
-    // thumbnail_image: use a placeholder until you add ffmpeg thumbnail generation
     thumbnail_image: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1200&q=90",
   });
 }

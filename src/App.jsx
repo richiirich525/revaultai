@@ -672,7 +672,7 @@ function SubmitPage({ setCreations, notify, setPage, user, profile }) {
     const formData = new FormData(); formData.append("video", videoFile);
     try {
       const result = await new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest(); xhr.open("POST", "/api/upload");
+        const xhr = new XMLHttpRequest(); xhr.open("POST", "/api/upload"); xhr.setRequestHeader("Authorization", "Bearer " + (await supabase.auth.getSession()).data.session?.access_token ?? "");
         xhr.upload.addEventListener("progress", (e) => { if (e.lengthComputable) setUploadPct(Math.round((e.loaded / e.total) * 100)); });
         xhr.addEventListener("load", () => { if (xhr.status >= 200 && xhr.status < 300) { try { resolve(JSON.parse(xhr.responseText)); } catch { reject(new Error("Invalid response.")); } } else { let msg = "Upload failed."; try { msg = JSON.parse(xhr.responseText).error || msg; } catch {} reject(new Error(msg)); } });
         xhr.addEventListener("error", () => reject(new Error("Network error."))); xhr.addEventListener("abort", () => reject(new Error("Upload cancelled."))); xhr.send(formData);
