@@ -566,7 +566,7 @@ function handleMouseLeave() {
 }
 
 function SpotlightSection({ creations, onView }) {
-  const items = creations.filter((c) => c.spotlight && c.premium_status !== "Pending");
+  const items = creations.filter((c) => c.spotlight && c.premium_status !== "Pending" && c._fromDb);
   if (items.length === 0) return null;
   return (
     <div className="spotlight-section-wrap">
