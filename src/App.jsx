@@ -921,6 +921,22 @@ function AdminPage({ creations, setCreations, notify }) {
   const { data } = await fetchCreations();
   if (data) setCreations(data);
   notify("Approved.");
+  // Send email notification
+  try {
+    const session = await supabase.auth.getSession();
+    const token = session.data.session?.access_token ?? "";
+    await fetch("/api/notify-approval", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+      body: JSON.stringify({
+        creationId: id,
+        creationTitle: item.title,
+        creatorUserId: item.user_id,
+      }),
+    });
+  } catch (err) {
+    console.warn("[RevaultAI] Email notification failed:", err.message);
+  }
 }
 async function reject(id) {
   const item = creations.find((c) => c.id === id);
