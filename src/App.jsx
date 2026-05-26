@@ -735,7 +735,7 @@ function ExplorePage({ creations, setPage, setDetailId, dbLoaded }) {
   );
 }
 
-function CreatorsPage({ setPage, setCreatorUser, followedCreators }) {
+function CreatorsPage({ setPage, setCreatorUser }) {
   const [creators, setCreators] = useState([]); const [loading, setLoading] = useState(true);
   useEffect(() => {
     async function load() {
@@ -757,7 +757,7 @@ function CreatorsPage({ setPage, setCreatorUser, followedCreators }) {
                 <CreatorAvatar src={c.avatar_url} name={c.display_name} size={64} className="creator-avatar" />
                 <div className="creator-name">{c.display_name || c.username}</div>
                 <div className="creator-handle">@{c.username}</div>
-                <div className="creator-badges">{followedCreators.has(c.username) && <Badge type="following" />}</div>
+                <div className="creator-badges"></div>
                 {c.bio ? <div className="creator-bio">{c.bio}</div> : null}
               </div>
             ))}
@@ -1104,7 +1104,6 @@ const [page, setPage]             = useState("home");
   const [detailId, setDetailId]     = useState(null);
   const [creatorUser, setCreatorUser] = useState(null);
   const [notifMsg, setNotifMsg]     = useState(null);
-  const [followedCreators, setFollowedCreators] = useState(new Set());
   const [user, setUser]             = useState(null);
   const [profile, setProfile]       = useState(null);
   const [authOpen, setAuthOpen]     = useState(false);
@@ -1149,14 +1148,14 @@ const [page, setPage]             = useState("home");
 
   function notify(msg) { setNotifMsg(msg); }
   async function handleSignOut() { await supabase.auth.signOut(); notify("Signed out of RevaultAI."); }
-  function toggleFollow(creator) { setFollowedCreators((prev) => { const next = new Set(prev); const key = creator.username; if (next.has(key)) { next.delete(key); notify("Unfollowed " + (creator.display_name || key)); } else { next.add(key); notify("Following " + (creator.display_name || key)); } return next; }); }
+  
   useEffect(() => { window.scrollTo(0, 0); }, [page]);
 
   function renderPage() {
     switch (page) {
       case "home":    return <HomePage creations={creations} setPage={setPage} setDetailId={setDetailId} />;
       case "explore": return <ExplorePage creations={creations} setPage={setPage} setDetailId={setDetailId} dbLoaded={dbLoaded} />;
-      case "creators":return <CreatorsPage setPage={setPage} setCreatorUser={setCreatorUser} followedCreators={followedCreators} />;
+      case "creators":return <CreatorsPage setPage={setPage} setCreatorUser={setCreatorUser} />;
       case "profile": return <ProfilePage username={creatorUser} creations={creations} setPage={setPage} setDetailId={setDetailId} user={user} />;
       case "detail":  return <DetailPage id={detailId} creations={creations} user={user} purchasedIds={purchasedIds} setPage={setPage} setCreatorUser={setCreatorUser} notify={notify} />;
       case "settings": if (!user) return <div className="page"><div className="empty-state"><div className="empty-text">Sign in to access profile settings.</div></div></div>; return <SettingsPage user={user} profile={profile} setProfile={setProfile} notify={notify} />;
