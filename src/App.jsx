@@ -616,7 +616,7 @@ function HomePage({ creations, setPage, setDetailId }) {
   );
 }
 
-function ExplorePage({ creations, setPage, setDetailId }) {
+function ExplorePage({ creations, setPage, setDetailId, dbLoaded }) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
   const [sort, setSort] = useState("newest");
@@ -692,7 +692,11 @@ function ExplorePage({ creations, setPage, setDetailId }) {
         </div>
 
         {/* Results */}
-        {filtered.length === 0 ? (
+        {!dbLoaded ? (
+  <div className="empty-state" style={{ padding: "60px 0" }}>
+    <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", letterSpacing: "0.1em" }}>Loading creations...</div>
+  </div>
+) : filtered.length === 0 ? (
           <div className="empty-state" style={{ padding: "60px 0" }}>
             <div style={{ fontSize: 32, marginBottom: 16, opacity: 0.3 }}>&#9673;</div>
             <div className="empty-text" style={{ fontSize: 15, marginBottom: 8 }}>
@@ -737,7 +741,7 @@ function CreatorsPage({ setPage, setCreatorUser, followedCreators }) {
     async function load() {
       const { data, error } = await fetchCreators();
       if (error) console.warn("[RevaultAI] Could not load creators:", error.message);
-      setCreators(data && data.length > 0 ? data : SEED_CREATORS);
+      setCreators(data ?? []);
       setLoading(false);
     }
     load();
@@ -792,10 +796,8 @@ function ProfilePage({ username, creations: allCreations, setPage, setDetailId, 
           setIsFollowing(following);
         }
       } else {
-        const seed = SEED_CREATORS.find((c) => c.username === username);
-        setProfileData(seed ?? null);
-        setProfileCreations(allCreations.filter((c) => c.creator.username === username));
-      }
+  setProfileData(null);
+}
       setLoading(false);
     }
     load();
@@ -1097,7 +1099,8 @@ function EmailConfirmedPage({ setPage }) {
 
 export default function App() {
   const [creations, setCreations]   = useState(SEED_CREATIONS.map((c) => ({ ...c })));
-  const [page, setPage]             = useState("home");
+const [dbLoaded, setDbLoaded]     = useState(false);
+const [page, setPage]             = useState("home");
   const [detailId, setDetailId]     = useState(null);
   const [creatorUser, setCreatorUser] = useState(null);
   const [notifMsg, setNotifMsg]     = useState(null);
@@ -1127,7 +1130,7 @@ export default function App() {
   }
 
   useEffect(() => {
-    async function load() { const { data, error } = await fetchCreations(); if (error) { console.warn("[RevaultAI] Could not load creations:", error.message); return; } if (data && data.length > 0) { const dbIds = new Set(data.map((c) => c.id)); const seeds = SEED_CREATIONS.filter((c) => !dbIds.has(c.id)); setCreations([...data, ...seeds]); } }
+    async function load() { const { data, error } = await fetchCreations(); if (error) { console.warn("[RevaultAI] Could not load creations:", error.message); setDbLoaded(true); return; } if (data && data.length > 0) { const dbIds = new Set(data.map((c) => c.id)); const seeds = SEED_CREATIONS.filter((c) => !dbIds.has(c.id)); setCreations([...data, ...seeds]); } setDbLoaded(true); }
     load();
   }, []);
 
@@ -1152,7 +1155,7 @@ export default function App() {
   function renderPage() {
     switch (page) {
       case "home":    return <HomePage creations={creations} setPage={setPage} setDetailId={setDetailId} />;
-      case "explore": return <ExplorePage creations={creations} setPage={setPage} setDetailId={setDetailId} />;
+      case "explore": return <ExplorePage creations={creations} setPage={setPage} setDetailId={setDetailId} dbLoaded={dbLoaded} />;
       case "creators":return <CreatorsPage setPage={setPage} setCreatorUser={setCreatorUser} followedCreators={followedCreators} />;
       case "profile": return <ProfilePage username={creatorUser} creations={creations} setPage={setPage} setDetailId={setDetailId} user={user} />;
       case "detail":  return <DetailPage id={detailId} creations={creations} user={user} purchasedIds={purchasedIds} setPage={setPage} setCreatorUser={setCreatorUser} notify={notify} />;
