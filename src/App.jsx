@@ -15,6 +15,11 @@ import {
   fetchCreators,
   upsertProfile,
   defaultProfile,
+  fetchCreatorStats,
+  fetchFollowerCount,
+  fetchIsFollowing,
+  followCreator,
+  unfollowCreator,
 } from "./lib/profiles.js";
 
 const SEED_CREATIONS = [
@@ -546,40 +551,123 @@ function CreatorsPage({ setPage, setCreatorUser, followedCreators }) {
   );
 }
 
-function ProfilePage({ username, creations: allCreations, setPage, setDetailId, followedCreators, toggleFollow }) {
-  const [profileData, setProfileData] = useState(null); const [profileCreations, setProfileCreations] = useState([]); const [loading, setLoading] = useState(true); const [filter, setFilter] = useState("All");
+function ProfilePage({ username, creations: allCreations, setPage, setDetailId, user }) {
+  const [profileData, setProfileData] = useState(null);
+  const [profileCreations, setProfileCreations] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [followerCount, setFollowerCount] = useState(0);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState("All");
+
   useEffect(() => {
-    if (!username) return; setLoading(true);
+    if (!username) return;
+    setLoading(true);
     async function load() {
       const { data: prof } = await fetchProfileByUsername(username);
-      if (prof) { setProfileData(prof); const { data: creatns } = await fetchCreationsByUser(prof.id); setProfileCreations(creatns ?? []); }
-      else { const seed = SEED_CREATORS.find((c) => c.username === username); setProfileData(seed ?? null); setProfileCreations(allCreations.filter((c) => c.creator.username === username)); }
+      if (prof) {
+        setProfileData(prof);
+        const { data: creatns } = await fetchCreationsByUser(prof.id);
+        setProfileCreations(creatns ?? []);
+        const { data: s } = await fetchCreatorStats(prof.id);
+        setStats(s);
+        const { count } = await fetchFollowerCount(prof.id);
+        setFollowerCount(count);
+        if (user?.id) {
+          const { isFollowing: following } = await fetchIsFollowing(user.id, prof.id);
+          setIsFollowing(following);
+        }
+      } else {
+        const seed = SEED_CREATORS.find((c) => c.username === username);
+        setProfileData(seed ?? null);
+        setProfileCreations(allCreations.filter((c) => c.creator.username === username));
+      }
       setLoading(false);
     }
     load();
-  }, [username]);
+  }, [username, user?.id]);
+
+  async function handleFollow() {
+    if (!user) return;
+    setFollowLoading(true);
+    if (isFollowing) {
+      await unfollowCreator(user.id, profileData.id);
+      setIsFollowing(false);
+      setFollowerCount((n) => Math.max(0, n - 1));
+    } else {
+      await followCreator(user.id, profileData.id);
+      setIsFollowing(true);
+      setFollowerCount((n) => n + 1);
+    }
+    setFollowLoading(false);
+  }
+
   if (loading) return <div className="page"><div className="empty-state"><div className="empty-text">Loading profile...</div></div></div>;
   if (!profileData) return <div className="page"><div className="empty-state"><div className="empty-text">Creator not found.</div></div></div>;
-  const isFollowing = followedCreators.has(username);
-  const filtered = profileCreations.filter((c) => { if (c.premium_status === "Pending") return false; if (filter === "Premium") return c.is_premium; if (filter === "Open") return !c.is_premium; return true; });
+
+  const filtered = profileCreations.filter((c) => {
+    if (c.premium_status === "Pending") return false;
+    if (filter === "Premium") return c.is_premium;
+    if (filter === "Open") return !c.is_premium;
+    return true;
+  });
+
   function goDetail(id) { setDetailId(id); setPage("detail"); }
+
   return (
     <div className="page">
       <div className="back-btn" onClick={() => setPage("creators")}>&larr; Creators</div>
       <div className="profile-header">
         <CreatorAvatar src={profileData.avatar_url} name={profileData.display_name} size={96} className="profile-avatar" />
-        <div>
+        <div style={{ flex: 1 }}>
           <div className="profile-name">{profileData.display_name || profileData.username}</div>
           <div className="profile-handle">@{profileData.username}</div>
           {profileData.bio && <div className="profile-bio">{profileData.bio}</div>}
+          {stats && (
+            <div style={{ display: "flex", gap: 24, marginTop: 16, flexWrap: "wrap" }}>
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 20, fontWeight: 700, color: "var(--text)" }}>{stats.total}</div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: "0.14em", color: "var(--muted)", textTransform: "uppercase", marginTop: 2 }}>Creations</div>
+              </div>
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 20, fontWeight: 700, color: "var(--premium)" }}>{stats.premium}</div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: "0.14em", color: "var(--muted)", textTransform: "uppercase", marginTop: 2 }}>Premium</div>
+              </div>
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 20, fontWeight: 700, color: "var(--text)" }}>{stats.open}</div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: "0.14em", color: "var(--muted)", textTransform: "uppercase", marginTop: 2 }}>Open</div>
+              </div>
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 20, fontWeight: 700, color: "var(--accent)" }}>{followerCount}</div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: "0.14em", color: "var(--muted)", textTransform: "uppercase", marginTop: 2 }}>Followers</div>
+              </div>
+            </div>
+          )}
           <div className="profile-actions">
-            <button className={"btn-follow " + (isFollowing ? "followed" : "unfollowed")} onClick={() => toggleFollow(profileData)}>{isFollowing ? "\u2713 Following" : "+ Follow"}</button>
+            {user && user.id !== profileData.id && (
+              <button
+                className={"btn-follow " + (isFollowing ? "followed" : "unfollowed")}
+                onClick={handleFollow}
+                disabled={followLoading}
+                style={{ opacity: followLoading ? 0.6 : 1 }}
+              >
+                {followLoading ? "..." : isFollowing ? "\u2713 Following" : "+ Follow"}
+              </button>
+            )}
           </div>
         </div>
       </div>
       <section className="section">
-        <div className="filter-bar">{["All", "Premium", "Open"].map((f) => <button key={f} className={"filter-btn" + (filter === f ? " active" : "")} onClick={() => setFilter(f)}>{f}</button>)}</div>
-        {filtered.length === 0 ? <div className="empty-state"><div className="empty-text">No creations yet.</div></div> : <div className="creation-grid">{filtered.map((c) => <CreationCard key={c.id} creation={c} onClick={goDetail} />)}</div>}
+        <div className="filter-bar">
+          {["All", "Premium", "Open"].map((f) => (
+            <button key={f} className={"filter-btn" + (filter === f ? " active" : "")} onClick={() => setFilter(f)}>{f}</button>
+          ))}
+        </div>
+        {filtered.length === 0
+          ? <div className="empty-state"><div className="empty-text">No creations yet.</div></div>
+          : <div className="creation-grid">{filtered.map((c) => <CreationCard key={c.id} creation={c} onClick={goDetail} />)}</div>
+        }
       </section>
     </div>
   );
@@ -853,7 +941,7 @@ export default function App() {
       case "home":    return <HomePage creations={creations} setPage={setPage} setDetailId={setDetailId} />;
       case "explore": return <ExplorePage creations={creations} setPage={setPage} setDetailId={setDetailId} />;
       case "creators":return <CreatorsPage setPage={setPage} setCreatorUser={setCreatorUser} followedCreators={followedCreators} />;
-      case "profile": return <ProfilePage username={creatorUser} creations={creations} setPage={setPage} setDetailId={setDetailId} followedCreators={followedCreators} toggleFollow={toggleFollow} />;
+      case "profile": return <ProfilePage username={creatorUser} creations={creations} setPage={setPage} setDetailId={setDetailId} user={user} />;
       case "detail":  return <DetailPage id={detailId} creations={creations} user={user} purchasedIds={purchasedIds} setPage={setPage} setCreatorUser={setCreatorUser} notify={notify} />;
       case "settings": if (!user) return <div className="page"><div className="empty-state"><div className="empty-text">Sign in to access profile settings.</div></div></div>; return <SettingsPage user={user} profile={profile} setProfile={setProfile} notify={notify} />;
       case "admin": if (!isAdmin(user)) return <div className="page"><div className="empty-state"><div className="empty-text">Not authorized.</div></div></div>; return <AdminPage creations={creations} setCreations={setCreations} notify={notify} />;
