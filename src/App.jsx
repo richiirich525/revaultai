@@ -892,7 +892,22 @@ function DetailPage({ id, creations, user, purchasedIds, setPage, setCreatorUser
   const creation = creations.find((c) => c.id === id); const [checkingOut, setCheckingOut] = useState(false);
   if (!creation) return <div className="page"><div className="empty-state"><div className="empty-text">Creation not found.</div></div></div>;
   const isPending = creation.premium_status === "Pending"; const hasVideo = !!creation.video_url; const posterImg = creation.thumbnail_image || creation.hero_image; const purchased = purchasedIds.has(creation.id); const unlocked = !creation.is_premium || purchased; const priceLabel = creation.price_cents ? "$" + (creation.price_cents / 100).toFixed(2) : "$4.99";
-  async function handleBuy() { if (!user) { notify("Sign in to purchase."); return; } setCheckingOut(true); const { url, error } = await createCheckoutSession(creation.id, user.id); setCheckingOut(false); if (error) { notify("Checkout error: " + error.message); return; } window.location.href = url; }
+  async function handleBuy() {
+  if (!user) { notify("Sign in to purchase."); return; }
+  setCheckingOut(true);
+  try {
+    const { url, error } = await createCheckoutSession(creation.id, user.id);
+    if (error) {
+      notify("Checkout failed: " + error.message + ". Please try again.");
+      setCheckingOut(false);
+      return;
+    }
+    window.location.href = url;
+  } catch (err) {
+    notify("Checkout failed: " + err.message + ". Please try again.");
+    setCheckingOut(false);
+  }
+}
   return (
     <div className="page detail-page">
       <div className="detail-cinema"><div className="detail-cinema-inner"><div className="detail-back" onClick={() => setPage("explore")}>&larr; Archive</div>{hasVideo && unlocked ? <video src={creation.video_url} poster={posterImg} controls playsInline /> : <img className="detail-still" src={posterImg} alt={creation.title} />}</div></div>
@@ -904,7 +919,9 @@ function DetailPage({ id, creations, user, purchasedIds, setPage, setCreatorUser
         <div className="prompt-box">
           {isPending ? <p className="prompt-text" style={{ color: "var(--muted)", fontStyle: "italic" }}>Under review.</p>
           : unlocked ? <><p className="prompt-text">{creation.prompt_full}</p>{hasVideo && <div className="unlock-area"><a href={creation.video_url} download className="btn-unlock-restrained" style={{ textDecoration: "none", display: "inline-block" }}>&#11015; Download Film</a></div>}</>
-          : <><div className="prompt-fade"><p className="prompt-text">{creation.prompt_preview}</p></div><div className="unlock-area"><span className="unlock-label">Full prompt {hasVideo ? "and film download" : ""} available after purchase.</span><button className="btn-unlock-restrained" onClick={handleBuy} disabled={checkingOut} style={{ opacity: checkingOut ? 0.6 : 1 }}>{checkingOut ? "Redirecting..." : "Unlock for " + priceLabel}</button></div></>}
+          : <><div className="prompt-fade"><p className="prompt-text">{creation.prompt_preview}</p></div><div className="unlock-area"><span className="unlock-label">Full prompt {hasVideo ? "and film download" : ""} available after purchase.</span><button className="btn-unlock-restrained" onClick={handleBuy} disabled={checkingOut} style={{ opacity: checkingOut ? 0.6 : 1 }}>
+  {checkingOut ? "Opening checkout..." : "Unlock for " + priceLabel}
+</button></div></>}
         </div>
       </div>
     </div>
