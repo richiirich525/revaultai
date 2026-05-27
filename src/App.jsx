@@ -611,7 +611,17 @@ function HomePage({ creations, setPage, setDetailId }) {
         <div className="creation-grid">{openCreations.slice(0, 4).map((c) => <CreationCard key={c.id} creation={c} onClick={goDetail} />)}</div>
       </section>
       <section className="manifesto"><div className="manifesto-rule" /><p className="manifesto-quote">"The AI era doesn't need more content. It needs curation."</p><p className="manifesto-sub">RevaultAI is built for creators who believe AI is a medium, not just a tool.</p></section>
-      <footer className="footer"><div className="footer-logo">RevaultAI</div><div className="footer-copy">&copy; 2025 -- The AI-native creative vault</div></footer>
+      <footer className="footer">
+  <div className="footer-logo">RevaultAI</div>
+  <div style={{ display: "flex", gap: 24, flexWrap: "wrap", alignItems: "center" }}>
+    <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("terms")}>Terms</span>
+    <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("privacy")}>Privacy</span>
+    <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("refunds")}>Refunds</span>
+    <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("dmca")}>DMCA</span>
+    <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("ai-disclaimer")}>AI Disclaimer</span>
+  </div>
+  <div className="footer-copy">&copy; 2025 RevaultAI</div>
+</footer>
     </div>
   );
 }
@@ -1188,6 +1198,122 @@ function PurchaseSuccessPage({ setPage, setDetailId, creations }) {
     </div>
   );
 }
+function LegalPage({ setPage, page }) {
+  const content = {
+    terms: {
+      title: "Terms of Service",
+      updated: "May 2025",
+      body: `
+        <h2>1. Acceptance of Terms</h2>
+        <p>By accessing or using RevaultAI, you agree to be bound by these Terms of Service. If you do not agree, do not use the platform.</p>
+        <h2>2. Platform Use</h2>
+        <p>RevaultAI is a platform for sharing AI-generated creative content. You must be at least 18 years old to create an account or make purchases. You are responsible for all activity under your account.</p>
+        <h2>3. Content Submissions</h2>
+        <p>By submitting content to RevaultAI, you represent that you have the right to share it and grant RevaultAI a non-exclusive license to display it on the platform. You retain ownership of your original prompts and creative work.</p>
+        <h2>4. Premium Purchases</h2>
+        <p>Premium prompt purchases are processed via Stripe. All sales are subject to our Refund Policy. RevaultAI reserves the right to revoke access to content that violates these terms.</p>
+        <h2>5. Prohibited Content</h2>
+        <p>You may not submit content that is illegal, harmful, deceptive, or violates the rights of others. RevaultAI reserves the right to remove any content and terminate any account at its discretion.</p>
+        <h2>6. Disclaimers</h2>
+        <p>RevaultAI is provided "as is" without warranties of any kind. We are not liable for any damages arising from your use of the platform.</p>
+        <h2>7. Changes to Terms</h2>
+        <p>We may update these terms at any time. Continued use of RevaultAI after changes constitutes acceptance of the new terms.</p>
+        <h2>8. Contact</h2>
+        <p>For questions about these terms, contact us at richardgarland999@gmail.com.</p>
+      `
+    },
+    privacy: {
+      title: "Privacy Policy",
+      updated: "May 2025",
+      body: `
+        <h2>1. Information We Collect</h2>
+        <p>We collect your email address when you create an account. We also collect content you submit, profile information you provide, and usage data through standard server logs.</p>
+        <h2>2. How We Use Your Information</h2>
+        <p>We use your information to operate RevaultAI, process payments, send approval notifications, and improve the platform. We do not sell your personal data to third parties.</p>
+        <h2>3. Third-Party Services</h2>
+        <p>RevaultAI uses the following third-party services: Supabase (database and auth), Cloudflare R2 (video storage), Mux (video processing), Stripe (payments), and Resend (email). Each has their own privacy policy.</p>
+        <h2>4. Cookies</h2>
+        <p>We use cookies and local storage to maintain your session. No advertising or tracking cookies are used.</p>
+        <h2>5. Data Retention</h2>
+        <p>Your account data is retained until you request deletion. You may contact us at any time to request deletion of your account and associated data.</p>
+        <h2>6. Security</h2>
+        <p>We use industry-standard security practices including encrypted connections and hashed credentials. No system is perfectly secure and we cannot guarantee absolute security.</p>
+        <h2>7. Contact</h2>
+        <p>For privacy questions or data deletion requests, contact us at richardgarland999@gmail.com.</p>
+      `
+    },
+    refunds: {
+      title: "Refund Policy",
+      updated: "May 2025",
+      body: `
+        <h2>Digital Content Policy</h2>
+        <p>All purchases on RevaultAI are for digital content (AI-generated prompts and creative works). Due to the nature of digital goods, all sales are final once the content has been accessed.</p>
+        <h2>Eligible Refunds</h2>
+        <p>We will issue a full refund if: the content was not delivered due to a technical error on our end, or the content significantly differs from what was described.</p>
+        <h2>How to Request a Refund</h2>
+        <p>Contact us at richardgarland999@gmail.com within 7 days of purchase with your order details. We review all requests within 3 business days.</p>
+        <h2>Chargebacks</h2>
+        <p>Filing a chargeback without contacting us first may result in account suspension. We encourage you to reach out directly — we want to make things right.</p>
+      `
+    },
+    dmca: {
+      title: "DMCA Policy",
+      updated: "May 2025",
+      body: `
+        <h2>Copyright Policy</h2>
+        <p>RevaultAI respects intellectual property rights and expects users to do the same. We respond to valid DMCA takedown notices in accordance with the Digital Millennium Copyright Act.</p>
+        <h2>Reporting Infringement</h2>
+        <p>If you believe content on RevaultAI infringes your copyright, send a written notice to richardgarland999@gmail.com including:</p>
+        <ul>
+          <li>Your contact information</li>
+          <li>A description of the copyrighted work</li>
+          <li>The URL of the allegedly infringing content</li>
+          <li>A statement that you believe in good faith the use is unauthorized</li>
+          <li>Your electronic or physical signature</li>
+        </ul>
+        <h2>Counter-Notices</h2>
+        <p>If you believe your content was removed in error, you may file a counter-notice with the same contact information above.</p>
+        <h2>Repeat Infringers</h2>
+        <p>RevaultAI will terminate accounts of users who repeatedly infringe copyrights.</p>
+      `
+    },
+    "ai-disclaimer": {
+      title: "AI Content Disclaimer",
+      updated: "May 2025",
+      body: `
+        <h2>Nature of Content</h2>
+        <p>All content on RevaultAI is generated using artificial intelligence tools including but not limited to Sora, Runway, MidJourney, Kling, and Stable Diffusion. This content is synthetic and does not depict real events, real people, or factual information unless explicitly stated.</p>
+        <h2>No Endorsement</h2>
+        <p>The presence of AI-generated content on RevaultAI does not constitute endorsement of any particular AI tool, company, or viewpoint.</p>
+        <h2>Prompt Ownership</h2>
+        <p>Creators retain ownership of their original prompts. The AI-generated outputs may be subject to the terms of the respective AI platforms used to create them.</p>
+        <h2>Accuracy and Reliability</h2>
+        <p>AI-generated content may contain inaccuracies, artifacts, or unintended outputs. RevaultAI does not guarantee the accuracy or appropriateness of any AI-generated content.</p>
+        <h2>Responsible Use</h2>
+        <p>Users are expected to use AI tools responsibly and in accordance with each platform's terms of service. Content that depicts real individuals without consent, or that is harmful or deceptive, is prohibited on RevaultAI.</p>
+      `
+    },
+  };
+
+  const c = content[page];
+  if (!c) return null;
+
+  return (
+    <div className="page">
+      <div style={{ maxWidth: 720, margin: "0 auto", padding: "80px 48px" }}>
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.2em", color: "var(--accent)", textTransform: "uppercase", marginBottom: 12, cursor: "pointer" }} onClick={() => setPage("home")}>
+          &larr; RevaultAI
+        </div>
+        <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 48, fontWeight: 300, color: "var(--text)", marginBottom: 8 }}>{c.title}</h1>
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--muted)", letterSpacing: "0.1em", marginBottom: 48 }}>Last updated: {c.updated}</div>
+        <div
+          style={{ color: "var(--muted)", lineHeight: 1.8, fontSize: 14 }}
+          dangerouslySetInnerHTML={{ __html: c.body.replace(/<h2>/g, '<h2 style="font-family: \'Syne\', sans-serif; font-size: 14px; font-weight: 600; color: var(--text); text-transform: uppercase; letter-spacing: 0.1em; margin: 32px 0 12px;">').replace(/<ul>/g, '<ul style="padding-left: 24px; margin: 12px 0;">').replace(/<li>/g, '<li style="margin-bottom: 8px;">').replace(/<p>/g, '<p style="margin-bottom: 16px;">') }}
+        />
+      </div>
+    </div>
+  );
+}
 export default function App() {
   const [creations, setCreations]   = useState(SEED_CREATIONS.map((c) => ({ ...c })));
 const [dbLoaded, setDbLoaded]     = useState(false);
@@ -1293,6 +1419,11 @@ const [purchasesLoaded, setPurchasesLoaded] = useState(false);
       case "submit":  return <SubmitPage setCreations={setCreations} notify={notify} setPage={setPage} user={user} profile={profile} />;
       case "set-password": return <SetPasswordPage notify={notify} setPage={setPage} />;
       case "email-confirmed": return <EmailConfirmedPage setPage={setPage} />;
+      case "terms":     return <LegalPage setPage={setPage} page="terms" />;
+case "privacy":   return <LegalPage setPage={setPage} page="privacy" />;
+case "refunds":   return <LegalPage setPage={setPage} page="refunds" />;
+case "dmca":      return <LegalPage setPage={setPage} page="dmca" />;
+case "ai-disclaimer": return <LegalPage setPage={setPage} page="ai-disclaimer" />;
       case "purchase-success": return <PurchaseSuccessPage setPage={setPage} setDetailId={setDetailId} creations={creations} />;
       default: return null;
     }
