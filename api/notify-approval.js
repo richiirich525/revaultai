@@ -44,7 +44,7 @@ export default async function handler(req, res) {
 
   const { error: emailError } = await resend.emails.send({
     from: "RevaultAI <onboarding@resend.dev>",
-    to: creatorEmail,
+    to: "richardgarland999@gmail.com",
     subject: `Your creation "${creationTitle}" has been approved`,
     html: `
       <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; background: #0E0F14; color: #E8E6F0; padding: 40px 32px; border-radius: 8px;">
