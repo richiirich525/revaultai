@@ -965,7 +965,8 @@ async function reject(id) {
 }
 async function toggleSpotlight(id) {
   const item = creations.find((c) => c.id === id);
-  if (!item) return;
+if (!item) return;
+if (!item?._fromDb) { notify("Cannot modify seed creations."); return; }
   if (!item.spotlight && spotlightCount >= 3) { notify("Spotlight limited to 3."); return; }
   const { error } = await updateCreationSpotlight(id, !item.spotlight);
   if (error) { notify("Error: " + error.message); return; }
