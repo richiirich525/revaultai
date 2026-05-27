@@ -49,7 +49,7 @@ export default async function handler(req, res) {
     }],
     metadata: { creation_id, user_id },
     success_url: origin + "/purchase-success?session_id={CHECKOUT_SESSION_ID}",
-    cancel_url:  origin + "/explore",
+    cancel_url: origin + "/?cancelled=true",
   });
 
   return res.status(200).json({ url: session.url });

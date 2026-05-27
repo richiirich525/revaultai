@@ -1224,15 +1224,45 @@ const [page, setPage]             = useState("home");
   useEffect(() => { async function loadPurchases() { if (!user?.id) { setPurchasedIds(new Set()); return; } const { data } = await fetchPurchasedIds(user.id); if (data) setPurchasedIds(data); } loadPurchases(); }, [user]);
 
   useEffect(() => {
-    async function handlePurchaseReturn() {
-      const params = new URLSearchParams(window.location.search); const sessionId = params.get("session_id"); if (!sessionId) return;
-      window.history.replaceState({}, "", window.location.pathname); setPage("purchase-success");
-      const res = await fetch("/api/verify-session", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ session_id: sessionId }) }); const json = await res.json();
-      if (!res.ok) { setNotifMsg("Purchase verification failed: " + (json.error || "Unknown error")); return; }
-      if (json.user_id) { const { data: ids } = await fetchPurchasedIds(json.user_id); if (ids) setPurchasedIds(ids); }
+  async function handlePurchaseReturn() {
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get("session_id");
+    const cancelled  = params.get("cancelled");
+
+    // Handle cancel return
+    if (cancelled === "true") {
+      window.history.replaceState({}, "", window.location.pathname);
+      setNotifMsg("Checkout cancelled — no charge was made.");
+      return;
     }
-    handlePurchaseReturn();
-  }, []);
+
+    if (!sessionId) return;
+    window.history.replaceState({}, "", window.location.pathname);
+    setPage("purchase-success");
+
+    try {
+      const res = await fetch("/api/verify-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: sessionId }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setNotifMsg("Purchase verification failed: " + (json.error || "Unknown error"));
+        setPage("explore");
+        return;
+      }
+      if (json.user_id) {
+        const { data: ids } = await fetchPurchasedIds(json.user_id);
+        if (ids) setPurchasedIds(ids);
+      }
+    } catch (err) {
+      setNotifMsg("Purchase verification failed. Please contact support.");
+      setPage("explore");
+    }
+  }
+  handlePurchaseReturn();
+}, []);
 
   function notify(msg) { setNotifMsg(msg); }
   async function handleSignOut() { await supabase.auth.signOut(); notify("Signed out of RevaultAI."); }
