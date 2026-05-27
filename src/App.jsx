@@ -888,10 +888,11 @@ function ProfilePage({ username, creations: allCreations, setPage, setDetailId, 
   );
 }
 
-function DetailPage({ id, creations, user, purchasedIds, setPage, setCreatorUser, notify }) {
+function DetailPage({ id, creations, user, purchasedIds, purchasesLoaded, setPage, setCreatorUser, notify }) {
   const creation = creations.find((c) => c.id === id); const [checkingOut, setCheckingOut] = useState(false);
   if (!creation) return <div className="page"><div className="empty-state"><div className="empty-text">Creation not found.</div></div></div>;
-  const isPending = creation.premium_status === "Pending"; const hasVideo = !!creation.video_url; const posterImg = creation.thumbnail_image || creation.hero_image; const purchased = purchasedIds.has(creation.id); const unlocked = !creation.is_premium || purchased; const priceLabel = creation.price_cents ? "$" + (creation.price_cents / 100).toFixed(2) : "$4.99";
+  const isPending = creation.premium_status === "Pending"; const hasVideo = !!creation.video_url; const posterImg = creation.thumbnail_image || creation.hero_image; const purchased = purchasedIds.has(creation.id); const unlocked = !creation.is_premium || purchased;
+const purchaseLoading = creation.is_premium && !purchasesLoaded; const priceLabel = creation.price_cents ? "$" + (creation.price_cents / 100).toFixed(2) : "$4.99";
   async function handleBuy() {
   if (!user) { notify("Sign in to purchase."); return; }
   setCheckingOut(true);
@@ -919,7 +920,9 @@ function DetailPage({ id, creations, user, purchasedIds, setPage, setCreatorUser
         <div className="prompt-box">
           {isPending ? <p className="prompt-text" style={{ color: "var(--muted)", fontStyle: "italic" }}>Under review.</p>
           : unlocked ? <><p className="prompt-text">{creation.prompt_full}</p>{hasVideo && <div className="unlock-area"><a href={creation.video_url} download className="btn-unlock-restrained" style={{ textDecoration: "none", display: "inline-block" }}>&#11015; Download Film</a></div>}</>
-          : <><div className="prompt-fade"><p className="prompt-text">{creation.prompt_preview}</p></div><div className="unlock-area"><span className="unlock-label">Full prompt {hasVideo ? "and film download" : ""} available after purchase.</span><button className="btn-unlock-restrained" onClick={handleBuy} disabled={checkingOut} style={{ opacity: checkingOut ? 0.6 : 1 }}>
+          : purchaseLoading
+  ? <div className="unlock-area"><span className="unlock-label" style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--muted)", letterSpacing: "0.1em" }}>Checking purchase status...</span></div>
+  : <><div className="prompt-fade"><p className="prompt-text">{creation.prompt_preview}</p></div><div className="unlock-area"><span className="unlock-label">Full prompt {hasVideo ? "and film download" : ""} available after purchase.</span><button className="btn-unlock-restrained" onClick={handleBuy} disabled={checkingOut} style={{ opacity: checkingOut ? 0.6 : 1 }}>
   {checkingOut ? "Opening checkout..." : "Unlock for " + priceLabel}
 </button></div></>}
         </div>
@@ -1196,6 +1199,7 @@ const [page, setPage]             = useState("home");
   const [profile, setProfile]       = useState(null);
   const [authOpen, setAuthOpen]     = useState(false);
   const [purchasedIds, setPurchasedIds] = useState(new Set());
+const [purchasesLoaded, setPurchasesLoaded] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => { const u = data.session?.user ?? null; setUser(u); if (u) loadOrCreateProfile(u); });
@@ -1221,7 +1225,15 @@ const [page, setPage]             = useState("home");
     load();
   }, []);
 
-  useEffect(() => { async function loadPurchases() { if (!user?.id) { setPurchasedIds(new Set()); return; } const { data } = await fetchPurchasedIds(user.id); if (data) setPurchasedIds(data); } loadPurchases(); }, [user]);
+  useEffect(() => {
+  async function loadPurchases() {
+    if (!user?.id) { setPurchasedIds(new Set()); setPurchasesLoaded(true); return; }
+    const { data } = await fetchPurchasedIds(user.id);
+    if (data) setPurchasedIds(data);
+    setPurchasesLoaded(true);
+  }
+  loadPurchases();
+}, [user]);
 
   useEffect(() => {
   async function handlePurchaseReturn() {
@@ -1275,7 +1287,7 @@ const [page, setPage]             = useState("home");
       case "explore": return <ExplorePage creations={creations} setPage={setPage} setDetailId={setDetailId} dbLoaded={dbLoaded} />;
       case "creators":return <CreatorsPage setPage={setPage} setCreatorUser={setCreatorUser} />;
       case "profile": return <ProfilePage username={creatorUser} creations={creations} setPage={setPage} setDetailId={setDetailId} user={user} />;
-      case "detail":  return <DetailPage id={detailId} creations={creations} user={user} purchasedIds={purchasedIds} setPage={setPage} setCreatorUser={setCreatorUser} notify={notify} />;
+      case "detail":  return <DetailPage id={detailId} creations={creations} user={user} purchasedIds={purchasedIds} purchasesLoaded={purchasesLoaded} setPage={setPage} setCreatorUser={setCreatorUser} notify={notify} />;
       case "settings": if (!user) return <div className="page"><div className="empty-state"><div className="empty-text">Sign in to access profile settings.</div></div></div>; return <SettingsPage user={user} profile={profile} setProfile={setProfile} notify={notify} />;
       case "admin": if (!isAdmin(user)) return <div className="page"><div className="empty-state"><div className="empty-text">Not authorized.</div></div></div>; return <AdminPage creations={creations} setCreations={setCreations} notify={notify} />;
       case "submit":  return <SubmitPage setCreations={setCreations} notify={notify} setPage={setPage} user={user} profile={profile} />;
