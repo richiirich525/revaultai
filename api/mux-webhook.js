@@ -66,12 +66,13 @@ export default async function handler(req, res) {
     updateQuery = updateQuery.eq("mux_asset_id", assetId);
   }
 
-  const { error } = await updateQuery;
+  const { data, error } = await updateQuery.select();
 
-  if (error) {
-    console.error("[mux-webhook] DB update failed:", error.message);
-    return res.status(500).json({ error: error.message });
-  }
+if (error) {
+  console.error("[mux-webhook] DB update failed:", error.message);
+  return res.status(500).json({ error: error.message });
+}
+console.log("[mux-webhook] Update result:", JSON.stringify(data));
 
   console.log("[mux-webhook] Updated creation:", { assetId, playbackId, creationId });
   return res.status(200).json({ received: true });
