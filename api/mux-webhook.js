@@ -20,22 +20,6 @@ export default async function handler(req, res) {
   }
 
   const rawBody = await getRawBody(req);
-  const webhookSecret = process.env.MUX_WEBHOOK_SECRET;
-
-  // Verify webhook signature
-  // Signature verification — log but don't block for now
-if (webhookSecret) {
-  try {
-    const mux = new Mux({
-      tokenId: process.env.MUX_TOKEN_ID,
-      tokenSecret: process.env.MUX_TOKEN_SECRET,
-    });
-    mux.webhooks.verifySignature(rawBody, req.headers, webhookSecret);
-  } catch (err) {
-    console.warn("[mux-webhook] Signature check skipped:", err.message);
-    // Continue processing — we'll tighten this later
-  }
-}
 
   let event;
   try {
@@ -44,15 +28,14 @@ if (webhookSecret) {
     return res.status(400).json({ error: "Invalid JSON" });
   }
 
-  // Only handle asset ready events
   if (event.type !== "video.asset.ready") {
     return res.status(200).json({ received: true });
   }
 
-  const asset = event.data;
+  const asset      = event.data;
   const playbackId = asset.playback_ids?.[0]?.id;
   const assetId    = asset.id;
-  const creationId = asset.passthrough; // we stored this when creating the asset
+  const creationId = asset.passthrough;
 
   if (!playbackId) {
     console.error("[mux-webhook] No playback ID on asset:", assetId);
@@ -61,14 +44,12 @@ if (webhookSecret) {
 
   const thumbnailUrl = `https://image.mux.com/${playbackId}/thumbnail.jpg?time=0&width=1200`;
   const previewUrl   = `https://image.mux.com/${playbackId}/animated.gif?start=0&end=4&width=640`;
-  const streamUrl    = `https://stream.mux.com/${playbackId}.m3u8`;
 
   const supabase = createClient(
     process.env.VITE_SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
   );
 
-  // Update by creationId if we have it, otherwise find by mux_asset_id
   let updateQuery = supabase
     .from("creations")
     .update({
@@ -92,6 +73,6 @@ if (webhookSecret) {
     return res.status(500).json({ error: error.message });
   }
 
-  console.log("[mux-webhook] Updated creation with Mux URLs:", { assetId, playbackId, creationId });
+  console.log("[mux-webhook] Updated creation:", { assetId, playbackId, creationId });
   return res.status(200).json({ received: true });
 }

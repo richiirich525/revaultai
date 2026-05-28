@@ -1,100 +1,72 @@
-import Mux from "@mux/mux-node";
 import { createClient } from "@supabase/supabase-js";
-
-export const config = {
-  api: { bodyParser: false },
-};
-
-async function getRawBody(req) {
-  return new Promise((resolve, reject) => {
-    const chunks = [];
-    req.on("data", (chunk) => chunks.push(chunk));
-    req.on("end", () => resolve(Buffer.concat(chunks)));
-    req.on("error", reject);
-  });
-}
+import Mux from "@mux/mux-node";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const rawBody = await getRawBody(req);
-  const webhookSecret = process.env.MUX_WEBHOOK_SECRET;
+  const authHeader = req.headers.authorization ?? "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
+  if (!token) return res.status(401).json({ error: "Unauthorized." });
 
-  // Verify webhook signature
-  if (webhookSecret) {
-    try {
-      const mux = new Mux({
-        tokenId: process.env.MUX_TOKEN_ID,
-        tokenSecret: process.env.MUX_TOKEN_SECRET,
-      });
-      mux.webhooks.verifySignature(
-        rawBody,
-        req.headers,
-        webhookSecret
-      );
-    } catch (err) {
-      console.error("[mux-webhook] Signature verification failed:", err.message);
-      return res.status(401).json({ error: "Invalid webhook signature" });
-    }
-  }
-
-  let event;
   try {
-    event = JSON.parse(rawBody.toString());
+    const supabase = createClient(
+      process.env.VITE_SUPABASE_URL,
+      process.env.VITE_SUPABASE_ANON_KEY
+    );
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    if (error || !user) {
+      return res.status(401).json({ error: "Unauthorized: invalid or expired session." });
+    }
   } catch {
-    return res.status(400).json({ error: "Invalid JSON" });
+    return res.status(401).json({ error: "Unauthorized: could not verify session." });
   }
 
-  // Only handle asset ready events
-  if (event.type !== "video.asset.ready") {
-    return res.status(200).json({ received: true });
+  const { videoPublicUrl, creationId } = req.body;
+  if (!videoPublicUrl) {
+    return res.status(400).json({ error: "videoPublicUrl is required." });
   }
 
-  const asset = event.data;
-  const playbackId = asset.playback_ids?.[0]?.id;
-  const assetId    = asset.id;
-  const creationId = asset.passthrough; // we stored this when creating the asset
+  const muxTokenId     = process.env.MUX_TOKEN_ID;
+  const muxTokenSecret = process.env.MUX_TOKEN_SECRET;
 
-  if (!playbackId) {
-    console.error("[mux-webhook] No playback ID on asset:", assetId);
-    return res.status(200).json({ received: true });
+  if (!muxTokenId || !muxTokenSecret) {
+    return res.status(200).json({
+      video_url:       videoPublicUrl,
+      preview_video:   videoPublicUrl,
+      thumbnail_image: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1200&q=90",
+      mux_enabled:     false,
+    });
   }
 
-  const thumbnailUrl = `https://image.mux.com/${playbackId}/thumbnail.jpg?time=0&width=1200`;
-  const previewUrl   = `https://image.mux.com/${playbackId}/animated.gif?start=0&end=4&width=640`;
-  const streamUrl    = `https://stream.mux.com/${playbackId}.m3u8`;
+  try {
+    const mux = new Mux({ tokenId: muxTokenId, tokenSecret: muxTokenSecret });
+    const { video } = mux;
 
-  const supabase = createClient(
-    process.env.VITE_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  );
-
-  // Update by creationId if we have it, otherwise find by mux_asset_id
-  let updateQuery = supabase
-    .from("creations")
-    .update({
-      thumbnail_image: thumbnailUrl,
-      preview_video:   previewUrl,
-      hero_image:      thumbnailUrl,
-      mux_asset_id:    assetId,
-      mux_playback_id: playbackId,
+    const asset = await video.assets.create({
+      input: [{ url: videoPublicUrl }],
+      playback_policy: ["public"],
+      passthrough: creationId ?? "",
     });
 
-  if (creationId && creationId.length > 10) {
-    updateQuery = updateQuery.eq("id", creationId);
-  } else {
-    updateQuery = updateQuery.eq("mux_asset_id", assetId);
+    return res.status(200).json({
+      success:         true,
+      video_url:       videoPublicUrl,
+      preview_video:   videoPublicUrl,
+      thumbnail_image: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1200&q=90",
+      mux_asset_id:    asset.id,
+      mux_enabled:     true,
+      processing:      true,
+    });
+  } catch (err) {
+    console.error("[process-video] Mux error:", err.message);
+    return res.status(200).json({
+      success:         true,
+      video_url:       videoPublicUrl,
+      preview_video:   videoPublicUrl,
+      thumbnail_image: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1200&q=90",
+      mux_error:       err.message,
+    });
   }
-
-  const { error } = await updateQuery;
-
-  if (error) {
-    console.error("[mux-webhook] DB update failed:", error.message);
-    return res.status(500).json({ error: error.message });
-  }
-
-  console.log("[mux-webhook] Updated creation with Mux URLs:", { assetId, playbackId, creationId });
-  return res.status(200).json({ received: true });
 }
