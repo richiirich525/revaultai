@@ -1081,8 +1081,8 @@ function SubmitPage({ setCreations, notify, setPage, user, profile }) {
   body: JSON.stringify({ videoPublicUrl, creationId: "pending" }),
 });
     const result = await res.json();
-    setUploadResult(result);
-    setUploadState("done");
+    console.log("[upload] result:", result);
+setUploadResult(result); setUploadState("done");
   } catch (err) { setUploadError(err.message); setUploadState("error"); }
 }
   async function handleSubmit() {
