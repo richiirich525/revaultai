@@ -55,6 +55,7 @@ export function creationToRow(creation, user, profile) {
     prompt_preview:   creation.prompt_preview ?? null,
     prompt_full:      creation.prompt_full,
     spotlight:        false,
+    mux_asset_id:     creation.mux_asset_id ?? null,
   };
 }
 
