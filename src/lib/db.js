@@ -38,7 +38,7 @@ export function rowToCreation(row) {
 }
 
 export function creationToRow(creation, user, profile) {
-  return {
+  const row = {
     user_id:          user?.id ?? null,
     creator_username: profile?.username     ?? user?.email?.split("@")[0] ?? "anonymous",
     creator_name:     profile?.display_name ?? user?.email?.split("@")[0] ?? "Anonymous",
@@ -57,6 +57,8 @@ export function creationToRow(creation, user, profile) {
     spotlight:        false,
     mux_asset_id:     creation.mux_asset_id ?? null,
   };
+  console.log("[creationToRow] mux_asset_id:", row.mux_asset_id);
+  return row;
 }
 
 // ---------------------------------------------------------------------------
