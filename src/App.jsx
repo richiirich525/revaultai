@@ -1076,10 +1076,10 @@ function SubmitPage({ setCreations, notify, setPage, user, profile }) {
   // Step 3: send to Mux for processing
   try {
     const res = await fetch("/api/process-video", {
-      method: "POST",
-      headers: authHeader,
-      body: JSON.stringify({ videoPublicUrl }),
-    });
+  method: "POST",
+  headers: authHeader,
+  body: JSON.stringify({ videoPublicUrl, creationId: "pending" }),
+});
     const result = await res.json();
     setUploadResult(result);
     setUploadState("done");
@@ -1116,7 +1116,7 @@ function SubmitPage({ setCreations, notify, setPage, user, profile }) {
               <><div className="upload-file-info"><span className="upload-file-name">{videoFile.name}</span><span className="upload-file-size">{formatBytes(videoFile.size)}</span>{uploadState !== "uploading" && <button className="upload-file-clear" onClick={clearFile}>&#10005;</button>}</div>
               {uploadState === "idle" && <button className="btn-primary" style={{ marginTop: 12, padding: "10px 24px", fontSize: 11 }} onClick={uploadToR2}>Upload to Vault</button>}
               {uploadState === "uploading" && <div className="upload-progress-wrap"><div className="upload-progress-bar-bg"><div className="upload-progress-bar" style={{ width: uploadPct + "%" }} /></div><div className="upload-progress-label"><span>Uploading...</span><span>{uploadPct}%</span></div></div>}
-{uploadState === "processing" && <div className="upload-progress-wrap"><div className="upload-progress-bar-bg"><div className="upload-progress-bar" style={{ width: "100%", opacity: 0.6, animation: "pulse 1.5s ease-in-out infinite" }} /></div><div className="upload-progress-label"><span>Processing video...</span><span>Please wait</span></div></div>}
+{uploadState === "processing" && <div className="upload-progress-wrap"><div className="upload-progress-bar-bg"><div className="upload-progress-bar" style={{ width: "100%", opacity: 0.6, animation: "pulse 1.5s ease-in-out infinite" }} /></div><div className="upload-progress-label"><span>Submitting to vault...</span><span>Almost done</span></div></div>}
 {uploadState === "done" && <div className="upload-success">&#10003;&nbsp; Upload complete</div>}
               {uploadState === "error" && <><div className="upload-error">{uploadError}</div><button className="btn-primary" style={{ marginTop: 10, padding: "9px 20px", fontSize: 11 }} onClick={uploadToR2}>Retry Upload</button></>}</>
             )}
