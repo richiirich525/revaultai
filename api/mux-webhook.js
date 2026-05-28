@@ -49,8 +49,8 @@ export default async function handler(req, res) {
     process.env.VITE_SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
   );
-
-  let updateQuery = supabase
+console.log("[mux-webhook] Looking for mux_asset_id:", assetId);
+  const { error } = await supabase
     .from("creations")
     .update({
       thumbnail_image: thumbnailUrl,
@@ -58,15 +58,8 @@ export default async function handler(req, res) {
       hero_image:      thumbnailUrl,
       mux_asset_id:    assetId,
       mux_playback_id: playbackId,
-    });
-
-  if (creationId && creationId.length > 10) {
-    updateQuery = updateQuery.eq("id", creationId);
-  } else {
-    updateQuery = updateQuery.eq("mux_asset_id", assetId);
-  }
-
-  const { error } = await updateQuery;
+    })
+    .eq("mux_asset_id", assetId);
 
 if (error) {
   console.error("[mux-webhook] DB update failed:", error.message);
