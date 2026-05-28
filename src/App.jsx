@@ -1092,8 +1092,9 @@ setUploadResult(result); setUploadState("done");
     const toolList = form.tools.split(",").map((t) => t.trim()).filter(Boolean);
     const fallbackThumb = "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1200&q=90";
     const newCreation = { id: "u" + Date.now(), title: form.title.trim(), creator: { username: profile?.username ?? user?.email?.split("@")[0] ?? "you", display_name: profile?.display_name ?? user?.email?.split("@")[0] ?? "You", avatar_url: profile?.avatar_url ?? "" }, hero_image: uploadResult?.thumbnail_image || fallbackThumb, thumbnail_image: uploadResult?.thumbnail_image || fallbackThumb, video_url: uploadResult?.video_url || "", preview_video: uploadResult?.preview_video || "", tools_used: toolList.length > 0 ? toolList : ["Unknown"], category: form.category, is_premium: form.isPremium, premium_status: form.isPremium ? "Pending" : null, prompt_preview: form.isPremium ? form.prompt.trim().slice(0, 120) + "..." : null, prompt_full: form.prompt.trim(), spotlight: false, mux_asset_id: uploadResult?.mux_asset_id || null };
-    setCreations((prev) => [newCreation, ...prev]);
-    const { data: saved, error } = await insertCreation(newCreation, user, profile);
+    console.log("[submit] newCreation.mux_asset_id:", newCreation.mux_asset_id);
+setCreations((prev) => [newCreation, ...prev]);
+const { data: saved, error } = await insertCreation(newCreation, user, profile);
     if (error) { console.error("[RevaultAI] Supabase insert failed:", error.message); notify("Saved locally -- could not reach the database."); }
     else if (saved) { setCreations((prev) => prev.map((c) => (c.id === newCreation.id ? saved : c))); }
     setSubmitting(false); setPage("explore");
