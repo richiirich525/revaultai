@@ -814,19 +814,21 @@ function ProfilePage({ username, creations: allCreations, setPage, setDetailId, 
   }, [username, user?.id]);
 
   async function handleFollow() {
-    if (!user) return;
-    setFollowLoading(true);
-    if (isFollowing) {
-      await unfollowCreator(user.id, profileData.id);
-      setIsFollowing(false);
-      setFollowerCount((n) => Math.max(0, n - 1));
-    } else {
-      await followCreator(user.id, profileData.id);
-      setIsFollowing(true);
-      setFollowerCount((n) => n + 1);
-    }
-    setFollowLoading(false);
+  if (!user) return;
+  setFollowLoading(true);
+  if (isFollowing) {
+    const { error } = await unfollowCreator(user.id, profileData.id);
+    if (error) { setFollowLoading(false); return; }
+    setIsFollowing(false);
+    setFollowerCount((n) => Math.max(0, n - 1));
+  } else {
+    const { error } = await followCreator(user.id, profileData.id);
+    if (error) { setFollowLoading(false); return; }
+    setIsFollowing(true);
+    setFollowerCount((n) => n + 1);
   }
+  setFollowLoading(false);
+}
 
   if (loading) return <div className="page"><div className="empty-state"><div className="empty-text">Loading profile...</div></div></div>;
   if (!profileData) return <div className="page"><div className="empty-state"><div className="empty-text">Creator not found.</div></div></div>;
@@ -1034,9 +1036,15 @@ function SubmitPage({ setCreations, notify, setPage, user, profile }) {
   if (!videoFile) return;
   setUploadState("uploading"); setUploadError(null); setUploadPct(0);
 
-  const session = await supabase.auth.getSession();
-  const token = session.data.session?.access_token ?? "";
-  const authHeader = { "Authorization": "Bearer " + token, "Content-Type": "application/json" };
+  let token;
+try {
+  token = await getSessionToken();
+} catch (err) {
+  setUploadError("Session expired. Please sign in again and retry.");
+  setUploadState("error");
+  return;
+}
+const authHeader = { "Authorization": "Bearer " + token, "Content-Type": "application/json" };
 
   // Step 1: get presigned URL from server
   let uploadUrl, videoPublicUrl;
@@ -1081,7 +1089,7 @@ function SubmitPage({ setCreations, notify, setPage, user, profile }) {
   body: JSON.stringify({ videoPublicUrl, creationId: "pending" }),
 });
     const result = await res.json();
-    console.log("[submit] newCreation.mux_asset_id:", newCreation.mux_asset_id);
+    
 setUploadResult(result); setUploadState("done");
   } catch (err) { setUploadError(err.message); setUploadState("error"); }
 }
@@ -1092,7 +1100,7 @@ setUploadResult(result); setUploadState("done");
     const toolList = form.tools.split(",").map((t) => t.trim()).filter(Boolean);
     const fallbackThumb = "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1200&q=90";
     const newCreation = { id: "u" + Date.now(), title: form.title.trim(), creator: { username: profile?.username ?? user?.email?.split("@")[0] ?? "you", display_name: profile?.display_name ?? user?.email?.split("@")[0] ?? "You", avatar_url: profile?.avatar_url ?? "" }, hero_image: uploadResult?.thumbnail_image || fallbackThumb, thumbnail_image: uploadResult?.thumbnail_image || fallbackThumb, video_url: uploadResult?.video_url || "", preview_video: uploadResult?.preview_video || "", tools_used: toolList.length > 0 ? toolList : ["Unknown"], category: form.category, is_premium: form.isPremium, premium_status: form.isPremium ? "Pending" : null, prompt_preview: form.isPremium ? form.prompt.trim().slice(0, 120) + "..." : null, prompt_full: form.prompt.trim(), spotlight: false, mux_asset_id: uploadResult?.mux_asset_id || null };
-    console.log("[submit] newCreation.mux_asset_id:", newCreation.mux_asset_id);
+    
 setCreations((prev) => [newCreation, ...prev]);
 const { data: saved, error } = await insertCreation(newCreation, user, profile);
     if (error) { console.error("[RevaultAI] Supabase insert failed:", error.message); notify("Saved locally -- could not reach the database."); }
@@ -1314,6 +1322,12 @@ function LegalPage({ setPage, page }) {
       </div>
     </div>
   );
+}
+async function getSessionToken() {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) throw new Error("Your session has expired. Please sign in again.");
+  return token;
 }
 export default function App() {
   const [creations, setCreations]   = useState(SEED_CREATIONS.map((c) => ({ ...c })));
