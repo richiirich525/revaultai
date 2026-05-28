@@ -1081,7 +1081,7 @@ function SubmitPage({ setCreations, notify, setPage, user, profile }) {
   body: JSON.stringify({ videoPublicUrl, creationId: "pending" }),
 });
     const result = await res.json();
-    console.log("[upload] result:", result);
+    console.log("[submit] newCreation.mux_asset_id:", newCreation.mux_asset_id);
 setUploadResult(result); setUploadState("done");
   } catch (err) { setUploadError(err.message); setUploadState("error"); }
 }

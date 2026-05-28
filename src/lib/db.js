@@ -57,7 +57,7 @@ export function creationToRow(creation, user, profile) {
     spotlight:        false,
     mux_asset_id:     creation.mux_asset_id ?? null,
   };
-  console.log("[creationToRow] mux_asset_id:", row.mux_asset_id);
+  
   return row;
 }
 
