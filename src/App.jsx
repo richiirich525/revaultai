@@ -614,6 +614,7 @@ function HomePage({ creations, setPage, setDetailId }) {
       <footer className="footer">
   <div className="footer-logo">RevaultAI</div>
   <div style={{ display: "flex", gap: 24, flexWrap: "wrap", alignItems: "center" }}>
+    <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("faq")}>FAQ</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("terms")}>Terms</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("privacy")}>Privacy</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("refunds")}>Refunds</span>
@@ -1329,6 +1330,91 @@ async function getSessionToken() {
   if (!token) throw new Error("Your session has expired. Please sign in again.");
   return token;
 }
+function FAQPage({ setPage }) {
+  const faqs = [
+    {
+      q: "What is RevaultAI?",
+      a: "RevaultAI is a curated archive of AI-generated films, animations, and creative works. We exist to surface the best AI-native content from the world's most skilled AI artists — and make it discoverable, purchasable, and inspiring."
+    },
+    {
+      q: "What makes RevaultAI different?",
+      a: "Most platforms are feeds. RevaultAI is a vault. Every creation is reviewed before it goes live. We don't optimize for volume — we optimize for quality. The result is a platform where every piece of content is worth your time."
+    },
+    {
+      q: "What are Premium Prompts?",
+      a: "Premium Prompts are the full, detailed creative briefs behind a creator's AI-generated work. They include model settings, camera directions, lighting notes, sound design guidance, and the exact language used to produce the result. They are the creative DNA of the work."
+    },
+    {
+      q: "How do purchases work?",
+      a: "Click 'Unlock' on any premium creation. You'll be taken to a secure Stripe checkout. After payment, the full prompt is permanently unlocked for your account. You can access it any time from the creation page."
+    },
+    {
+      q: "Can I download videos?",
+      a: "Unlocking a premium creation gives you access to the full prompt. Video download availability depends on the individual creator's settings. If a download is available, it will appear after purchase."
+    },
+    {
+      q: "Who owns uploaded content?",
+      a: "Creators retain full ownership of their work. By submitting to RevaultAI, creators grant us a non-exclusive license to display their content on the platform. Purchasing a prompt does not transfer ownership — it grants you a personal license to use the creative brief for your own work."
+    },
+    {
+      q: "What AI tools are supported?",
+      a: "RevaultAI supports content created with any AI tool — Sora, Runway, MidJourney, Kling, Stable Diffusion, Pika, Luma, and beyond. We are tool-agnostic. What matters is the quality of the output and the craft behind the prompt."
+    },
+    {
+      q: "How do I become a featured creator?",
+      a: "Submit your best work through the Submit page. Every submission is reviewed by the RevaultAI team. Creators who consistently produce high-quality work are eligible for Spotlight placement and featured positions on the homepage."
+    },
+    {
+      q: "How does Spotlight work?",
+      a: "Spotlight is our curated selection of up to three exceptional creations displayed prominently on the homepage and Explore page. Spotlight is hand-picked by the RevaultAI team and rotates regularly. It is the highest visibility placement on the platform."
+    },
+    {
+      q: "How do refunds work?",
+      a: "All purchases are for digital content and are final once the prompt has been accessed. If you experienced a technical issue that prevented delivery, contact us at richardgarland999@gmail.com within 7 days of purchase and we will make it right."
+    },
+  ];
+
+  const [open, setOpen] = useState(null);
+
+  return (
+    <div className="page">
+      <div style={{ maxWidth: 720, margin: "0 auto", padding: "80px 48px" }}>
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.2em", color: "var(--accent)", textTransform: "uppercase", marginBottom: 12, cursor: "pointer" }} onClick={() => setPage("home")}>
+          &larr; RevaultAI
+        </div>
+        <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 48, fontWeight: 300, color: "var(--text)", marginBottom: 8 }}>
+          Frequently Asked Questions
+        </h1>
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", letterSpacing: "0.08em", marginBottom: 56 }}>
+          Everything you need to know about RevaultAI.
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {faqs.map((faq, i) => (
+            <div key={i} style={{ borderTop: "1px solid var(--border)", padding: "24px 0" }}>
+              <div
+                onClick={() => setOpen(open === i ? null : i)}
+                style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", cursor: "pointer", gap: 24 }}
+              >
+                <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 15, fontWeight: 600, color: "var(--text)", lineHeight: 1.4 }}>
+                  {faq.q}
+                </div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 16, color: "var(--accent)", flexShrink: 0, marginTop: 2 }}>
+                  {open === i ? "−" : "+"}
+                </div>
+              </div>
+              {open === i && (
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 1.8, marginTop: 16, letterSpacing: "0.02em" }}>
+                  {faq.a}
+                </div>
+              )}
+            </div>
+          ))}
+          <div style={{ borderTop: "1px solid var(--border)" }} />
+        </div>
+      </div>
+    </div>
+  );
+}
 export default function App() {
   const [creations, setCreations]   = useState(SEED_CREATIONS.map((c) => ({ ...c })));
 const [dbLoaded, setDbLoaded]     = useState(false);
@@ -1435,6 +1521,7 @@ const [purchasesLoaded, setPurchasesLoaded] = useState(false);
       case "set-password": return <SetPasswordPage notify={notify} setPage={setPage} />;
       case "email-confirmed": return <EmailConfirmedPage setPage={setPage} />;
       case "terms":     return <LegalPage setPage={setPage} page="terms" />;
+      case "faq":       return <FAQPage setPage={setPage} />;
 case "privacy":   return <LegalPage setPage={setPage} page="privacy" />;
 case "refunds":   return <LegalPage setPage={setPage} page="refunds" />;
 case "dmca":      return <LegalPage setPage={setPage} page="dmca" />;
