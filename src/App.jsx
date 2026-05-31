@@ -617,6 +617,7 @@ function HomePage({ creations, setPage, setDetailId }) {
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("faq")}>FAQ</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("contact")}>Contact</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("guidelines")}>Guidelines</span>
+    <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("premium-prompts")}>Premium Prompts</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("terms")}>Terms</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("privacy")}>Privacy</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("refunds")}>Refunds</span>
@@ -1520,6 +1521,61 @@ function GuidelinesPage({ setPage }) {
     </div>
   );
 }
+function PremiumPromptsPage({ setPage }) {
+  return (
+    <div className="page">
+      <div style={{ maxWidth: 720, margin: "0 auto", padding: "80px 48px" }}>
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.2em", color: "var(--accent)", textTransform: "uppercase", marginBottom: 12, cursor: "pointer" }} onClick={() => setPage("home")}>← RevaultAI</div>
+        <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 48, fontWeight: 300, color: "var(--text)", marginBottom: 8 }}>Premium Prompts</h1>
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", letterSpacing: "0.08em", marginBottom: 56 }}>The creative DNA behind the work.</div>
+
+        <div style={{ borderTop: "1px solid var(--border)", padding: "32px 0" }}>
+          <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 700, color: "var(--text)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 16 }}>What Is a Premium Prompt?</div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 1.9 }}>A Premium Prompt is the full creative brief behind an AI-generated work. Not a vague description — a detailed, replicable document that includes the exact language, model settings, camera direction, lighting intent, sound design notes, and creative decisions that produced the result you see on screen. It is the craft behind the output.</div>
+        </div>
+
+        <div style={{ borderTop: "1px solid var(--border)", padding: "32px 0" }}>
+          <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 700, color: "var(--text)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 20 }}>Why Creators Charge for Them</div>
+          {[
+            ["Time and iteration", "A great prompt is rarely the first attempt. It represents hours of refinement, testing, and creative decision-making."],
+            ["Transferable skill", "The best prompts teach you how to think — not just what to type. They are educational artifacts."],
+            ["Creative ownership", "Creators invest their creative vision into their prompts. Pricing reflects that value."],
+          ].map(([title, desc], i) => (
+            <div key={i} style={{ marginBottom: 24 }}>
+              <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 12, fontWeight: 600, color: "var(--text)", marginBottom: 6 }}>{title}</div>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", lineHeight: 1.7 }}>{desc}</div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ borderTop: "1px solid var(--border)", padding: "32px 0" }}>
+          <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 700, color: "var(--text)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 20 }}>What Buyers Receive</div>
+          {["The complete, unabridged prompt used to generate the work", "Model and tool specifications", "Camera movement and framing direction", "Lighting and atmosphere notes", "Sound design guidance where applicable", "Permanent access — unlocked forever on your account"].map((item, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 12 }}>
+              <div style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--accent)", flexShrink: 0, marginTop: 6 }} />
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>{item}</div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ borderTop: "1px solid var(--border)", padding: "32px 0" }}>
+          <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 700, color: "var(--text)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 20 }}>Ownership and Usage</div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 1.9, marginBottom: 16 }}>Purchasing a Premium Prompt grants you a personal license to use the creative brief for your own work. Creators retain full ownership of their original prompts. Reselling or redistributing purchased prompts is not permitted.</div>
+        </div>
+
+        <div style={{ borderTop: "1px solid var(--border)", padding: "32px 0" }}>
+          <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 700, color: "var(--text)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 16 }}>Refund Policy</div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 1.9 }}>All purchases are final once the prompt has been accessed. If you experienced a technical issue that prevented delivery, contact us within 7 days and we will make it right. See our full <span style={{ color: "var(--accent)", cursor: "pointer" }} onClick={() => setPage("refunds")}>Refund Policy.</span></div>
+        </div>
+
+        <div style={{ borderTop: "1px solid var(--border)", paddingTop: 40 }}>
+          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 300, color: "var(--text)", marginBottom: 20, lineHeight: 1.4 }}>Ready to unlock something exceptional?</div>
+          <button className="btn-primary" onClick={() => setPage("explore")}>Browse Premium Creations</button>
+        </div>
+      </div>
+    </div>
+  );
+}
 export default function App() {
   const [creations, setCreations]   = useState(SEED_CREATIONS.map((c) => ({ ...c })));
 const [dbLoaded, setDbLoaded]     = useState(false);
@@ -1629,6 +1685,7 @@ const [purchasesLoaded, setPurchasesLoaded] = useState(false);
       case "faq":       return <FAQPage setPage={setPage} />;
       case "contact":   return <ContactPage setPage={setPage} />;
       case "guidelines": return <GuidelinesPage setPage={setPage} />;
+      case "premium-prompts": return <PremiumPromptsPage setPage={setPage} />;
 case "privacy":   return <LegalPage setPage={setPage} page="privacy" />;
 case "refunds":   return <LegalPage setPage={setPage} page="refunds" />;
 case "dmca":      return <LegalPage setPage={setPage} page="dmca" />;
