@@ -618,6 +618,7 @@ function HomePage({ creations, setPage, setDetailId }) {
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("contact")}>Contact</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("guidelines")}>Guidelines</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("premium-prompts")}>Premium Prompts</span>
+    <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("about")}>About</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("terms")}>Terms</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("privacy")}>Privacy</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("refunds")}>Refunds</span>
@@ -1576,6 +1577,54 @@ function PremiumPromptsPage({ setPage }) {
     </div>
   );
 }
+function AboutPage({ setPage }) {
+  return (
+    <div className="page">
+      <div style={{ maxWidth: 720, margin: "0 auto", padding: "80px 48px" }}>
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.2em", color: "var(--accent)", textTransform: "uppercase", marginBottom: 12, cursor: "pointer" }} onClick={() => setPage("home")}>← RevaultAI</div>
+
+        <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 56, fontWeight: 300, color: "var(--text)", marginBottom: 8, lineHeight: 1.1 }}>The AI era does not need more content.</h1>
+        <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 56, fontWeight: 300, color: "var(--accent)", marginBottom: 56, lineHeight: 1.1 }}>It needs curation.</h2>
+
+        <div style={{ borderTop: "1px solid var(--border)", padding: "40px 0" }}>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 2, marginBottom: 24 }}>Every week, millions of AI-generated images, videos, and films are produced and discarded into the feed. Most are forgotten within hours. The tools have never been more powerful. The signal has never been harder to find.</div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 2 }}>RevaultAI exists because we believe the best AI-native creative work deserves a permanent home. Not a feed. Not an algorithm. A vault.</div>
+        </div>
+
+        <div style={{ borderTop: "1px solid var(--border)", padding: "40px 0" }}>
+          <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 700, color: "var(--text)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 20 }}>Signal Over Noise</div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 2, marginBottom: 24 }}>Every creation on RevaultAI is reviewed before it goes live. We do not optimize for volume. We optimize for quality. The result is a platform where every piece of content is worth your time — and where creators who take their craft seriously get the visibility they deserve.</div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 2 }}>This is not a social media platform. There are no likes, no follower counts on the feed, no algorithmic recommendations. There is only the work.</div>
+        </div>
+
+        <div style={{ borderTop: "1px solid var(--border)", padding: "40px 0" }}>
+          <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 700, color: "var(--text)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 20 }}>Human Creativity. AI Tools.</div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 2 }}>We are not interested in the debate about whether AI is art. We are interested in what skilled, intentional human beings create when given access to extraordinary tools. The prompts behind the work on this platform represent real creative thinking — the vision, the iteration, the craft. The AI is the medium. The creator is the artist.</div>
+        </div>
+
+        <div style={{ borderTop: "1px solid var(--border)", padding: "40px 0" }}>
+          <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 700, color: "var(--text)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 20 }}>Creator First</div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 2, marginBottom: 24 }}>RevaultAI is built for creators who take their work seriously. Every feature on this platform — premium prompts, spotlight placement, curated profiles — is designed to give serious AI artists the recognition and infrastructure they deserve.</div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 2 }}>We review every submission personally. We respond to every message. We are building this with the creators who trust us with their work.</div>
+        </div>
+
+        <div style={{ borderTop: "1px solid var(--border)", padding: "40px 0" }}>
+          <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 700, color: "var(--text)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 20 }}>The Long View</div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 2, marginBottom: 24 }}>We are at the beginning of something. The tools will keep improving. The volume of AI-generated content will keep growing. The need for trusted curation will only increase.</div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 2 }}>RevaultAI is building the archive that will matter when everyone looks back at this moment and asks: where was the best work? It will be here.</div>
+        </div>
+
+        <div style={{ borderTop: "1px solid var(--border)", paddingTop: 48 }}>
+          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, fontWeight: 300, color: "var(--text)", marginBottom: 32, lineHeight: 1.4 }}>The vault is open.</div>
+          <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+            <button className="btn-primary" onClick={() => setPage("explore")}>Explore the Archive</button>
+            <button className="btn-ghost" onClick={() => setPage("guidelines")}>Submit Your Work</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 export default function App() {
   const [creations, setCreations]   = useState(SEED_CREATIONS.map((c) => ({ ...c })));
 const [dbLoaded, setDbLoaded]     = useState(false);
@@ -1686,6 +1735,7 @@ const [purchasesLoaded, setPurchasesLoaded] = useState(false);
       case "contact":   return <ContactPage setPage={setPage} />;
       case "guidelines": return <GuidelinesPage setPage={setPage} />;
       case "premium-prompts": return <PremiumPromptsPage setPage={setPage} />;
+      case "about": return <AboutPage setPage={setPage} />;
 case "privacy":   return <LegalPage setPage={setPage} page="privacy" />;
 case "refunds":   return <LegalPage setPage={setPage} page="refunds" />;
 case "dmca":      return <LegalPage setPage={setPage} page="dmca" />;
