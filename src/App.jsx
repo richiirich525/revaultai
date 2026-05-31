@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "./lib/supabase.js";
+import { initAnalytics, identifyUser, resetUser, track } from "./lib/analytics.js";
 import {
   fetchCreations,
   fetchCreationsByUser,
@@ -681,7 +682,7 @@ function ExplorePage({ creations, setPage, setDetailId, dbLoaded }) {
             type="text"
             placeholder="Search by title, creator, category, or tool..."
             value={search}
-            onChange={(e) => { setSearch(e.target.value); setVisible(12); }}
+            onChange={(e) => { setSearch(e.target.value); setVisible(12); if (e.target.value.length === 3) track("search_used", { query: e.target.value }); }}
             style={{ maxWidth: 520 }}
           />
         </div>
@@ -823,11 +824,13 @@ function ProfilePage({ username, creations: allCreations, setPage, setDetailId, 
   setFollowLoading(true);
   if (isFollowing) {
     const { error } = await unfollowCreator(user.id, profileData.id);
+    track("creator_unfollowed", { creator_id: profileData.id, creator_username: profileData.username });
     if (error) { setFollowLoading(false); return; }
     setIsFollowing(false);
     setFollowerCount((n) => Math.max(0, n - 1));
   } else {
     const { error } = await followCreator(user.id, profileData.id);
+    track("creator_followed", { creator_id: profileData.id, creator_username: profileData.username });
     if (error) { setFollowLoading(false); return; }
     setIsFollowing(true);
     setFollowerCount((n) => n + 1);
@@ -913,6 +916,7 @@ const purchaseLoading = creation.is_premium && !purchasesLoaded; const priceLabe
   async function handleBuy() {
   if (!user) { notify("Sign in to purchase."); return; }
   setCheckingOut(true);
+  track("purchase_started", { creation_id: creation.id, title: creation.title, price_cents: creation.price_cents });
   try {
     const { url, error } = await createCheckoutSession(creation.id, user.id);
     if (error) {
@@ -957,6 +961,7 @@ function AdminPage({ creations, setCreations, notify }) {
   if (error) { notify("Error: " + error.message); return; }
   const { data } = await fetchCreations();
   if (data) setCreations(data);
+  track("creation_approved", { creation_id: id, title: item.title });
   notify("Approved.");
   // Send email notification
   try {
@@ -982,10 +987,12 @@ async function reject(id) {
   if (error) { notify("Error: " + error.message); return; }
   const { data } = await fetchCreations();
   if (data) setCreations(data);
+  track("creation_rejected", { creation_id: id, title: item.title });
   notify("Rejected.");
 }
 async function toggleSpotlight(id) {
   const item = creations.find((c) => c.id === id);
+  const wasSpotlit = item?.spotlight;
   if (!item) return;
   if (!item?._fromDb) { notify("Cannot modify seed creations."); return; }
   if (!item.spotlight && spotlightCount >= 3) { notify("Spotlight limited to 3."); return; }
@@ -993,6 +1000,7 @@ async function toggleSpotlight(id) {
   if (error) { notify("Error: " + error.message); return; }
   const { data } = await fetchCreations();
   if (data) setCreations(data);
+  track(wasSpotlit ? "spotlight_removed" : "spotlight_added", { creation_id: id });
 }
 async function reject(id) {
   const { error } = await updateCreationStatus(id, "Rejected");
@@ -1040,6 +1048,7 @@ function SubmitPage({ setCreations, notify, setPage, user, profile }) {
   async function uploadToR2() {
   if (!videoFile) return;
   setUploadState("uploading"); setUploadError(null); setUploadPct(0);
+track("upload_started");
 
   let token;
 try {
@@ -1096,6 +1105,7 @@ const authHeader = { "Authorization": "Bearer " + token, "Content-Type": "applic
     const result = await res.json();
     
 setUploadResult(result); setUploadState("done");
+track("upload_completed");
   } catch (err) { setUploadError(err.message); setUploadState("error"); }
 }
   async function handleSubmit() {
@@ -1111,6 +1121,7 @@ const { data: saved, error } = await insertCreation(newCreation, user, profile);
     if (error) { console.error("[RevaultAI] Supabase insert failed:", error.message); notify("Saved locally -- could not reach the database."); }
     else if (saved) { setCreations((prev) => prev.map((c) => (c.id === newCreation.id ? saved : c))); }
     setSubmitting(false); setPage("explore");
+    track("creation_submitted", { title: newCreation.title, category: newCreation.category, is_premium: newCreation.is_premium });
     if (!error) notify(form.isPremium ? "Submitted for review." : "Creation is now live on RevaultAI.");
   }
   return (
@@ -1626,6 +1637,7 @@ function AboutPage({ setPage }) {
   );
 }
 export default function App() {
+  useEffect(() => { initAnalytics(); }, []);
   const [creations, setCreations]   = useState(SEED_CREATIONS.map((c) => ({ ...c })));
 const [dbLoaded, setDbLoaded]     = useState(false);
 const [page, setPage]             = useState("home");
@@ -1641,7 +1653,8 @@ const [purchasesLoaded, setPurchasesLoaded] = useState(false);
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => { const u = data.session?.user ?? null; setUser(u); if (u) loadOrCreateProfile(u); });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      const u = session?.user ?? null; setUser(u);
+      const u = setUser(session?.user ?? null);
+if (session?.user) { identifyUser(session.user.id, session.user.email); } else { resetUser(); }
       if (event === "PASSWORD_RECOVERY") setPage("set-password");
       if (u) { loadOrCreateProfile(u); } else { setProfile(null); setPurchasedIds(new Set()); }
     });
