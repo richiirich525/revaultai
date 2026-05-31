@@ -35,7 +35,7 @@ export default async function handler(req, res) {
     return res.status(404).json({ error: "Creation not found" });
   }
 
-  const origin = req.headers.origin || "https://yourdomain.vercel.app";
+  const origin = req.headers.origin || "https://revaultai.com";
 
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
