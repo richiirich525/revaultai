@@ -57,7 +57,6 @@ console.log("[mux-webhook] Looking for mux_asset_id:", assetId);
       preview_video:   previewUrl,
       hero_image:      thumbnailUrl,
       mux_asset_id:    assetId,
-      mux_playback_id: playbackId,
     })
     .eq("mux_asset_id", assetId);
 

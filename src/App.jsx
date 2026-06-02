@@ -1116,7 +1116,27 @@ track("upload_completed");
     setSubmitting(true);
     const toolList = form.tools.split(",").map((t) => t.trim()).filter(Boolean);
     const fallbackThumb = "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1200&q=90";
-    const newCreation = { id: "u" + Date.now(), title: form.title.trim(), creator: { username: profile?.username ?? user?.email?.split("@")[0] ?? "you", display_name: profile?.display_name ?? user?.email?.split("@")[0] ?? "You", avatar_url: profile?.avatar_url ?? "" }, hero_image: uploadResult?.thumbnail_image || fallbackThumb, thumbnail_image: uploadResult?.thumbnail_image || fallbackThumb, video_url: uploadResult?.video_url || "", preview_video: uploadResult?.preview_video || "", tools_used: toolList.length > 0 ? toolList : ["Unknown"], category: form.category, is_premium: form.isPremium, premium_status: form.isPremium ? "Pending" : null, prompt_preview: form.isPremium ? form.prompt.trim().slice(0, 120) + "..." : null, prompt_full: form.prompt.trim(), spotlight: false, mux_asset_id: uploadResult?.mux_asset_id || null };
+
+    // If user spent time filling the form, Mux may already be done — check before inserting
+    let resolvedUpload = uploadResult;
+    if (uploadResult?.mux_asset_id) {
+      try {
+        const token = await getSessionToken();
+        const statusRes = await fetch("/api/mux-status", {
+          method: "POST",
+          headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
+          body: JSON.stringify({ mux_asset_id: uploadResult.mux_asset_id }),
+        });
+        if (statusRes.ok) {
+          const status = await statusRes.json();
+          if (status.ready) {
+            resolvedUpload = { ...uploadResult, thumbnail_image: status.thumbnail_image, preview_video: status.preview_video };
+          }
+        }
+      } catch { /* non-critical, proceed with placeholder */ }
+    }
+
+    const newCreation = { id: "u" + Date.now(), title: form.title.trim(), creator: { username: profile?.username ?? user?.email?.split("@")[0] ?? "you", display_name: profile?.display_name ?? user?.email?.split("@")[0] ?? "You", avatar_url: profile?.avatar_url ?? "" }, hero_image: resolvedUpload?.thumbnail_image || fallbackThumb, thumbnail_image: resolvedUpload?.thumbnail_image || fallbackThumb, video_url: resolvedUpload?.video_url || "", preview_video: resolvedUpload?.preview_video || "", tools_used: toolList.length > 0 ? toolList : ["Unknown"], category: form.category, is_premium: form.isPremium, premium_status: form.isPremium ? "Pending" : null, prompt_preview: form.isPremium ? form.prompt.trim().slice(0, 120) + "..." : null, prompt_full: form.prompt.trim(), spotlight: false, mux_asset_id: resolvedUpload?.mux_asset_id || null };
     
 setCreations((prev) => [newCreation, ...prev]);
 const { data: saved, error } = await insertCreation(newCreation, user, profile);
@@ -1125,6 +1145,24 @@ const { data: saved, error } = await insertCreation(newCreation, user, profile);
     setSubmitting(false); setPage("explore");
     track("creation_submitted", { title: newCreation.title, category: newCreation.category, is_premium: newCreation.is_premium });
     if (!error) notify(form.isPremium ? "Submitted for review." : "Creation is now live on RevaultAI.");
+
+    // Re-fetch after Mux finishes processing to replace placeholder thumbnail
+    if (uploadResult?.mux_asset_id) {
+      const refresh = async () => {
+        const { data } = await fetchCreations();
+        if (data) {
+          setCreations((prev) => {
+            const dbIds = new Set(data.map((c) => c.id));
+            const seeds = SEED_CREATIONS.filter((c) => !dbIds.has(c.id));
+            return [...data, ...seeds];
+          });
+        }
+      };
+      const t1 = setTimeout(refresh, 45000);
+      const t2 = setTimeout(refresh, 90000);
+      // Best-effort cleanup if component unmounts; timeouts are fire-and-forget otherwise
+      return () => { clearTimeout(t1); clearTimeout(t2); };
+    }
   }
   return (
     <div className="page">
