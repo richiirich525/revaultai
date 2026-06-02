@@ -57,8 +57,8 @@ export default async function handler(req, res) {
     credentials: { accessKeyId, secretAccessKey },
     // Prevent SDK from adding CRC32 checksum headers to presigned URLs —
     // browsers can't compute or send those headers, causing a 403 from R2.
-    requestChecksumCalculation: "WHEN_REQUIRED",
-    responseChecksumValidation: "WHEN_REQUIRED",
+    requestChecksumCalculation: "when_required",
+    responseChecksumValidation: "when_required",
   });
 
   const command = new PutObjectCommand({
