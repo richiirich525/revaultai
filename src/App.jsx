@@ -1419,7 +1419,7 @@ function FAQPage({ setPage }) {
     },
     {
       q: "Can I download videos?",
-      a: "Unlocking a premium creation gives you access to the full prompt. Video download availability depends on the individual creator's settings. If a download is available, it will appear after purchase."
+      a: "Yes. Open creations are free to watch and download. For premium creations, purchasing unlocks both the full prompt and a download of the finished film — you keep the work and the exact brief behind it."
     },
     {
       q: "Who owns uploaded content?",
@@ -1779,7 +1779,7 @@ function BecomeCreatorPage({ setPage, user }) {
           <div style={{ border: "1px solid var(--accent)", borderRadius: 8, padding: "40px 32px", background: "var(--surface)" }}>
             <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.2em", color: "var(--accent)", textTransform: "uppercase", marginBottom: 16 }}>Premium</div>
             <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 20, fontWeight: 700, color: "var(--text)", marginBottom: 16 }}>Prompt for Purchase</div>
-            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", lineHeight: 1.8 }}>A teaser prompt is visible to everyone. The full creative brief is unlocked after purchase at $4.99. You earn visibility and credibility on a premium platform.</div>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", lineHeight: 1.8 }}>A teaser prompt is visible to everyone. After purchase at $4.99, buyers unlock the full creative brief and a download of the finished film. You earn visibility and credibility on a premium platform.</div>
           </div>
         </div>
       </div>
