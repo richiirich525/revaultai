@@ -43,7 +43,7 @@ const SEED_CREATORS = [
   { id: "seed-lumen",  username: "lumen_x", display_name: "Lumen X",    bio: "Light is the medium. AI is the brush.", avatar_url: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&q=90" },
 ];
 
-const CATEGORIES = ["Abstract","Action","Animation","Creative Experiments","Crime","Documentary","Films","Drama","Horror","Images","Music","News","Noir","Prompts","Romance","Sci-Fi/Fantasy","Short Films","Sports","Thriller","Western","Workflows"];
+const CATEGORIES = ["Abstract","Action","Animation","Comedy","Creative Experiments","Crime","Documentary","Films","Drama","Horror","Images","Music","News","Noir","Prompts","Romance","Sci-Fi/Fantasy","Short Films","Sports","Thriller","Western","Workflows"];
 
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Mono:wght@300;400&family=Syne:wght@400;500;600;700;800&display=swap');
