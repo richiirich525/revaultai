@@ -43,7 +43,7 @@ const SEED_CREATORS = [
   { id: "seed-lumen",  username: "lumen_x", display_name: "Lumen X",    bio: "Light is the medium. AI is the brush.", avatar_url: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&q=90" },
 ];
 
-const CATEGORIES = ["Abstract","Action","Animation","Crime","Documentary","Drama","Horror","News","Noir","Romance","Sci-Fi/Fantasy","Short Films","Sports","Thriller","Western"];
+const CATEGORIES = ["Abstract","Action","Animation","Creative Experiments","Crime","Documentary","Films","Drama","Horror","Images","Music","News","Noir","Prompts","Romance","Sci-Fi/Fantasy","Short Films","Sports","Thriller","Western","Workflows"];
 
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Mono:wght@300;400&family=Syne:wght@400;500;600;700;800&display=swap');
@@ -600,7 +600,8 @@ function HomePage({ creations, setPage, setDetailId }) {
           <div className="hero-eyebrow">AI-Native Creative Platform</div>
           <div className="hero-tagline">The AI era doesn't<br />need more content.</div>
           <span className="hero-tagline-accent">It needs curation.</span>
-          <p className="hero-sub">RevaultAI is a curated archive of the world's best AI-generated creations.</p>
+          <p className="hero-sub" style={{ color: "var(--text)", fontSize: 16, fontWeight: 500, lineHeight: 1.6, maxWidth: 440, marginBottom: 16 }}>Home to the world's best AI films, short films, images, prompts, workflows, and creative experiments.</p>
+          <p className="hero-sub">RevaultAI is a curated archive of exceptional AI-native creativity. Discover cinematic films, short films, visual art, prompt collections, workflows, and creative experiments from creators pushing the medium forward.</p>
           <button className="hero-link" onClick={() => setPage("explore")}>Explore the Archive <span className="hero-link-arrow">&rarr;</span></button>
         </div>
         <div className="hero-right"><img src="https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?w=1400&q=90" alt="Cinematic AI visual" /></div>
@@ -614,7 +615,51 @@ function HomePage({ creations, setPage, setDetailId }) {
         <div className="section-header"><div><div className="section-label">Open Archive</div><div className="section-sublabel">Free access to outstanding AI creations.</div></div><span className="section-link" onClick={() => setPage("explore")}>View All &rarr;</span></div>
         <div className="creation-grid">{openCreations.slice(0, 4).map((c) => <CreationCard key={c.id} creation={c} onClick={goDetail} />)}</div>
       </section>
-      <section className="manifesto"><div className="manifesto-rule" /><p className="manifesto-quote">"The AI era doesn't need more content. It needs curation."</p><p className="manifesto-sub">RevaultAI is built for creators who believe AI is a medium, not just a tool.</p></section>
+      <section className="section" style={{ textAlign: "center", borderTop: "1px solid var(--border)", background: "var(--bg)" }}>
+        <div style={{ maxWidth: 640, margin: "0 auto" }}>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.22em", color: "var(--accent)", textTransform: "uppercase", marginBottom: 18 }}>For Creators</div>
+          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "clamp(32px, 4vw, 48px)", fontWeight: 300, color: "var(--text)", marginBottom: 18, lineHeight: 1.15 }}>Build your creative legacy.</div>
+          <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.8, maxWidth: 520, margin: "0 auto 36px" }}>Share your work, grow your audience, monetize premium prompts, and become part of a curated archive of AI-native creativity.</p>
+          <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
+            <button className="btn-primary" onClick={() => setPage("become-creator")}>Become a Creator</button>
+            <button className="btn-ghost" onClick={() => setPage("creators")}>Explore Creators</button>
+          </div>
+        </div>
+      </section>
+      <section className="section" style={{ textAlign: "center", borderTop: "1px solid var(--border)", background: "var(--bg)" }}>
+        <div style={{ maxWidth: 640, margin: "0 auto" }}>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.22em", color: "var(--accent)", textTransform: "uppercase", marginBottom: 18 }}>For Creators</div>
+          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "clamp(32px, 4vw, 48px)", fontWeight: 300, color: "var(--text)", marginBottom: 18, lineHeight: 1.15 }}>Build your creative legacy.</div>
+          <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.8, maxWidth: 520, margin: "0 auto 36px" }}>Share your work, grow your audience, monetize premium prompts, and become part of a curated archive of AI-native creativity.</p>
+          <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
+            <button className="btn-primary" onClick={() => setPage("become-creator")}>Become a Creator</button>
+            <button className="btn-ghost" onClick={() => setPage("creators")}>Explore Creators</button>
+          </div>
+        </div>
+      </section>
+      <section className="section" style={{ textAlign: "center", borderTop: "1px solid var(--border)", background: "var(--bg)" }}>
+        <div style={{ maxWidth: 640, margin: "0 auto" }}>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.22em", color: "var(--accent)", textTransform: "uppercase", marginBottom: 18 }}>For Creators</div>
+          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "clamp(32px, 4vw, 48px)", fontWeight: 300, color: "var(--text)", marginBottom: 18, lineHeight: 1.15 }}>Build your creative legacy.</div>
+          <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.8, maxWidth: 520, margin: "0 auto 36px" }}>Share your work, grow your audience, monetize premium prompts, and become part of a curated archive of AI-native creativity.</p>
+          <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
+            <button className="btn-primary" onClick={() => setPage("become-creator")}>Become a Creator</button>
+            <button className="btn-ghost" onClick={() => setPage("creators")}>Explore Creators</button>
+          </div>
+        </div>
+      </section>
+      <section className="section" style={{ textAlign: "center", borderTop: "1px solid var(--border)", background: "var(--bg)" }}>
+        <div style={{ maxWidth: 640, margin: "0 auto" }}>
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.22em", color: "var(--accent)", textTransform: "uppercase", marginBottom: 18 }}>For Creators</div>
+          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "clamp(32px, 4vw, 48px)", fontWeight: 300, color: "var(--text)", marginBottom: 18, lineHeight: 1.15 }}>Build your creative legacy.</div>
+           <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.8, maxWidth: 520, margin: "0 auto 36px" }}>Share your work, grow your audience, monetize premium prompts, and become part of a curated archive of AI-native creativity.</p>
+          <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
+            <button className="btn-primary" onClick={() => setPage("become-creator")}>Become a Creator</button>
+            <button className="btn-ghost" onClick={() => setPage("creators")}>Explore Creators</button>
+          </div>
+          </div>
+      </section>
+      <section className="manifesto"><div className="manifesto-rule" /><p className="manifesto-quote">"The AI era doesn't need more content. It needs curation."</p><p className="manifesto-sub">RevaultAI is built for creators who believe AI is a medium, not just a tool.</p></section> 
       <footer className="footer">
   <div className="footer-logo">RevaultAI</div>
   <div style={{ display: "flex", gap: 24, flexWrap: "wrap", alignItems: "center" }}>
@@ -1391,7 +1436,7 @@ function FAQPage({ setPage }) {
   const faqs = [
     {
       q: "What is RevaultAI?",
-      a: "RevaultAI is a curated archive of AI-generated films, animations, and creative works. We exist to surface the best AI-native content from the world's most skilled AI artists — and make it discoverable, purchasable, and inspiring."
+      a: "RevaultAI is a curated archive of AI-generated films, short films, images, animations, and creative works. We exist to surface the best AI-native content from the world's most skilled AI artists — and make it discoverable, purchasable, and inspiring."
     },
     {
       q: "What makes RevaultAI different?",
@@ -1680,10 +1725,10 @@ function AboutPage({ setPage }) {
 }
 function BecomeCreatorPage({ setPage, user }) {
   const whyCards = [
-    { title: "Curated Exposure", desc: "Your work will not be buried in an endless feed. Every creation is reviewed and placed with intention." },
-    { title: "Premium Prompt Sales", desc: "Monetize your best prompts. Set your work as Premium and earn recognition for your creative process." },
-    { title: "Spotlight Opportunities", desc: "Exceptional work may be featured on the homepage Spotlight — the highest visibility placement on the platform." },
-    { title: "Creator-First Platform", desc: "Built specifically for AI-native artists and filmmakers. Every feature exists to serve your creative practice." },
+    { title: "Show the Process, Not Just the Result", desc: "Share the prompts, workflows, tools, and techniques behind your creations. RevaultAI is built for creators who want their work understood, not just viewed." },
+    { title: "Build a Creator Profile", desc: "Create a permanent portfolio of your AI-native work. Gain followers, showcase your best creations, and build your reputation inside a curated creative community." },
+    { title: "Monetize Premium Prompts", desc: "Offer premium prompts, workflows, and creative breakdowns for purchase. Keep your best techniques protected while earning from your expertise." },
+    { title: "Get Curated, Not Buried", desc: "Unlike massive content platforms, RevaultAI is built around quality and discovery. Exceptional work can be featured in spotlights, collections, and creator showcases." },
   ];
   const content = ["AI Films", "AI Short Films", "AI Animations", "Experimental Cinema", "Music Visuals", "Narrative Projects", "Hybrid Human and AI Productions"];
   const steps = [
@@ -1720,9 +1765,13 @@ function BecomeCreatorPage({ setPage, user }) {
         </div>
       </div>
 
-      {/* WHY JOIN */}
+      {/* WHY CREATORS JOIN */}
       <div style={{ maxWidth: 960, margin: "0 auto", padding: "80px 48px" }}>
-        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 40, fontWeight: 300, color: "var(--text)", marginBottom: 48, textAlign: "center" }}>Why Create on RevaultAI?</div>
+        <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto 48px" }}>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.25em", color: "var(--accent)", textTransform: "uppercase", marginBottom: 16 }}>Why Creators Join</div>
+          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 40, fontWeight: 300, color: "var(--text)", marginBottom: 20, lineHeight: 1.1 }}>Your work deserves more than another feed.</div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 1.9 }}>Most platforms focus on views. RevaultAI focuses on creators. Whether you're making AI films, short films, images, music, animations, prompt collections, workflows, or creative experiments, this is a place to showcase the craft behind the creation.</div>
+        </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 24 }}>
           {whyCards.map((c, i) => (
             <div key={i} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, padding: "32px 24px" }}>
