@@ -626,40 +626,7 @@ function HomePage({ creations, setPage, setDetailId }) {
           </div>
         </div>
       </section>
-      <section className="section" style={{ textAlign: "center", borderTop: "1px solid var(--border)", background: "var(--bg)" }}>
-        <div style={{ maxWidth: 640, margin: "0 auto" }}>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.22em", color: "var(--accent)", textTransform: "uppercase", marginBottom: 18 }}>For Creators</div>
-          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "clamp(32px, 4vw, 48px)", fontWeight: 300, color: "var(--text)", marginBottom: 18, lineHeight: 1.15 }}>Build your creative legacy.</div>
-          <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.8, maxWidth: 520, margin: "0 auto 36px" }}>Share your work, grow your audience, monetize premium prompts, and become part of a curated archive of AI-native creativity.</p>
-          <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
-            <button className="btn-primary" onClick={() => setPage("become-creator")}>Become a Creator</button>
-            <button className="btn-ghost" onClick={() => setPage("creators")}>Explore Creators</button>
-          </div>
-        </div>
-      </section>
-      <section className="section" style={{ textAlign: "center", borderTop: "1px solid var(--border)", background: "var(--bg)" }}>
-        <div style={{ maxWidth: 640, margin: "0 auto" }}>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.22em", color: "var(--accent)", textTransform: "uppercase", marginBottom: 18 }}>For Creators</div>
-          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "clamp(32px, 4vw, 48px)", fontWeight: 300, color: "var(--text)", marginBottom: 18, lineHeight: 1.15 }}>Build your creative legacy.</div>
-          <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.8, maxWidth: 520, margin: "0 auto 36px" }}>Share your work, grow your audience, monetize premium prompts, and become part of a curated archive of AI-native creativity.</p>
-          <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
-            <button className="btn-primary" onClick={() => setPage("become-creator")}>Become a Creator</button>
-            <button className="btn-ghost" onClick={() => setPage("creators")}>Explore Creators</button>
-          </div>
-        </div>
-      </section>
-      <section className="section" style={{ textAlign: "center", borderTop: "1px solid var(--border)", background: "var(--bg)" }}>
-        <div style={{ maxWidth: 640, margin: "0 auto" }}>
-        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.22em", color: "var(--accent)", textTransform: "uppercase", marginBottom: 18 }}>For Creators</div>
-          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "clamp(32px, 4vw, 48px)", fontWeight: 300, color: "var(--text)", marginBottom: 18, lineHeight: 1.15 }}>Build your creative legacy.</div>
-           <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.8, maxWidth: 520, margin: "0 auto 36px" }}>Share your work, grow your audience, monetize premium prompts, and become part of a curated archive of AI-native creativity.</p>
-          <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
-            <button className="btn-primary" onClick={() => setPage("become-creator")}>Become a Creator</button>
-            <button className="btn-ghost" onClick={() => setPage("creators")}>Explore Creators</button>
-          </div>
-          </div>
-      </section>
-      <section className="manifesto"><div className="manifesto-rule" /><p className="manifesto-quote">"The AI era doesn't need more content. It needs curation."</p><p className="manifesto-sub">RevaultAI is built for creators who believe AI is a medium, not just a tool.</p></section> 
+      <section className="manifesto"><div className="manifesto-rule" /><p className="manifesto-quote">"The AI era doesn't need more content. It needs curation."</p><p className="manifesto-sub">RevaultAI is built for creators who believe AI is a medium, not just a tool.</p></section>
       <footer className="footer">
   <div className="footer-logo">RevaultAI</div>
   <div style={{ display: "flex", gap: 24, flexWrap: "wrap", alignItems: "center" }}>
