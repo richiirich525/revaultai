@@ -352,7 +352,9 @@ function Nav({ page, setPage, user, profile, onSignInClick, onSignOut }) {
   const avatarSrc = profile?.avatar_url ?? null;
   return (
     <nav className="nav">
-      <div className="nav-logo" onClick={() => setPage("home")}>REVAULT<span>AI</span></div>
+      <div className="nav-logo" onClick={() => setPage("home")}>
+        <img src="/revaultai-logo-transparent.png" alt="RevaultAI" style={{ height: "34px", width: "auto", display: "block" }} />
+      </div>
       <div className="nav-center">
         <div className={"nav-link" + (page === "home" ? " active" : "")} onClick={() => setPage("home")}>Home</div>
         <div className={"nav-link" + (page === "explore" ? " active" : "")} onClick={() => setPage("explore")}>Explore</div>
