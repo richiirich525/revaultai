@@ -956,7 +956,7 @@ const purchaseLoading = creation.is_premium && !purchasesLoaded; const priceLabe
       <div className="detail-body"><div className="detail-rule" /><div className="detail-section-label">Production Note<div className="detail-section-label-line" /></div>
         <div className="prompt-box">
           {isPending ? <p className="prompt-text" style={{ color: "var(--muted)", fontStyle: "italic" }}>Under review.</p>
-          : unlocked ? <><p className="prompt-text">{creation.prompt_full}</p>{hasVideo && <div className="unlock-area"><a href={creation.video_url} download className="btn-unlock-restrained" style={{ textDecoration: "none", display: "inline-block" }}>&#11015; Download Film</a></div>}</>
+          : unlocked ? <><p className="prompt-text">{creation.prompt_full}</p>{hasVideo && creation.is_premium && <div className="unlock-area"><a href={creation.video_url} download className="btn-unlock-restrained" style={{ textDecoration: "none", display: "inline-block" }}>&#11015; Download Film</a></div>}</>
           : purchaseLoading
   ? <div className="unlock-area"><span className="unlock-label" style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--muted)", letterSpacing: "0.1em" }}>Checking purchase status...</span></div>
   : <><div className="prompt-fade"><p className="prompt-text">{creation.prompt_preview}</p></div><div className="unlock-area"><span className="unlock-label">Full prompt {hasVideo ? "and film download" : ""} available after purchase.</span><button className="btn-unlock-restrained" onClick={handleBuy} disabled={checkingOut} style={{ opacity: checkingOut ? 0.6 : 1 }}>
@@ -1418,8 +1418,8 @@ function FAQPage({ setPage }) {
       a: "Click 'Unlock' on any premium creation. You'll be taken to a secure Stripe checkout. After payment, the full prompt is permanently unlocked for your account. You can access it any time from the creation page."
     },
     {
-      q: "Can I download videos?",
-      a: "Yes. Open creations are free to watch and download. For premium creations, purchasing unlocks both the full prompt and a download of the finished film — you keep the work and the exact brief behind it."
+      q: "Can I download the videos?",
+      a: "Film downloads are a premium benefit. Purchasing a premium creation unlocks both the full prompt and a download of the finished film. Open creations are free to watch on the platform."
     },
     {
       q: "Who owns uploaded content?",
@@ -1620,7 +1620,7 @@ function PremiumPromptsPage({ setPage }) {
 
         <div style={{ borderTop: "1px solid var(--border)", padding: "32px 0" }}>
           <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 700, color: "var(--text)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 20 }}>What Buyers Receive</div>
-          {["The complete, unabridged prompt used to generate the work", "Model and tool specifications", "Camera movement and framing direction", "Lighting and atmosphere notes", "Sound design guidance where applicable", "Permanent access — unlocked forever on your account"].map((item, i) => (
+          {["The complete, unabridged prompt used to generate the work", "A download of the finished film", "Model and tool specifications", "Camera movement and framing direction", "Lighting and atmosphere notes", "Sound design guidance where applicable", "Permanent access — unlocked forever on your account"].map((item, i) => (
             <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 12 }}>
               <div style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--accent)", flexShrink: 0, marginTop: 6 }} />
               <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>{item}</div>
