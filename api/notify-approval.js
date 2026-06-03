@@ -43,8 +43,8 @@ export default async function handler(req, res) {
   const resend = new Resend(process.env.RESEND_API_KEY);
 
   const { error: emailError } = await resend.emails.send({
-    from: "RevaultAI <onboarding@resend.dev>",
-    to: "richardgarland999@gmail.com",
+    from: "RevaultAI <noreply@revaultai.com>",
+    to: creatorEmail,
     subject: `Your creation "${creationTitle}" has been approved`,
     html: `
       <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; background: #0E0F14; color: #E8E6F0; padding: 40px 32px; border-radius: 8px;">
@@ -57,7 +57,7 @@ export default async function handler(req, res) {
         <p style="font-size: 14px; color: #6B6878; line-height: 1.7; margin-bottom: 24px;">
           Hi ${creatorName}, your submission <strong style="color: #E8E6F0;">"${creationTitle}"</strong> has been reviewed and approved by the RevaultAI team. It is now live on the platform.
         </p>
-        <a href="https://revaultai.vercel.app" style="display: inline-block; background: #7B3FE4; color: white; padding: 12px 28px; border-radius: 4px; text-decoration: none; font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;">
+        <a href="https://revaultai.com" style="display: inline-block; background: #7B3FE4; color: white; padding: 12px 28px; border-radius: 4px; text-decoration: none; font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;">
           View on RevaultAI
         </a>
         <p style="font-size: 11px; color: #6B6878; margin-top: 40px; line-height: 1.6;">
