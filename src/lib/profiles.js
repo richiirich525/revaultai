@@ -43,7 +43,7 @@ export async function upsertProfile(user, profile) {
   };
 }
 
-export function defaultProfile(user) {}
+export function defaultProfile(user) {
   const handle = user.email?.split("@")[0] ?? "creator";
   return {
     username:     handle,
@@ -54,6 +54,7 @@ export function defaultProfile(user) {}
     hire_url:     "",
     tool_links:   [],
   };
+}
 
 // ---------------------------------------------------------------------------
 // All creators (for the Creators page)
