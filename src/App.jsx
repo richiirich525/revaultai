@@ -25,24 +25,6 @@ import {
   uploadAvatar,
 } from "./lib/profiles.js";
 
-const SEED_CREATIONS = [
-  { id: "c1", title: "Meridian Collapse", creator: { username: "solara", display_name: "Solara Chen", avatar_url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=90" }, hero_image: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1200&q=90", thumbnail_image: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1200&q=90", video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4", preview_video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4", tools_used: ["Sora", "Runway"], category: "Sci-Fi/Fantasy", is_premium: true, premium_status: "Approved", prompt_preview: "A desolate orbital station drifts through amber nebula clouds...", prompt_full: "A desolate orbital station drifts through amber nebula clouds, structural ribs fractured, emergency lights pulsing at irregular intervals.", spotlight: true },
-  { id: "c2", title: "The Quiet Epoch", creator: { username: "nvoid", display_name: "Nullvoid", avatar_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=90" }, hero_image: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=1200&q=90", thumbnail_image: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=1200&q=90", video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4", preview_video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4", tools_used: ["Kling", "MidJourney"], category: "Abstract", is_premium: false, premium_status: null, prompt_preview: null, prompt_full: "Time-lapse of a brutalist concrete tower slowly consumed by crystalline growth.", spotlight: true },
-  { id: "c3", title: "After the Signal", creator: { username: "mira_kd", display_name: "Mira Kade", avatar_url: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400&q=90" }, hero_image: "https://images.unsplash.com/photo-1545987796-200677ee1011?w=1200&q=90", thumbnail_image: "https://images.unsplash.com/photo-1545987796-200677ee1011?w=1200&q=90", video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", preview_video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", tools_used: ["Sora", "Stable Diffusion"], category: "Noir", is_premium: true, premium_status: "Approved", prompt_preview: "Rain-soaked alleyway in a city that receives no satellite signal...", prompt_full: "Rain-soaked alleyway in a city that receives no satellite signal. Figures move behind frosted glass.", spotlight: true },
-  { id: "c4", title: "Velvet Recursion", creator: { username: "solara", display_name: "Solara Chen", avatar_url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=90" }, hero_image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200&q=90", thumbnail_image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200&q=90", video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4", preview_video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4", tools_used: ["Runway", "After Effects"], category: "Abstract", is_premium: true, premium_status: "Approved", prompt_preview: "Infinite corridor of velvet panels folding into themselves...", prompt_full: "Infinite corridor of velvet panels folding into themselves, each fold revealing a smaller version of the same space.", spotlight: false },
-  { id: "c5", title: "Bone Garden", creator: { username: "lumen_x", display_name: "Lumen X", avatar_url: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&q=90" }, hero_image: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1200&q=90", thumbnail_image: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1200&q=90", video_url: "", preview_video: "", tools_used: ["MidJourney", "Kling"], category: "Sci-Fi/Fantasy", is_premium: false, premium_status: null, prompt_preview: null, prompt_full: "A medieval garden where all flora is composed of bleached bone structures.", spotlight: false },
-  { id: "c6", title: "Low Earth Memory", creator: { username: "mira_kd", display_name: "Mira Kade", avatar_url: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400&q=90" }, hero_image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200&q=90", thumbnail_image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200&q=90", video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4", preview_video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4", tools_used: ["Sora"], category: "Sci-Fi/Fantasy", is_premium: false, premium_status: null, prompt_preview: null, prompt_full: "Astronaut floating weightless in ISS module, but all surfaces are covered in handwritten letters.", spotlight: false },
-  { id: "c7", title: "Threshold Protocol", creator: { username: "nvoid", display_name: "Nullvoid", avatar_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=90" }, hero_image: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=1200&q=90", thumbnail_image: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=1200&q=90", video_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", preview_video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", tools_used: ["Runway", "Stable Diffusion"], category: "Thriller", is_premium: true, premium_status: "Approved", prompt_preview: "A figure stands at the threshold of a server room...", prompt_full: "A figure stands at the threshold of a server room, data streams flickering across glass walls.", spotlight: false },
-  { id: "c8", title: "Fold and Dissolve", creator: { username: "lumen_x", display_name: "Lumen X", avatar_url: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&q=90" }, hero_image: "https://images.unsplash.com/photo-1509909756405-be0199881695?w=1200&q=90", thumbnail_image: "https://images.unsplash.com/photo-1509909756405-be0199881695?w=1200&q=90", video_url: "", preview_video: "", tools_used: ["MidJourney"], category: "Abstract", is_premium: false, premium_status: null, prompt_preview: null, prompt_full: "Origami cranes made of newspaper with legible headlines unfold mid-flight into human figures.", spotlight: false },
-];
-
-const SEED_CREATORS = [
-  { id: "seed-solara", username: "solara",  display_name: "Solara Chen", bio: "Crafting narrative AI films at the edge of perception.", avatar_url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=90" },
-  { id: "seed-nvoid",  username: "nvoid",   display_name: "Nullvoid",    bio: "Systems thinker. I build worlds that collapse beautifully.", avatar_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=90" },
-  { id: "seed-mira",   username: "mira_kd", display_name: "Mira Kade",  bio: "Noir, memory, and machine vision. Every frame is a question.", avatar_url: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400&q=90" },
-  { id: "seed-lumen",  username: "lumen_x", display_name: "Lumen X",    bio: "Light is the medium. AI is the brush.", avatar_url: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&q=90" },
-];
-
 const CATEGORIES = ["Abstract","Action","Animation","Comedy","Creative Experiments","Crime","Documentary","Films","Drama","Horror","Images","Music","News","Noir","Prompts","Romance","Sci-Fi/Fantasy","Short Films","Sports","Thriller","Western","Workflows"];
 
 const CSS = `
@@ -1164,13 +1146,7 @@ const { data: saved, error } = await insertCreation(newCreation, user, profile);
     if (uploadResult?.mux_asset_id) {
       const refresh = async () => {
         const { data } = await fetchCreations();
-        if (data) {
-          setCreations((prev) => {
-            const dbIds = new Set(data.map((c) => c.id));
-            const seeds = SEED_CREATIONS.filter((c) => !dbIds.has(c.id));
-            return [...data, ...seeds];
-          });
-        }
+        if (data) { setCreations(data); }
       };
       const t1 = setTimeout(refresh, 45000);
       const t2 = setTimeout(refresh, 90000);
@@ -1862,7 +1838,7 @@ function BecomeCreatorPage({ setPage, user }) {
 }
 export default function App() {
   useEffect(() => { initAnalytics(); }, []);
-  const [creations, setCreations]   = useState(SEED_CREATIONS.map((c) => ({ ...c })));
+  const [creations, setCreations]   = useState([]);
 const [dbLoaded, setDbLoaded]     = useState(false);
 const [page, setPage]             = useState("home");
   const [detailId, setDetailId]     = useState(null);
@@ -1895,7 +1871,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
   }
 
   useEffect(() => {
-    async function load() { const { data, error } = await fetchCreations(); if (error) { console.warn("[RevaultAI] Could not load creations:", error.message); setDbLoaded(true); return; } if (data && data.length > 0) { const dbIds = new Set(data.map((c) => c.id)); const seeds = SEED_CREATIONS.filter((c) => !dbIds.has(c.id)); setCreations([...data, ...seeds]); } setDbLoaded(true); }
+   async function load() { const { data, error } = await fetchCreations(); if (error) { console.warn("[RevaultAI] Could not load creations:", error.message); setDbLoaded(true); return; } if (data) { setCreations(data); } setDbLoaded(true); }
     load();
   }, []);
 
