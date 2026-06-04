@@ -26,6 +26,7 @@ export function rowToCreation(row) {
     spotlight:       row.spotlight,
     prompt_preview:  row.prompt_preview,
     prompt_full:     row.prompt_full,
+    license_url:     row.license_url ?? "",
     creator: {
       username:     row.creator_username ?? "unknown",
       display_name: row.creator_name     ?? "Unknown",
@@ -54,6 +55,7 @@ export function creationToRow(creation, user, profile) {
     price_cents:      creation.price_cents ?? 499,
     prompt_preview:   creation.prompt_preview ?? null,
     prompt_full:      creation.prompt_full,
+    license_url:      creation.license_url ?? null,
     spotlight:        false,
     mux_asset_id:     creation.mux_asset_id ?? null,
   };
@@ -128,6 +130,7 @@ export async function updateCreation(id, fields, user) {
     premium_status:  fields.is_premium ? (fields.premium_status ?? "Pending") : null,
     hero_image:      fields.hero_image,
     thumbnail_image: fields.thumbnail_image,
+    license_url:     fields.license_url ?? null,
   };
 
   const { data, error } = await supabase

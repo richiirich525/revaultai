@@ -383,6 +383,19 @@ function normalizeTipUrl(raw) {
   return { ok: true, url: parsed.href };
 }
 
+function normalizeContactUrl(raw) {
+  const v = (raw ?? "").trim();
+  if (!v) return { ok: true, url: "" }; // blank clears the field
+  if (v.length > 500) return { ok: false, error: "Link is too long (max 500 characters)." };
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return { ok: true, url: "mailto:" + v };
+  let parsed;
+  try { parsed = new URL(v); }
+  catch { return { ok: false, error: "Enter a full URL (https://...) or an email address." }; }
+  if (parsed.protocol === "mailto:") return { ok: true, url: parsed.href };
+  if (parsed.protocol !== "https:") return { ok: false, error: "Link must start with https:// (or be an email address)." };
+  return { ok: true, url: parsed.href };
+}
+
 function SettingsPage({ user, profile, setProfile, notify }) {
   const [form, setForm] = useState({
     display_name: profile?.display_name ?? "",
@@ -390,6 +403,7 @@ function SettingsPage({ user, profile, setProfile, notify }) {
     bio:          profile?.bio          ?? "",
     avatar_url:   profile?.avatar_url   ?? "",
     tip_url:      profile?.tip_url      ?? "",
+    hire_url:     profile?.hire_url     ?? "",
   });
   const [saving, setSaving]           = useState(false);
   const [formError, setFormError]     = useState(null);
@@ -405,6 +419,7 @@ function SettingsPage({ user, profile, setProfile, notify }) {
         bio:          profile.bio          ?? "",
         avatar_url:   profile.avatar_url   ?? "",
         tip_url:      profile.tip_url      ?? "",
+        hire_url:     profile.hire_url     ?? "",
       });
     }
   }, [profile?.id]);
@@ -443,6 +458,8 @@ function SettingsPage({ user, profile, setProfile, notify }) {
     if (usernameStatus === "taken") { setFormError("That username is already taken."); return; }
     const tip = normalizeTipUrl(form.tip_url);
     if (!tip.ok) { setFormError(tip.error); return; }
+    const hire = normalizeContactUrl(form.hire_url);
+    if (!hire.ok) { setFormError(hire.error); return; }
     setFormError(null); setSaving(true);
     const updated = {
       display_name: form.display_name.trim(),
@@ -450,6 +467,7 @@ function SettingsPage({ user, profile, setProfile, notify }) {
       bio:          form.bio.trim(),
       avatar_url:   form.avatar_url.trim(),
       tip_url:      tip.url,
+      hire_url:     hire.url,
     };
     const { data, error } = await upsertProfile(user, updated);
     setSaving(false);
@@ -545,6 +563,22 @@ function SettingsPage({ user, profile, setProfile, notify }) {
             />
             <div className="form-hint">
               Optional. Your own external support page — shown as a button on your public profile. Ko-fi, Buy Me a Coffee, PayPal, Patreon, Venmo, Cash App, Liberapay, GoFundMe, or Stripe. Must start with https://. Leave blank to remove.
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Hire Me Link</label>
+            <input
+              className="form-input"
+              type="text"
+              inputMode="url"
+              placeholder="https://calendly.com/you  or  you@email.com"
+              value={form.hire_url}
+              onChange={(e) => updateField("hire_url", e.target.value)}
+              maxLength={500}
+            />
+            <div className="form-hint">
+              Optional. Where people can reach you for paid work: your booking page, portfolio contact, or an email address. Web links must start with https://. Leave blank to remove.
             </div>
           </div>
 
@@ -889,6 +923,8 @@ function ProfilePage({ username, creations: allCreations, setPage, setDetailId, 
 
   const tipCheck = profileData.tip_url ? normalizeTipUrl(profileData.tip_url) : null;
   const tipUrl = tipCheck && tipCheck.ok ? tipCheck.url : "";
+  const hireCheck = profileData.hire_url ? normalizeContactUrl(profileData.hire_url) : null;
+  const hireUrl = hireCheck && hireCheck.ok ? hireCheck.url : "";
 
   function goDetail(id) { setDetailId(id); setPage("detail"); }
 
@@ -944,7 +980,24 @@ function ProfilePage({ username, creations: allCreations, setPage, setDetailId, 
                 &#9829; Support
               </a>
             )}
+            {hireUrl && (
+              <a
+                className="btn-ghost"
+                href={hireUrl}
+                target={hireUrl.startsWith("mailto:") ? undefined : "_blank"}
+                rel="noopener noreferrer nofollow"
+                onClick={() => track("hire_link_clicked", { creator_id: profileData.id, creator_username: profileData.username })}
+                style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}
+              >
+                &#9993; Hire Me
+              </a>
+            )}
           </div>
+          {hireUrl && (
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: "var(--muted)", letterSpacing: "0.06em", marginTop: 10, lineHeight: 1.5, maxWidth: 360 }}>
+              Arrangements are made directly between you and the creator.
+            </div>
+          )}
         </div>
       </div>
       <section className="section">
@@ -965,6 +1018,8 @@ function ProfilePage({ username, creations: allCreations, setPage, setDetailId, 
 function DetailPage({ id, creations, user, purchasedIds, purchasesLoaded, setPage, setCreatorUser, notify }) {
   const creation = creations.find((c) => c.id === id); const [checkingOut, setCheckingOut] = useState(false);
   if (!creation) return <div className="page"><div className="empty-state"><div className="empty-text">Creation not found.</div></div></div>;
+  const licenseCheck = creation.license_url ? normalizeContactUrl(creation.license_url) : null;
+  const licenseUrl = licenseCheck && licenseCheck.ok ? licenseCheck.url : "";
   const isPending = creation.premium_status === "Pending"; const hasVideo = !!creation.video_url; const posterImg = creation.thumbnail_image || creation.hero_image; const purchased = purchasedIds.has(creation.id); const unlocked = !creation.is_premium || purchased;
 const purchaseLoading = creation.is_premium && !purchasesLoaded; const priceLabel = creation.price_cents ? "$" + (creation.price_cents / 100).toFixed(2) : "$4.99";
   async function handleBuy() {
@@ -989,7 +1044,7 @@ const purchaseLoading = creation.is_premium && !purchasesLoaded; const priceLabe
       <div className="detail-cinema"><div className="detail-cinema-inner"><div className="detail-back" onClick={() => setPage("explore")}>&larr; Archive</div>{hasVideo && unlocked ? <video src={creation.video_url} poster={posterImg} controls playsInline /> : <img className="detail-still" src={posterImg} alt={creation.title} />}</div></div>
       <div className="detail-editorial-strip"><div className="detail-editorial-inner">
         <div className="detail-editorial-left"><div className="detail-eyebrow"><div className="detail-eyebrow-line" />{creation.category}</div><h1 className="detail-title">{creation.title}</h1><div className="detail-creator-row"><span className="detail-creator-link" onClick={() => { setCreatorUser(creation.creator.username); setPage("profile"); }}>{creation.creator.display_name}</span><span className="detail-creator-sep">&#183;</span><span className="detail-category-tag">{creation.category}</span></div><div className="detail-tools-row">{creation.tools_used.map((t) => <span key={t} className="detail-tool-tag">{t}</span>)}{hasVideo && unlocked && <span className="detail-tool-tag detail-tool-tag-video">&#9654; Film</span>}</div></div>
-        <div className="detail-editorial-right"><div className="detail-badges-row">{creation.is_premium ? <Badge type="Premium" /> : <Badge type="Open" />}{isPending && <Badge type="review" />}</div></div>
+        <div className="detail-editorial-right"><div className="detail-badges-row">{creation.is_premium ? <Badge type="Premium" /> : <Badge type="Open" />}{isPending && <Badge type="review" />}</div>{licenseUrl && (<div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, marginTop: 4 }}><a className="btn-ghost" href={licenseUrl} target={licenseUrl.startsWith("mailto:") ? undefined : "_blank"} rel="noopener noreferrer nofollow" onClick={() => track("license_link_clicked", { creation_id: creation.id, title: creation.title })} style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}>&#9878; License This</a><span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: "var(--muted)", letterSpacing: "0.06em", maxWidth: 200, textAlign: "right", lineHeight: 1.5 }}>Arrangements are made directly between you and the creator.</span></div>)}</div>
       </div></div>
       <div className="detail-body"><div className="detail-rule" /><div className="detail-section-label">Production Note<div className="detail-section-label-line" /></div>
         <div className="prompt-box">
@@ -1093,7 +1148,7 @@ if (!item?._fromDb) { notify("Cannot modify seed creations."); return; }
 }
 
 function SubmitPage({ setCreations, notify, setPage, user, profile }) {
-  const [form, setForm] = useState({ title: "", tools: "", category: "Abstract", prompt: "", isPremium: false });
+  const [form, setForm] = useState({ title: "", tools: "", category: "Abstract", prompt: "", isPremium: false, licenseUrl: "" });
   const [videoFile, setVideoFile] = useState(null); const [uploadState, setUploadState] = useState("idle"); const [uploadPct, setUploadPct] = useState(0); const [uploadResult, setUploadResult] = useState(null); const [uploadError, setUploadError] = useState(null); const [dragover, setDragover] = useState(false); const [submitting, setSubmitting] = useState(false);
   function updateField(key, value) { setForm((prev) => ({ ...prev, [key]: value })); }
   function formatBytes(b) { if (b < 1024 * 1024) return (b / 1024).toFixed(1) + " KB"; return (b / (1024 * 1024)).toFixed(1) + " MB"; }
@@ -1165,6 +1220,8 @@ track("upload_completed");
   async function handleSubmit() {
     if (!form.title.trim() || !form.prompt.trim()) { notify("Please fill in Title and Prompt."); return; }
     if (videoFile && uploadState !== "done") { notify("Please wait for your video to finish uploading."); return; }
+    const license = normalizeContactUrl(form.licenseUrl);
+    if (!license.ok) { notify(license.error); return; }
     setSubmitting(true);
     const toolList = form.tools.split(",").map((t) => t.trim()).filter(Boolean);
     const fallbackThumb = "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1200&q=90";
@@ -1188,7 +1245,7 @@ track("upload_completed");
       } catch { /* non-critical, proceed with placeholder */ }
     }
 
-    const newCreation = { id: "u" + Date.now(), title: form.title.trim(), creator: { username: profile?.username ?? user?.email?.split("@")[0] ?? "you", display_name: profile?.display_name ?? user?.email?.split("@")[0] ?? "You", avatar_url: profile?.avatar_url ?? "" }, hero_image: resolvedUpload?.thumbnail_image || fallbackThumb, thumbnail_image: resolvedUpload?.thumbnail_image || fallbackThumb, video_url: resolvedUpload?.video_url || "", preview_video: resolvedUpload?.preview_video || "", tools_used: toolList.length > 0 ? toolList : ["Unknown"], category: form.category, is_premium: form.isPremium, premium_status: form.isPremium ? "Pending" : null, prompt_preview: form.isPremium ? form.prompt.trim().slice(0, 120) + "..." : null, prompt_full: form.prompt.trim(), spotlight: false, mux_asset_id: resolvedUpload?.mux_asset_id || null };
+    const newCreation = { id: "u" + Date.now(), title: form.title.trim(), creator: { username: profile?.username ?? user?.email?.split("@")[0] ?? "you", display_name: profile?.display_name ?? user?.email?.split("@")[0] ?? "You", avatar_url: profile?.avatar_url ?? "" }, hero_image: resolvedUpload?.thumbnail_image || fallbackThumb, thumbnail_image: resolvedUpload?.thumbnail_image || fallbackThumb, video_url: resolvedUpload?.video_url || "", preview_video: resolvedUpload?.preview_video || "", tools_used: toolList.length > 0 ? toolList : ["Unknown"], category: form.category, is_premium: form.isPremium, premium_status: form.isPremium ? "Pending" : null, prompt_preview: form.isPremium ? form.prompt.trim().slice(0, 120) + "..." : null, prompt_full: form.prompt.trim(), spotlight: false, mux_asset_id: resolvedUpload?.mux_asset_id || null, license_url: license.url };
     
 setCreations((prev) => [newCreation, ...prev]);
 const { data: saved, error } = await insertCreation(newCreation, user, profile);
@@ -1250,6 +1307,11 @@ const { data: saved, error } = await insertCreation(newCreation, user, profile);
           <div className="form-group"><label className="form-label">Category</label><select className="form-select" value={form.category} onChange={(e) => updateField("category", e.target.value)}>{CATEGORIES.map((o) => <option key={o} value={o}>{o}</option>)}</select></div>
           <div className="form-group"><label className="form-label">Prompt *</label><textarea className="form-textarea" placeholder="Describe your full prompt in detail..." value={form.prompt} onChange={(e) => updateField("prompt", e.target.value)} /></div>
           <div className="form-group"><div className="toggle-row"><div className={"toggle" + (form.isPremium ? " on" : "")} onClick={() => updateField("isPremium", !form.isPremium)}><div className="toggle-knob" /></div><div><div className="toggle-label">Premium Prompt</div><div className="toggle-sub">{form.isPremium ? "Prompt paywalled, requires admin approval." : "Prompt freely visible to all."}</div></div></div></div>
+          <div className="form-group">
+            <label className="form-label">License This Link</label>
+            <input className="form-input" type="text" inputMode="url" placeholder="https://yoursite.com/licensing  or  you@email.com" value={form.licenseUrl} onChange={(e) => updateField("licenseUrl", e.target.value)} maxLength={500} />
+            <div className="form-hint">Optional. Where people can ask to license this piece: a licensing page or your email. Shown as a button on this creation's page. Web links must start with https://.</div>
+          </div>
           <button className="btn-primary" onClick={handleSubmit} disabled={submitting || uploadState === "uploading" || uploadState === "processing"} style={{ opacity: (submitting || uploadState === "uploading") ? 0.6 : 1 }}>{submitting ? "Submitting..." : "Submit Creation"}</button>
         </div>
       </section>

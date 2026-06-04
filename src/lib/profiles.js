@@ -7,7 +7,7 @@ import { supabase } from "./supabase.js";
 export async function fetchProfile(userId) {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, username, display_name, bio, avatar_url, tip_url, created_at")
+    .select("id, username, display_name, bio, avatar_url, tip_url, hire_url, created_at")
     .eq("id", userId)
     .maybeSingle();
 
@@ -27,12 +27,13 @@ export async function upsertProfile(user, profile) {
     // regardless of which key it passes in.
     avatar_url:   profile.avatar_url ?? profile.profile_image ?? "",
     tip_url:      profile.tip_url      ?? "",
+    hire_url:     profile.hire_url     ?? "",
   };
 
   const { data, error } = await supabase
     .from("profiles")
     .upsert(row, { onConflict: "id" })
-    .select("id, username, display_name, bio, avatar_url, tip_url, created_at")
+    .select("id, username, display_name, bio, avatar_url, tip_url, hire_url, created_at")
     .maybeSingle();
 
   return {
@@ -49,6 +50,7 @@ export function defaultProfile(user) {
     bio:          "",
     avatar_url:   "",
     tip_url:      "",
+    hire_url:     "",
   };
 }
 
@@ -96,7 +98,7 @@ export async function fetchCreators() {
 export async function fetchProfileByUsername(username) {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, username, display_name, bio, avatar_url, tip_url, created_at")
+    .select("id, username, display_name, bio, avatar_url, tip_url, hire_url, created_at")
     .eq("username", username)
     .maybeSingle();
 
