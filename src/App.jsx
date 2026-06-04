@@ -395,15 +395,40 @@ function normalizeContactUrl(raw) {
   if (parsed.protocol !== "https:") return { ok: false, error: "Link must start with https:// (or be an email address)." };
   return { ok: true, url: parsed.href };
 }
+function toolLinksToText(arr) {
+  return (Array.isArray(arr) ? arr : []).map((t) => `${t.name} | ${t.url}`).join("\n");
+}
+
+function parseToolLinks(raw) {
+  const lines = (raw ?? "").split("\n").map((l) => l.trim()).filter(Boolean);
+  if (lines.length > 12) return { ok: false, error: "You can list up to 12 tools." };
+  const list = [];
+  for (let i = 0; i < lines.length; i++) {
+    const sep = lines[i].indexOf("|");
+    if (sep === -1) return { ok: false, error: `Line ${i + 1}: use the format  Tool name | https://link` };
+    const name = lines[i].slice(0, sep).trim();
+    const link = lines[i].slice(sep + 1).trim();
+    if (!name) return { ok: false, error: `Line ${i + 1}: missing the tool name.` };
+    if (name.length > 60) return { ok: false, error: `Line ${i + 1}: tool name is too long.` };
+    if (link.length > 500) return { ok: false, error: `Line ${i + 1}: link is too long.` };
+    let parsed;
+    try { parsed = new URL(link); }
+    catch { return { ok: false, error: `Line ${i + 1}: that isn't a valid URL.` }; }
+    if (parsed.protocol !== "https:") return { ok: false, error: `Line ${i + 1}: link must start with https://` };
+    list.push({ name, url: parsed.href });
+  }
+  return { ok: true, list };
+}
 
 function SettingsPage({ user, profile, setProfile, notify }) {
-  const [form, setForm] = useState({
+ const [form, setForm] = useState({
     display_name: profile?.display_name ?? "",
     username:     profile?.username     ?? "",
     bio:          profile?.bio          ?? "",
     avatar_url:   profile?.avatar_url   ?? "",
     tip_url:      profile?.tip_url      ?? "",
     hire_url:     profile?.hire_url     ?? "",
+    tool_links_text: toolLinksToText(profile?.tool_links),
   });
   const [saving, setSaving]           = useState(false);
   const [formError, setFormError]     = useState(null);
@@ -420,6 +445,7 @@ function SettingsPage({ user, profile, setProfile, notify }) {
         avatar_url:   profile.avatar_url   ?? "",
         tip_url:      profile.tip_url      ?? "",
         hire_url:     profile.hire_url     ?? "",
+        tool_links_text: toolLinksToText(profile.tool_links),
       });
     }
   }, [profile?.id]);
@@ -460,6 +486,8 @@ function SettingsPage({ user, profile, setProfile, notify }) {
     if (!tip.ok) { setFormError(tip.error); return; }
     const hire = normalizeContactUrl(form.hire_url);
     if (!hire.ok) { setFormError(hire.error); return; }
+    const toolsParsed = parseToolLinks(form.tool_links_text);
+    if (!toolsParsed.ok) { setFormError(toolsParsed.error); return; }
     setFormError(null); setSaving(true);
     const updated = {
       display_name: form.display_name.trim(),
@@ -468,6 +496,7 @@ function SettingsPage({ user, profile, setProfile, notify }) {
       avatar_url:   form.avatar_url.trim(),
       tip_url:      tip.url,
       hire_url:     hire.url,
+      tool_links:   toolsParsed.list,
     };
     const { data, error } = await upsertProfile(user, updated);
     setSaving(false);
@@ -579,6 +608,20 @@ function SettingsPage({ user, profile, setProfile, notify }) {
             />
             <div className="form-hint">
               Optional. Where people can reach you for paid work: your booking page, portfolio contact, or an email address. Web links must start with https://. Leave blank to remove.
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Affiliate Tool Links</label>
+            <textarea
+              className="form-textarea"
+              placeholder={"Runway | https://runway.com/?ref=you\nMidJourney | https://midjourney.com/?ref=you"}
+              value={form.tool_links_text}
+              onChange={(e) => updateField("tool_links_text", e.target.value)}
+              style={{ minHeight: 110, fontFamily: "'DM Mono', monospace", fontSize: 12 }}
+            />
+            <div className="form-hint">
+              Optional. One per line as: Tool name, a pipe (|), then your https:// affiliate link. Shown on your profile and on your creations. Up to 12 tools. These are disclosed as affiliate links.
             </div>
           </div>
 
@@ -936,6 +979,9 @@ function ProfilePage({ username, creations: allCreations, setPage, setDetailId, 
   const tipUrl = tipCheck && tipCheck.ok ? tipCheck.url : "";
   const hireCheck = profileData.hire_url ? normalizeContactUrl(profileData.hire_url) : null;
   const hireUrl = hireCheck && hireCheck.ok ? hireCheck.url : "";
+  const tools = Array.isArray(profileData.tool_links)
+    ? profileData.tool_links.filter((t) => t && typeof t.url === "string" && /^https:\/\//i.test(t.url) && t.name)
+    : [];
 
   function goDetail(id) { setDetailId(id); setPage("detail"); }
 
@@ -1009,6 +1055,17 @@ function ProfilePage({ username, creations: allCreations, setPage, setDetailId, 
               Arrangements are made directly between you and the creator.
             </div>
           )}
+          {tools.length > 0 && (
+            <div style={{ marginTop: 18 }}>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: "0.14em", color: "var(--muted)", textTransform: "uppercase", marginBottom: 10 }}>Tools I Use</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {tools.map((t, i) => (
+                  <a key={i} href={t.url} target="_blank" rel="noopener noreferrer nofollow" onClick={() => track("affiliate_link_clicked", { creator_username: profileData.username, tool: t.name })} className="detail-tool-tag detail-tool-tag-video" style={{ textDecoration: "none" }}>{t.name} &#8599;</a>
+                ))}
+              </div>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: "var(--muted)", letterSpacing: "0.06em", marginTop: 10, lineHeight: 1.5, maxWidth: 360 }}>Some links are affiliate links; the creator may earn a commission.</div>
+            </div>
+          )}
         </div>
       </div>
       <section className="section">
@@ -1028,6 +1085,25 @@ function ProfilePage({ username, creations: allCreations, setPage, setDetailId, 
 
 function DetailPage({ id, creations, user, purchasedIds, purchasesLoaded, setPage, setCreatorUser, notify }) {
   const creation = creations.find((c) => c.id === id); const [checkingOut, setCheckingOut] = useState(false);
+  const [toolMap, setToolMap] = useState({});
+  useEffect(() => {
+    const uname = creation?.creator?.username;
+    if (!uname || uname === "unknown") { setToolMap({}); return; }
+    let cancelled = false;
+    (async () => {
+      const { data } = await fetchProfileByUsername(uname);
+      if (cancelled) return;
+      const map = {};
+      const links = Array.isArray(data?.tool_links) ? data.tool_links : [];
+      for (const t of links) {
+        if (t && typeof t.url === "string" && /^https:\/\//i.test(t.url) && t.name) {
+          map[t.name.trim().toLowerCase()] = t.url;
+        }
+      }
+      setToolMap(map);
+    })();
+    return () => { cancelled = true; };
+  }, [creation?.creator?.username]);
   if (!creation) return <div className="page"><div className="empty-state"><div className="empty-text">Creation not found.</div></div></div>;
   const licenseCheck = creation.license_url ? normalizeContactUrl(creation.license_url) : null;
   const licenseUrl = licenseCheck && licenseCheck.ok ? licenseCheck.url : "";
@@ -1054,7 +1130,7 @@ const purchaseLoading = creation.is_premium && !purchasesLoaded; const priceLabe
     <div className="page detail-page">
       <div className="detail-cinema"><div className="detail-cinema-inner"><div className="detail-back" onClick={() => setPage("explore")}>&larr; Archive</div>{hasVideo && unlocked ? <video src={creation.video_url} poster={posterImg} controls playsInline /> : <img className="detail-still" src={posterImg} alt={creation.title} />}</div></div>
       <div className="detail-editorial-strip"><div className="detail-editorial-inner">
-        <div className="detail-editorial-left"><div className="detail-eyebrow"><div className="detail-eyebrow-line" />{creation.category}</div><h1 className="detail-title">{creation.title}</h1><div className="detail-creator-row"><span className="detail-creator-link" onClick={() => { setCreatorUser(creation.creator.username); setPage("profile"); }}>{creation.creator.display_name}</span><span className="detail-creator-sep">&#183;</span><span className="detail-category-tag">{creation.category}</span></div><div className="detail-tools-row">{creation.tools_used.map((t) => <span key={t} className="detail-tool-tag">{t}</span>)}{hasVideo && unlocked && <span className="detail-tool-tag detail-tool-tag-video">&#9654; Film</span>}</div></div>
+        <div className="detail-editorial-left"><div className="detail-eyebrow"><div className="detail-eyebrow-line" />{creation.category}</div><h1 className="detail-title">{creation.title}</h1><div className="detail-creator-row"><span className="detail-creator-link" onClick={() => { setCreatorUser(creation.creator.username); setPage("profile"); }}>{creation.creator.display_name}</span><span className="detail-creator-sep">&#183;</span><span className="detail-category-tag">{creation.category}</span></div><div className="detail-tools-row">{creation.tools_used.map((t) => { const href = toolMap[String(t).trim().toLowerCase()]; return href ? <a key={t} href={href} target="_blank" rel="noopener noreferrer nofollow" onClick={() => track("affiliate_link_clicked", { creation_id: creation.id, tool: t })} className="detail-tool-tag detail-tool-tag-video" style={{ textDecoration: "none" }}>{t} &#8599;</a> : <span key={t} className="detail-tool-tag">{t}</span>; })}{hasVideo && unlocked && <span className="detail-tool-tag detail-tool-tag-video">&#9654; Film</span>}</div>{creation.tools_used.some((t) => toolMap[String(t).trim().toLowerCase()]) && <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: "var(--muted)", letterSpacing: "0.06em", marginTop: 10, lineHeight: 1.5 }}>Some tool links are affiliate links; the creator may earn a commission.</div>}</div>
         <div className="detail-editorial-right"><div className="detail-badges-row">{creation.is_premium ? <Badge type="Premium" /> : <Badge type="Open" />}{isPending && <Badge type="review" />}</div>{licenseUrl && (<div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, marginTop: 4 }}><a className="btn-ghost" href={licenseUrl} target={licenseUrl.startsWith("mailto:") ? undefined : "_blank"} rel="noopener noreferrer nofollow" onClick={() => track("license_link_clicked", { creation_id: creation.id, title: creation.title })} style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}>&#9878; License This</a><span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: "var(--muted)", letterSpacing: "0.06em", maxWidth: 200, textAlign: "right", lineHeight: 1.5 }}>Arrangements are made directly between you and the creator.</span></div>)}</div>
       </div></div>
       <div className="detail-body"><div className="detail-rule" /><div className="detail-section-label">Production Note<div className="detail-section-label-line" /></div>

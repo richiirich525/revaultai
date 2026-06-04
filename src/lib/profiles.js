@@ -7,7 +7,7 @@ import { supabase } from "./supabase.js";
 export async function fetchProfile(userId) {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, username, display_name, bio, avatar_url, tip_url, hire_url, created_at")
+    .select("id, username, display_name, bio, avatar_url, tip_url, hire_url, tool_links, created_at")
     .eq("id", userId)
     .maybeSingle();
 
@@ -28,12 +28,13 @@ export async function upsertProfile(user, profile) {
     avatar_url:   profile.avatar_url ?? profile.profile_image ?? "",
     tip_url:      profile.tip_url      ?? "",
     hire_url:     profile.hire_url     ?? "",
+    tool_links:   profile.tool_links   ?? [],
   };
 
   const { data, error } = await supabase
     .from("profiles")
     .upsert(row, { onConflict: "id" })
-    .select("id, username, display_name, bio, avatar_url, tip_url, hire_url, created_at")
+    .select("id, username, display_name, bio, avatar_url, tip_url, hire_url, tool_links, created_at")
     .maybeSingle();
 
   return {
@@ -42,7 +43,7 @@ export async function upsertProfile(user, profile) {
   };
 }
 
-export function defaultProfile(user) {
+export function defaultProfile(user) {}
   const handle = user.email?.split("@")[0] ?? "creator";
   return {
     username:     handle,
@@ -51,8 +52,8 @@ export function defaultProfile(user) {
     avatar_url:   "",
     tip_url:      "",
     hire_url:     "",
+    tool_links:   [],
   };
-}
 
 // ---------------------------------------------------------------------------
 // All creators (for the Creators page)
@@ -98,7 +99,7 @@ export async function fetchCreators() {
 export async function fetchProfileByUsername(username) {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, username, display_name, bio, avatar_url, tip_url, hire_url, created_at")
+    .select("id, username, display_name, bio, avatar_url, tip_url, hire_url, tool_links, created_at")
     .eq("username", username)
     .maybeSingle();
 
