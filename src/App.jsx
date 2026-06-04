@@ -907,6 +907,17 @@ function ProfilePage({ username, creations: allCreations, setPage, setDetailId, 
     if (error) { setFollowLoading(false); return; }
     setIsFollowing(true);
     setFollowerCount((n) => n + 1);
+    // Best-effort: email the creator that they have a new follower (non-blocking)
+    try {
+      const token = await getSessionToken();
+      await fetch("/api/notify-follow", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
+        body: JSON.stringify({ creatorUserId: profileData.id }),
+      });
+    } catch (err) {
+      console.warn("[RevaultAI] Follow notification failed:", err.message);
+    }
   }
   setFollowLoading(false);
 }
