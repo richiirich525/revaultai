@@ -7,7 +7,7 @@ import { supabase } from "./supabase.js";
 export async function fetchProfile(userId) {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, username, display_name, bio, avatar_url, created_at")
+    .select("id, username, display_name, bio, avatar_url, tip_url, created_at")
     .eq("id", userId)
     .maybeSingle();
 
@@ -26,12 +26,13 @@ export async function upsertProfile(user, profile) {
     // Accept either field name from callers so SettingsPage works
     // regardless of which key it passes in.
     avatar_url:   profile.avatar_url ?? profile.profile_image ?? "",
+    tip_url:      profile.tip_url      ?? "",
   };
 
   const { data, error } = await supabase
     .from("profiles")
     .upsert(row, { onConflict: "id" })
-    .select("id, username, display_name, bio, avatar_url, created_at")
+    .select("id, username, display_name, bio, avatar_url, tip_url, created_at")
     .maybeSingle();
 
   return {
@@ -47,6 +48,7 @@ export function defaultProfile(user) {
     display_name: handle,
     bio:          "",
     avatar_url:   "",
+    tip_url:      "",
   };
 }
 
@@ -77,7 +79,7 @@ export async function fetchCreators() {
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, username, display_name, bio, avatar_url, created_at")
+    .select("id, username, display_name, bio, avatar_url, tip_url, created_at")
     .in("id", userIds)
     .order("created_at", { ascending: true });
 
@@ -94,7 +96,7 @@ export async function fetchCreators() {
 export async function fetchProfileByUsername(username) {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, username, display_name, bio, avatar_url, created_at")
+    .select("id, username, display_name, bio, avatar_url, tip_url, created_at")
     .eq("username", username)
     .maybeSingle();
 

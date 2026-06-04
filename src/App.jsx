@@ -363,12 +363,33 @@ function Nav({ page, setPage, user, profile, onSignInClick, onSignOut }) {
   );
 }
 
+const TIP_HOSTS = [
+  "ko-fi.com", "buymeacoffee.com", "patreon.com",
+  "paypal.com", "paypal.me", "venmo.com", "cash.app",
+  "liberapay.com", "gofundme.com", "buy.stripe.com",
+];
+
+function normalizeTipUrl(raw) {
+  const v = (raw ?? "").trim();
+  if (!v) return { ok: true, url: "" }; // blank clears the field
+  if (v.length > 500) return { ok: false, error: "Support link is too long (max 500 characters)." };
+  let parsed;
+  try { parsed = new URL(v); }
+  catch { return { ok: false, error: "Enter a full URL, e.g. https://ko-fi.com/yourname." }; }
+  if (parsed.protocol !== "https:") return { ok: false, error: "Support link must start with https://." };
+  const host = parsed.hostname.replace(/^www\./, "").toLowerCase();
+  const allowed = TIP_HOSTS.some((h) => host === h || host.endsWith("." + h));
+  if (!allowed) return { ok: false, error: "Use a known support platform (Ko-fi, Buy Me a Coffee, PayPal, Patreon, Venmo, Cash App, Liberapay, GoFundMe, or Stripe)." };
+  return { ok: true, url: parsed.href };
+}
+
 function SettingsPage({ user, profile, setProfile, notify }) {
   const [form, setForm] = useState({
     display_name: profile?.display_name ?? "",
     username:     profile?.username     ?? "",
     bio:          profile?.bio          ?? "",
     avatar_url:   profile?.avatar_url   ?? "",
+    tip_url:      profile?.tip_url      ?? "",
   });
   const [saving, setSaving]           = useState(false);
   const [formError, setFormError]     = useState(null);
@@ -383,6 +404,7 @@ function SettingsPage({ user, profile, setProfile, notify }) {
         username:     profile.username     ?? "",
         bio:          profile.bio          ?? "",
         avatar_url:   profile.avatar_url   ?? "",
+        tip_url:      profile.tip_url      ?? "",
       });
     }
   }, [profile?.id]);
@@ -419,12 +441,15 @@ function SettingsPage({ user, profile, setProfile, notify }) {
       return;
     }
     if (usernameStatus === "taken") { setFormError("That username is already taken."); return; }
+    const tip = normalizeTipUrl(form.tip_url);
+    if (!tip.ok) { setFormError(tip.error); return; }
     setFormError(null); setSaving(true);
     const updated = {
       display_name: form.display_name.trim(),
       username:     form.username.trim(),
       bio:          form.bio.trim(),
       avatar_url:   form.avatar_url.trim(),
+      tip_url:      tip.url,
     };
     const { data, error } = await upsertProfile(user, updated);
     setSaving(false);
@@ -505,6 +530,22 @@ function SettingsPage({ user, profile, setProfile, notify }) {
             <label className="form-label">Bio</label>
             <textarea className="form-textarea" placeholder="Tell the RevaultAI community about your creative practice..." value={form.bio} onChange={(e) => updateField("bio", e.target.value)} maxLength={400} style={{ minHeight: 100 }} />
             <div className="form-hint">{form.bio.length}/400 characters.</div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Support / Tip Link</label>
+            <input
+              className="form-input"
+              type="url"
+              inputMode="url"
+              placeholder="https://ko-fi.com/yourname"
+              value={form.tip_url}
+              onChange={(e) => updateField("tip_url", e.target.value)}
+              maxLength={500}
+            />
+            <div className="form-hint">
+              Optional. Your own external support page — shown as a button on your public profile. Ko-fi, Buy Me a Coffee, PayPal, Patreon, Venmo, Cash App, Liberapay, GoFundMe, or Stripe. Must start with https://. Leave blank to remove.
+            </div>
           </div>
 
           <div className="settings-divider" />
@@ -846,6 +887,9 @@ function ProfilePage({ username, creations: allCreations, setPage, setDetailId, 
     return true;
   });
 
+  const tipCheck = profileData.tip_url ? normalizeTipUrl(profileData.tip_url) : null;
+  const tipUrl = tipCheck && tipCheck.ok ? tipCheck.url : "";
+
   function goDetail(id) { setDetailId(id); setPage("detail"); }
 
   return (
@@ -887,6 +931,18 @@ function ProfilePage({ username, creations: allCreations, setPage, setDetailId, 
               >
                 {followLoading ? "..." : isFollowing ? "\u2713 Following" : "+ Follow"}
               </button>
+            )}
+            {tipUrl && (
+              <a
+                className="btn-ghost"
+                href={tipUrl}
+                target="_blank"
+                rel="noopener noreferrer nofollow"
+                onClick={() => track("tip_link_clicked", { creator_id: profileData.id, creator_username: profileData.username })}
+                style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}
+              >
+                &#9829; Support
+              </a>
             )}
           </div>
         </div>
