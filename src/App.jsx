@@ -1142,14 +1142,14 @@ const { data: saved, error } = await insertCreation(newCreation, user, profile);
     track("creation_submitted", { title: newCreation.title, category: newCreation.category, is_premium: newCreation.is_premium });
     if (!error) notify(form.isPremium ? "Submitted for review." : "Creation is now live on RevaultAI.");
 
-    // Notify admin when an open creation goes live (no approval step)
-    if (!error && !form.isPremium) {
+    // Notify admin of every new submission (premium = awaiting review, open = already live)
+    if (!error) {
       try {
         const token = await getSessionToken();
         await fetch("/api/notify-submission", {
           method: "POST",
           headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
-          body: JSON.stringify({ title: newCreation.title, creatorName: newCreation.creator.display_name, category: newCreation.category }),
+          body: JSON.stringify({ title: newCreation.title, creatorName: newCreation.creator.display_name, category: newCreation.category, isPremium: form.isPremium }),
         });
       } catch (err) {
         console.warn("[RevaultAI] Submission notification failed:", err.message);
