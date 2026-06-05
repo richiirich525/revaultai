@@ -1087,11 +1087,11 @@ function DetailPage({ id, creations, user, purchasedIds, purchasesLoaded, setPag
   const creation = creations.find((c) => c.id === id); const [checkingOut, setCheckingOut] = useState(false);
   const [toolMap, setToolMap] = useState({});
   useEffect(() => {
-    const uname = creation?.creator?.username;
-    if (!uname || uname === "unknown") { setToolMap({}); return; }
+    const creatorId = creation?.user_id;
+    if (!creatorId) { setToolMap({}); return; }
     let cancelled = false;
     (async () => {
-      const { data } = await fetchProfileByUsername(uname);
+      const { data } = await fetchProfile(creatorId);
       if (cancelled) return;
       const map = {};
       const links = Array.isArray(data?.tool_links) ? data.tool_links : [];
@@ -1103,7 +1103,7 @@ function DetailPage({ id, creations, user, purchasedIds, purchasesLoaded, setPag
       setToolMap(map);
     })();
     return () => { cancelled = true; };
-  }, [creation?.creator?.username]);
+  }, [creation?.user_id]);
   if (!creation) return <div className="page"><div className="empty-state"><div className="empty-text">Creation not found.</div></div></div>;
   const licenseCheck = creation.license_url ? normalizeContactUrl(creation.license_url) : null;
   const licenseUrl = licenseCheck && licenseCheck.ok ? licenseCheck.url : "";
@@ -1332,7 +1332,7 @@ track("upload_completed");
       } catch { /* non-critical, proceed with placeholder */ }
     }
 
-    const newCreation = { id: "u" + Date.now(), title: form.title.trim(), creator: { username: profile?.username ?? user?.email?.split("@")[0] ?? "you", display_name: profile?.display_name ?? user?.email?.split("@")[0] ?? "You", avatar_url: profile?.avatar_url ?? "" }, hero_image: resolvedUpload?.thumbnail_image || fallbackThumb, thumbnail_image: resolvedUpload?.thumbnail_image || fallbackThumb, video_url: resolvedUpload?.video_url || "", preview_video: resolvedUpload?.preview_video || "", tools_used: toolList.length > 0 ? toolList : ["Unknown"], category: form.category, is_premium: form.isPremium, premium_status: form.isPremium ? "Pending" : null, prompt_preview: form.isPremium ? form.prompt.trim().slice(0, 120) + "..." : null, prompt_full: form.prompt.trim(), spotlight: false, mux_asset_id: resolvedUpload?.mux_asset_id || null, license_url: license.url };
+    const newCreation = { id: "u" + Date.now(), title: form.title.trim(), creator: { username: profile?.username ?? user?.email?.split("@")[0] ?? "you", display_name: profile?.display_name ?? user?.email?.split("@")[0] ?? "You", avatar_url: profile?.avatar_url ?? "" }, hero_image: resolvedUpload?.thumbnail_image || fallbackThumb, thumbnail_image: resolvedUpload?.thumbnail_image || fallbackThumb, video_url: resolvedUpload?.video_url || "", preview_video: resolvedUpload?.preview_video || "", tools_used: toolList.length > 0 ? toolList : ["Unknown"], category: form.category, is_premium: form.isPremium, premium_status: form.isPremium ? "Pending" : null, prompt_preview: form.isPremium ? form.prompt.trim().slice(0, 120) + "..." : null, prompt_full: form.prompt.trim(), spotlight: false, mux_asset_id: resolvedUpload?.mux_asset_id || null, license_url: license.url, user_id: user?.id ?? null };
     
 setCreations((prev) => [newCreation, ...prev]);
 const { data: saved, error } = await insertCreation(newCreation, user, profile);
