@@ -1517,6 +1517,7 @@ track("upload_completed");
     const license = normalizeContactUrl(form.licenseUrl);
     if (!license.ok) { notify(license.error); return; }
     setSubmitting(true);
+    const autoApprove = profile?.auto_approve === true;
     const toolList = form.tools.split(",").map((t) => t.trim()).filter(Boolean);
     const fallbackThumb = "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1200&q=90";
 
@@ -1539,7 +1540,7 @@ track("upload_completed");
       } catch { /* non-critical, proceed with placeholder */ }
     }
 
-    const newCreation = { id: "u" + Date.now(), title: form.title.trim(), creator: { username: profile?.username ?? user?.email?.split("@")[0] ?? "you", display_name: profile?.display_name ?? user?.email?.split("@")[0] ?? "You", avatar_url: profile?.avatar_url ?? "" }, hero_image: resolvedUpload?.thumbnail_image || fallbackThumb, thumbnail_image: resolvedUpload?.thumbnail_image || fallbackThumb, video_url: resolvedUpload?.video_url || "", preview_video: resolvedUpload?.preview_video || "", tools_used: toolList.length > 0 ? toolList : ["Unknown"], category: form.category, is_premium: form.isPremium, premium_status: form.isPremium ? "Pending" : null, prompt_preview: form.isPremium ? form.prompt.trim().slice(0, 120) + "..." : null, prompt_full: form.prompt.trim(), spotlight: false, mux_asset_id: resolvedUpload?.mux_asset_id || null, license_url: license.url, user_id: user?.id ?? null };
+    const newCreation = { id: "u" + Date.now(), title: form.title.trim(), creator: { username: profile?.username ?? user?.email?.split("@")[0] ?? "you", display_name: profile?.display_name ?? user?.email?.split("@")[0] ?? "You", avatar_url: profile?.avatar_url ?? "" }, hero_image: resolvedUpload?.thumbnail_image || fallbackThumb, thumbnail_image: resolvedUpload?.thumbnail_image || fallbackThumb, video_url: resolvedUpload?.video_url || "", preview_video: resolvedUpload?.preview_video || "", tools_used: toolList.length > 0 ? toolList : ["Unknown"], category: form.category, is_premium: form.isPremium, premium_status: form.isPremium ? (autoApprove ? "Approved" : "Pending") : null, prompt_preview: form.isPremium ? form.prompt.trim().slice(0, 120) + "..." : null, prompt_full: form.prompt.trim(), spotlight: false, mux_asset_id: resolvedUpload?.mux_asset_id || null, license_url: license.url, user_id: user?.id ?? null };
     
 setCreations((prev) => [newCreation, ...prev]);
 const { data: saved, error } = await insertCreation(newCreation, user, profile);
@@ -1547,7 +1548,7 @@ const { data: saved, error } = await insertCreation(newCreation, user, profile);
     else if (saved) { setCreations((prev) => prev.map((c) => (c.id === newCreation.id ? saved : c))); }
     setSubmitting(false); setPage("explore");
     track("creation_submitted", { title: newCreation.title, category: newCreation.category, is_premium: newCreation.is_premium });
-    if (!error) notify(form.isPremium ? "Submitted for review." : "Creation is now live on RevaultAI.");
+    if (!error) notify(form.isPremium && !autoApprove ? "Submitted for review." : "Creation is now live on RevaultAI.");
 
     // Notify admin of every new submission (premium = awaiting review, open = already live)
     if (!error) {
@@ -1556,7 +1557,7 @@ const { data: saved, error } = await insertCreation(newCreation, user, profile);
         await fetch("/api/notify-submission", {
           method: "POST",
           headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
-          body: JSON.stringify({ title: newCreation.title, creatorName: newCreation.creator.display_name, category: newCreation.category, isPremium: form.isPremium }),
+          body: JSON.stringify({ title: newCreation.title, creatorName: newCreation.creator.display_name, category: newCreation.category, isPremium: form.isPremium && !autoApprove }),
         });
       } catch (err) {
         console.warn("[RevaultAI] Submission notification failed:", err.message);
@@ -1845,7 +1846,7 @@ function FAQPage({ setPage }) {
     },
     {
       q: "How much do creators earn?",
-      a: "Creators keep 80% of every unlock. Your share is calculated on the net amount after payment-processing fees, and RevaultAI keeps the remaining 20%. Viewers can also tip you directly through the Support button — RevaultAI takes no cut of tips, so you keep the full amount after payment-processing fees.",
+      a: "Creators keep 80% of every unlock. Your share is calculated on the net amount after payment-processing fees, and RevaultAI keeps the remaining 20%. Viewers can also tip you directly through the Support button — which points to a support link you provide, so tips go straight to you and RevaultAI takes no cut.",
     },
     {
       q: "Will there be more ways for creators to earn?",
