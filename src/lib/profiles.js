@@ -29,12 +29,13 @@ export async function upsertProfile(user, profile) {
     tip_url:      profile.tip_url      ?? "",
     hire_url:     profile.hire_url     ?? "",
     tool_links:   profile.tool_links   ?? [],
+    social_links: profile.social_links ?? {},
   };
 
   const { data, error } = await supabase
     .from("profiles")
     .upsert(row, { onConflict: "id" })
-    .select("id, username, display_name, bio, avatar_url, tip_url, hire_url, tool_links, created_at")
+    .select("id, username, display_name, bio, avatar_url, tip_url, hire_url, tool_links, social_links, created_at")
     .maybeSingle();
 
   return {
@@ -53,6 +54,7 @@ export function defaultProfile(user) {
     tip_url:      "",
     hire_url:     "",
     tool_links:   [],
+    social_links: {},
   };
 }
 

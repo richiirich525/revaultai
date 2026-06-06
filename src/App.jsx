@@ -420,6 +420,58 @@ function parseToolLinks(raw) {
   return { ok: true, list };
 }
 
+const SOCIAL_PLATFORMS = [
+  { key: "website",   label: "Website",     placeholder: "https://yoursite.com" },
+  { key: "x",         label: "X / Twitter", placeholder: "https://x.com/yourhandle" },
+  { key: "youtube",   label: "YouTube",     placeholder: "https://youtube.com/@yourchannel" },
+  { key: "instagram", label: "Instagram",   placeholder: "https://instagram.com/yourhandle" },
+  { key: "tiktok",    label: "TikTok",      placeholder: "https://tiktok.com/@yourhandle" },
+  { key: "linkedin",  label: "LinkedIn",    placeholder: "https://linkedin.com/in/you" },
+  { key: "discord",   label: "Discord",     placeholder: "https://discord.gg/yourinvite" },
+  { key: "github",    label: "GitHub",      placeholder: "https://github.com/you" },
+];
+
+const SOCIAL_ICONS = {
+  website: FaGlobe,
+  x: FaXTwitter,
+  youtube: FaYoutube,
+  instagram: FaInstagram,
+  tiktok: FaTiktok,
+  linkedin: FaLinkedinIn,
+  discord: FaDiscord,
+  github: FaGithub,
+};
+
+const SOCIAL_ICONS = {
+  website: FaGlobe,
+  x: FaXTwitter,
+  youtube: FaYoutube,
+  instagram: FaInstagram,
+  tiktok: FaTiktok,
+  linkedin: FaLinkedinIn,
+  discord: FaDiscord,
+  github: FaGithub,
+};
+
+function socialFormFromProfile(profile) {
+  const links = (profile && profile.social_links) || {};
+  const out = {};
+  for (const p of SOCIAL_PLATFORMS) out["social_" + p.key] = links[p.key] ?? "";
+  return out;
+}
+
+function normalizeSocialLinks(formObj) {
+  const out = {};
+  for (const p of SOCIAL_PLATFORMS) {
+    const raw = (formObj["social_" + p.key] ?? "").trim();
+    if (!raw) continue;
+    if (raw.length > 500) return { ok: false, error: p.label + " link is too long (max 500 characters)." };
+    if (!/^https:\/\//i.test(raw)) return { ok: false, error: p.label + " link must start with https://" };
+    out[p.key] = raw;
+  }
+  return { ok: true, links: out };
+}
+
 function SettingsPage({ user, profile, setProfile, notify }) {
  const [form, setForm] = useState({
     display_name: profile?.display_name ?? "",
@@ -429,6 +481,7 @@ function SettingsPage({ user, profile, setProfile, notify }) {
     tip_url:      profile?.tip_url      ?? "",
     hire_url:     profile?.hire_url     ?? "",
     tool_links_text: toolLinksToText(profile?.tool_links),
+    ...socialFormFromProfile(profile),
   });
   const [saving, setSaving]           = useState(false);
   const [formError, setFormError]     = useState(null);
@@ -446,6 +499,7 @@ function SettingsPage({ user, profile, setProfile, notify }) {
         tip_url:      profile.tip_url      ?? "",
         hire_url:     profile.hire_url     ?? "",
         tool_links_text: toolLinksToText(profile.tool_links),
+        ...socialFormFromProfile(profile),
       });
     }
   }, [profile?.id]);
@@ -488,6 +542,8 @@ function SettingsPage({ user, profile, setProfile, notify }) {
     if (!hire.ok) { setFormError(hire.error); return; }
     const toolsParsed = parseToolLinks(form.tool_links_text);
     if (!toolsParsed.ok) { setFormError(toolsParsed.error); return; }
+    const social = normalizeSocialLinks(form);
+    if (!social.ok) { setFormError(social.error); return; }
     setFormError(null); setSaving(true);
     const updated = {
       display_name: form.display_name.trim(),
@@ -497,6 +553,7 @@ function SettingsPage({ user, profile, setProfile, notify }) {
       tip_url:      tip.url,
       hire_url:     hire.url,
       tool_links:   toolsParsed.list,
+      social_links: social.links,
     };
     const { data, error } = await upsertProfile(user, updated);
     setSaving(false);
@@ -623,6 +680,27 @@ function SettingsPage({ user, profile, setProfile, notify }) {
             <div className="form-hint">
               Optional. One per line as: Tool name, a pipe (|), then your https:// affiliate link. Shown on your profile and on your creations. Up to 12 tools. These are disclosed as affiliate links.
             </div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Social Links</label>
+            <div className="form-hint" style={{ marginBottom: 12 }}>
+              Optional. Paste the full https:// link for each. They show as icons on your public profile; leave any blank to hide it.
+            </div>
+            {SOCIAL_PLATFORMS.map((p) => (
+              <input
+                key={p.key}
+                className="form-input"
+                type="url"
+                inputMode="url"
+                placeholder={p.label + ": " + p.placeholder}
+                value={form["social_" + p.key]}
+                onChange={(e) => updateField("social_" + p.key, e.target.value)}
+                maxLength={500}
+                aria-label={p.label}
+                style={{ marginBottom: 8 }}
+              />
+            ))}
           </div>
 
           <div className="settings-divider" />
@@ -983,6 +1061,11 @@ function ProfilePage({ username, creations: allCreations, setPage, setDetailId, 
     ? profileData.tool_links.filter((t) => t && typeof t.url === "string" && /^https:\/\//i.test(t.url) && t.name)
     : [];
 
+  const socialLinksObj = (profileData.social_links && typeof profileData.social_links === "object") ? profileData.social_links : {};
+  const socials = SOCIAL_PLATFORMS
+    .map((p) => ({ key: p.key, label: p.label, url: socialLinksObj[p.key], Icon: SOCIAL_ICONS[p.key] }))
+    .filter((p) => typeof p.url === "string" && /^https:\/\//i.test(p.url) && p.Icon);
+
   function goDetail(id) { setDetailId(id); setPage("detail"); }
 
   return (
@@ -994,6 +1077,15 @@ function ProfilePage({ username, creations: allCreations, setPage, setDetailId, 
           <div className="profile-name">{profileData.display_name || profileData.username}</div>
           <div className="profile-handle">@{profileData.username}</div>
           {profileData.bio && <div className="profile-bio">{profileData.bio}</div>}
+          {socials.length > 0 && (
+            <div className="profile-socials" style={{ display: "flex", gap: 14, flexWrap: "wrap", marginTop: 14 }}>
+              {socials.map(({ key, label, url, Icon }) => (
+                <a key={key} href={url} target="_blank" rel="noopener noreferrer nofollow" title={label} aria-label={label} onClick={() => track("social_link_clicked", { creator_id: profileData.id, platform: key })} style={{ color: "var(--muted)", display: "inline-flex", alignItems: "center", fontSize: 20, textDecoration: "none" }} onMouseEnter={(e) => { e.currentTarget.style.color = "var(--text)"; }} onMouseLeave={(e) => { e.currentTarget.style.color = "var(--muted)"; }}>
+                  <Icon />
+                </a>
+              ))}
+            </div>
+          )}
           {stats && (
             <div style={{ display: "flex", gap: 24, marginTop: 16, flexWrap: "wrap" }}>
               <div style={{ textAlign: "center" }}>
