@@ -26,6 +26,8 @@ import {
   uploadAvatar,
 } from "./lib/profiles.js";
 
+import { fetchFollowingFeed } from "./lib/db.js";
+
 const CATEGORIES = ["Abstract","Action","Animation","Comedy","Creative Experiments","Crime","Documentary","Films","Drama","Horror","Images","Music","News","Noir","Prompts","Romance","Sci-Fi/Fantasy","Short Films","Sports","Thriller","Western","Workflows"];
 
 const CSS = `
@@ -342,6 +344,7 @@ function Nav({ page, setPage, user, profile, onSignInClick, onSignOut }) {
         <div className={"nav-link" + (page === "home" ? " active" : "")} onClick={() => setPage("home")}>Home</div>
         <div className={"nav-link" + (page === "explore" ? " active" : "")} onClick={() => setPage("explore")}>Explore</div>
         <div className={"nav-link" + (page === "creators" ? " active" : "")} onClick={() => setPage("creators")}>Creators</div>
+        {user && <div className={"nav-link" + (page === "feed" ? " active" : "")} onClick={() => setPage("feed")}>Following</div>}
         <div className={"nav-link" + (page === "submit" ? " active" : "")} onClick={() => setPage("submit")}>Submit</div>
         <div className={"nav-link" + (page === "become-creator" ? " active" : "")} onClick={() => setPage("become-creator")}>Join</div>
         {user && isAdmin(user) && <div className={"nav-link" + (page === "admin" ? " active" : "")} onClick={() => setPage("admin")}>Admin</div>}
@@ -929,6 +932,66 @@ function ExplorePage({ creations, setPage, setDetailId, dbLoaded }) {
               </div>
             )}
           </>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function FollowFeedPage({ user, setPage, setDetailId, setCreatorUser }) {
+  const [feed, setFeed] = useState([]);
+  const [suggested, setSuggested] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user?.id) { setLoading(false); return; }
+    let cancelled = false;
+    setLoading(true);
+    (async () => {
+      const { data } = await fetchFollowingFeed(user.id);
+      if (cancelled) return;
+      const items = data ?? [];
+      setFeed(items);
+      if (items.length === 0) {
+        const { data: creators } = await fetchCreators();
+        if (!cancelled) setSuggested((creators ?? []).slice(0, 6));
+      }
+      setLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id]);
+
+  function goDetail(id) { setDetailId(id); setPage("detail"); }
+
+  return (
+    <div className="page">
+      <div className="page-hdr"><div className="page-hdr-eyebrow">Your Feed</div><div className="page-hdr-title">Following</div><div className="page-hdr-sub">The latest work from creators you follow.</div></div>
+      <section className="section">
+        {!user ? (
+          <div className="empty-state"><div className="empty-text">Sign in to see your feed.</div></div>
+        ) : loading ? (
+          <div className="empty-state"><div className="empty-text">Loading your feed...</div></div>
+        ) : feed.length > 0 ? (
+          <div className="creation-grid">{feed.map((c) => <CreationCard key={c.id} creation={c} onClick={goDetail} />)}</div>
+        ) : (
+          <div>
+            <div className="empty-state"><div className="empty-text">Follow creators to build your personalized feed.</div></div>
+            {suggested.length > 0 && (
+              <div style={{ marginTop: 8 }}>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: "0.14em", color: "var(--muted)", textTransform: "uppercase", marginBottom: 16, textAlign: "center" }}>Suggested Creators</div>
+                <div className="creator-grid">
+                  {suggested.map((c) => (
+                    <div key={c.id} className="creator-card" onClick={() => { setCreatorUser(c.username); setPage("profile"); }}>
+                      <CreatorAvatar src={c.avatar_url} name={c.display_name} size={64} className="creator-avatar" />
+                      <div className="creator-name">{c.display_name || c.username}</div>
+                      <div className="creator-handle">@{c.username}</div>
+                      {c.bio ? <div className="creator-bio">{c.bio}</div> : null}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         )}
       </section>
     </div>
@@ -2299,8 +2362,9 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       case "home":    return <HomePage creations={creations} setPage={setPage} setDetailId={setDetailId} />;
       case "explore": return <ExplorePage creations={creations} setPage={setPage} setDetailId={setDetailId} dbLoaded={dbLoaded} />;
       case "creators":return <CreatorsPage setPage={setPage} setCreatorUser={setCreatorUser} />;
+      case "feed":    return <FollowFeedPage user={user} setPage={setPage} setDetailId={setDetailId} setCreatorUser={setCreatorUser} />;
       case "profile": return <ProfilePage username={creatorUser} creations={creations} setPage={setPage} setDetailId={setDetailId} user={user} />;
-      case "detail":  return <DetailPage id={detailId} creations={creations} setCreations={setCreations} user={user} profile={profile} setProfile={setProfile} profile={profile} setProfile={setProfile} purchasedIds={purchasedIds} purchasesLoaded={purchasesLoaded} setPage={setPage} setCreatorUser={setCreatorUser} notify={notify} />;
+      case "detail":  return <DetailPage id={detailId} creations={creations} setCreations={setCreations} user={user} profile={profile} setProfile={setProfile} purchasedIds={purchasedIds} purchasesLoaded={purchasesLoaded} setPage={setPage} setCreatorUser={setCreatorUser} notify={notify} />;
       case "settings": if (!user) return <div className="page"><div className="empty-state"><div className="empty-text">Sign in to access profile settings.</div></div></div>; return <SettingsPage user={user} profile={profile} setProfile={setProfile} notify={notify} />;
       case "admin": if (!isAdmin(user)) return <div className="page"><div className="empty-state"><div className="empty-text">Not authorized.</div></div></div>; return <AdminPage creations={creations} setCreations={setCreations} notify={notify} />;
       case "submit":  return <SubmitPage setCreations={setCreations} notify={notify} setPage={setPage} user={user} profile={profile} />;

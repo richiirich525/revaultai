@@ -90,6 +90,31 @@ export async function fetchCreationsByUser(userId) {
   return { data: data.map(rowToCreation), error: null };
 }
 
+export async function fetchFollowingFeed(userId) {
+  if (!userId) return { data: [], error: null };
+
+  const { data: follows, error: fErr } = await supabase
+    .from("follows")
+    .select("creator_user_id")
+    .eq("follower_user_id", userId);
+
+  if (fErr) return { data: [], error: fErr };
+
+  const ids = [...new Set((follows ?? []).map((r) => r.creator_user_id))];
+  if (ids.length === 0) return { data: [], error: null };
+
+  const { data, error } = await supabase
+    .from("creations")
+    .select("*")
+    .in("user_id", ids)
+    .or("premium_status.is.null,premium_status.eq.Approved")
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  if (error) return { data: [], error };
+  return { data: data.map(rowToCreation), error: null };
+}
+
 export async function insertCreation(creation, user, profile) {
   const row = creationToRow(creation, user, profile);
 
