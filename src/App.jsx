@@ -1840,8 +1840,16 @@ function FAQPage({ setPage }) {
       a: "Spotlight is our curated selection of up to three exceptional creations displayed prominently on the homepage and Explore page. Spotlight is hand-picked by the RevaultAI team and rotates regularly. It is the highest visibility placement on the platform."
     },
     {
+      q: "How much do creators earn?",
+      a: "Creators keep 80% of every unlock. Your share is calculated on the net amount after payment-processing fees, and RevaultAI keeps the remaining 20%.",
+    },
+    {
+      q: "How much do creators earn?",
+      a: "Creators keep 80% of every unlock. Your share is calculated on the net amount after payment-processing fees, and RevaultAI keeps the remaining 20%. Viewers can also tip you directly through the Support button — RevaultAI takes no cut of tips, so you keep the full amount after payment-processing fees.",
+    },
+    {
       q: "Will there be more ways for creators to earn?",
-      a: "Yes. Today, creators earn by selling premium prompts. We're actively exploring additional ways for creators to be rewarded for exceptional work, and we'll share details here as they become available. RevaultAI is built creator-first — earning included."
+      a: "Yes. Today, creators earn through premium prompt sales and viewer tips. We're actively exploring additional ways for creators to be rewarded for exceptional work, and we'll share details here as they become available. RevaultAI is built creator-first — earning included."
     },
     {
       q: "How do refunds work?",
