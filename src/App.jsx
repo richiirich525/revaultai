@@ -442,17 +442,6 @@ const SOCIAL_ICONS = {
   github: FaGithub,
 };
 
-const SOCIAL_ICONS = {
-  website: FaGlobe,
-  x: FaXTwitter,
-  youtube: FaYoutube,
-  instagram: FaInstagram,
-  tiktok: FaTiktok,
-  linkedin: FaLinkedinIn,
-  discord: FaDiscord,
-  github: FaGithub,
-};
-
 function socialFormFromProfile(profile) {
   const links = (profile && profile.social_links) || {};
   const out = {};
