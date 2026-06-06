@@ -1,3 +1,4 @@
+import { FaGlobe, FaXTwitter, FaYoutube, FaInstagram, FaTiktok, FaLinkedinIn, FaDiscord, FaGithub } from "react-icons/fa6";
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "./lib/supabase.js";
 import { initAnalytics, identifyUser, resetUser, track } from "./lib/analytics.js";
