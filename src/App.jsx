@@ -1043,6 +1043,15 @@ function ProfilePage({ username, creations: allCreations, setPage, setDetailId, 
     return true;
   });
 
+  const pinnedIds = Array.isArray(profileData.pinned_creation_ids) ? profileData.pinned_creation_ids : [];
+  const visibleById = {};
+  for (const c of profileCreations) {
+    if (c.premium_status !== "Pending") visibleById[c.id] = c;
+  }
+  const pinnedCreations = pinnedIds.map((pid) => visibleById[pid]).filter(Boolean);
+  const pinnedSet = new Set(pinnedCreations.map((c) => c.id));
+  const gridCreations = filtered.filter((c) => !pinnedSet.has(c.id));
+
   const tipCheck = profileData.tip_url ? normalizeTipUrl(profileData.tip_url) : null;
   const tipUrl = tipCheck && tipCheck.ok ? tipCheck.url : "";
   const hireCheck = profileData.hire_url ? normalizeContactUrl(profileData.hire_url) : null;
@@ -1150,25 +1159,33 @@ function ProfilePage({ username, creations: allCreations, setPage, setDetailId, 
           )}
         </div>
       </div>
+      {pinnedCreations.length > 0 && (
+        <section className="section" style={{ paddingBottom: 0 }}>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: "0.14em", color: "var(--muted)", textTransform: "uppercase", marginBottom: 16 }}>Featured Work</div>
+          <div className="creation-grid">{pinnedCreations.map((c) => <CreationCard key={c.id} creation={c} onClick={goDetail} />)}</div>
+        </section>
+      )}
       <section className="section">
         <div className="filter-bar">
           {["All", "Premium", "Open"].map((f) => (
             <button key={f} className={"filter-btn" + (filter === f ? " active" : "")} onClick={() => setFilter(f)}>{f}</button>
           ))}
         </div>
-        {filtered.length === 0
-          ? <div className="empty-state"><div className="empty-text">No creations yet.</div></div>
-          : <div className="creation-grid">{filtered.map((c) => <CreationCard key={c.id} creation={c} onClick={goDetail} />)}</div>
-        }
+        {gridCreations.length > 0 ? (
+          <div className="creation-grid">{gridCreations.map((c) => <CreationCard key={c.id} creation={c} onClick={goDetail} />)}</div>
+        ) : pinnedCreations.length === 0 ? (
+          <div className="empty-state"><div className="empty-text">No creations yet.</div></div>
+        ) : null}
       </section>
     </div>
   );
 }
 
-function DetailPage({ id, creations, setCreations, user, purchasedIds, purchasesLoaded, setPage, setCreatorUser, notify }) {
+function DetailPage({ id, creations, setCreations, user, profile, setProfile, purchasedIds, purchasesLoaded, setPage, setCreatorUser, notify }) {
   const creation = creations.find((c) => c.id === id); const [checkingOut, setCheckingOut] = useState(false);
   const [toolMap, setToolMap] = useState({});
   const [deleting, setDeleting] = useState(false);
+  const [pinning, setPinning] = useState(false);
   useEffect(() => {
     const creatorId = creation?.user_id;
     if (!creatorId) { setToolMap({}); return; }
@@ -1210,6 +1227,22 @@ const purchaseLoading = creation.is_premium && !purchasesLoaded; const priceLabe
   }
 }
   const canDelete = !!user && (creation.user_id === user.id || isAdmin(user));
+  const canPin = !!user && creation.user_id === user.id;
+  const pinnedIds = Array.isArray(profile?.pinned_creation_ids) ? profile.pinned_creation_ids : [];
+  const isPinned = pinnedIds.includes(creation.id);
+  async function handlePin() {
+    if (pinning || !profile) return;
+    const already = pinnedIds.includes(creation.id);
+    if (!already && pinnedIds.length >= 6) { notify("You can feature up to 6 creations. Unpin one first."); return; }
+    const next = already ? pinnedIds.filter((x) => x !== creation.id) : [...pinnedIds, creation.id];
+    setPinning(true);
+    const { data, error } = await upsertProfile(user, { ...profile, pinned_creation_ids: next });
+    setPinning(false);
+    if (error) { notify("Could not update Featured Work: " + error.message); return; }
+    setProfile(data ?? { ...profile, pinned_creation_ids: next });
+    track(already ? "creation_unpinned" : "creation_pinned", { creation_id: creation.id });
+    notify(already ? "Removed from Featured Work." : "Pinned to Featured Work.");
+  }
   async function handleDelete() {
     if (deleting) return;
     const ok = window.confirm(`Delete "${creation.title}"? This permanently removes the creation and its video files, and can't be undone.`);
@@ -1242,7 +1275,7 @@ const purchaseLoading = creation.is_premium && !purchasesLoaded; const priceLabe
       <div className="detail-cinema"><div className="detail-cinema-inner"><div className="detail-back" onClick={() => setPage("explore")}>&larr; Archive</div>{hasVideo && unlocked ? <video src={creation.video_url} poster={posterImg} controls playsInline /> : <img className="detail-still" src={posterImg} alt={creation.title} />}</div></div>
       <div className="detail-editorial-strip"><div className="detail-editorial-inner">
         <div className="detail-editorial-left"><div className="detail-eyebrow"><div className="detail-eyebrow-line" />{creation.category}</div><h1 className="detail-title">{creation.title}</h1><div className="detail-creator-row"><span className="detail-creator-link" onClick={() => { setCreatorUser(creation.creator.username); setPage("profile"); }}>{creation.creator.display_name}</span><span className="detail-creator-sep">&#183;</span><span className="detail-category-tag">{creation.category}</span></div><div className="detail-tools-row">{creation.tools_used.map((t) => { const href = toolMap[String(t).trim().toLowerCase()]; return href ? <a key={t} href={href} target="_blank" rel="noopener noreferrer nofollow" onClick={() => track("affiliate_link_clicked", { creation_id: creation.id, tool: t })} className="detail-tool-tag detail-tool-tag-video" style={{ textDecoration: "none" }}>{t} &#8599;</a> : <span key={t} className="detail-tool-tag">{t}</span>; })}{hasVideo && unlocked && <span className="detail-tool-tag detail-tool-tag-video">&#9654; Film</span>}</div>{creation.tools_used.some((t) => toolMap[String(t).trim().toLowerCase()]) && <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: "var(--muted)", letterSpacing: "0.06em", marginTop: 10, lineHeight: 1.5 }}>Some tool links are affiliate links; the creator may earn a commission.</div>}</div>
-        <div className="detail-editorial-right"><div className="detail-badges-row">{creation.is_premium ? <Badge type="Premium" /> : <Badge type="Open" />}{isPending && <Badge type="review" />}</div>{canDelete && (<div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}><button type="button" className="btn-ghost" onClick={handleDelete} disabled={deleting} style={{ fontSize: 11, color: "#C25B5B", opacity: deleting ? 0.6 : 1 }}>{deleting ? "Deleting..." : "Delete creation"}</button></div>)}{licenseUrl && (<div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, marginTop: 4 }}><a className="btn-ghost" href={licenseUrl} target={licenseUrl.startsWith("mailto:") ? undefined : "_blank"} rel="noopener noreferrer nofollow" onClick={() => track("license_link_clicked", { creation_id: creation.id, title: creation.title })} style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}>&#9878; License This</a><span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: "var(--muted)", letterSpacing: "0.06em", maxWidth: 200, textAlign: "right", lineHeight: 1.5 }}>Arrangements are made directly between you and the creator.</span></div>)}</div>
+        <div className="detail-editorial-right"><div className="detail-badges-row">{creation.is_premium ? <Badge type="Premium" /> : <Badge type="Open" />}{isPending && <Badge type="review" />}</div>{canPin && (<div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}><button type="button" className="btn-ghost" onClick={handlePin} disabled={pinning} style={{ fontSize: 11, opacity: pinning ? 0.6 : 1 }}>{pinning ? "Saving..." : isPinned ? "\u2605 Pinned" : "\u2606 Pin to profile"}</button></div>)}{canDelete && (<div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}><button type="button" className="btn-ghost" onClick={handleDelete} disabled={deleting} style={{ fontSize: 11, color: "#C25B5B", opacity: deleting ? 0.6 : 1 }}>{deleting ? "Deleting..." : "Delete creation"}</button></div>)}{licenseUrl && (<div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, marginTop: 4 }}><a className="btn-ghost" href={licenseUrl} target={licenseUrl.startsWith("mailto:") ? undefined : "_blank"} rel="noopener noreferrer nofollow" onClick={() => track("license_link_clicked", { creation_id: creation.id, title: creation.title })} style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}>&#9878; License This</a><span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: "var(--muted)", letterSpacing: "0.06em", maxWidth: 200, textAlign: "right", lineHeight: 1.5 }}>Arrangements are made directly between you and the creator.</span></div>)}</div>
       </div></div>
       <div className="detail-body"><div className="detail-rule" /><div className="detail-section-label">Production Note<div className="detail-section-label-line" /></div>
         <div className="prompt-box">
@@ -2267,7 +2300,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       case "explore": return <ExplorePage creations={creations} setPage={setPage} setDetailId={setDetailId} dbLoaded={dbLoaded} />;
       case "creators":return <CreatorsPage setPage={setPage} setCreatorUser={setCreatorUser} />;
       case "profile": return <ProfilePage username={creatorUser} creations={creations} setPage={setPage} setDetailId={setDetailId} user={user} />;
-      case "detail":  return <DetailPage id={detailId} creations={creations} setCreations={setCreations} user={user} purchasedIds={purchasedIds} purchasesLoaded={purchasesLoaded} setPage={setPage} setCreatorUser={setCreatorUser} notify={notify} />;
+      case "detail":  return <DetailPage id={detailId} creations={creations} setCreations={setCreations} user={user} profile={profile} setProfile={setProfile} profile={profile} setProfile={setProfile} purchasedIds={purchasedIds} purchasesLoaded={purchasesLoaded} setPage={setPage} setCreatorUser={setCreatorUser} notify={notify} />;
       case "settings": if (!user) return <div className="page"><div className="empty-state"><div className="empty-text">Sign in to access profile settings.</div></div></div>; return <SettingsPage user={user} profile={profile} setProfile={setProfile} notify={notify} />;
       case "admin": if (!isAdmin(user)) return <div className="page"><div className="empty-state"><div className="empty-text">Not authorized.</div></div></div>; return <AdminPage creations={creations} setCreations={setCreations} notify={notify} />;
       case "submit":  return <SubmitPage setCreations={setCreations} notify={notify} setPage={setPage} user={user} profile={profile} />;
