@@ -813,7 +813,7 @@ function HomePage({ creations, setPage, setDetailId }) {
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("dmca")}>DMCA</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("ai-disclaimer")}>AI Disclaimer</span>
   </div>
-  <div className="footer-copy">&copy; 2025 RevaultAI</div>
+  <div className="footer-copy">&copy; 2026 RevaultAI</div>
 </footer>
     </div>
   );
