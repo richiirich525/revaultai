@@ -7,7 +7,7 @@ import { supabase } from "./supabase.js";
 export async function fetchProfile(userId) {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, username, display_name, bio, avatar_url, tip_url, hire_url, tool_links, created_at")
+    .select("id, username, display_name, bio, avatar_url, tip_url, hire_url, tool_links, social_links, created_at")
     .eq("id", userId)
     .maybeSingle();
 
@@ -102,7 +102,7 @@ export async function fetchCreators() {
 export async function fetchProfileByUsername(username) {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, username, display_name, bio, avatar_url, tip_url, hire_url, tool_links, created_at")
+    .select("id, username, display_name, bio, avatar_url, tip_url, hire_url, tool_links, social_links, created_at")
     .eq("username", username)
     .maybeSingle();
 
