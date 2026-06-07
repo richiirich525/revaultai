@@ -43,6 +43,8 @@ console.log("WEBHOOK METADATA:", session.metadata);
       user_id,
       creation_id,
       stripe_session_id: session.id,
+        amount_total: session.amount_total,
+        currency: session.currency,
     }, { onConflict: "user_id,creation_id" });
   }
 

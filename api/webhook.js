@@ -53,7 +53,7 @@ export default async function handler(req, res) {
       );
 
       await supabase.from("purchases").upsert(
-        { user_id, creation_id, stripe_session_id: session.id },
+        { user_id, creation_id, stripe_session_id: session.id, amount_total: session.amount_total, currency: session.currency },
         { onConflict: "user_id,creation_id" }
       );
     }
