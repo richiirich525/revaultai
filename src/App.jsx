@@ -1151,7 +1151,9 @@ function ProfilePage({ username, creations: allCreations, setPage, setDetailId, 
         <div style={{ flex: 1 }}>
           <div className="profile-name" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             {profileData.display_name || profileData.username}
-            {profileData.founding_creator && <span className="founding-badge">Founding Creator</span>}
+            {profileData.founding_creator && (
+              <span style={{ display: "inline-flex", alignItems: "center", fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--accent)", border: "1px solid var(--accent)", borderRadius: 999, padding: "4px 11px", whiteSpace: "nowrap", lineHeight: 1 }}>Founding Creator</span>
+            )}
           </div>
           <div className="profile-handle">@{profileData.username}</div>
           {profileData.bio && <div className="profile-bio">{profileData.bio}</div>}
