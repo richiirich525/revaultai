@@ -1136,7 +1136,10 @@ function ProfilePage({ username, creations: allCreations, setPage, setDetailId, 
       <div className="profile-header">
         <CreatorAvatar src={profileData.avatar_url} name={profileData.display_name} size={96} className="profile-avatar" />
         <div style={{ flex: 1 }}>
-          <div className="profile-name">{profileData.display_name || profileData.username}</div>
+          <div className="profile-name" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            {profileData.display_name || profileData.username}
+            {profileData.founding_creator && <span className="founding-badge">Founding Creator</span>}
+          </div>
           <div className="profile-handle">@{profileData.username}</div>
           {profileData.bio && <div className="profile-bio">{profileData.bio}</div>}
           {socials.length > 0 && (
