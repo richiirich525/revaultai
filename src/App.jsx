@@ -259,7 +259,20 @@ const CSS = `
     .auth-modal { max-width: 100%; margin: 0 16px; } .auth-header { padding: 24px 24px 0; } .auth-body { padding: 20px 24px 24px; } .auth-tabs { flex-wrap: wrap; } .auth-tab { font-size: 9px; padding: 8px 0; }
     .page-hdr { padding: 40px 24px 32px; } .page-hdr-title { font-size: 36px; }
     .back-btn { padding: 16px 24px; }
-    .profile-header { flex-direction: column; padding: 40px 24px 32px; gap: 20px; } .profile-name { font-size: 32px; } .profile-avatar { width: 80px; height: 80px; }
+    .profile-header { flex-direction: column; padding: 40px 24px 32px; gap: 20px; } .profile-name { font-size: 32px; }.founding-badge {
+  display: inline-flex;
+  align-items: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  padding: 4px 11px;
+  white-space: nowrap;
+  line-height: 1;
+}  .profile-avatar { width: 80px; height: 80px; }
     .detail-back { font-size: 9px; padding: 5px 12px; } .detail-editorial-inner { flex-direction: column; gap: 20px; padding: 28px 24px 24px; } .detail-editorial-right { align-items: flex-start; } .detail-body { padding: 32px 24px 56px; } .detail-title { font-size: 28px; } .prompt-box { padding: 20px 18px; }
     .manifesto { padding: 48px 24px; } .manifesto-quote { font-size: 20px; }
     .filter-bar { gap: 8px; } .filter-btn { padding: 8px 16px; font-size: 10px; }
