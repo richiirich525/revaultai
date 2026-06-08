@@ -494,6 +494,10 @@ function SettingsPage({ user, profile, setProfile, notify }) {
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [usernameStatus, setUsernameStatus]   = useState(null); // "available" | "taken" | null
   const fileInputRef = useRef(null);
+  const [showDelete, setShowDelete]       = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [deleting, setDeleting]           = useState(false);
+  const [deleteError, setDeleteError]     = useState(null);
 
   useEffect(() => {
     if (profile) {
@@ -566,6 +570,30 @@ function SettingsPage({ user, profile, setProfile, notify }) {
     if (error) { setFormError("Save failed: " + error.message); return; }
     setProfile(data ?? ((prev) => ({ ...prev, ...updated })));
     notify("Profile saved.");
+  }
+
+  async function handleDeleteAccount() {
+    if (deleteConfirm.trim().toUpperCase() !== "DELETE") { setDeleteError("Type DELETE to confirm."); return; }
+    setDeleting(true); setDeleteError(null);
+    try {
+      const token = await getSessionToken();
+      const res = await fetch("/api/delete-account", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        setDeleteError(j.error || "Could not delete your account. Please try again.");
+        setDeleting(false);
+        return;
+      }
+      // Account is gone — clear the local session and send them home.
+      await supabase.auth.signOut();
+      window.location.href = "/";
+    } catch (err) {
+      setDeleteError(err.message || "Something went wrong. Please try again.");
+      setDeleting(false);
+    }
   }
 
   const avatarPreview = form.avatar_url.trim();
@@ -717,6 +745,49 @@ function SettingsPage({ user, profile, setProfile, notify }) {
             </button>
             <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--muted)", letterSpacing: "0.08em" }}>{user?.email}</span>
           </div>
+
+          <div className="settings-divider" />
+          <div className="settings-section-title" style={{ color: "#F87171" }}>Delete Account</div>
+          <div className="settings-section-sub">
+            Permanently deletes your profile, your creations and their files, your follows, and your purchase history. This can't be undone.
+          </div>
+          {!showDelete ? (
+            <button
+              className="btn-ghost"
+              style={{ marginTop: 14, borderColor: "#F87171", color: "#F87171" }}
+              onClick={() => { setShowDelete(true); setDeleteError(null); setDeleteConfirm(""); }}
+            >
+              Delete my account
+            </button>
+          ) : (
+            <div style={{ marginTop: 14, maxWidth: 420 }}>
+              <div className="form-hint" style={{ marginBottom: 10 }}>
+                Type <strong>DELETE</strong> to confirm. This permanently removes your account and everything on it.
+              </div>
+              <input
+                className="form-input"
+                type="text"
+                placeholder="DELETE"
+                value={deleteConfirm}
+                onChange={(e) => setDeleteConfirm(e.target.value)}
+                style={{ marginBottom: 12 }}
+              />
+              {deleteError && <div className="settings-save-error" style={{ marginBottom: 12 }}>{deleteError}</div>}
+              <div style={{ display: "flex", gap: 10 }}>
+                <button
+                  className="btn-primary"
+                  onClick={handleDeleteAccount}
+                  disabled={deleting || deleteConfirm.trim().toUpperCase() !== "DELETE"}
+                  style={{ background: "#F87171", backgroundImage: "none", borderColor: "#F87171", color: "#fff", opacity: deleting ? 0.6 : 1 }}
+                >
+                  {deleting ? "Deleting..." : "Permanently delete"}
+                </button>
+                <button className="btn-ghost" onClick={() => { setShowDelete(false); setDeleteConfirm(""); setDeleteError(null); }} disabled={deleting}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
