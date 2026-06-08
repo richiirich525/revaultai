@@ -315,10 +315,11 @@ function AuthModal({ onClose, notify }) {
   const [tab, setTab] = useState("signin");
   const [email, setEmail] = useState(""); const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false); const [error, setError] = useState(null); const [success, setSuccess] = useState(null);
+  const siteUrl = window.location.hostname === "localhost" ? window.location.origin : "https://revaultai.com";
   function reset() { setError(null); setSuccess(null); }
   async function handleSignIn(e) { e.preventDefault(); reset(); setLoading(true); const { error: err } = await supabase.auth.signInWithPassword({ email, password }); setLoading(false); if (err) { setError(err.message); return; } notify("Welcome back to RevaultAI."); onClose(); }
-  async function handleSignUp(e) { e.preventDefault(); reset(); setLoading(true); const { error: err } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${window.location.origin}/email-confirmed` } }); setLoading(false); if (err) { setError(err.message); return; } setSuccess("Account created. Check your email to confirm."); }
-  async function handleForgotPassword(e) { e.preventDefault(); if (!email.trim()) { setError("Please enter your email address."); return; } reset(); setLoading(true); const { error: err } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/set-password` }); setLoading(false); if (err) { setError(err.message); return; } setSuccess("Password reset email sent."); }
+  async function handleSignUp(e) { e.preventDefault(); reset(); setLoading(true); const { error: err } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${siteUrl}/email-confirmed` } }); setLoading(false); if (err) { setError(err.message); return; } setSuccess("Account created. Check your email to confirm."); }
+  async function handleForgotPassword(e) { e.preventDefault(); if (!email.trim()) { setError("Please enter your email address."); return; } reset(); setLoading(true); const { error: err } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${siteUrl}/set-password` }); setLoading(false); if (err) { setError(err.message); return; } setSuccess("Password reset email sent."); }
   function handleOverlayClick(e) { if (e.target === e.currentTarget) onClose(); }
   return (
     <div className="auth-overlay" onClick={handleOverlayClick}>
