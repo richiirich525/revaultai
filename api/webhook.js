@@ -44,9 +44,25 @@ export default async function handler(req, res) {
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
-    const { creation_id, user_id } = session.metadata || {};
+    const meta = session.metadata || {};
+    const { creation_id, user_id } = meta;
 
-    if (creation_id && user_id) {
+    if (meta.type === "credit_purchase" && user_id) {
+      const supabase = createClient(
+        requireEnv("VITE_SUPABASE_URL"),
+        requireEnv("SUPABASE_SERVICE_ROLE_KEY")
+      );
+
+      const creditsToAdd = parseInt(meta.credits, 10) || 0;
+      if (creditsToAdd > 0) {
+        await supabase.rpc("add_credits", {
+          p_user_id: user_id,
+          p_amount: creditsToAdd,
+          p_reason: "purchase",
+          p_session_id: session.id,
+        });
+      }
+    } else if (creation_id && user_id) {
       const supabase = createClient(
         requireEnv("VITE_SUPABASE_URL"),
         requireEnv("SUPABASE_SERVICE_ROLE_KEY")
