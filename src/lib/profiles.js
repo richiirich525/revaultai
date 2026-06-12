@@ -7,7 +7,7 @@ import { supabase } from "./supabase.js";
 export async function fetchProfile(userId) {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, username, display_name, bio, avatar_url, tip_url, hire_url, tool_links, social_links, pinned_creation_ids, created_at, auto_approve, founding_creator")
+    .select("id, username, display_name, bio, avatar_url, tip_url, hire_url, tool_links, social_links, pinned_creation_ids, created_at, auto_approve, founding_creator, credits, credits")
     .eq("id", userId)
     .maybeSingle();
 
@@ -36,7 +36,7 @@ export async function upsertProfile(user, profile) {
   const { data, error } = await supabase
     .from("profiles")
     .upsert(row, { onConflict: "id" })
-    .select("id, username, display_name, bio, avatar_url, tip_url, hire_url, tool_links, social_links, pinned_creation_ids, created_at, auto_approve, founding_creator")
+    .select("id, username, display_name, bio, avatar_url, tip_url, hire_url, tool_links, social_links, pinned_creation_ids, created_at, auto_approve, founding_creator, credits, credits")
     .maybeSingle();
 
   return {
