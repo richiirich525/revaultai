@@ -2587,6 +2587,12 @@ const [dbLoaded, setDbLoaded]     = useState(false);
 const [page, setPage]             = useState("home");
   const [detailId, setDetailId]     = useState(null);
   const [genSubmission, setGenSubmission] = useState(null);
+
+  // A generation prefill is single-use: once the user leaves the Submit page,
+  // clear it so future visits to Submit start clean
+  useEffect(() => {
+    if (page !== "submit" && genSubmission) setGenSubmission(null);
+  }, [page]);
   const [creatorUser, setCreatorUser] = useState(null);
   const [notifMsg, setNotifMsg]     = useState(null);
   const [user, setUser]             = useState(null);
