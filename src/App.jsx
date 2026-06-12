@@ -227,6 +227,13 @@ const CSS = `
   .footer { padding: 48px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
   .footer-logo { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 400; color: var(--muted); }
   .footer-copy { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.1em; }
+  .credits-section { margin-bottom: 36px; padding: 24px; background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; }
+  .credits-section h3 { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.14em; color: var(--muted); text-transform: uppercase; margin: 0 0 8px; font-weight: 400; }
+  .credits-section p { font-size: 13px; color: var(--text); margin: 0 0 14px; }
+  .credits-packs { display: flex; gap: 10px; flex-wrap: wrap; }
+  .credits-packs button { padding: 10px 18px; font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text); background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; transition: color 0.2s, border-color 0.2s; }
+  .credits-packs button:hover { color: var(--accent); border-color: var(--accent); }
+  .credits-packs button:disabled { opacity: 0.5; cursor: default; }
   .settings-layout { display: grid; grid-template-columns: 220px 1fr; gap: 0; min-height: calc(100vh - 62px); }
   .settings-sidebar { border-right: 1px solid var(--border); padding: 48px 0; background: var(--bg2); }
   .settings-sidebar-title { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.22em; color: var(--muted); text-transform: uppercase; padding: 0 28px 16px; }
@@ -479,6 +486,47 @@ function normalizeSocialLinks(formObj) {
   return { ok: true, links: out };
 }
 
+function BuyCreditsSection({ user, profile, notify }) {
+  const [buying, setBuying] = useState(null); // "starter" | "creator" | null
+
+  async function handleBuyCredits(pack) {
+    if (!user) { notify("Sign in to purchase credits."); return; }
+    setBuying(pack);
+    try {
+      const res = await fetch("/api/buy-credits", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pack, userId: user.id }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok || !j.url) {
+        notify("Checkout failed: " + (j.error || "Please try again."));
+        setBuying(null);
+        return;
+      }
+      window.location.href = j.url;
+    } catch (err) {
+      notify("Checkout failed: " + err.message + ". Please try again.");
+      setBuying(null);
+    }
+  }
+
+  return (
+    <div className="credits-section">
+      <h3>Credits</h3>
+      <p>Balance: <strong>{profile?.credits ?? 0}</strong> credits</p>
+      <div className="credits-packs">
+        <button onClick={() => handleBuyCredits("starter")} disabled={buying !== null}>
+          {buying === "starter" ? "Redirecting…" : "Starter — 50 credits ($5)"}
+        </button>
+        <button onClick={() => handleBuyCredits("creator")} disabled={buying !== null}>
+          {buying === "creator" ? "Redirecting…" : "Creator — 200 credits ($15)"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function SettingsPage({ user, profile, setProfile, notify }) {
  const [form, setForm] = useState({
     display_name: profile?.display_name ?? "",
@@ -608,6 +656,7 @@ function SettingsPage({ user, profile, setProfile, notify }) {
           <button className="settings-nav-item active">Creator Profile</button>
         </aside>
         <div className="settings-main">
+          <BuyCreditsSection user={user} profile={profile} notify={notify} />
           <div className="settings-section-title">Creator Profile</div>
           <div className="settings-section-sub">Your public identity on RevaultAI.</div>
 
