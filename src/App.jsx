@@ -231,7 +231,8 @@ const CSS = `
   .gen-prompt { width: 100%; padding: 16px; background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 14px; line-height: 1.6; resize: vertical; }
   .gen-prompt:focus { outline: none; border-color: var(--accent); }
   .gen-form-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
-  .gen-cost { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.12em; color: var(--muted); text-transform: uppercase; }
+  .gen-cost { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.12em; color: var(--muted); text-transform: uppercase; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
+  .gen-model-select { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text); background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; padding: 8px 10px; cursor: pointer; }
   .gen-button { padding: 12px 28px; font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text); background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; transition: color 0.2s, border-color 0.2s; }
   .gen-button:hover { color: var(--accent); border-color: var(--accent); }
   .gen-button:disabled { opacity: 0.5; cursor: default; }
@@ -1088,12 +1089,17 @@ function ExplorePage({ creations, setPage, setDetailId, dbLoaded }) {
 }
 
 function GeneratePage({ user, profile, notify, setPage, setGenSubmission }) {
+  const GEN_MODELS = [
+    { key: "wan-2.6", label: "Wan 2.6 — Fast", cost: 5 },
+    { key: "kling-3.0", label: "Kling 3.0 — Cinematic", cost: 10 },
+  ];
   const [prompt, setPrompt] = useState("");
+  const [model, setModel] = useState("wan-2.6");
   const [submitting, setSubmitting] = useState(false);
   const [gens, setGens] = useState([]);
   const [videoUrls, setVideoUrls] = useState({});
   const videoUrlsRef = useRef({});
-  const COST = 5;
+  const COST = GEN_MODELS.find((m) => m.key === model)?.cost ?? 5;
 
   async function loadGens() {
     if (!user?.id) return;
@@ -1140,7 +1146,7 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission }) {
       const res = await fetch("/api/generate-video", {
         method: "POST",
         headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: prompt.trim(), model: "wan-2.6" }),
+        body: JSON.stringify({ prompt: prompt.trim(), model }),
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -1179,7 +1185,12 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission }) {
               onChange={(e) => setPrompt(e.target.value)}
             />
             <div className="gen-form-row">
-              <div className="gen-cost">Model: Wan 2.6 · Cost: {COST} credits · Balance: {profile?.credits ?? 0}</div>
+              <div className="gen-cost">
+                <select className="gen-model-select" value={model} onChange={(e) => setModel(e.target.value)}>
+                  {GEN_MODELS.map((m) => <option key={m.key} value={m.key}>{m.label} — {m.cost} credits</option>)}
+                </select>
+                <span style={{ marginLeft: 12 }}>Balance: {profile?.credits ?? 0}</span>
+              </div>
               <button className="gen-button" onClick={handleGenerate} disabled={submitting}>
                 {submitting ? "Starting..." : "Generate"}
               </button>
@@ -1194,7 +1205,7 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission }) {
                 {g.status === "complete" && g.video_url ? (
                   <>
                     {videoUrls[g.id] ? <video className="gen-item-video" src={videoUrls[g.id]} controls playsInline /> : <div className="gen-item-status">Preparing playback...</div>}
-                    <button className="gen-button" style={{ marginTop: 12 }} onClick={() => { setGenSubmission({ videoUrl: g.video_url, prompt: g.prompt }); setPage("submit"); }}>
+                    <button className="gen-button" style={{ marginTop: 12 }} onClick={() => { setGenSubmission({ videoUrl: g.video_url, prompt: g.prompt, model: g.model }); setPage("submit"); }}>
                       Submit to Gallery
                     </button>
                   </>
@@ -1729,7 +1740,7 @@ function SubmitPage({ setCreations, notify, setPage, user, profile, prefill }) {
   // If arriving from the Generate page, attach the generated video automatically
   useEffect(() => {
     if (!prefill?.videoUrl) return;
-    setForm((prev) => ({ ...prev, prompt: prefill.prompt ?? prev.prompt, tools: prev.tools || "Wan 2.6 (RevaultAI Generate)" }));
+    setForm((prev) => ({ ...prev, prompt: prefill.prompt ?? prev.prompt, tools: prev.tools || (prefill.model === "kling-3.0" ? "Kling 3.0 (RevaultAI Generate)" : "Wan 2.6 (RevaultAI Generate)") }));
     (async () => {
       setUploadState("processing");
       try {

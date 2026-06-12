@@ -7,6 +7,10 @@ const MODELS = {
     falId: 'wan/v2.6/text-to-video',
     creditsPerVideo: 5, // 5-second clip
   },
+  'kling-3.0': {
+    falId: 'fal-ai/kling-video/v3/standard/text-to-video',
+    creditsPerVideo: 10, // 5-second clip, cinematic tier
+  },
 };
 
 export default async function handler(req, res) {
