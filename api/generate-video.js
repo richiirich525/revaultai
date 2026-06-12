@@ -6,7 +6,7 @@ const MODELS = {
   'wan-2.6': {
     falId: 'wan/v2.6/text-to-video',
     creditsPerSecond: 1,
-    durationParam: { 5: '5s', 10: '10s' },
+    durationParam: { 5: '5', 10: '10' },
   },
   'kling-3.0': {
     falId: 'fal-ai/kling-video/v3/standard/text-to-video',
