@@ -227,6 +227,20 @@ const CSS = `
   .footer { padding: 48px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
   .footer-logo { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 400; color: var(--muted); }
   .footer-copy { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.1em; }
+  .gen-form { max-width: 680px; margin: 0 auto 40px; }
+  .gen-prompt { width: 100%; padding: 16px; background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 14px; line-height: 1.6; resize: vertical; }
+  .gen-prompt:focus { outline: none; border-color: var(--accent); }
+  .gen-form-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
+  .gen-cost { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.12em; color: var(--muted); text-transform: uppercase; }
+  .gen-button { padding: 12px 28px; font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text); background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; transition: color 0.2s, border-color 0.2s; }
+  .gen-button:hover { color: var(--accent); border-color: var(--accent); }
+  .gen-button:disabled { opacity: 0.5; cursor: default; }
+  .gen-list { max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+  .gen-item { padding: 20px; background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; }
+  .gen-item-prompt { font-size: 13px; color: var(--text); line-height: 1.6; margin-bottom: 12px; }
+  .gen-item-video { width: 100%; border-radius: 4px; display: block; }
+  .gen-item-status { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.12em; color: var(--muted); text-transform: uppercase; }
+  .gen-failed { color: #c0392b; }
   .credits-section { margin-bottom: 36px; padding: 24px; background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; }
   .credits-section h3 { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.14em; color: var(--muted); text-transform: uppercase; margin: 0 0 8px; font-weight: 400; }
   .credits-section p { font-size: 13px; color: var(--text); margin: 0 0 14px; }
@@ -366,6 +380,7 @@ function Nav({ page, setPage, user, profile, onSignInClick, onSignOut }) {
         <div className={"nav-link" + (page === "explore" ? " active" : "")} onClick={() => setPage("explore")}>Explore</div>
         <div className={"nav-link" + (page === "creators" ? " active" : "")} onClick={() => setPage("creators")}>Creators</div>
         {user && <div className={"nav-link" + (page === "feed" ? " active" : "")} onClick={() => setPage("feed")}>Following</div>}
+        {user && <div className={"nav-link" + (page === "generate" ? " active" : "")} onClick={() => setPage("generate")}>Generate</div>}
         <div className={"nav-link" + (page === "submit" ? " active" : "")} onClick={() => setPage("submit")}>Submit</div>
         {!user && <div className={"nav-link" + (page === "become-creator" ? " active" : "")} onClick={() => setPage("become-creator")}>Join</div>}
         {user && isAdmin(user) && <div className={"nav-link" + (page === "admin" ? " active" : "")} onClick={() => setPage("admin")}>Admin</div>}
@@ -1066,6 +1081,105 @@ function ExplorePage({ creations, setPage, setDetailId, dbLoaded }) {
               </div>
             )}
           </>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function GeneratePage({ user, profile, notify }) {
+  const [prompt, setPrompt] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [gens, setGens] = useState([]);
+  const COST = 5;
+
+  async function loadGens() {
+    if (!user?.id) return;
+    const { data } = await supabase
+      .from("generations")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(20);
+    setGens(data ?? []);
+  }
+
+  useEffect(() => {
+    loadGens();
+    const t = setInterval(loadGens, 8000);
+    return () => clearInterval(t);
+  }, [user?.id]);
+
+  async function handleGenerate() {
+    if (!user) { notify("Sign in to generate."); return; }
+    if (!prompt.trim()) { notify("Write a prompt first."); return; }
+    if ((profile?.credits ?? 0) < COST) { notify("Not enough credits — top up on your Profile page."); return; }
+    setSubmitting(true);
+    try {
+      const token = await getSessionToken();
+      const res = await fetch("/api/generate-video", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: prompt.trim(), model: "wan-2.6" }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        notify(j.error || "Could not start generation.");
+        setSubmitting(false);
+        return;
+      }
+      notify("Generation started — it usually takes a few minutes.");
+      setPrompt("");
+      setSubmitting(false);
+      loadGens();
+    } catch (err) {
+      notify("Could not start generation: " + err.message);
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="page">
+      <div className="page-hdr">
+        <div className="page-hdr-eyebrow">Create</div>
+        <div className="page-hdr-title">Generate</div>
+        <div className="page-hdr-sub">Turn a prompt into a film clip. {COST} credits per 5-second video.</div>
+      </div>
+      <section className="section">
+        {!user ? (
+          <div className="empty-state"><div className="empty-text">Sign in to generate videos.</div></div>
+        ) : (
+          <div className="gen-form">
+            <textarea
+              className="gen-prompt"
+              rows={4}
+              maxLength={2000}
+              placeholder="Describe your shot — subject, motion, lighting, camera..."
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+            />
+            <div className="gen-form-row">
+              <div className="gen-cost">Model: Wan 2.6 · Cost: {COST} credits · Balance: {profile?.credits ?? 0}</div>
+              <button className="gen-button" onClick={handleGenerate} disabled={submitting}>
+                {submitting ? "Starting..." : "Generate"}
+              </button>
+            </div>
+          </div>
+        )}
+        {gens.length > 0 && (
+          <div className="gen-list">
+            {gens.map((g) => (
+              <div key={g.id} className="gen-item">
+                <div className="gen-item-prompt">{g.prompt}</div>
+                {g.status === "complete" && g.video_url ? (
+                  <video className="gen-item-video" src={g.video_url} controls playsInline />
+                ) : g.status === "failed" ? (
+                  <div className="gen-item-status gen-failed">Failed — credits refunded{g.error_message ? ": " + g.error_message : ""}</div>
+                ) : (
+                  <div className="gen-item-status">Generating... this can take a few minutes.</div>
+                )}
+              </div>
+            ))}
+          </div>
         )}
       </section>
     </div>
@@ -2511,6 +2625,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       case "explore": return <ExplorePage creations={creations} setPage={setPage} setDetailId={setDetailId} dbLoaded={dbLoaded} />;
       case "creators":return <CreatorsPage setPage={setPage} setCreatorUser={setCreatorUser} />;
       case "feed":    return <FollowFeedPage user={user} setPage={setPage} setDetailId={setDetailId} setCreatorUser={setCreatorUser} />;
+      case "generate": return <GeneratePage user={user} profile={profile} notify={notify} />;
       case "profile": return <ProfilePage username={creatorUser} creations={creations} setPage={setPage} setDetailId={setDetailId} user={user} />;
       case "detail":  return <DetailPage id={detailId} creations={creations} setCreations={setCreations} user={user} profile={profile} setProfile={setProfile} purchasedIds={purchasedIds} purchasesLoaded={purchasesLoaded} setPage={setPage} setCreatorUser={setCreatorUser} notify={notify} />;
       case "settings": if (!user) return <div className="page"><div className="empty-state"><div className="empty-text">Sign in to access profile settings.</div></div></div>; return <SettingsPage user={user} profile={profile} setProfile={setProfile} notify={notify} />;
