@@ -1,5 +1,28 @@
 import { createClient } from "@supabase/supabase-js";
 import Mux from "@mux/mux-node";
+import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+
+// Mux pulls the source file itself, so once the bucket is private
+// it needs a signed URL. 1 hour covers ingest queuing.
+async function signR2Url(storedUrl) {
+  const publicUrl = (process.env.R2_PUBLIC_URL ?? "").replace(/\/$/, "");
+  if (!storedUrl.startsWith(publicUrl + "/")) return storedUrl; // not ours — pass through
+  const key = decodeURIComponent(storedUrl.slice(publicUrl.length + 1));
+  const r2 = new S3Client({
+    region: "auto",
+    endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: process.env.R2_ACCESS_KEY_ID,
+      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+    },
+  });
+  return getSignedUrl(
+    r2,
+    new GetObjectCommand({ Bucket: process.env.R2_BUCKET_NAME, Key: key }),
+    { expiresIn: 3600 }
+  );
+}
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -44,8 +67,9 @@ export default async function handler(req, res) {
     const mux = new Mux({ tokenId: muxTokenId, tokenSecret: muxTokenSecret });
     const { video } = mux;
 
+    const ingestUrl = await signR2Url(videoPublicUrl);
     const asset = await video.assets.create({
-      input: [{ url: videoPublicUrl }],
+      input: [{ url: ingestUrl }],
       playback_policy: ["public"],
       passthrough: creationId ?? "",
     });

@@ -1091,6 +1091,8 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission }) {
   const [prompt, setPrompt] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [gens, setGens] = useState([]);
+  const [videoUrls, setVideoUrls] = useState({});
+  const videoUrlsRef = useRef({});
   const COST = 5;
 
   async function loadGens() {
@@ -1100,7 +1102,26 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission }) {
       .select("*")
       .order("created_at", { ascending: false })
       .limit(20);
-    setGens(data ?? []);
+    const items = data ?? [];
+    setGens(items);
+
+    // Fetch a signed playback URL for each completed video we don't have yet
+    const need = items.filter((g) => g.status === "complete" && g.video_url && !videoUrlsRef.current[g.id]);
+    for (const g of need) {
+      try {
+        const token = await getSessionToken();
+        const r = await fetch("/api/get-video-url", {
+          method: "POST",
+          headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
+          body: JSON.stringify({ type: "generation", id: g.id }),
+        });
+        const j = await r.json().catch(() => ({}));
+        if (r.ok && j.url) {
+          videoUrlsRef.current = { ...videoUrlsRef.current, [g.id]: j.url };
+          setVideoUrls(videoUrlsRef.current);
+        }
+      } catch { /* retry on next poll */ }
+    }
   }
 
   useEffect(() => {
@@ -1172,7 +1193,7 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission }) {
                 <div className="gen-item-prompt">{g.prompt}</div>
                 {g.status === "complete" && g.video_url ? (
                   <>
-                    <video className="gen-item-video" src={g.video_url} controls playsInline />
+                    {videoUrls[g.id] ? <video className="gen-item-video" src={videoUrls[g.id]} controls playsInline /> : <div className="gen-item-status">Preparing playback...</div>}
                     <button className="gen-button" style={{ marginTop: 12 }} onClick={() => { setGenSubmission({ videoUrl: g.video_url, prompt: g.prompt }); setPage("submit"); }}>
                       Submit to Gallery
                     </button>
@@ -1601,7 +1622,7 @@ const purchaseLoading = creation.is_premium && !purchasesLoaded; const priceLabe
       <div className="detail-body"><div className="detail-rule" /><div className="detail-section-label">Production Note<div className="detail-section-label-line" /></div>
         <div className="prompt-box">
           {isPending ? <p className="prompt-text" style={{ color: "var(--muted)", fontStyle: "italic" }}>Under review.</p>
-          : unlocked ? <><p className="prompt-text">{creation.prompt_full}</p>{hasVideo && creation.is_premium && <div className="unlock-area"><a href={creation.video_url} download className="btn-unlock-restrained" style={{ textDecoration: "none", display: "inline-block" }}>&#11015; Download Film</a></div>}</>
+          : unlocked ? <><p className="prompt-text">{creation.prompt_full}</p>{hasVideo && creation.is_premium && <div className="unlock-area"><button className="btn-unlock-restrained" onClick={async () => { try { const token = await getSessionToken(); const r = await fetch("/api/get-video-url", { method: "POST", headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" }, body: JSON.stringify({ type: "creation", id: creation.id }) }); const j = await r.json().catch(() => ({})); if (!r.ok || !j.url) { notify(j.error || "Could not prepare download."); return; } window.location.href = j.url; } catch (err) { notify("Could not prepare download: " + err.message); } }}>&#11015; Download Film</button></div>}</>
           : purchaseLoading
   ? <div className="unlock-area"><span className="unlock-label" style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--muted)", letterSpacing: "0.1em" }}>Checking purchase status...</span></div>
   : <><div className="prompt-fade"><p className="prompt-text">{creation.prompt_preview}</p></div><div className="unlock-area"><span className="unlock-label">Full prompt {hasVideo ? "and film download" : ""} available after purchase.</span><button className="btn-unlock-restrained" onClick={handleBuy} disabled={checkingOut} style={{ opacity: checkingOut ? 0.6 : 1 }}>
