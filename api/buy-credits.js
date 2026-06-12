@@ -6,11 +6,11 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 // never a price or credit amount, so it can't be tampered with.
 const CREDIT_PACKS = {
   starter: {
-    priceId: 'price_1ThJIS3RUAL3Ja5cLJE2CwWU', // $5
+    priceId: 'price_1ThLEpQOsoMQrPgCnV1owEAo', // $5
     credits: 50,
   },
   creator: {
-    priceId: 'price_1ThJIt3RUAL3Ja5cdjdTl8Tu', // $15
+    priceId: 'price_1ThLEkQOsoMQrPgCp5U5OhuI', // $15
     credits: 200,
   },
 };
