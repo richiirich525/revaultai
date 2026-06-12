@@ -1087,7 +1087,7 @@ function ExplorePage({ creations, setPage, setDetailId, dbLoaded }) {
   );
 }
 
-function GeneratePage({ user, profile, notify }) {
+function GeneratePage({ user, profile, notify, setPage, setGenSubmission }) {
   const [prompt, setPrompt] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [gens, setGens] = useState([]);
@@ -1171,7 +1171,12 @@ function GeneratePage({ user, profile, notify }) {
               <div key={g.id} className="gen-item">
                 <div className="gen-item-prompt">{g.prompt}</div>
                 {g.status === "complete" && g.video_url ? (
-                  <video className="gen-item-video" src={g.video_url} controls playsInline />
+                  <>
+                    <video className="gen-item-video" src={g.video_url} controls playsInline />
+                    <button className="gen-button" style={{ marginTop: 12 }} onClick={() => { setGenSubmission({ videoUrl: g.video_url, prompt: g.prompt }); setPage("submit"); }}>
+                      Submit to Gallery
+                    </button>
+                  </>
                 ) : g.status === "failed" ? (
                   <div className="gen-item-status gen-failed">Failed — credits refunded{g.error_message ? ": " + g.error_message : ""}</div>
                 ) : (
@@ -1694,11 +1699,34 @@ if (!item?._fromDb) { notify("Cannot modify seed creations."); return; }
   );
 }
 
-function SubmitPage({ setCreations, notify, setPage, user, profile }) {
+function SubmitPage({ setCreations, notify, setPage, user, profile, prefill }) {
   const [form, setForm] = useState({ title: "", tools: "", category: "Abstract", prompt: "", isPremium: false, licenseUrl: "" });
   const [videoFile, setVideoFile] = useState(null); const [uploadState, setUploadState] = useState("idle"); const [uploadPct, setUploadPct] = useState(0); const [uploadResult, setUploadResult] = useState(null); const [uploadError, setUploadError] = useState(null); const [dragover, setDragover] = useState(false); const [submitting, setSubmitting] = useState(false);
   function updateField(key, value) { setForm((prev) => ({ ...prev, [key]: value })); }
   function formatBytes(b) { if (b < 1024 * 1024) return (b / 1024).toFixed(1) + " KB"; return (b / (1024 * 1024)).toFixed(1) + " MB"; }
+
+  // If arriving from the Generate page, attach the generated video automatically
+  useEffect(() => {
+    if (!prefill?.videoUrl) return;
+    setForm((prev) => ({ ...prev, prompt: prefill.prompt ?? prev.prompt, tools: prev.tools || "Wan 2.6 (RevaultAI Generate)" }));
+    (async () => {
+      setUploadState("processing");
+      try {
+        const token = await getSessionToken();
+        const res = await fetch("/api/process-video", {
+          method: "POST",
+          headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
+          body: JSON.stringify({ videoPublicUrl: prefill.videoUrl, creationId: "pending" }),
+        });
+        const result = await res.json();
+        setUploadResult(result);
+        setUploadState("done");
+      } catch (err) {
+        setUploadError(err.message);
+        setUploadState("error");
+      }
+    })();
+  }, []);
   function pickFile(file) { if (!file) return; const allowed = ["video/mp4", "video/quicktime", "video/webm"]; if (!allowed.includes(file.type)) { setUploadError("Only MP4, MOV, or WebM files are accepted."); return; } if (file.size > 500 * 1024 * 1024) { setUploadError("File exceeds 500 MB limit."); return; } setVideoFile(file); setUploadState("idle"); setUploadResult(null); setUploadError(null); setUploadPct(0); }
   function clearFile() { setVideoFile(null); setUploadState("idle"); setUploadResult(null); setUploadError(null); setUploadPct(0); }
   async function uploadToR2() {
@@ -1766,7 +1794,7 @@ track("upload_completed");
 }
   async function handleSubmit() {
     if (!form.title.trim() || !form.prompt.trim()) { notify("Please fill in Title and Prompt."); return; }
-    if (videoFile && uploadState !== "done") { notify("Please wait for your video to finish uploading."); return; }
+    if ((videoFile || prefill?.videoUrl) && uploadState !== "done") { notify("Please wait for your video to finish uploading."); return; }
     const license = normalizeContactUrl(form.licenseUrl);
     if (!license.ok) { notify(license.error); return; }
     setSubmitting(true);
@@ -1837,7 +1865,14 @@ const { data: saved, error } = await insertCreation(newCreation, user, profile);
           <div className="form-group"><label className="form-label">Title *</label><input className="form-input" placeholder="Name your creation" value={form.title} onChange={(e) => updateField("title", e.target.value)} /></div>
           <div className="form-group">
             <label className="form-label">Film / Video</label>
-            {!videoFile ? (
+            {prefill?.videoUrl ? (
+              <div className="upload-file-info">
+                <span className="upload-file-name">Your generated video</span>
+                {uploadState === "processing" && <span className="upload-file-size">Preparing...</span>}
+                {uploadState === "done" && <span className="upload-file-size">&#10003; Attached</span>}
+                {uploadState === "error" && <span className="upload-file-size">{uploadError}</span>}
+              </div>
+            ) : !videoFile ? (
               <div className={"upload-drop" + (dragover ? " dragover" : "")} onDragOver={(e) => { e.preventDefault(); setDragover(true); }} onDragLeave={() => setDragover(false)} onDrop={(e) => { e.preventDefault(); setDragover(false); pickFile(e.dataTransfer.files[0]); }}>
                 <input type="file" accept="video/mp4,video/quicktime,video/webm" onChange={(e) => pickFile(e.target.files[0])} />
                 <div className="upload-drop-icon">&#9654;</div><div className="upload-drop-label">Drop your film here or click to browse</div><div className="upload-drop-hint">MP4, MOV, WebM &middot; max 500 MB</div>
@@ -2530,6 +2565,7 @@ export default function App() {
 const [dbLoaded, setDbLoaded]     = useState(false);
 const [page, setPage]             = useState("home");
   const [detailId, setDetailId]     = useState(null);
+  const [genSubmission, setGenSubmission] = useState(null);
   const [creatorUser, setCreatorUser] = useState(null);
   const [notifMsg, setNotifMsg]     = useState(null);
   const [user, setUser]             = useState(null);
@@ -2625,12 +2661,12 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       case "explore": return <ExplorePage creations={creations} setPage={setPage} setDetailId={setDetailId} dbLoaded={dbLoaded} />;
       case "creators":return <CreatorsPage setPage={setPage} setCreatorUser={setCreatorUser} />;
       case "feed":    return <FollowFeedPage user={user} setPage={setPage} setDetailId={setDetailId} setCreatorUser={setCreatorUser} />;
-      case "generate": return <GeneratePage user={user} profile={profile} notify={notify} />;
+      case "generate": return <GeneratePage user={user} profile={profile} notify={notify} setPage={setPage} setGenSubmission={setGenSubmission} />;
       case "profile": return <ProfilePage username={creatorUser} creations={creations} setPage={setPage} setDetailId={setDetailId} user={user} />;
       case "detail":  return <DetailPage id={detailId} creations={creations} setCreations={setCreations} user={user} profile={profile} setProfile={setProfile} purchasedIds={purchasedIds} purchasesLoaded={purchasesLoaded} setPage={setPage} setCreatorUser={setCreatorUser} notify={notify} />;
       case "settings": if (!user) return <div className="page"><div className="empty-state"><div className="empty-text">Sign in to access profile settings.</div></div></div>; return <SettingsPage user={user} profile={profile} setProfile={setProfile} notify={notify} />;
       case "admin": if (!isAdmin(user)) return <div className="page"><div className="empty-state"><div className="empty-text">Not authorized.</div></div></div>; return <AdminPage creations={creations} setCreations={setCreations} notify={notify} />;
-      case "submit":  return <SubmitPage setCreations={setCreations} notify={notify} setPage={setPage} user={user} profile={profile} />;
+      case "submit":  return <SubmitPage setCreations={setCreations} notify={notify} setPage={setPage} user={user} profile={profile} prefill={genSubmission} />;
       case "set-password": return <SetPasswordPage notify={notify} setPage={setPage} />;
       case "email-confirmed": return <EmailConfirmedPage setPage={setPage} />;
       case "terms":     return <LegalPage setPage={setPage} page="terms" />;
