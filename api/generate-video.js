@@ -5,11 +5,13 @@ import { createClient } from '@supabase/supabase-js';
 const MODELS = {
   'wan-2.6': {
     falId: 'wan/v2.6/text-to-video',
-    creditsPerVideo: 5, // 5-second clip
+    creditsPerSecond: 1,
+    durationParam: { 5: '5s', 10: '10s' },
   },
   'kling-3.0': {
     falId: 'fal-ai/kling-video/v3/standard/text-to-video',
-    creditsPerVideo: 10, // 5-second clip, cinematic tier
+    creditsPerSecond: 2, // bump to 3 if the live price reads $0.168/s
+    durationParam: { 5: '5', 10: '10' },
   },
 };
 
@@ -32,9 +34,14 @@ export default async function handler(req, res) {
     }
 
     // 2. Validate input
-    const { prompt, model } = req.body;
+    const { prompt, model, duration } = req.body;
     const selected = MODELS[model];
     if (!selected) return res.status(400).json({ error: 'Unknown model' });
+    const seconds = Number(duration) || 5;
+    if (!selected.durationParam[seconds]) {
+      return res.status(400).json({ error: 'Invalid duration' });
+    }
+    const cost = selected.creditsPerSecond * seconds;
     if (!prompt || !prompt.trim() || prompt.length > 2000) {
       return res.status(400).json({ error: 'Prompt is required (max 2000 characters)' });
     }
@@ -42,7 +49,7 @@ export default async function handler(req, res) {
     // 3. Deduct credits atomically — fails cleanly if balance is short
     const { data: paid, error: spendError } = await supabase.rpc('spend_credits', {
       p_user_id: user.id,
-      p_amount: selected.creditsPerVideo,
+      p_amount: cost,
       p_reason: 'generation',
     });
     if (spendError) throw spendError;
@@ -58,7 +65,7 @@ export default async function handler(req, res) {
         prompt: prompt.trim(),
         model,
         status: 'queued',
-        credits_spent: selected.creditsPerVideo,
+        credits_spent: cost,
       })
       .select()
       .single();
@@ -67,7 +74,7 @@ export default async function handler(req, res) {
     // 5. Submit the job to fal, with our webhook for completion
     try {
       const { request_id } = await fal.queue.submit(selected.falId, {
-        input: { prompt: prompt.trim() },
+        input: { prompt: prompt.trim(), duration: selected.durationParam[seconds] },
         webhookUrl: 'https://www.revaultai.com/api/generation-webhook',
       });
 
@@ -82,7 +89,7 @@ export default async function handler(req, res) {
       console.error('fal submit error:', falError);
       await supabase.rpc('add_credits', {
         p_user_id: user.id,
-        p_amount: selected.creditsPerVideo,
+        p_amount: cost,
         p_reason: 'refund',
         p_session_id: null,
       });

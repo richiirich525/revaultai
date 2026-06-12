@@ -1090,16 +1090,17 @@ function ExplorePage({ creations, setPage, setDetailId, dbLoaded }) {
 
 function GeneratePage({ user, profile, notify, setPage, setGenSubmission }) {
   const GEN_MODELS = [
-    { key: "wan-2.6", label: "Wan 2.6 — Fast", cost: 5 },
-    { key: "kling-3.0", label: "Kling 3.0 — Cinematic", cost: 10 },
+    { key: "wan-2.6", label: "Wan 2.6 — Fast", costPerSecond: 1 },
+    { key: "kling-3.0", label: "Kling 3.0 — Cinematic", costPerSecond: 2 },
   ];
   const [prompt, setPrompt] = useState("");
   const [model, setModel] = useState("wan-2.6");
+  const [duration, setDuration] = useState(5);
   const [submitting, setSubmitting] = useState(false);
   const [gens, setGens] = useState([]);
   const [videoUrls, setVideoUrls] = useState({});
   const videoUrlsRef = useRef({});
-  const COST = GEN_MODELS.find((m) => m.key === model)?.cost ?? 5;
+  const COST = (GEN_MODELS.find((m) => m.key === model)?.costPerSecond ?? 1) * duration;
 
   async function loadGens() {
     if (!user?.id) return;
@@ -1146,7 +1147,7 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission }) {
       const res = await fetch("/api/generate-video", {
         method: "POST",
         headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: prompt.trim(), model }),
+        body: JSON.stringify({ prompt: prompt.trim(), model, duration }),
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -1187,9 +1188,13 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission }) {
             <div className="gen-form-row">
               <div className="gen-cost">
                 <select className="gen-model-select" value={model} onChange={(e) => setModel(e.target.value)}>
-                  {GEN_MODELS.map((m) => <option key={m.key} value={m.key}>{m.label} — {m.cost} credits</option>)}
+                  {GEN_MODELS.map((m) => <option key={m.key} value={m.key}>{m.label}</option>)}
                 </select>
-                <span style={{ marginLeft: 12 }}>Balance: {profile?.credits ?? 0}</span>
+                <select className="gen-model-select" value={duration} onChange={(e) => setDuration(Number(e.target.value))}>
+                  <option value={5}>5 seconds</option>
+                  <option value={10}>10 seconds</option>
+                </select>
+                <span style={{ marginLeft: 12 }}>Cost: {COST} credits · Balance: {profile?.credits ?? 0}</span>
               </div>
               <button className="gen-button" onClick={handleGenerate} disabled={submitting}>
                 {submitting ? "Starting..." : "Generate"}
