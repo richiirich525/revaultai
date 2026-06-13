@@ -1567,28 +1567,7 @@ function DetailPage({ id, creations, setCreations, user, profile, setProfile, pu
     })();
     return () => { cancelled = true; };
   }, [creation?.id, unlockedForPlayback]);
-  const [playbackUrl, setPlaybackUrl] = useState(null);
-
-  // Fetch a signed, entitlement-checked playback URL for the film
-  const unlockedForPlayback = creation && (!creation.is_premium || purchasedIds.has(creation.id));
-  useEffect(() => {
-    setPlaybackUrl(null);
-    if (!creation?.id || !creation.video_url || !unlockedForPlayback) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const token = await getSessionToken();
-        const r = await fetch("/api/get-video-url", {
-          method: "POST",
-          headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
-          body: JSON.stringify({ type: "creation", id: creation.id }),
-        });
-        const j = await r.json().catch(() => ({}));
-        if (!cancelled && r.ok && j.url) setPlaybackUrl(j.url);
-      } catch { /* poster remains as fallback */ }
-    })();
-    return () => { cancelled = true; };
-  }, [creation?.id, unlockedForPlayback]);
+  
   useEffect(() => {
     const creatorId = creation?.user_id;
     if (!creatorId) { setToolMap({}); return; }
