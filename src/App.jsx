@@ -878,9 +878,9 @@ function handleMouseLeave() {
       <div className="creation-thumb">
         <img src={creation.thumbnail_image || creation.hero_image} alt={creation.title} />
         {hasPreview && (
-  creation.preview_video.includes("image.mux.com")
+  creation.preview_video.includes("image.mux.com") || creation.preview_video.includes("stream.mux.com")
     ? <img src={creation.preview_video} alt="preview" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0, transition: "opacity 0.4s ease", pointerEvents: "none" }} className="preview-gif" />
-    : <video ref={videoRef} src={creation.preview_video} muted loop playsInline preload="metadata" />
+    : null
 )}
         {(hasPreview || !!creation.video_url) && <div className="video-indicator">&#9654; Film</div>}
         <div className="creation-badge">{isPending ? <Badge type="review" /> : creation.is_premium ? <Badge type="Premium" /> : <Badge type="Open" />}</div>
@@ -1544,6 +1544,28 @@ function DetailPage({ id, creations, setCreations, user, profile, setProfile, pu
   const [toolMap, setToolMap] = useState({});
   const [deleting, setDeleting] = useState(false);
   const [pinning, setPinning] = useState(false);
+  const [playbackUrl, setPlaybackUrl] = useState(null);
+
+  // Fetch a signed, entitlement-checked playback URL for the film
+  const unlockedForPlayback = creation && (!creation.is_premium || purchasedIds.has(creation.id));
+  useEffect(() => {
+    setPlaybackUrl(null);
+    if (!creation?.id || !creation.video_url || !unlockedForPlayback) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const token = await getSessionToken();
+        const r = await fetch("/api/get-video-url", {
+          method: "POST",
+          headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
+          body: JSON.stringify({ type: "creation", id: creation.id }),
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!cancelled && r.ok && j.url) setPlaybackUrl(j.url);
+      } catch { /* poster remains as fallback */ }
+    })();
+    return () => { cancelled = true; };
+  }, [creation?.id, unlockedForPlayback]);
   useEffect(() => {
     const creatorId = creation?.user_id;
     if (!creatorId) { setToolMap({}); return; }
@@ -1630,7 +1652,7 @@ const purchaseLoading = creation.is_premium && !purchasesLoaded; const priceLabe
   }
   return (
     <div className="page detail-page">
-      <div className="detail-cinema"><div className="detail-cinema-inner"><div className="detail-back" onClick={() => setPage("explore")}>&larr; Archive</div>{hasVideo && unlocked ? <video src={creation.video_url} poster={posterImg} controls playsInline /> : <img className="detail-still" src={posterImg} alt={creation.title} />}</div></div>
+      <div className="detail-cinema"><div className="detail-cinema-inner"><div className="detail-back" onClick={() => setPage("explore")}>&larr; Archive</div>{hasVideo && unlocked ? (playbackUrl ? <video src={playbackUrl} poster={posterImg} controls playsInline /> : <div className="detail-still" style={{ display: "flex", alignItems: "center", justifyContent: "center", aspectRatio: "16/9", background: "var(--bg2)" }}><img className="detail-still" src={posterImg} alt={creation.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} /></div>) : <img className="detail-still" src={posterImg} alt={creation.title} />}</div></div>
       <div className="detail-editorial-strip"><div className="detail-editorial-inner">
         <div className="detail-editorial-left"><div className="detail-eyebrow"><div className="detail-eyebrow-line" />{creation.category}</div><h1 className="detail-title">{creation.title}</h1><div className="detail-creator-row"><span className="detail-creator-link" onClick={() => { setCreatorUser(creation.creator.username); setPage("profile"); }}>{creation.creator.display_name}</span><span className="detail-creator-sep">&#183;</span><span className="detail-category-tag">{creation.category}</span></div><div className="detail-tools-row">{creation.tools_used.map((t) => { const href = toolMap[String(t).trim().toLowerCase()]; return href ? <a key={t} href={href} target="_blank" rel="noopener noreferrer nofollow" onClick={() => track("affiliate_link_clicked", { creation_id: creation.id, tool: t })} className="detail-tool-tag detail-tool-tag-video" style={{ textDecoration: "none" }}>{t} &#8599;</a> : <span key={t} className="detail-tool-tag">{t}</span>; })}{hasVideo && unlocked && <span className="detail-tool-tag detail-tool-tag-video">&#9654; Film</span>}</div>{creation.tools_used.some((t) => toolMap[String(t).trim().toLowerCase()]) && <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: "var(--muted)", letterSpacing: "0.06em", marginTop: 10, lineHeight: 1.5 }}>Some tool links are affiliate links; the creator may earn a commission.</div>}</div>
         <div className="detail-editorial-right"><div className="detail-badges-row">{creation.is_premium ? <Badge type="Premium" /> : <Badge type="Open" />}{isPending && <Badge type="review" />}</div>{canPin && (<div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}><button type="button" className="btn-ghost" onClick={handlePin} disabled={pinning} style={{ fontSize: 11, opacity: pinning ? 0.6 : 1 }}>{pinning ? "Saving..." : isPinned ? "\u2605 Pinned" : "\u2606 Pin to profile"}</button></div>)}{canDelete && (<div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}><button type="button" className="btn-ghost" onClick={handleDelete} disabled={deleting} style={{ fontSize: 11, color: "#C25B5B", opacity: deleting ? 0.6 : 1 }}>{deleting ? "Deleting..." : "Delete creation"}</button></div>)}{licenseUrl && (<div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, marginTop: 4 }}><a className="btn-ghost" href={licenseUrl} target={licenseUrl.startsWith("mailto:") ? undefined : "_blank"} rel="noopener noreferrer nofollow" onClick={() => track("license_link_clicked", { creation_id: creation.id, title: creation.title })} style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}>&#9878; License This</a><span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: "var(--muted)", letterSpacing: "0.06em", maxWidth: 200, textAlign: "right", lineHeight: 1.5 }}>Arrangements are made directly between you and the creator.</span></div>)}</div>
