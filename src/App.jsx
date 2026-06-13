@@ -1,3 +1,4 @@
+import MuxPlayer from "@mux/mux-player-react";
 import { FaGlobe, FaXTwitter, FaYoutube, FaInstagram, FaTiktok, FaLinkedinIn, FaDiscord, FaGithub } from "react-icons/fa6";
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "./lib/supabase.js";
@@ -1566,6 +1567,28 @@ function DetailPage({ id, creations, setCreations, user, profile, setProfile, pu
     })();
     return () => { cancelled = true; };
   }, [creation?.id, unlockedForPlayback]);
+  const [playbackUrl, setPlaybackUrl] = useState(null);
+
+  // Fetch a signed, entitlement-checked playback URL for the film
+  const unlockedForPlayback = creation && (!creation.is_premium || purchasedIds.has(creation.id));
+  useEffect(() => {
+    setPlaybackUrl(null);
+    if (!creation?.id || !creation.video_url || !unlockedForPlayback) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const token = await getSessionToken();
+        const r = await fetch("/api/get-video-url", {
+          method: "POST",
+          headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
+          body: JSON.stringify({ type: "creation", id: creation.id }),
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!cancelled && r.ok && j.url) setPlaybackUrl(j.url);
+      } catch { /* poster remains as fallback */ }
+    })();
+    return () => { cancelled = true; };
+  }, [creation?.id, unlockedForPlayback]);
   useEffect(() => {
     const creatorId = creation?.user_id;
     if (!creatorId) { setToolMap({}); return; }
@@ -1652,7 +1675,21 @@ const purchaseLoading = creation.is_premium && !purchasesLoaded; const priceLabe
   }
   return (
     <div className="page detail-page">
-      <div className="detail-cinema"><div className="detail-cinema-inner"><div className="detail-back" onClick={() => setPage("explore")}>&larr; Archive</div>{hasVideo && unlocked ? (playbackUrl ? <video src={playbackUrl} poster={posterImg} controls playsInline /> : <div className="detail-still" style={{ display: "flex", alignItems: "center", justifyContent: "center", aspectRatio: "16/9", background: "var(--bg2)" }}><img className="detail-still" src={posterImg} alt={creation.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} /></div>) : <img className="detail-still" src={posterImg} alt={creation.title} />}</div></div>
+      <div className="detail-cinema"><div className="detail-cinema-inner"><div className="detail-back" onClick={() => setPage("explore")}>&larr; Archive</div>{hasVideo && unlocked ? (
+  creation.mux_playback_id ? (
+    <MuxPlayer
+      playbackId={creation.mux_playback_id}
+      poster={posterImg}
+      accentColor="#7c3aed"
+      metadata={{ video_id: creation.id, video_title: creation.title }}
+      style={{ width: "100%", aspectRatio: "16/9" }}
+    />
+  ) : creation.is_premium && playbackUrl ? (
+    <video src={playbackUrl} poster={posterImg} controls playsInline />
+  ) : (
+    <img className="detail-still" src={posterImg} alt={creation.title} />
+  )
+) : <img className="detail-still" src={posterImg} alt={creation.title} />}</div></div>
       <div className="detail-editorial-strip"><div className="detail-editorial-inner">
         <div className="detail-editorial-left"><div className="detail-eyebrow"><div className="detail-eyebrow-line" />{creation.category}</div><h1 className="detail-title">{creation.title}</h1><div className="detail-creator-row"><span className="detail-creator-link" onClick={() => { setCreatorUser(creation.creator.username); setPage("profile"); }}>{creation.creator.display_name}</span><span className="detail-creator-sep">&#183;</span><span className="detail-category-tag">{creation.category}</span></div><div className="detail-tools-row">{creation.tools_used.map((t) => { const href = toolMap[String(t).trim().toLowerCase()]; return href ? <a key={t} href={href} target="_blank" rel="noopener noreferrer nofollow" onClick={() => track("affiliate_link_clicked", { creation_id: creation.id, tool: t })} className="detail-tool-tag detail-tool-tag-video" style={{ textDecoration: "none" }}>{t} &#8599;</a> : <span key={t} className="detail-tool-tag">{t}</span>; })}{hasVideo && unlocked && <span className="detail-tool-tag detail-tool-tag-video">&#9654; Film</span>}</div>{creation.tools_used.some((t) => toolMap[String(t).trim().toLowerCase()]) && <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: "var(--muted)", letterSpacing: "0.06em", marginTop: 10, lineHeight: 1.5 }}>Some tool links are affiliate links; the creator may earn a commission.</div>}</div>
         <div className="detail-editorial-right"><div className="detail-badges-row">{creation.is_premium ? <Badge type="Premium" /> : <Badge type="Open" />}{isPending && <Badge type="review" />}</div>{canPin && (<div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}><button type="button" className="btn-ghost" onClick={handlePin} disabled={pinning} style={{ fontSize: 11, opacity: pinning ? 0.6 : 1 }}>{pinning ? "Saving..." : isPinned ? "\u2605 Pinned" : "\u2606 Pin to profile"}</button></div>)}{canDelete && (<div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}><button type="button" className="btn-ghost" onClick={handleDelete} disabled={deleting} style={{ fontSize: 11, color: "#C25B5B", opacity: deleting ? 0.6 : 1 }}>{deleting ? "Deleting..." : "Delete creation"}</button></div>)}{licenseUrl && (<div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, marginTop: 4 }}><a className="btn-ghost" href={licenseUrl} target={licenseUrl.startsWith("mailto:") ? undefined : "_blank"} rel="noopener noreferrer nofollow" onClick={() => track("license_link_clicked", { creation_id: creation.id, title: creation.title })} style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}>&#9878; License This</a><span style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: "var(--muted)", letterSpacing: "0.06em", maxWidth: 200, textAlign: "right", lineHeight: 1.5 }}>Arrangements are made directly between you and the creator.</span></div>)}</div>
@@ -1874,13 +1911,13 @@ track("upload_completed");
         if (statusRes.ok) {
           const status = await statusRes.json();
           if (status.ready) {
-            resolvedUpload = { ...uploadResult, thumbnail_image: status.thumbnail_image, preview_video: status.preview_video };
+            resolvedUpload = { ...uploadResult, thumbnail_image: status.thumbnail_image, preview_video: status.preview_video, mux_playback_id: status.mux_playback_id };
           }
         }
       } catch { /* non-critical, proceed with placeholder */ }
     }
 
-    const newCreation = { id: "u" + Date.now(), title: form.title.trim(), creator: { username: profile?.username ?? user?.email?.split("@")[0] ?? "you", display_name: profile?.display_name ?? user?.email?.split("@")[0] ?? "You", avatar_url: profile?.avatar_url ?? "" }, hero_image: resolvedUpload?.thumbnail_image || fallbackThumb, thumbnail_image: resolvedUpload?.thumbnail_image || fallbackThumb, video_url: resolvedUpload?.video_url || "", preview_video: resolvedUpload?.preview_video || "", tools_used: toolList.length > 0 ? toolList : ["Unknown"], category: form.category, is_premium: form.isPremium, premium_status: form.isPremium ? (autoApprove ? "Approved" : "Pending") : null, prompt_preview: form.isPremium ? form.prompt.trim().slice(0, 120) + "..." : null, prompt_full: form.prompt.trim(), spotlight: false, mux_asset_id: resolvedUpload?.mux_asset_id || null, license_url: license.url, user_id: user?.id ?? null };
+    const newCreation = { id: "u" + Date.now(), title: form.title.trim(), creator: { username: profile?.username ?? user?.email?.split("@")[0] ?? "you", display_name: profile?.display_name ?? user?.email?.split("@")[0] ?? "You", avatar_url: profile?.avatar_url ?? "" }, hero_image: resolvedUpload?.thumbnail_image || fallbackThumb, thumbnail_image: resolvedUpload?.thumbnail_image || fallbackThumb, video_url: resolvedUpload?.video_url || "", preview_video: resolvedUpload?.preview_video || "", tools_used: toolList.length > 0 ? toolList : ["Unknown"], category: form.category, is_premium: form.isPremium, premium_status: form.isPremium ? (autoApprove ? "Approved" : "Pending") : null, prompt_preview: form.isPremium ? form.prompt.trim().slice(0, 120) + "..." : null, prompt_full: form.prompt.trim(), spotlight: false, mux_asset_id: resolvedUpload?.mux_asset_id || null, mux_playback_id: resolvedUpload?.mux_playback_id || null, license_url: license.url, user_id: user?.id ?? null };
     
 setCreations((prev) => [newCreation, ...prev]);
 const { data: saved, error } = await insertCreation(newCreation, user, profile);
