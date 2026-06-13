@@ -68,8 +68,25 @@ export default async function handler(req, res) {
         requireEnv("SUPABASE_SERVICE_ROLE_KEY")
       );
 
+      // Pull Stripe's actual fee from the charge's balance transaction,
+      // so payouts can be computed on NET rather than gross
+      let stripeFee = null;
+      let amountNet = null;
+      try {
+        const pi = await stripe.paymentIntents.retrieve(session.payment_intent, {
+          expand: ["latest_charge.balance_transaction"],
+        });
+        const bt = pi?.latest_charge?.balance_transaction;
+        if (bt && typeof bt === "object") {
+          stripeFee = bt.fee;
+          amountNet = bt.net;
+        }
+      } catch (feeErr) {
+        console.warn("Could not retrieve Stripe fee for session", session.id, feeErr.message);
+      }
+
       await supabase.from("purchases").upsert(
-        { user_id, creation_id, stripe_session_id: session.id, amount_total: session.amount_total, currency: session.currency },
+        { user_id, creation_id, stripe_session_id: session.id, amount_total: session.amount_total, currency: session.currency, stripe_fee: stripeFee, amount_net: amountNet },
         { onConflict: "user_id,creation_id" }
       );
     }
