@@ -20,6 +20,8 @@ export function rowToCreation(row) {
     thumbnail_image: row.thumbnail_image,
     video_url:       row.video_url,
     preview_video:   row.preview_video,
+    mux_playback_id: row.mux_playback_id,
+    mux_asset_id:    row.mux_asset_id,
     is_premium:      row.is_premium,
     premium_status:  row.premium_status,
     price_cents:     row.price_cents ?? 499,
