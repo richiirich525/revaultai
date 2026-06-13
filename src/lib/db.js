@@ -58,6 +58,7 @@ export function creationToRow(creation, user, profile) {
     license_url:      creation.license_url ?? null,
     spotlight:        false,
     mux_asset_id:     creation.mux_asset_id ?? null,
+    mux_playback_id:  creation.mux_playback_id ?? null,
   };
   
   return row;
