@@ -1097,6 +1097,9 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission }) {
   const [prompt, setPrompt] = useState("");
   const [model, setModel] = useState("wan-2.6");
   const [duration, setDuration] = useState(5);
+  useEffect(() => {
+    if (model !== "wan-2.6" && duration > 10) setDuration(10);
+  }, [model]);
   const [submitting, setSubmitting] = useState(false);
   const [gens, setGens] = useState([]);
   const [videoUrls, setVideoUrls] = useState({});
@@ -1194,6 +1197,7 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission }) {
                 <select className="gen-model-select" value={duration} onChange={(e) => setDuration(Number(e.target.value))}>
                   <option value={5}>5 seconds</option>
                   <option value={10}>10 seconds</option>
+                  {model === "wan-2.6" && <option value={15}>15 seconds</option>}
                 </select>
                 <span style={{ marginLeft: 12 }}>Cost: {COST} credits · Balance: {profile?.credits ?? 0}</span>
               </div>
