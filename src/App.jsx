@@ -955,7 +955,7 @@ function HomePage({ creations, setPage, setDetailId }) {
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("faq")}>FAQ</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("contact")}>Contact</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("guidelines")}>Guidelines</span>
-    <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("premium-prompts")}>Premium Prompts</span>
+    <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("premium-prompts")}>Premium Films</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("about")}>About</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("become-creator")}>Become a Creator</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("terms")}>Terms</span>
@@ -2184,8 +2184,8 @@ function FAQPage({ setPage }) {
       a: "Most platforms are feeds. RevaultAI is a vault. Every creation is reviewed before it goes live. We don't optimize for volume — we optimize for quality. The result is a platform where every piece of content is worth your time."
     },
     {
-      q: "What are Premium Prompts?",
-      a: "Premium Prompts are the full, detailed creative briefs behind a creator's AI-generated work. They include model settings, camera directions, lighting notes, sound design guidance, and the exact language used to produce the result. They are the creative DNA of the work."
+      q: "What are Premium Films?",
+      a: "Every film on RevaultAI plays free, with its full production note — the prompt, tools, and creative decisions — open to everyone. When a creator marks a film as premium, you can buy it: a full-quality download to own, and a direct way to support the creator. Creators keep 80% of every sale."
     },
     {
       q: "How do purchases work?",
@@ -2378,20 +2378,20 @@ function PremiumPromptsPage({ setPage }) {
     <div className="page">
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "80px 48px" }}>
         <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.2em", color: "var(--accent)", textTransform: "uppercase", marginBottom: 12, cursor: "pointer" }} onClick={() => setPage("home")}>← RevaultAI</div>
-        <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 48, fontWeight: 300, color: "var(--text)", marginBottom: 8 }}>Premium Prompts</h1>
-        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", letterSpacing: "0.08em", marginBottom: 56 }}>The creative DNA behind the work.</div>
+        <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 48, fontWeight: 300, color: "var(--text)", marginBottom: 8 }}>Premium Films</h1>
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", letterSpacing: "0.08em", marginBottom: 56 }}>Every film plays free. Owning one supports the creator.</div>
 
         <div style={{ borderTop: "1px solid var(--border)", padding: "32px 0" }}>
-          <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 700, color: "var(--text)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 16 }}>What Is a Premium Prompt?</div>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 1.9 }}>A Premium Prompt is the full creative brief behind an AI-generated work. Not a vague description — a detailed, replicable document that includes the exact language, model settings, camera direction, lighting intent, sound design notes, and creative decisions that produced the result you see on screen. It is the craft behind the output.</div>
+          <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 700, color: "var(--text)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 16 }}>How It Works</div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 1.9 }}>Everything in the RevaultAI gallery streams free, in full — no paywall, no locked previews. Every film is also published with its complete production note: the full prompt, tools, and creative decisions behind the work, open for anyone to learn from. When a creator marks a film as premium, you have the option to buy it: a full-quality download to own, and a direct way to support the person who made it.</div>
         </div>
 
         <div style={{ borderTop: "1px solid var(--border)", padding: "32px 0" }}>
-          <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 700, color: "var(--text)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 20 }}>Why Creators Charge for Them</div>
+          <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 700, color: "var(--text)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 20 }}>Why Buy a Film You Can Watch Free?</div>
           {[
-            ["Time and iteration", "A great prompt is rarely the first attempt. It represents hours of refinement, testing, and creative decision-making."],
-            ["Transferable skill", "The best prompts teach you how to think — not just what to type. They are educational artifacts."],
-            ["Creative ownership", "Creators invest their creative vision into their prompts. Pricing reflects that value."],
+            ["Own the work", "A full-quality download of the finished film — yours to keep, on or off the platform."],
+            ["Support the craft", "AI filmmaking is real creative labor: hours of iteration, direction, and taste. Buying a film pays the person behind it directly."],
+            ["Back the culture", "Creators keep the overwhelming share of every sale. Collecting work here keeps independent AI film open — not locked behind paywalls."],
           ].map(([title, desc], i) => (
             <div key={i} style={{ marginBottom: 24 }}>
               <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 12, fontWeight: 600, color: "var(--text)", marginBottom: 6 }}>{title}</div>
@@ -2402,7 +2402,7 @@ function PremiumPromptsPage({ setPage }) {
 
         <div style={{ borderTop: "1px solid var(--border)", padding: "32px 0" }}>
           <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 700, color: "var(--text)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 20 }}>What Buyers Receive</div>
-          {["The complete, unabridged prompt used to generate the work", "A download of the finished film", "Model and tool specifications", "Camera movement and framing direction", "Lighting and atmosphere notes", "Sound design guidance where applicable", "Permanent access — unlocked forever on your account"].map((item, i) => (
+          {["A full-quality download of the finished film", "Permanent access — re-download any time from your account", "The satisfaction of directly supporting the creator", "The complete production note remains open to everyone"].map((item, i) => (
             <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 12 }}>
               <div style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--accent)", flexShrink: 0, marginTop: 6 }} />
               <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>{item}</div>
@@ -2412,17 +2412,17 @@ function PremiumPromptsPage({ setPage }) {
 
         <div style={{ borderTop: "1px solid var(--border)", padding: "32px 0" }}>
           <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 700, color: "var(--text)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 20 }}>Ownership and Usage</div>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 1.9, marginBottom: 16 }}>Purchasing a Premium Prompt grants you a personal license to use the creative brief for your own work. Creators retain full ownership of their original prompts. Reselling or redistributing purchased prompts is not permitted.</div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 1.9, marginBottom: 16 }}>Buying a film grants you a personal-use copy of the work. Creators retain full ownership and copyright of their films. Reselling or redistributing purchased films is not permitted. For commercial licensing, use the License This link on the film's page to arrange it with the creator directly.</div>
         </div>
 
         <div style={{ borderTop: "1px solid var(--border)", padding: "32px 0" }}>
           <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 700, color: "var(--text)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 16 }}>Refund Policy</div>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 1.9 }}>All purchases are final once the prompt has been accessed. If you experienced a technical issue that prevented delivery, contact us within 7 days and we will make it right. See our full <span style={{ color: "var(--accent)", cursor: "pointer" }} onClick={() => setPage("refunds")}>Refund Policy.</span></div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 1.9 }}>All purchases are final once the film has been downloaded. If you experienced a technical issue that prevented delivery, contact us within 7 days and we will make it right. See our full <span style={{ color: "var(--accent)", cursor: "pointer" }} onClick={() => setPage("refunds")}>Refund Policy.</span></div>
         </div>
 
         <div style={{ borderTop: "1px solid var(--border)", paddingTop: 40 }}>
-          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 300, color: "var(--text)", marginBottom: 20, lineHeight: 1.4 }}>Ready to unlock something exceptional?</div>
-          <button className="btn-primary" onClick={() => setPage("explore")}>Browse Premium Creations</button>
+          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 300, color: "var(--text)", marginBottom: 20, lineHeight: 1.4 }}>Find a film worth owning.</div>
+          <button className="btn-primary" onClick={() => setPage("explore")}>Browse the Gallery</button>
         </div>
       </div>
     </div>
@@ -2480,7 +2480,7 @@ function BecomeCreatorPage({ setPage, user }) {
   const whyCards = [
     { title: "Show the Process, Not Just the Result", desc: "Share the prompts, workflows, tools, and techniques behind your creations. RevaultAI is built for creators who want their work understood, not just viewed." },
     { title: "Build a Creator Profile", desc: "Create a permanent portfolio of your AI-native work. Gain followers, showcase your best creations, and build your reputation inside a curated creative community." },
-    { title: "Monetize Premium Prompts", desc: "Offer premium prompts, workflows, and creative breakdowns for purchase. Keep your best techniques protected while earning from your expertise." },
+    { title: "Sell Your Films", desc: "Every film streams free for the world to watch. Mark yours as premium and viewers can buy the full-quality download — you keep 80% of every sale, and your craft stays open." },
     { title: "Get Curated, Not Buried", desc: "Unlike massive content platforms, RevaultAI is built around quality and discovery. Exceptional work can be featured in spotlights, collections, and creator showcases." },
   ];
   const content = ["AI Films", "AI Short Films", "AI Animations", "Experimental Cinema", "Music Visuals", "Narrative Projects", "Hybrid Human and AI Productions"];
