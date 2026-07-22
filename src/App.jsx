@@ -2476,7 +2476,7 @@ function AboutPage({ setPage }) {
     </div>
   );
 }
-function BecomeCreatorPage({ setPage, user }) {
+function BecomeCreatorPage({ setPage, user, onSignInClick }) {
   const whyCards = [
     { title: "Show the Process, Not Just the Result", desc: "Share the prompts, workflows, tools, and techniques behind your creations. RevaultAI is built for creators who want their work understood, not just viewed." },
     { title: "Build a Creator Profile", desc: "Create a permanent portfolio of your AI-native work. Gain followers, showcase your best creations, and build your reputation inside a curated creative community." },
@@ -2505,7 +2505,7 @@ function BecomeCreatorPage({ setPage, user }) {
         <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 24, fontWeight: 300, color: "var(--muted)", marginBottom: 24, fontStyle: "italic" }}>Help define the future of AI-native filmmaking.</div>
         <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 1.9, maxWidth: 560, margin: "0 auto 40px" }}>RevaultAI is building a curated home for exceptional AI films, animations, short films, and premium prompts. We are currently inviting a small group of creators to help shape the platform before public launch.</div>
         <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
-          <button className="btn-primary" onClick={() => user ? setPage("submit") : setPage("home")}>{user ? "Start Creating" : "Create Your Account"}</button>
+          <button className="btn-primary" onClick={() => user ? setPage("submit") : onSignInClick?.()}>{user ? "Start Creating" : "Create Your Account"}</button>
           <button className="btn-ghost" onClick={() => setPage("guidelines")}>View Submission Guidelines</button>
         </div>
       </div>
@@ -2634,7 +2634,7 @@ function BecomeCreatorPage({ setPage, user }) {
         <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 48, fontWeight: 300, color: "var(--text)", marginBottom: 16, lineHeight: 1.2 }}>Ready to Join RevaultAI?</div>
         <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", lineHeight: 1.9, marginBottom: 40 }}>Become one of the founding creators helping shape the future of AI-native creativity.</div>
         <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
-          <button className="btn-primary" onClick={() => user ? setPage("submit") : setPage("home")}>{user ? "Submit Your First Creation" : "Create Your Account"}</button>
+          <button className="btn-primary" onClick={() => user ? setPage("submit") : onSignInClick?.()}>{user ? "Submit Your First Creation" : "Create Your Account"}</button>
           <button className="btn-ghost" onClick={() => setPage("explore")}>Explore the Archive</button>
         </div>
       </div>
@@ -2764,7 +2764,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       case "guidelines": return <GuidelinesPage setPage={setPage} />;
       case "premium-prompts": return <PremiumPromptsPage setPage={setPage} />;
       case "about": return <AboutPage setPage={setPage} />;
-      case "become-creator": return <BecomeCreatorPage setPage={setPage} user={user} />;
+      case "become-creator": return <BecomeCreatorPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} />;
 case "privacy":   return <LegalPage setPage={setPage} page="privacy" />;
 case "refunds":   return <LegalPage setPage={setPage} page="refunds" />;
 case "dmca":      return <LegalPage setPage={setPage} page="dmca" />;
