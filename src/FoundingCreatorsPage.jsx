@@ -213,7 +213,7 @@ export default function FoundingCreatorsPage() {
             <div className="fc-get">
               <div className="fc-get-num">02</div>
               <h3>80% of net</h3>
-              <p>Sell premium films or prompts and keep 80% after payment fees. The free showcase costs nothing.</p>
+              <p>Sell premium films or prompts and keep 80% after payment fees. Plus tips, hire-me, and affiliate tool links on your profile — all yours, no cut. The free showcase costs nothing.</p>
             </div>
             <div className="fc-get">
               <div className="fc-get-num">03</div>
@@ -221,6 +221,9 @@ export default function FoundingCreatorsPage() {
               <p>You work with the founder, not a support queue. Your feedback shapes the platform.</p>
             </div>
           </div>
+          <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted, #6B6878)", lineHeight: 1.8, marginTop: 28, maxWidth: 620 }}>
+            Also on the platform: generate films directly on RevaultAI with Wan and Kling, and submit straight to the vault.
+          </p>
         </section>
 
         <section className="fc-section">
