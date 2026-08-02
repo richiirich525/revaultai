@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-// ↓ Adjust this import to wherever your Supabase client lives
 import { supabase } from "./lib/supabase.js";
 
 /*
   FoundingCreatorsPage — RevaultAI
-  Drop-in page for the founding-creator ad campaign.
-  Self-contained: scoped styles (fc- prefix), no new dependencies.
+  Landing page for the founding-creator ad campaign.
+  Styled to match the live site: Syne / DM Mono / Cormorant Garamond,
+  purple accent (#7B3FE4) on #0E0F14. Self-contained (fc- prefix).
   Captures UTM params from the URL and stores them with each application.
 */
 
@@ -48,119 +48,147 @@ export default function FoundingCreatorsPage() {
   return (
     <div className="fc-page">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Inter:wght@400;500;600&display=swap');
-
         .fc-page {
-          --fc-black: #0b0b0a;
-          --fc-charcoal: #171614;
-          --fc-concrete: #211f1c;
-          --fc-line: #33302b;
-          --fc-gold: #c9a227;
-          --fc-gold-soft: #d8b24a;
-          --fc-ivory: #ede8dd;
-          --fc-mute: #8a867c;
-          background: var(--fc-black);
-          color: var(--fc-ivory);
-          font-family: 'Inter', system-ui, sans-serif;
+          background: var(--bg, #0E0F14);
+          color: var(--text, #E8E6F0);
+          font-family: 'Syne', sans-serif;
           min-height: 100vh;
           -webkit-font-smoothing: antialiased;
         }
-        .fc-wrap { max-width: 880px; margin: 0 auto; padding: 0 24px; }
+        .fc-wrap { max-width: 880px; margin: 0 auto; padding: 0 48px; }
 
         .fc-eyebrow {
-          font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase;
-          color: var(--fc-gold); font-weight: 500;
+          font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.25em;
+          text-transform: uppercase; color: var(--accent, #7B3FE4);
         }
-        .fc-rule { height: 1px; background: var(--fc-line); border: 0; margin: 0; }
-        .fc-rule--gold { background: var(--fc-gold); width: 56px; height: 2px; }
+        .fc-rule { height: 1px; background: var(--border, rgba(255,255,255,0.06)); border: 0; margin: 0; }
 
-        /* Hero — set like an exhibition wall label */
-        .fc-hero { padding: 96px 0 72px; }
+        /* Hero */
+        .fc-hero { padding: 100px 0 72px; }
         .fc-hero h1 {
           font-family: 'Cormorant Garamond', serif;
-          font-weight: 300; font-size: clamp(40px, 7vw, 72px);
-          line-height: 1.05; margin: 20px 0 24px; letter-spacing: 0.01em;
+          font-weight: 300; font-size: clamp(40px, 6.5vw, 68px);
+          line-height: 1.08; margin: 20px 0 24px; color: var(--text, #E8E6F0);
         }
-        .fc-hero h1 em { font-style: italic; color: var(--fc-gold-soft); }
-        .fc-hero p { color: var(--fc-mute); font-size: 17px; line-height: 1.65; max-width: 560px; margin: 0; }
+        .fc-hero h1 em { font-style: italic; color: var(--accent, #7B3FE4); }
+        .fc-hero p {
+          font-family: 'DM Mono', monospace; color: var(--muted, #6B6878);
+          font-size: 12px; line-height: 1.9; max-width: 560px; margin: 0;
+        }
 
-        /* Plaque — the 80/20 split as etched museum signage */
+        /* Stats strip */
         .fc-plaque {
-          margin: 72px 0; border: 1px solid var(--fc-line); background: var(--fc-charcoal);
+          margin: 64px 0; border: 1px solid var(--border, rgba(255,255,255,0.06));
+          background: var(--bg2, #13141A); border-radius: 8px;
           padding: 40px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 32px;
         }
-        .fc-plaque .fc-stat b {
-          display: block; font-family: 'Cormorant Garamond', serif; font-weight: 400;
-          font-size: 44px; color: var(--fc-ivory); line-height: 1;
+        .fc-stat b {
+          display: block; font-family: 'Syne', sans-serif; font-weight: 700;
+          font-size: 34px; color: var(--text, #E8E6F0); line-height: 1;
         }
-        .fc-plaque .fc-stat span {
-          display: block; margin-top: 10px; font-size: 12px; letter-spacing: 0.14em;
-          text-transform: uppercase; color: var(--fc-mute);
+        .fc-stat:first-child b { color: var(--accent, #7B3FE4); }
+        .fc-stat span {
+          display: block; margin-top: 10px; font-family: 'DM Mono', monospace;
+          font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase;
+          color: var(--muted, #6B6878); line-height: 1.6;
         }
 
         .fc-section { padding: 8px 0 64px; }
+        .fc-label {
+          font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.2em;
+          color: var(--accent, #7B3FE4); text-transform: uppercase; margin-bottom: 12px;
+        }
         .fc-section h2 {
           font-family: 'Cormorant Garamond', serif; font-weight: 300;
-          font-size: 34px; margin: 16px 0 12px;
+          font-size: 38px; margin: 0 0 14px; color: var(--text, #E8E6F0);
         }
-        .fc-section > p { color: var(--fc-mute); line-height: 1.7; max-width: 620px; }
+        .fc-section > p {
+          font-family: 'DM Mono', monospace; color: var(--muted, #6B6878);
+          font-size: 12px; line-height: 1.9; max-width: 620px;
+        }
 
-        .fc-gets { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; background: var(--fc-line); border: 1px solid var(--fc-line); margin-top: 28px; }
-        .fc-get { background: var(--fc-black); padding: 28px 24px; }
-        .fc-get h3 { font-size: 15px; font-weight: 600; margin: 0 0 8px; color: var(--fc-ivory); }
-        .fc-get p { font-size: 14px; color: var(--fc-mute); line-height: 1.6; margin: 0; }
+        .fc-gets { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; margin-top: 32px; }
+        .fc-get {
+          background: var(--bg2, #13141A); border: 1px solid var(--border, rgba(255,255,255,0.06));
+          border-radius: 8px; padding: 32px 24px; transition: border-color 0.25s;
+        }
+        .fc-get:hover { border-color: var(--border-hover, rgba(123,63,228,0.35)); }
+        .fc-get .fc-get-num {
+          font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.2em;
+          color: var(--accent, #7B3FE4); text-transform: uppercase; margin-bottom: 12px;
+        }
+        .fc-get h3 {
+          font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700;
+          margin: 0 0 10px; color: var(--text, #E8E6F0);
+        }
+        .fc-get p {
+          font-family: 'DM Mono', monospace; font-size: 11px;
+          color: var(--muted, #6B6878); line-height: 1.7; margin: 0;
+        }
 
         /* Form */
-        .fc-form { border: 1px solid var(--fc-line); background: var(--fc-concrete); padding: 40px; margin-bottom: 96px; }
-        .fc-form label { display: block; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fc-mute); margin: 22px 0 8px; }
+        .fc-form {
+          border: 1px solid var(--border, rgba(255,255,255,0.06));
+          background: var(--bg2, #13141A); border-radius: 8px;
+          padding: 40px; margin-bottom: 96px;
+        }
+        .fc-form label {
+          display: block; font-family: 'DM Mono', monospace; font-size: 10px;
+          letter-spacing: 0.15em; text-transform: uppercase;
+          color: var(--accent, #7B3FE4); margin: 24px 0 10px;
+        }
+        .fc-form label:first-child { margin-top: 0; }
         .fc-form input, .fc-form textarea {
-          width: 100%; box-sizing: border-box; background: var(--fc-black);
-          border: 1px solid var(--fc-line); color: var(--fc-ivory);
-          padding: 13px 14px; font-size: 15px; font-family: inherit; border-radius: 0;
+          width: 100%; box-sizing: border-box; background: var(--bg3, #1A1B23);
+          border: 1px solid var(--border, rgba(255,255,255,0.06));
+          color: var(--text, #E8E6F0); padding: 12px 16px; font-size: 14px;
+          font-family: 'Syne', sans-serif; border-radius: 4px; outline: none;
+          transition: border-color 0.2s;
         }
-        .fc-form input:focus-visible, .fc-form textarea:focus-visible {
-          outline: 2px solid var(--fc-gold); outline-offset: 1px; border-color: var(--fc-gold);
-        }
-        .fc-form textarea { min-height: 90px; resize: vertical; }
+        .fc-form input:focus, .fc-form textarea:focus { border-color: var(--accent, #7B3FE4); }
+        .fc-form input::placeholder, .fc-form textarea::placeholder { color: var(--muted, #6B6878); }
+        .fc-form textarea { min-height: 100px; resize: vertical; line-height: 1.6; }
         .fc-hp { position: absolute; left: -9999px; height: 0; overflow: hidden; }
 
         .fc-submit {
-          margin-top: 30px; background: var(--fc-gold); color: var(--fc-black);
-          border: 0; padding: 15px 34px; font-size: 14px; font-weight: 600;
-          letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer;
+          margin-top: 32px; background: var(--accent, #7B3FE4); color: white;
+          border: none; padding: 14px 32px; border-radius: 4px;
+          font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600;
+          letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer;
+          transition: all 0.2s;
         }
-        .fc-submit:hover { background: var(--fc-gold-soft); }
-        .fc-submit:focus-visible { outline: 2px solid var(--fc-ivory); outline-offset: 2px; }
-        .fc-submit:disabled { opacity: 0.5; cursor: default; }
+        .fc-submit:hover { opacity: 0.88; box-shadow: 0 8px 32px var(--accent-glow, rgba(123,63,228,0.4)); }
+        .fc-submit:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
 
-        .fc-msg { margin-top: 18px; font-size: 14px; line-height: 1.6; }
-        .fc-msg--ok { color: var(--fc-gold-soft); }
-        .fc-msg--err { color: #d47b6a; }
+        .fc-msg {
+          font-family: 'DM Mono', monospace; font-size: 11px; line-height: 1.6;
+          margin-top: 18px; padding: 10px 14px; border-radius: 3px;
+        }
+        .fc-msg--ok { color: #4ADE80; background: rgba(74,222,128,0.06); border: 1px solid rgba(74,222,128,0.2); }
+        .fc-msg--err { color: #F87171; background: rgba(248,113,113,0.06); border: 1px solid rgba(248,113,113,0.2); }
 
-        @media (max-width: 720px) {
+        @media (max-width: 760px) {
+          .fc-wrap { padding: 0 24px; }
           .fc-hero { padding: 64px 0 48px; }
+          .fc-hero h1 { font-size: 36px; }
           .fc-plaque, .fc-gets { grid-template-columns: 1fr; }
-          .fc-plaque { padding: 28px; gap: 24px; }
+          .fc-plaque { padding: 28px; gap: 24px; margin: 48px 0; }
           .fc-form { padding: 24px; }
-        }
-        @media (prefers-reduced-motion: no-preference) {
-          .fc-hero h1, .fc-hero p, .fc-hero .fc-eyebrow { animation: fcRise 0.7s ease both; }
-          .fc-hero p { animation-delay: 0.12s; }
-          @keyframes fcRise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+          .fc-section h2 { font-size: 30px; }
         }
       `}</style>
 
       <div className="fc-wrap">
         <header className="fc-hero">
-          <span className="fc-eyebrow">Founding cohort · Limited spots</span>
+          <span className="fc-eyebrow">Founding Cohort &middot; Limited Spots</span>
           <h1>
-            Your film, on a wall.
+            Your film, in the vault.
             <br />
             Not in a <em>feed</em>.
           </h1>
           <p>
-            RevaultAI is a curated gallery for AI-generated films. We are selecting a small
-            founding cohort of filmmakers whose work opens the gallery — shown with intention,
+            RevaultAI is a curated archive for AI-generated films. We are selecting a small
+            founding cohort of filmmakers whose work opens the vault — shown with intention,
             paid like it matters.
           </p>
         </header>
@@ -170,22 +198,25 @@ export default function FoundingCreatorsPage() {
         <section className="fc-plaque" aria-label="The terms">
           <div className="fc-stat"><b>80%</b><span>of net revenue to creators</span></div>
           <div className="fc-stat"><b>Curated</b><span>every film reviewed, none buried</span></div>
-          <div className="fc-stat"><b>Founding</b><span>permanent founding-creator status</span></div>
+          <div className="fc-stat"><b>Founding</b><span>permanent founding-creator badge</span></div>
         </section>
 
         <section className="fc-section">
-          <hr className="fc-rule fc-rule--gold" />
+          <div className="fc-label">The Offer</div>
           <h2>What founding creators receive</h2>
           <div className="fc-gets">
             <div className="fc-get">
+              <div className="fc-get-num">01</div>
               <h3>Top placement</h3>
-              <p>Founding work anchors the gallery — featured positioning, not a slot in a scroll.</p>
+              <p>Founding work anchors the archive — Spotlight eligibility and featured positioning, not a slot in a scroll.</p>
             </div>
             <div className="fc-get">
+              <div className="fc-get-num">02</div>
               <h3>80% of net</h3>
-              <p>Sell premium films or prompts and keep 80% after payment fees. Free showcase costs nothing.</p>
+              <p>Sell premium films or prompts and keep 80% after payment fees. The free showcase costs nothing.</p>
             </div>
             <div className="fc-get">
+              <div className="fc-get-num">03</div>
               <h3>A direct line</h3>
               <p>You work with the founder, not a support queue. Your feedback shapes the platform.</p>
             </div>
@@ -193,32 +224,33 @@ export default function FoundingCreatorsPage() {
         </section>
 
         <section className="fc-section">
-          <hr className="fc-rule fc-rule--gold" />
+          <div className="fc-label">Apply</div>
           <h2>Submit your work for consideration</h2>
           <p>
-            Send a link to your strongest AI film work — a profile, a reel, a single film.
-            We review everything personally and reply either way.
+            Send a link to your strongest AI film work — a profile, a reel, a single film,
+            or even a Google Drive folder. No public presence yet? Email your work to
+            rich@revaultai.com instead. We review everything personally and reply either way.
           </p>
 
           <div className="fc-form">
             {status === "done" ? (
-              <p className="fc-msg fc-msg--ok">
-                Received. Your work is in the review queue — you'll hear back at the email you
-                provided, usually within a few days.
+              <p className="fc-msg fc-msg--ok" style={{ marginTop: 0 }}>
+                &#10003;&nbsp; Received. Your work is in the review queue — you'll hear back at the
+                email you provided, usually within a few days.
               </p>
             ) : (
               <>
                 <label htmlFor="fc-name">Name</label>
-                <input id="fc-name" value={form.name} onChange={set("name")} autoComplete="name" />
+                <input id="fc-name" value={form.name} onChange={set("name")} autoComplete="name" placeholder="Your name" />
 
                 <label htmlFor="fc-email">Email</label>
-                <input id="fc-email" type="email" value={form.email} onChange={set("email")} autoComplete="email" />
+                <input id="fc-email" type="email" value={form.email} onChange={set("email")} autoComplete="email" placeholder="you@example.com" />
 
-                <label htmlFor="fc-work">Link to your work</label>
+                <label htmlFor="fc-work">Link to your work (YouTube, Vimeo, Instagram, Drive — anywhere)</label>
                 <input id="fc-work" type="url" placeholder="https://" value={form.workUrl} onChange={set("workUrl")} />
 
                 <label htmlFor="fc-note">Anything we should know (optional)</label>
-                <textarea id="fc-note" value={form.note} onChange={set("note")} />
+                <textarea id="fc-note" value={form.note} onChange={set("note")} placeholder="Tools you use, what you're working on..." />
 
                 <div className="fc-hp" aria-hidden="true">
                   <label htmlFor="fc-website">Website</label>
@@ -226,7 +258,7 @@ export default function FoundingCreatorsPage() {
                 </div>
 
                 <button className="fc-submit" onClick={submit} disabled={status === "sending"}>
-                  {status === "sending" ? "Sending…" : "Submit for review"}
+                  {status === "sending" ? "Sending…" : "Submit for Review"}
                 </button>
 
                 {status === "error" && (
