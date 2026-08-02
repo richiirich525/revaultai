@@ -28,6 +28,7 @@ import {
 } from "./lib/profiles.js";
 
 import { fetchFollowingFeed } from "./lib/db.js";
+import FoundingCreatorsPage from "./FoundingCreatorsPage.jsx";
 
 const CATEGORIES = ["Abstract","Action","Animation","Comedy","Creative Experiments","Crime","Documentary","Films","Drama","Horror","Images","Music","News","Noir","Prompts","Romance","Sci-Fi/Fantasy","Short Films","Sports","Thriller","Western","Workflows"];
 
@@ -2675,6 +2676,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
   }, []);
 
   useEffect(() => { const hash = window.location.hash; if (hash && hash.includes("type=signup")) { setPage("email-confirmed"); window.history.replaceState({}, "", window.location.pathname); } }, []);
+  useEffect(() => { if (window.location.pathname === "/founding-creators") setPage("founding-creators"); }, []);
 
   async function loadOrCreateProfile(u) {
     const { data, error } = await fetchProfile(u.id);
@@ -2770,6 +2772,7 @@ case "refunds":   return <LegalPage setPage={setPage} page="refunds" />;
 case "dmca":      return <LegalPage setPage={setPage} page="dmca" />;
 case "ai-disclaimer": return <LegalPage setPage={setPage} page="ai-disclaimer" />;
       case "purchase-success": return <PurchaseSuccessPage setPage={setPage} setDetailId={setDetailId} creations={creations} />;
+      case "founding-creators": return <FoundingCreatorsPage />;
       default: return null;
     }
   }
