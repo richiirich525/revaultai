@@ -3,6 +3,7 @@ import { FaGlobe, FaXTwitter, FaYoutube, FaInstagram, FaTiktok, FaLinkedinIn, Fa
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "./lib/supabase.js";
 import { initAnalytics, identifyUser, resetUser, track } from "./lib/analytics.js";
+import { applySEO } from "./lib/seo.js";
 import {
   fetchCreations,
   fetchCreationsByUser,
@@ -2778,6 +2779,8 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
   async function handleSignOut() { await supabase.auth.signOut(); notify("Signed out of RevaultAI."); }
   
   useEffect(() => { window.scrollTo(0, 0); }, [page]);
+
+  useEffect(() => { applySEO({ page, detailId, creatorUser, creations }); }, [page, detailId, creatorUser, creations]);
 
   function renderPage() {
     switch (page) {
