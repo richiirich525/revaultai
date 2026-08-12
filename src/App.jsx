@@ -1545,7 +1545,7 @@ function ProfilePage({ username, creations: allCreations, setPage, setDetailId, 
   );
 }
 
-function DetailPage({ id, creations, setCreations, user, profile, setProfile, purchasedIds, purchasesLoaded, setPage, setCreatorUser, notify }) {
+function DetailPage({ id, creations, setCreations, user, profile, setProfile, purchasedIds, purchasesLoaded, setPage, setCreatorUser, dbLoaded, notify }) {
   const creation = creations.find((c) => c.id === id); const [checkingOut, setCheckingOut] = useState(false);
   const [toolMap, setToolMap] = useState({});
   const [deleting, setDeleting] = useState(false);
@@ -1591,7 +1591,7 @@ function DetailPage({ id, creations, setCreations, user, profile, setProfile, pu
     })();
     return () => { cancelled = true; };
   }, [creation?.user_id]);
-  if (!creation) return <div className="page"><div className="empty-state"><div className="empty-text">Creation not found.</div></div></div>;
+  if (!creation) return <div className="page"><div className="empty-state"><div className="empty-text">{dbLoaded ? "Creation not found." : "Loading film..."}</div></div></div>;
   const licenseCheck = creation.license_url ? normalizeContactUrl(creation.license_url) : null;
   const licenseUrl = licenseCheck && licenseCheck.ok ? licenseCheck.url : "";
   const isPending = creation.premium_status === "Pending"; const hasVideo = !!creation.video_url; const posterImg = creation.thumbnail_image || creation.hero_image; const purchased = purchasedIds.has(creation.id); const unlocked = !creation.is_premium || purchased;
@@ -2647,8 +2647,8 @@ export default function App() {
   useEffect(() => { initAnalytics(); }, []);
   const [creations, setCreations]   = useState([]);
 const [dbLoaded, setDbLoaded]     = useState(false);
-const [page, setPage]             = useState("home");
-  const [detailId, setDetailId]     = useState(null);
+const [page, setPageState]        = useState("home");
+  const [detailId, setDetailIdState] = useState(null);
   const [genSubmission, setGenSubmission] = useState(null);
 
   // A generation prefill is single-use: once the user leaves the Submit page,
@@ -2656,7 +2656,28 @@ const [page, setPage]             = useState("home");
   useEffect(() => {
     if (page !== "submit" && genSubmission) setGenSubmission(null);
   }, [page]);
-  const [creatorUser, setCreatorUser] = useState(null);
+  const [creatorUser, setCreatorUserState] = useState(null);
+
+  // ---- URL routing ----
+  const detailIdRef = useRef(null);
+  const creatorUserRef = useRef(null);
+  const KNOWN_PAGES = ["home","explore","creators","feed","generate","settings","admin","submit","set-password","email-confirmed","terms","faq","contact","guidelines","premium-prompts","about","become-creator","privacy","refunds","dmca","ai-disclaimer","purchase-success","founding-creators"];
+
+  function setDetailId(id) { detailIdRef.current = id; setDetailIdState(id); }
+  function setCreatorUser(u) { creatorUserRef.current = u; setCreatorUserState(u); }
+
+  function pathForPage(p) {
+    if (p === "home") return "/";
+    if (p === "detail") return detailIdRef.current ? "/film/" + detailIdRef.current : "/explore";
+    if (p === "profile") return creatorUserRef.current ? "/creator/" + creatorUserRef.current : "/creators";
+    return "/" + p;
+  }
+
+  function setPage(p) {
+    setPageState(p);
+    const path = pathForPage(p);
+    if (window.location.pathname !== path) window.history.pushState({ page: p }, "", path);
+  }
   const [notifMsg, setNotifMsg]     = useState(null);
   const [user, setUser]             = useState(null);
   const [profile, setProfile]       = useState(null);
@@ -2676,7 +2697,19 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
   }, []);
 
   useEffect(() => { const hash = window.location.hash; if (hash && hash.includes("type=signup")) { setPage("email-confirmed"); window.history.replaceState({}, "", window.location.pathname); } }, []);
-  useEffect(() => { if (window.location.pathname === "/founding-creators") setPage("founding-creators"); }, []);
+  useEffect(() => {
+    function applyPath() {
+      const path = window.location.pathname;
+      if (path === "/") { setPageState("home"); return; }
+      if (path.startsWith("/film/")) { const id = decodeURIComponent(path.slice(6)); detailIdRef.current = id; setDetailIdState(id); setPageState("detail"); return; }
+      if (path.startsWith("/creator/")) { const u = decodeURIComponent(path.slice(9)); creatorUserRef.current = u; setCreatorUserState(u); setPageState("profile"); return; }
+      const slug = path.slice(1).replace(/\/$/, "");
+      if (KNOWN_PAGES.includes(slug)) setPageState(slug);
+    }
+    applyPath();
+    window.addEventListener("popstate", applyPath);
+    return () => window.removeEventListener("popstate", applyPath);
+  }, []);
 
   async function loadOrCreateProfile(u) {
     const { data, error } = await fetchProfile(u.id);
@@ -2754,7 +2787,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       case "feed":    return <FollowFeedPage user={user} setPage={setPage} setDetailId={setDetailId} setCreatorUser={setCreatorUser} />;
       case "generate": return <GeneratePage user={user} profile={profile} notify={notify} setPage={setPage} setGenSubmission={setGenSubmission} />;
       case "profile": return <ProfilePage username={creatorUser} creations={creations} setPage={setPage} setDetailId={setDetailId} user={user} />;
-      case "detail":  return <DetailPage id={detailId} creations={creations} setCreations={setCreations} user={user} profile={profile} setProfile={setProfile} purchasedIds={purchasedIds} purchasesLoaded={purchasesLoaded} setPage={setPage} setCreatorUser={setCreatorUser} notify={notify} />;
+      case "detail":  return <DetailPage id={detailId} dbLoaded={dbLoaded} creations={creations} setCreations={setCreations} user={user} profile={profile} setProfile={setProfile} purchasedIds={purchasedIds} purchasesLoaded={purchasesLoaded} setPage={setPage} setCreatorUser={setCreatorUser} notify={notify} />;
       case "settings": if (!user) return <div className="page"><div className="empty-state"><div className="empty-text">Sign in to access profile settings.</div></div></div>; return <SettingsPage user={user} profile={profile} setProfile={setProfile} notify={notify} />;
       case "admin": if (!isAdmin(user)) return <div className="page"><div className="empty-state"><div className="empty-text">Not authorized.</div></div></div>; return <AdminPage creations={creations} setCreations={setCreations} notify={notify} />;
       case "submit":  return <SubmitPage setCreations={setCreations} notify={notify} setPage={setPage} user={user} profile={profile} prefill={genSubmission} />;
