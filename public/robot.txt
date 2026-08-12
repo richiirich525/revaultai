@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+Disallow: /settings
+Disallow: /admin
+Disallow: /set-password
+Disallow: /email-confirmed
+Disallow: /purchase-success
+Disallow: /api/
+
+Sitemap: https://www.revaultai.com/sitemap.xml
