@@ -2663,7 +2663,7 @@ const [page, setPageState]        = useState("home");
   // ---- URL routing ----
   const detailIdRef = useRef(null);
   const creatorUserRef = useRef(null);
-  const KNOWN_PAGES = ["home","explore","creators","feed","generate","settings","admin","submit","set-password","email-confirmed","terms","faq","contact","guidelines","premium-prompts","about","become-creator","privacy","refunds","dmca","ai-disclaimer","purchase-success","founding-creators"];
+  const KNOWN_PAGES = ["home","explore","creators","feed","generate","settings","admin","submit","set-password","email-confirmed","terms","faq","contact","guidelines","premium-prompts","about","become-creator","privacy","refunds","dmca","ai-disclaimer","purchase-success","founding-creators"]; "purchase-success","founding-creators","blog";
 
   function setDetailId(id) { detailIdRef.current = id; setDetailIdState(id); }
   const blogSlugRef = useRef(null);
@@ -2711,7 +2711,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       if (path.startsWith("/creator/")) { const u = decodeURIComponent(path.slice(9)); creatorUserRef.current = u; setCreatorUserState(u); setPageState("profile"); return; }
       if (path.startsWith("/blog/")) { const s = decodeURIComponent(path.slice(6)); blogSlugRef.current = s; setBlogSlugState(s); setPageState("blog-post"); return; }
       const slug = path.slice(1).replace(/\/$/, "");
-      if (KNOWN_PAGES.includes(slug)) setPageState(slug);
+      if (KNOWN_PAGES.includes(slug)) setPageState(slug); 
     }
     applyPath();
     window.addEventListener("popstate", applyPath);
