@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from "./lib/supabase.js";
 import { initAnalytics, identifyUser, resetUser, track } from "./lib/analytics.js";
 import { applySEO } from "./lib/seo.js";
+import { BlogPage, BlogPostPage } from "./BlogPage.jsx";
 import {
   fetchCreations,
   fetchCreationsByUser,
@@ -958,7 +959,7 @@ function HomePage({ creations, setPage, setDetailId }) {
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("contact")}>Contact</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("guidelines")}>Guidelines</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("premium-prompts")}>Premium Films</span>
-    <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("about")}>About</span>
+    <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("about")}>About</span><span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("blog")}>Journal</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("become-creator")}>Become a Creator</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("terms")}>Terms</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("privacy")}>Privacy</span>
@@ -2665,12 +2666,16 @@ const [page, setPageState]        = useState("home");
   const KNOWN_PAGES = ["home","explore","creators","feed","generate","settings","admin","submit","set-password","email-confirmed","terms","faq","contact","guidelines","premium-prompts","about","become-creator","privacy","refunds","dmca","ai-disclaimer","purchase-success","founding-creators"];
 
   function setDetailId(id) { detailIdRef.current = id; setDetailIdState(id); }
+  const blogSlugRef = useRef(null);
+  const [blogSlug, setBlogSlugState] = useState(null);
+  function openPost(slug) { blogSlugRef.current = slug; setBlogSlugState(slug); setPage("blog-post"); }
   function setCreatorUser(u) { creatorUserRef.current = u; setCreatorUserState(u); }
 
   function pathForPage(p) {
     if (p === "home") return "/";
     if (p === "detail") return detailIdRef.current ? "/film/" + detailIdRef.current : "/explore";
     if (p === "profile") return creatorUserRef.current ? "/creator/" + creatorUserRef.current : "/creators";
+    if (p === "blog-post") return blogSlugRef.current ? "/blog/" + blogSlugRef.current : "/blog";
     return "/" + p;
   }
 
@@ -2704,6 +2709,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       if (path === "/") { setPageState("home"); return; }
       if (path.startsWith("/film/")) { const id = decodeURIComponent(path.slice(6)); detailIdRef.current = id; setDetailIdState(id); setPageState("detail"); return; }
       if (path.startsWith("/creator/")) { const u = decodeURIComponent(path.slice(9)); creatorUserRef.current = u; setCreatorUserState(u); setPageState("profile"); return; }
+      if (path.startsWith("/blog/")) { const s = decodeURIComponent(path.slice(6)); blogSlugRef.current = s; setBlogSlugState(s); setPageState("blog-post"); return; }
       const slug = path.slice(1).replace(/\/$/, "");
       if (KNOWN_PAGES.includes(slug)) setPageState(slug);
     }
@@ -2809,6 +2815,8 @@ case "dmca":      return <LegalPage setPage={setPage} page="dmca" />;
 case "ai-disclaimer": return <LegalPage setPage={setPage} page="ai-disclaimer" />;
       case "purchase-success": return <PurchaseSuccessPage setPage={setPage} setDetailId={setDetailId} creations={creations} />;
       case "founding-creators": return <FoundingCreatorsPage />;
+      case "blog": return <BlogPage setPage={setPage} openPost={openPost} />;
+      case "blog-post": return <BlogPostPage slug={blogSlug} setPage={setPage} />;
       default: return null;
     }
   }

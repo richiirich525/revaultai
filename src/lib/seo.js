@@ -83,6 +83,8 @@ const PAGES = {
 // Pages that should never appear in search results.
 const NOINDEX = new Set(["settings", "admin", "set-password", "email-confirmed", "purchase-success", "feed", "generate"]);
 
+import { POSTS } from "../blog/posts.js";
+
 function clip(text, max) {
   const s = String(text ?? "").replace(/\s+/g, " ").trim();
   if (s.length <= max) return s;
@@ -159,6 +161,14 @@ export function applySEO({ page, detailId, creatorUser, creations }) {
     } else {
       meta = { title: "Film — RevaultAI", description: DEFAULT.description };
     }
+  }
+
+if (page === "blog") {
+    meta = { title: "The Vault Journal — AI Filmmaking Craft & Tools | RevaultAI", description: "Essays and comparisons on AI filmmaking: models, prompts, workflows, and the craft of AI-native film. From the RevaultAI founder's desk." };
+  }
+  if (page === "blog-post") {
+    const post = POSTS.find((p) => "/blog/" + p.slug === path);
+    if (post) meta = { title: clip(post.title, 65), description: clip(post.description, 155) };
   }
 
   if (page === "profile" && creatorUser) {

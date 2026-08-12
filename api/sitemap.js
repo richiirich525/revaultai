@@ -1,6 +1,7 @@
 // /api/sitemap.js — generates sitemap.xml live from Supabase
 // Served at https://www.revaultai.com/sitemap.xml via the vercel.json rewrite.
 
+import { POSTS } from "../src/blog/posts.js";
 import { createClient } from "@supabase/supabase-js";
 
 const SITE = "https://www.revaultai.com";
@@ -14,6 +15,7 @@ const STATIC_PAGES = [
   ["/premium-prompts", "0.7", "monthly"],
   ["/become-creator", "0.7", "monthly"],
   ["/founding-creators", "0.7", "monthly"],
+  ["/blog", "0.8", "weekly"],
   ["/faq", "0.6", "monthly"],
   ["/guidelines", "0.6", "monthly"],
   ["/contact", "0.5", "yearly"],
@@ -45,9 +47,13 @@ export default async function handler(req, res) {
   const url = process.env.VITE_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  const entries = STATIC_PAGES.map(([path, priority, changefreq]) =>
+  const entries = STATIC_PAGES.map(([path, priority, changefreq])  => 
     urlEntry({ loc: SITE + path, priority, changefreq })
   );
+
+  for (const p of POSTS) {
+    entries.push(urlEntry({ loc: SITE + "/blog/" + p.slug, lastmod: p.date, changefreq: "monthly", priority: "0.7" }));
+  }
 
   try {
     if (url && key) {
