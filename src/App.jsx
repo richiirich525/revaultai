@@ -1156,19 +1156,53 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission }) {
     "upscale-4k": { label: "Upscale to 4K", perSec: 6, adds: 0 },
     "extend-5": { label: "Extend by 5s", perSec: 3, adds: 5 },
     "extend-10": { label: "Extend by 10s", perSec: 3, adds: 10 },
+    "lipsync": { label: "Lip Sync", perSec: 2, adds: 0, skipConfirm: true },
   };
-  async function handleEdit(gen, action) {
+  const [lipsyncFor, setLipsyncFor] = useState(null);
+  const [audioBusy, setAudioBusy] = useState(false);
+  async function handleAudioPick(gen, file) {
+    if (!file) return;
+    if (!/^audio\//.test(file.type)) { notify("Please choose an audio file (MP3, WAV, M4A, AAC, OGG)."); return; }
+    if (file.size > 20 * 1024 * 1024) { notify("Audio must be under 20 MB."); return; }
+    const secs = gen.duration_seconds || 5;
+    if (!window.confirm(`Lip Sync — ${2 * secs} credits. Continue?`)) return;
+    setAudioBusy(true);
+    try {
+      const token = await getSessionToken();
+      const r = await fetch("/api/get-upload-url", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
+        body: JSON.stringify({ fileType: file.type }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.uploadUrl) { notify(j.error || "Could not prepare the audio upload."); setAudioBusy(false); return; }
+      await new Promise((resolve, reject) => {
+        const x = new XMLHttpRequest();
+        x.open("PUT", j.uploadUrl);
+        x.setRequestHeader("Content-Type", file.type);
+        x.addEventListener("load", () => (x.status >= 200 && x.status < 300) ? resolve() : reject(new Error("Upload failed (" + x.status + ")")));
+        x.addEventListener("error", () => reject(new Error("Network error during upload")));
+        x.send(file);
+      });
+      await handleEdit(gen, "lipsync", { audioUrl: j.videoPublicUrl });
+      setLipsyncFor(null);
+    } catch (err) {
+      notify("Audio upload failed: " + err.message);
+    }
+    setAudioBusy(false);
+  }
+  async function handleEdit(gen, action, extra = {}) {
     const a = EDIT_ACTIONS[action];
     const secs = gen.duration_seconds || 5;
     const cost = a.perSec * (secs + a.adds);
-    if (!window.confirm(`${a.label} — ${cost} credits. Continue?`)) return;
+    if (!a.skipConfirm && !window.confirm(`${a.label} — ${cost} credits. Continue?`)) return;
     setEditing(gen.id);
     try {
       const token = await getSessionToken();
       const res = await fetch("/api/edit-video", {
         method: "POST",
         headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
-        body: JSON.stringify({ action, generationId: gen.id }),
+        body: JSON.stringify({ action, generationId: gen.id, ...extra }),
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) { notify(j.error || "Could not start edit."); setEditing(null); return; }
@@ -1273,9 +1307,20 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission }) {
                           <button className="gen-button" onClick={() => handleEdit(g, "extend-10")} disabled={editing === g.id}>
                             Extend +10s
                           </button>
+                          <button className="gen-button" onClick={() => setLipsyncFor(lipsyncFor === g.id ? null : g.id)} disabled={editing === g.id}>
+                            Lip Sync
+                          </button>
                         </>
                       )}
                     </div>
+                    {lipsyncFor === g.id && (
+                      <div style={{ marginTop: 12, padding: 14, background: "var(--bg3)", border: "1px solid var(--border)", borderRadius: 4 }}>
+                        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.1em", color: "var(--muted)", marginBottom: 10 }}>
+                          {audioBusy ? "UPLOADING AUDIO..." : "CHOOSE AN AUDIO FILE — THE MOUTH WILL BE RE-SYNCED TO IT"}
+                        </div>
+                        <input type="file" accept="audio/*" disabled={audioBusy} onChange={(e) => handleAudioPick(g, e.target.files[0])} style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text)" }} />
+                      </div>
+                    )}
                   </>
                 ) : g.status === "failed" ? (
                   <div className="gen-item-status gen-failed">Failed — credits refunded{g.error_message ? ": " + g.error_message : ""}</div>

@@ -32,6 +32,12 @@ const EDITS = {
     extraInput: { mode: 'end' },
     label: 'Extend by 10s',
   },
+  'lipsync': {
+    falId: 'veed/lipsync/v2',
+    kind: 'lipsync',
+    creditsPerSecond: 2,   // $0.07/s cost
+    label: 'Lip Sync',
+  },
 };
 
 // SeedVR2 bills $0.001 per megapixel of OUTPUT (width x height x frames).
@@ -60,10 +66,13 @@ export default async function handler(req, res) {
     }
 
     // 2. Validate input
-    const { action, generationId } = req.body;
+    const { action, generationId, audioUrl } = req.body;
     const edit = EDITS[action];
     if (!edit) return res.status(400).json({ error: 'Unknown action' });
     if (!generationId) return res.status(400).json({ error: 'Missing generation' });
+    if (edit.kind === 'lipsync' && !audioUrl) {
+      return res.status(400).json({ error: 'An audio file is required for lip sync' });
+    }
 
     // 3. Load the source clip and confirm ownership
     const { data: source, error: srcError } = await supabase
@@ -110,7 +119,9 @@ export default async function handler(req, res) {
     // 6. Submit to fal
     try {
       const { request_id } = await fal.queue.submit(edit.falId, {
-        input: edit.kind === 'extend'
+        input: edit.kind === 'lipsync'
+          ? { video_url: source.video_url, audio_url: audioUrl }
+          : edit.kind === 'extend'
           ? {
               video_url: source.video_url,
               duration: String(edit.extendSeconds),
