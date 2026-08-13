@@ -1246,7 +1246,21 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission }) {
       setEditing(null);
     }
   }
-  
+  async function handleDownload(gen) {
+    try {
+      const token = await getSessionToken();
+      const r = await fetch("/api/get-video-url", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "generation", id: gen.id }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.url) { notify(j.error || "Could not prepare the download."); return; }
+      window.location.href = j.url;
+    } catch (err) {
+      notify("Could not prepare the download: " + err.message);
+    }
+  }
   async function handleGenerate() {
     if (!user) { notify("Sign in to generate."); return; }
     if (!prompt.trim()) { notify("Write a prompt first."); return; }
@@ -1334,6 +1348,9 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission }) {
                   <>
                     {videoUrls[g.id] ? <video className="gen-item-video" src={videoUrls[g.id]} controls playsInline /> : <div className="gen-item-status">Preparing playback...</div>}
                     <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
+                      <button className="gen-button" onClick={() => handleDownload(g)}>
+                        ⬇ Download
+                      </button>
                       <button className="gen-button" onClick={() => { setGenSubmission({ videoUrl: g.video_url, prompt: g.prompt, model: g.model }); setPage("submit"); }}>
                         Submit to Gallery
                       </button>
