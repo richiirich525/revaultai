@@ -64,6 +64,11 @@ const PAGES = {
     description:
       "Showcase your AI films, build a creator profile, sell premium work, and keep 80% of net revenue. Join the RevaultAI creator community.",
   },
+  "ai-video-generator": {
+    title: "AI Video Generator — Seedance, Veo, Kling & Wan | RevaultAI",
+    description:
+      "Generate AI video with Seedance 2.0, Veo 3.1, Kling 3.0, and Wan 2.6, then upscale to 4K, extend, and lip-sync — one credit balance, no subscription.",
+  },
   "founding-creators": {
     title: "Founding Creators Wanted — RevaultAI",
     description:

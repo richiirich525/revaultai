@@ -6,6 +6,7 @@ import { initAnalytics, identifyUser, resetUser, track } from "./lib/analytics.j
 import { applySEO } from "./lib/seo.js";
 import { BlogPage, BlogPostPage } from "./BlogPage.jsx";
 import Comments from "./Comments.jsx";
+import AiVideoGeneratorPage from "./AiVideoGeneratorPage.jsx";
 import { updateCommentsEnabled } from "./lib/comments.js";
 import {
   fetchCreations,
@@ -962,6 +963,7 @@ function HomePage({ creations, setPage, setDetailId }) {
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("guidelines")}>Guidelines</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("premium-prompts")}>Premium Films</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("about")}>About</span><span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("blog")}>Journal</span>
+    <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("ai-video-generator")}>AI Video Generator</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("become-creator")}>Become a Creator</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("terms")}>Terms</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("privacy")}>Privacy</span>
@@ -2835,7 +2837,7 @@ const [page, setPageState]        = useState("home");
   // ---- URL routing ----
   const detailIdRef = useRef(null);
   const creatorUserRef = useRef(null);
-  const KNOWN_PAGES = ["home","explore","creators","feed","generate","settings","admin","submit","set-password","email-confirmed","terms","faq","contact","guidelines","premium-prompts","about","become-creator","privacy","refunds","dmca","ai-disclaimer","purchase-success","founding-creators"]; "purchase-success","founding-creators","blog";
+  const KNOWN_PAGES = ["home","explore","creators","feed","generate","settings","admin","submit","set-password","email-confirmed","terms","faq","contact","guidelines","premium-prompts","about","become-creator","privacy","refunds","dmca","ai-disclaimer","purchase-success","founding-creators"]; "purchase-success","founding-creators","blog","ai-video-generator";
 
   function setDetailId(id) { detailIdRef.current = id; setDetailIdState(id); }
   const blogSlugRef = useRef(null);
@@ -2988,6 +2990,7 @@ case "dmca":      return <LegalPage setPage={setPage} page="dmca" />;
 case "ai-disclaimer": return <LegalPage setPage={setPage} page="ai-disclaimer" />;
       case "purchase-success": return <PurchaseSuccessPage setPage={setPage} setDetailId={setDetailId} creations={creations} />;
       case "founding-creators": return <FoundingCreatorsPage />;
+      case "ai-video-generator": return <AiVideoGeneratorPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} />;
       case "blog": return <BlogPage setPage={setPage} openPost={openPost} />;
       case "blog-post": return <BlogPostPage slug={blogSlug} setPage={setPage} />;
       default: return null;

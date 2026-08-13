@@ -16,6 +16,7 @@ const STATIC_PAGES = [
   ["/become-creator", "0.7", "monthly"],
   ["/founding-creators", "0.7", "monthly"],
   ["/blog", "0.8", "weekly"],
+  ["/ai-video-generator", "0.9", "monthly"],
   ["/faq", "0.6", "monthly"],
   ["/guidelines", "0.6", "monthly"],
   ["/contact", "0.5", "yearly"],
