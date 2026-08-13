@@ -1151,10 +1151,17 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission }) {
   }, [user?.id]);
 
   const [editing, setEditing] = useState(null);
+  const EDIT_ACTIONS = {
+    "upscale-1080p": { label: "Upscale to 1080p", perSec: 2, adds: 0 },
+    "upscale-4k": { label: "Upscale to 4K", perSec: 6, adds: 0 },
+    "extend-5": { label: "Extend by 5s", perSec: 3, adds: 5 },
+    "extend-10": { label: "Extend by 10s", perSec: 3, adds: 10 },
+  };
   async function handleEdit(gen, action) {
-    const perSec = action === "upscale-4k" ? 6 : 2;
+    const a = EDIT_ACTIONS[action];
     const secs = gen.duration_seconds || 5;
-    if (!window.confirm(`${action === "upscale-4k" ? "Upscale to 4K" : "Upscale to 1080p"} — ${perSec * secs} credits. Continue?`)) return;
+    const cost = a.perSec * (secs + a.adds);
+    if (!window.confirm(`${a.label} — ${cost} credits. Continue?`)) return;
     setEditing(gen.id);
     try {
       const token = await getSessionToken();
@@ -1164,12 +1171,12 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission }) {
         body: JSON.stringify({ action, generationId: gen.id }),
       });
       const j = await res.json().catch(() => ({}));
-      if (!res.ok) { notify(j.error || "Could not start upscale."); setEditing(null); return; }
-      notify("Upscale started — it usually takes a few minutes.");
+      if (!res.ok) { notify(j.error || "Could not start edit."); setEditing(null); return; }
+      notify(a.label + " started — it usually takes a few minutes.");
       setEditing(null);
       loadGens();
     } catch (err) {
-      notify("Could not start upscale: " + err.message);
+      notify("Could not start edit: " + err.message);
       setEditing(null);
     }
   }
@@ -1259,6 +1266,12 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission }) {
                           </button>
                           <button className="gen-button" onClick={() => handleEdit(g, "upscale-4k")} disabled={editing === g.id}>
                             Upscale 4K
+                          </button>
+                          <button className="gen-button" onClick={() => handleEdit(g, "extend-5")} disabled={editing === g.id}>
+                            Extend +5s
+                          </button>
+                          <button className="gen-button" onClick={() => handleEdit(g, "extend-10")} disabled={editing === g.id}>
+                            Extend +10s
                           </button>
                         </>
                       )}

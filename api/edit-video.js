@@ -16,6 +16,22 @@ const EDITS = {
     extraInput: { upscale_mode: 'target', target_resolution: '2160p' },
     label: 'Upscale to 4K',
   },
+  'extend-5': {
+    falId: 'fal-ai/ltx-2.3/extend-video',
+    kind: 'extend',
+    extendSeconds: 5,
+    creditsPerSecond: 3,   // $0.10/s cost — priced on total output length
+    extraInput: { mode: 'end' },
+    label: 'Extend by 5s',
+  },
+  'extend-10': {
+    falId: 'fal-ai/ltx-2.3/extend-video',
+    kind: 'extend',
+    extendSeconds: 10,
+    creditsPerSecond: 3,
+    extraInput: { mode: 'end' },
+    label: 'Extend by 10s',
+  },
 };
 
 // SeedVR2 bills $0.001 per megapixel of OUTPUT (width x height x frames).
@@ -62,7 +78,8 @@ export default async function handler(req, res) {
     }
 
     const seconds = Number(source.duration_seconds) || DEFAULT_DURATION;
-    const cost = edit.creditsPerSecond * seconds;
+    const outputSeconds = edit.kind === 'extend' ? seconds + edit.extendSeconds : seconds;
+    const cost = edit.creditsPerSecond * outputSeconds;
 
     // 4. Deduct credits atomically
     const { data: paid, error: spendError } = await supabase.rpc('spend_credits', {
@@ -83,7 +100,7 @@ export default async function handler(req, res) {
         model: action,
         status: 'queued',
         credits_spent: cost,
-        duration_seconds: seconds,
+        duration_seconds: outputSeconds,
         source_generation_id: source.id,
       })
       .select()
@@ -93,10 +110,17 @@ export default async function handler(req, res) {
     // 6. Submit to fal
     try {
       const { request_id } = await fal.queue.submit(edit.falId, {
-        input: {
-          video_url: source.video_url,
-          ...(edit.extraInput || {}),
-        },
+        input: edit.kind === 'extend'
+          ? {
+              video_url: source.video_url,
+              duration: String(edit.extendSeconds),
+              prompt: String(source.prompt || '').slice(0, 2000),
+              ...(edit.extraInput || {}),
+            }
+          : {
+              video_url: source.video_url,
+              ...(edit.extraInput || {}),
+            },
         webhookUrl: 'https://www.revaultai.com/api/generation-webhook',
       });
 
