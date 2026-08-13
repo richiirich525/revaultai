@@ -5,28 +5,33 @@ import { createClient } from '@supabase/supabase-js';
 const MODELS = {
   'wan-2.6': {
     falId: 'wan/v2.6/text-to-video',
+    imageFalId: 'wan/v2.6/image-to-video',   // VERIFY on fal
     creditsPerSecond: 1,
     durationParam: { 5: '5', 10: '10', 15: '15' },
   },
   'kling-3.0': {
     falId: 'fal-ai/kling-video/v3/standard/text-to-video',
-    creditsPerSecond: 2, // bump to 3 if the live price reads $0.168/s
+    imageFalId: 'fal-ai/kling-video/v3/standard/image-to-video',   // VERIFY on fal
+    creditsPerSecond: 2,
     durationParam: { 5: '5', 10: '10' },
   },
   'seedance-2.0': {
     falId: 'bytedance/seedance-2.0/fast/text-to-video',
+    imageFalId: 'bytedance/seedance-2.0/fast/image-to-video',
     creditsPerSecond: 6,
     durationParam: { 5: '5', 10: '10', 15: '15' },
     extraInput: { resolution: '720p' },
   },
   'seedance-2.0-480': {
     falId: 'bytedance/seedance-2.0/fast/text-to-video',
+    imageFalId: 'bytedance/seedance-2.0/fast/image-to-video',
     creditsPerSecond: 3,
     durationParam: { 5: '5', 10: '10', 15: '15' },
     extraInput: { resolution: '480p' },
   },
   'veo-3.1': {
-    falId: 'fal-ai/veo3.1/fast',
+    falId: 'fal-ai/veo3.1/fast/text-to-video',
+    imageFalId: 'fal-ai/veo3.1/fast/image-to-video',   // VERIFY on fal
     creditsPerSecond: 4,
     durationParam: { 4: '4s', 6: '6s', 8: '8s' },
   },
@@ -51,9 +56,12 @@ export default async function handler(req, res) {
     }
 
     // 2. Validate input
-    const { prompt, model, duration } = req.body;
+    const { prompt, model, duration, imageUrl } = req.body;
     const selected = MODELS[model];
     if (!selected) return res.status(400).json({ error: 'Unknown model' });
+    if (imageUrl && !selected.imageFalId) {
+      return res.status(400).json({ error: 'That model does not support image input' });
+    }
     const seconds = Number(duration) || 5;
     if (!selected.durationParam[seconds]) {
       return res.status(400).json({ error: 'Invalid duration' });
@@ -91,10 +99,13 @@ export default async function handler(req, res) {
 
     // 5. Submit the job to fal, with our webhook for completion
     try {
-      const { request_id } = await fal.queue.submit(selected.falId, {
+      const { request_id } = await fal.queue.submit(
+        imageUrl ? selected.imageFalId : selected.falId,
+        {
         input: {
           prompt: prompt.trim(),
           duration: selected.durationParam[seconds],
+          ...(imageUrl ? { image_url: imageUrl } : {}),
           ...(selected.extraInput || {}),
         },
         webhookUrl: 'https://www.revaultai.com/api/generation-webhook',

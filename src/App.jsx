@@ -1110,6 +1110,38 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission }) {
     if (m && !m.durations.includes(duration)) setDuration(m.durations[0]);
   }, [model]);
   const [submitting, setSubmitting] = useState(false);
+  const [imageUrl, setImageUrl] = useState(null);
+  const [imageName, setImageName] = useState("");
+  const [imageBusy, setImageBusy] = useState(false);
+  async function handleImagePick(file) {
+    if (!file) return;
+    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) { notify("Image must be JPG, PNG, or WebP."); return; }
+    if (file.size > 10 * 1024 * 1024) { notify("Image must be under 10 MB."); return; }
+    setImageBusy(true);
+    try {
+      const token = await getSessionToken();
+      const r = await fetch("/api/get-upload-url", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
+        body: JSON.stringify({ fileType: file.type }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.uploadUrl) { notify(j.error || "Could not prepare the image upload."); setImageBusy(false); return; }
+      await new Promise((resolve, reject) => {
+        const x = new XMLHttpRequest();
+        x.open("PUT", j.uploadUrl);
+        x.setRequestHeader("Content-Type", file.type);
+        x.addEventListener("load", () => (x.status >= 200 && x.status < 300) ? resolve() : reject(new Error("Upload failed (" + x.status + ")")));
+        x.addEventListener("error", () => reject(new Error("Network error during upload")));
+        x.send(file);
+      });
+      setImageUrl(j.videoPublicUrl);
+      setImageName(file.name);
+    } catch (err) {
+      notify("Image upload failed: " + err.message);
+    }
+    setImageBusy(false);
+  }
   const [gens, setGens] = useState([]);
   const [videoUrls, setVideoUrls] = useState({});
   const videoUrlsRef = useRef({});
@@ -1225,7 +1257,7 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission }) {
       const res = await fetch("/api/generate-video", {
         method: "POST",
         headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: prompt.trim(), model, duration }),
+        body: JSON.stringify({ prompt: prompt.trim(), model, duration, imageUrl: imageUrl || undefined }),
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -1235,6 +1267,8 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission }) {
       }
       notify("Generation started — it usually takes a few minutes.");
       setPrompt("");
+      setImageUrl(null);
+      setImageName("");
       setSubmitting(false);
       loadGens();
     } catch (err) {
@@ -1263,6 +1297,16 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission }) {
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
             />
+            <div style={{ marginTop: 10, padding: 12, background: "var(--bg3)", border: "1px solid var(--border)", borderRadius: 4, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.1em", color: "var(--muted)", textTransform: "uppercase" }}>
+                {imageBusy ? "Uploading image..." : imageUrl ? "Starting frame: " + imageName : "Starting frame (optional)"}
+              </span>
+              {imageUrl ? (
+                <button className="gen-button" style={{ padding: "6px 14px", fontSize: 10 }} onClick={() => { setImageUrl(null); setImageName(""); }}>Remove</button>
+              ) : (
+                <input type="file" accept="image/jpeg,image/png,image/webp" disabled={imageBusy} onChange={(e) => handleImagePick(e.target.files[0])} style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text)" }} />
+              )}
+            </div>
             <div className="gen-form-row">
               <div className="gen-cost">
                 <select className="gen-model-select" value={model} onChange={(e) => setModel(e.target.value)}>
