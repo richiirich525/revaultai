@@ -1098,8 +1098,9 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission }) {
   const GEN_MODELS = [
     { key: "wan-2.6", label: "Wan 2.6 — Fast", costPerSecond: 1, durations: [5, 10, 15] },
     { key: "kling-3.0", label: "Kling 3.0 — Cinematic", costPerSecond: 2, durations: [5, 10] },
-    { key: "seedance-2.0", label: "Seedance 2.0 — Flagship", costPerSecond: 2, durations: [5, 10] },
-    { key: "veo-3.1", label: "Veo 3.1 — Native Audio", costPerSecond: 3, durations: [4, 6, 8] },
+    { key: "seedance-2.0-480", label: "Seedance 2.0 — Draft (480p)", costPerSecond: 3, durations: [5, 10, 15] },
+    { key: "seedance-2.0", label: "Seedance 2.0 — Flagship (720p)", costPerSecond: 6, durations: [5, 10, 15] },
+    { key: "veo-3.1", label: "Veo 3.1 — Native Audio", costPerSecond: 4, durations: [4, 6, 8] },
   ];
   const [prompt, setPrompt] = useState("");
   const [model, setModel] = useState("wan-2.6");

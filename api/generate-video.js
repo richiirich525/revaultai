@@ -14,14 +14,21 @@ const MODELS = {
     durationParam: { 5: '5', 10: '10' },
   },
   'seedance-2.0': {
-    falId: 'bytedance/seedance-2.0/text-to-video',
-    creditsPerSecond: 2, // VERIFY live $/s on fal.ai/seedance-2.0 — set credits ≈ 2× cost in dollars ÷ 0.10
-    durationParam: { 5: '5', 10: '10' }, // VERIFY allowed durations in the API tab
+    falId: 'bytedance/seedance-2.0/fast/text-to-video',
+    creditsPerSecond: 6,
+    durationParam: { 5: '5', 10: '10', 15: '15' },
+    extraInput: { resolution: '720p' },
+  },
+  'seedance-2.0-480': {
+    falId: 'bytedance/seedance-2.0/fast/text-to-video',
+    creditsPerSecond: 3,
+    durationParam: { 5: '5', 10: '10', 15: '15' },
+    extraInput: { resolution: '480p' },
   },
   'veo-3.1': {
-    falId: 'fal-ai/veo3.1/text-to-video', // VERIFY exact ID on fal — search "veo 3.1" in their model gallery
-    creditsPerSecond: 3, // Veo runs ~$0.15/s fast tier — verify and adjust
-    durationParam: { 4: '4s', 6: '6s', 8: '8s' }, // VERIFY — Veo uses second-suffixed strings on some fal endpoints
+    falId: 'fal-ai/veo3.1/fast',
+    creditsPerSecond: 4,
+    durationParam: { 4: '4s', 6: '6s', 8: '8s' },
   },
 };
 
@@ -84,7 +91,11 @@ export default async function handler(req, res) {
     // 5. Submit the job to fal, with our webhook for completion
     try {
       const { request_id } = await fal.queue.submit(selected.falId, {
-        input: { prompt: prompt.trim(), duration: selected.durationParam[seconds] },
+        input: {
+          prompt: prompt.trim(),
+          duration: selected.durationParam[seconds],
+          ...(selected.extraInput || {}),
+        },
         webhookUrl: 'https://www.revaultai.com/api/generation-webhook',
       });
 
