@@ -83,6 +83,7 @@ export default async function handler(req, res) {
         model,
         status: 'queued',
         credits_spent: cost,
+        duration_seconds: seconds,
       })
       .select()
       .single();

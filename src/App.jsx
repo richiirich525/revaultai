@@ -1150,6 +1150,30 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission }) {
     return () => clearInterval(t);
   }, [user?.id]);
 
+  const [editing, setEditing] = useState(null);
+  async function handleEdit(gen, action) {
+    const perSec = action === "upscale-4k" ? 6 : 2;
+    const secs = gen.duration_seconds || 5;
+    if (!window.confirm(`${action === "upscale-4k" ? "Upscale to 4K" : "Upscale to 1080p"} — ${perSec * secs} credits. Continue?`)) return;
+    setEditing(gen.id);
+    try {
+      const token = await getSessionToken();
+      const res = await fetch("/api/edit-video", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
+        body: JSON.stringify({ action, generationId: gen.id }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) { notify(j.error || "Could not start upscale."); setEditing(null); return; }
+      notify("Upscale started — it usually takes a few minutes.");
+      setEditing(null);
+      loadGens();
+    } catch (err) {
+      notify("Could not start upscale: " + err.message);
+      setEditing(null);
+    }
+  }
+  
   async function handleGenerate() {
     if (!user) { notify("Sign in to generate."); return; }
     if (!prompt.trim()) { notify("Write a prompt first."); return; }
@@ -1224,9 +1248,21 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission }) {
                 {g.status === "complete" && g.video_url ? (
                   <>
                     {videoUrls[g.id] ? <video className="gen-item-video" src={videoUrls[g.id]} controls playsInline /> : <div className="gen-item-status">Preparing playback...</div>}
-                    <button className="gen-button" style={{ marginTop: 12 }} onClick={() => { setGenSubmission({ videoUrl: g.video_url, prompt: g.prompt, model: g.model }); setPage("submit"); }}>
-                      Submit to Gallery
-                    </button>
+                    <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
+                      <button className="gen-button" onClick={() => { setGenSubmission({ videoUrl: g.video_url, prompt: g.prompt, model: g.model }); setPage("submit"); }}>
+                        Submit to Gallery
+                      </button>
+                      {!String(g.model || "").startsWith("upscale-") && (
+                        <>
+                          <button className="gen-button" onClick={() => handleEdit(g, "upscale-1080p")} disabled={editing === g.id}>
+                            {editing === g.id ? "Starting..." : "Upscale 1080p"}
+                          </button>
+                          <button className="gen-button" onClick={() => handleEdit(g, "upscale-4k")} disabled={editing === g.id}>
+                            Upscale 4K
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </>
                 ) : g.status === "failed" ? (
                   <div className="gen-item-status gen-failed">Failed — credits refunded{g.error_message ? ": " + g.error_message : ""}</div>
