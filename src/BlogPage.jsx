@@ -62,6 +62,11 @@ export function BlogPage({ setPage, openPost }) {
           </article>
         ))}
         <div style={{ borderTop: "1px solid var(--border)" }} />
+        <div className="blog-cta" style={{ marginTop: 48 }}>
+          <div className="blog-cta-label">Write for the Journal</div>
+          <div className="blog-cta-title">Know something worth teaching?</div>
+          <div className="blog-cta-sub">We publish guest pieces from working AI filmmakers — workflow breakdowns, model comparisons, prompt craft, hard-won lessons. You get a byline, a link to your creator profile, and your work in front of people who care about the craft. Pitch us at rich@revaultai.com.</div>
+        </div>
       </div>
     </div>
   );
@@ -96,7 +101,12 @@ export function BlogPostPage({ slug, setPage }) {
         <span className="blog-back" onClick={() => setPage("blog")}>&larr; The Vault Journal</span>
         <div className="blog-post-meta">{post.category} &middot; {fmtDate(post.date)} &middot; {post.readingTime}</div>
         <h1 className="blog-post-title">{post.title}</h1>
-        <div className="blog-post-byline">By {post.author}</div>
+        <div className="blog-post-byline">
+          By {post.authorUrl
+            ? <a href={post.authorUrl} target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent)", textDecoration: "none" }}>{post.author}</a>
+            : post.author}
+          {post.authorNote ? <span style={{ color: "var(--muted)" }}> — {post.authorNote}</span> : null}
+        </div>
         <div className="blog-content" onClick={handleContentClick} dangerouslySetInnerHTML={{ __html: post.content }} />
         <div className="blog-cta">
           <div className="blog-cta-label">Founding Cohort</div>
