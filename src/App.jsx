@@ -1096,14 +1096,17 @@ function ExplorePage({ creations, setPage, setDetailId, dbLoaded }) {
 
 function GeneratePage({ user, profile, notify, setPage, setGenSubmission }) {
   const GEN_MODELS = [
-    { key: "wan-2.6", label: "Wan 2.6 — Fast", costPerSecond: 1 },
-    { key: "kling-3.0", label: "Kling 3.0 — Cinematic", costPerSecond: 2 },
+    { key: "wan-2.6", label: "Wan 2.6 — Fast", costPerSecond: 1, durations: [5, 10, 15] },
+    { key: "kling-3.0", label: "Kling 3.0 — Cinematic", costPerSecond: 2, durations: [5, 10] },
+    { key: "seedance-2.0", label: "Seedance 2.0 — Flagship", costPerSecond: 2, durations: [5, 10] },
+    { key: "veo-3.1", label: "Veo 3.1 — Native Audio", costPerSecond: 3, durations: [4, 6, 8] },
   ];
   const [prompt, setPrompt] = useState("");
   const [model, setModel] = useState("wan-2.6");
   const [duration, setDuration] = useState(5);
   useEffect(() => {
-    if (model !== "wan-2.6" && duration > 10) setDuration(10);
+    const m = GEN_MODELS.find((x) => x.key === model);
+    if (m && !m.durations.includes(duration)) setDuration(m.durations[0]);
   }, [model]);
   const [submitting, setSubmitting] = useState(false);
   const [gens, setGens] = useState([]);
@@ -1200,9 +1203,9 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission }) {
                   {GEN_MODELS.map((m) => <option key={m.key} value={m.key}>{m.label}</option>)}
                 </select>
                 <select className="gen-model-select" value={duration} onChange={(e) => setDuration(Number(e.target.value))}>
-                  <option value={5}>5 seconds</option>
-                  <option value={10}>10 seconds</option>
-                  {model === "wan-2.6" && <option value={15}>15 seconds</option>}
+                  {(GEN_MODELS.find((m) => m.key === model)?.durations ?? [5]).map((d) => (
+                    <option key={d} value={d}>{d} seconds</option>
+                  ))}
                 </select>
                 <span style={{ marginLeft: 12 }}>Cost: {COST} credits · Balance: {profile?.credits ?? 0}</span>
               </div>

@@ -13,6 +13,16 @@ const MODELS = {
     creditsPerSecond: 2, // bump to 3 if the live price reads $0.168/s
     durationParam: { 5: '5', 10: '10' },
   },
+  'seedance-2.0': {
+    falId: 'bytedance/seedance-2.0/text-to-video',
+    creditsPerSecond: 2, // VERIFY live $/s on fal.ai/seedance-2.0 — set credits ≈ 2× cost in dollars ÷ 0.10
+    durationParam: { 5: '5', 10: '10' }, // VERIFY allowed durations in the API tab
+  },
+  'veo-3.1': {
+    falId: 'fal-ai/veo3.1/text-to-video', // VERIFY exact ID on fal — search "veo 3.1" in their model gallery
+    creditsPerSecond: 3, // Veo runs ~$0.15/s fast tier — verify and adjust
+    durationParam: { 4: '4s', 6: '6s', 8: '8s' }, // VERIFY — Veo uses second-suffixed strings on some fal endpoints
+  },
 };
 
 export default async function handler(req, res) {
