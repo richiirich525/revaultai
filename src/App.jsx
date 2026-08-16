@@ -2653,6 +2653,197 @@ function AboutPage({ setPage }) {
     </div>
   );
 }
+function PromptBuilderPage({ setPage, user, onSignInClick }) {
+  const [idea, setIdea] = useState("");
+  const [model, setModel] = useState("veo");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [result, setResult] = useState(null);
+  const [copied, setCopied] = useState(false);
+
+  const models = [
+    ["veo", "Veo"],
+    ["sora", "Sora"],
+    ["kling", "Kling"],
+    ["runway", "Runway"],
+    ["wan", "Wan"],
+    ["hailuo", "Hailuo"],
+    ["seedance", "Seedance"],
+  ];
+
+  const fields = [
+    ["subject", "Subject"],
+    ["action", "Action"],
+    ["setting", "Setting"],
+    ["camera", "Camera"],
+    ["lighting", "Lighting"],
+    ["palette", "Palette"],
+    ["style", "Style"],
+    ["audio", "Audio"],
+    ["avoid", "Avoid"],
+  ];
+
+  async function handleBuild() {
+    if (idea.trim().length < 3) {
+      setError("Describe your idea in a few more words.");
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    setResult(null);
+    setCopied(false);
+    try {
+      const res = await fetch("/api/build-prompt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idea, model }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Something went wrong. Try again.");
+      } else {
+        setResult(data);
+      }
+    } catch (err) {
+      setError("Couldn't reach the prompt builder. Check your connection and try again.");
+    }
+    setLoading(false);
+  }
+
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(result.built.prompt);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      setError("Couldn't copy automatically — select the text and copy it manually.");
+    }
+  }
+
+  const labelStyle = { fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: "0.2em", color: "var(--accent)", textTransform: "uppercase", marginBottom: 8 };
+  const bodyStyle = { fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", lineHeight: 1.8 };
+
+  return (
+    <div className="page">
+
+      {/* HERO */}
+      <div style={{ maxWidth: 760, margin: "0 auto", padding: "100px 48px 48px", textAlign: "center" }}>
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.25em", color: "var(--accent)", textTransform: "uppercase", marginBottom: 24 }}>Free Tool</div>
+        <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 64, fontWeight: 300, color: "var(--text)", marginBottom: 16, lineHeight: 1.1 }}>Video Prompt Builder</h1>
+        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 24, fontWeight: 300, color: "var(--muted)", marginBottom: 24, fontStyle: "italic" }}>Turn a rough idea into a shot worth filming.</div>
+        <div style={{ ...bodyStyle, fontSize: 12, maxWidth: 540, margin: "0 auto" }}>Describe what you want to see. Get back a structured prompt written in real cinematography language — camera, lighting, palette, and style — ready for Veo, Sora, Kling, Runway, Wan, Hailuo, or Seedance. No account needed.</div>
+      </div>
+
+      {/* BUILDER */}
+      <div style={{ maxWidth: 760, margin: "0 auto", padding: "0 48px 64px" }}>
+        <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, padding: "32px" }}>
+
+          <div style={labelStyle}>Your idea</div>
+          <textarea
+            value={idea}
+            onChange={(e) => setIdea(e.target.value)}
+            maxLength={500}
+            rows={4}
+            placeholder="A lighthouse keeper walks out at dawn as the storm finally breaks"
+            style={{ width: "100%", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: 4, padding: "14px 16px", fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--text)", lineHeight: 1.7, resize: "vertical", boxSizing: "border-box", marginBottom: 6 }}
+          />
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: "var(--muted)", textAlign: "right", marginBottom: 24 }}>{idea.length} / 500</div>
+
+          <div style={labelStyle}>Target model</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 28 }}>
+            {models.map(([value, label]) => (
+              <button
+                key={value}
+                onClick={() => setModel(value)}
+                style={{
+                  border: model === value ? "1px solid var(--accent)" : "1px solid var(--border)",
+                  background: model === value ? "var(--bg)" : "transparent",
+                  color: model === value ? "var(--accent)" : "var(--muted)",
+                  borderRadius: 4,
+                  padding: "8px 16px",
+                  fontFamily: "'DM Mono', monospace",
+                  fontSize: 11,
+                  letterSpacing: "0.08em",
+                  cursor: "pointer",
+                }}
+              >{label}</button>
+            ))}
+          </div>
+
+          <button className="btn-primary" onClick={handleBuild} disabled={loading} style={{ width: "100%", opacity: loading ? 0.6 : 1 }}>
+            {loading ? "Building…" : "Build prompt"}
+          </button>
+
+          {error && (
+            <div style={{ marginTop: 20, border: "1px solid #F87171", borderRadius: 4, padding: "12px 16px", fontFamily: "'DM Mono', monospace", fontSize: 11, color: "#F87171", lineHeight: 1.7 }}>{error}</div>
+          )}
+        </div>
+      </div>
+
+      {/* RESULT */}
+      {result && (
+        <div style={{ maxWidth: 760, margin: "0 auto", padding: "0 48px 80px" }}>
+
+          <div style={{ textAlign: "center", marginBottom: 40 }}>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: "0.2em", color: "var(--muted)", textTransform: "uppercase", marginBottom: 12 }}>Built for {result.model}</div>
+            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 40, fontWeight: 300, color: "var(--text)", lineHeight: 1.2 }}>{result.built.title}</div>
+          </div>
+
+          {/* The prompt itself */}
+          <div style={{ border: "1px solid var(--accent)", borderRadius: 8, padding: "32px", background: "var(--surface)", marginBottom: 32 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 16 }}>
+              <div style={{ ...labelStyle, marginBottom: 0 }}>The prompt</div>
+              <button className="btn-ghost" onClick={handleCopy} style={{ padding: "6px 14px", fontSize: 10 }}>{copied ? "Copied" : "Copy"}</button>
+            </div>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--text)", lineHeight: 1.9 }}>{result.built.prompt}</div>
+          </div>
+
+          {/* The breakdown */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 20, marginBottom: 56 }}>
+            {fields.filter(([key]) => result.built[key]).map(([key, label]) => (
+              <div key={key} style={{ border: "1px solid var(--border)", borderRadius: 8, padding: "24px" }}>
+                <div style={labelStyle}>{label}</div>
+                <div style={bodyStyle}>{result.built[key]}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* CTA */}
+          <div style={{ textAlign: "center", borderTop: "1px solid var(--border)", paddingTop: 56 }}>
+            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 40, fontWeight: 300, color: "var(--text)", marginBottom: 16, lineHeight: 1.2 }}>Now make the film.</div>
+            <div style={{ ...bodyStyle, maxWidth: 480, margin: "0 auto 32px" }}>RevaultAI is a curated gallery for AI filmmakers — generate your film, publish it, and keep 80% of every sale.</div>
+            <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
+              <button className="btn-primary" onClick={() => user ? setPage("generate") : onSignInClick?.()}>{user ? "Generate on RevaultAI" : "Create your account"}</button>
+              <button className="btn-ghost" onClick={() => setPage("explore")}>Explore the archive</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* HOW IT WORKS — only before a first build */}
+      {!result && (
+        <div style={{ background: "var(--surface)", borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)", padding: "72px 48px" }}>
+          <div style={{ maxWidth: 800, margin: "0 auto" }}>
+            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 40, fontWeight: 300, color: "var(--text)", marginBottom: 40, textAlign: "center" }}>Why structured prompts work better</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 24 }}>
+              {[
+                ["Models read craft", "Video models respond to shot sizes, lens choices and lighting setups far more reliably than to adjectives like \"cinematic\"."],
+                ["One shot, one idea", "Most failed generations ask for too much at once. A single subject doing a single action holds together."],
+                ["Say what to avoid", "Naming the artifacts you don't want — warped hands, flicker, text — measurably reduces how often they appear."],
+              ].map(([title, desc], i) => (
+                <div key={i} style={{ border: "1px solid var(--border)", borderRadius: 8, padding: "28px 24px", background: "var(--bg)" }}>
+                  <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 14, fontWeight: 700, color: "var(--text)", marginBottom: 12 }}>{title}</div>
+                  <div style={bodyStyle}>{desc}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}
 function BecomeCreatorPage({ setPage, user, onSignInClick }) {
   const whyCards = [
     { title: "Show the Process, Not Just the Result", desc: "Share the prompts, workflows, tools, and techniques behind your creations. RevaultAI is built for creators who want their work understood, not just viewed." },
@@ -2837,7 +3028,7 @@ const [page, setPageState]        = useState("home");
   // ---- URL routing ----
   const detailIdRef = useRef(null);
   const creatorUserRef = useRef(null);
-  const KNOWN_PAGES = ["home","explore","creators","feed","generate","settings","admin","submit","set-password","email-confirmed","terms","faq","contact","guidelines","premium-prompts","about","become-creator","privacy","refunds","dmca","ai-disclaimer","purchase-success","founding-creators"]; "purchase-success","founding-creators","blog","ai-video-generator";
+  const KNOWN_PAGES = ["home","explore","creators","feed","generate","settings","admin","submit","set-password","email-confirmed","terms","faq","contact","guidelines","premium-prompts","about","become-creator","privacy","refunds","dmca","ai-disclaimer","purchase-success","founding-creators"]; "purchase-success","founding-creators","blog","ai-video-generator","prompt-builder";
 
   function setDetailId(id) { detailIdRef.current = id; setDetailIdState(id); }
   const blogSlugRef = useRef(null);
@@ -2985,6 +3176,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       case "premium-prompts": return <PremiumPromptsPage setPage={setPage} />;
       case "about": return <AboutPage setPage={setPage} />;
       case "become-creator": return <BecomeCreatorPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} />;
+      case "prompt-builder": return <PromptBuilderPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} />;
 case "privacy":   return <LegalPage setPage={setPage} page="privacy" />;
 case "refunds":   return <LegalPage setPage={setPage} page="refunds" />;
 case "dmca":      return <LegalPage setPage={setPage} page="dmca" />;

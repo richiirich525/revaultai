@@ -74,6 +74,10 @@ const PAGES = {
     description:
       "We are selecting a small founding cohort of AI filmmakers. Top placement, 80% of net revenue, and a permanent founding-creator badge.",
   },
+  "prompt-builder": {
+    title: "Video Prompt Builder — Free AI Video Prompt Generator | RevaultAI",
+    description: "Turn a rough idea into a structured video prompt for Veo, Sora, Kling, Runway, Wan, Hailuo and Seedance. Free, no account needed.",
+  },
   contact: { title: "Contact — RevaultAI", description: "Support, creator inquiries, DMCA, and partnership contacts for RevaultAI." },
   terms: { title: "Terms of Service — RevaultAI", description: "The terms governing use of the RevaultAI platform." },
   privacy: { title: "Privacy Policy — RevaultAI", description: "How RevaultAI collects, uses, and protects your data." },
