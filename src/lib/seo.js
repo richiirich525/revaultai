@@ -124,6 +124,45 @@ function setRobots(shouldIndex) {
   setMeta("name", "robots", shouldIndex ? "index, follow" : "noindex, nofollow");
 }
 
+// Article + FAQ structured data for Journal posts.
+function setPostSchema(post) {
+  const existing = document.getElementById("fc-post-schema");
+  if (existing) existing.remove();
+  if (!post) return;
+  const url = SITE + "/blog/" + post.slug;
+  const graph = [
+    {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      headline: post.title,
+      description: post.description,
+      datePublished: post.date,
+      dateModified: post.date,
+      author: { "@type": "Person", name: post.author },
+      publisher: { "@type": "Organization", name: SITE_NAME, url: SITE },
+      mainEntityOfPage: { "@type": "WebPage", "@id": url },
+      image: DEFAULT_IMAGE,
+      url: url,
+    },
+  ];
+  if (Array.isArray(post.faq) && post.faq.length) {
+    graph.push({
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: post.faq.map(([q, a]) => ({
+        "@type": "Question",
+        name: q,
+        acceptedAnswer: { "@type": "Answer", text: a },
+      })),
+    });
+  }
+  const script = document.createElement("script");
+  script.id = "fc-post-schema";
+  script.type = "application/ld+json";
+  script.textContent = JSON.stringify(graph);
+  document.head.appendChild(script);
+}
+
 // Structured data so Google can show film pages as video results.
 function setVideoSchema(creation) {
   const existing = document.getElementById("fc-video-schema");
@@ -177,7 +216,7 @@ if (page === "blog") {
   }
   if (page === "blog-post") {
     const post = POSTS.find((p) => "/blog/" + p.slug === path);
-    if (post) meta = { title: clip(post.title, 65), description: clip(post.description, 155) };
+    if (post) meta = { title: clip(post.seoTitle || post.title, 70), description: clip(post.description, 160) };
   }
 
   if (page === "profile" && creatorUser) {
@@ -211,4 +250,5 @@ if (page === "blog") {
   setLink("canonical", canonical);
   setRobots(!NOINDEX.has(page));
   setVideoSchema(page === "detail" ? creation : null);
+  setPostSchema(page === "blog-post" ? POSTS.find((p) => "/blog/" + p.slug === path) : null);
 }
