@@ -13,7 +13,7 @@ const DEFAULT = {
 
 // Static pages. Titles stay under ~60 characters, descriptions under ~155,
 // so Google shows them in full instead of truncating with an ellipsis.
-const PAGES = {
+export const PAGES = {
   home: {
     title: "RevaultAI — Curated AI Films and Premium Prompts",
     description:
