@@ -171,23 +171,35 @@ try {
     const { createClient } = await import("@supabase/supabase-js");
     const supabase = createClient(url, key);
 
-    const { data: creations } = await supabase
+    const { data: profileRows, error: pErr } = await supabase
+      .from("profiles")
+      .select("id, username, display_name, bio")
+      .not("username", "is", null)
+      .limit(2000);
+    if (pErr) console.warn("[prerender] profiles query error:", pErr.message);
+    const nameById = {};
+    for (const p of profileRows ?? []) nameById[p.id] = p.display_name || p.username;
+
+    const { data: creations, error: cErr } = await supabase
       .from("creations")
-      .select("id, title, prompt_full, category, premium_status, profiles:user_id (username, display_name)")
+      .select("id, title, prompt_full, category, user_id, premium_status")
       .not("premium_status", "in", '("Pending","Rejected")')
       .limit(2000);
+    if (cErr) console.warn("[prerender] creations query error:", cErr.message);
 
     for (const c of creations ?? []) {
-      const who = c.profiles?.display_name || c.profiles?.username || "a RevaultAI creator";
+      const who = nameById[c.user_id] || "a RevaultAI creator";
       const title = `${c.title} — AI Film by ${who} | RevaultAI`;
       const desc = String(c.prompt_full || c.title).replace(/\s+/g, " ").slice(0, 155);
       const pageUrl = `${SITE}/film/${c.id}`;
       let html = template;
       html = setTitle(html, title);
+      html = setMeta(html, "name", "title", title);
       html = setMeta(html, "name", "description", desc);
       html = setMeta(html, "property", "og:title", title);
       html = setMeta(html, "property", "og:description", desc);
       html = setMeta(html, "property", "og:url", pageUrl);
+      html = setMeta(html, "name", "twitter:url", pageUrl);
       html = setCanonical(html, pageUrl);
       html = setRobots(html, true);
       html = injectBody(html, `<h1>${esc(c.title)}</h1><p>An AI-generated ${esc(String(c.category || "film").toLowerCase())} by ${esc(who)} on RevaultAI.</p><h2>Production note</h2><p>${esc(c.prompt_full || "")}</p>`);
@@ -195,13 +207,7 @@ try {
       count++;
     }
 
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("username, display_name, bio")
-      .not("username", "is", null)
-      .limit(2000);
-
-    for (const p of profiles ?? []) {
+    for (const p of profileRows ?? []) {
       const name = p.display_name || p.username;
       const title = `${name} — AI Filmmaker on RevaultAI`;
       const desc = String(p.bio || `Films, prompts, and workflows by ${name} on RevaultAI, a curated archive of AI-native creative work.`).replace(/\s+/g, " ").slice(0, 155);
