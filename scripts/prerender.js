@@ -84,6 +84,8 @@ for (const [slug, meta] of Object.entries(PAGES)) {
   html = setMeta(html, "property", "og:url", url);
   html = setMeta(html, "name", "twitter:title", meta.title);
   html = setMeta(html, "name", "twitter:description", meta.description);
+  html = setMeta(html, "name", "title", meta.title);
+  html = setMeta(html, "name", "twitter:url", url);
   html = setCanonical(html, url);
   html = setRobots(html, true);
   html = injectBody(html, `<h1>${esc(meta.title)}</h1><p>${esc(meta.description)}</p><p><a href="/">RevaultAI</a> — a curated gallery for AI-generated film.</p>`);
@@ -125,6 +127,8 @@ for (const post of POSTS) {
   html = setMeta(html, "property", "og:type", "article");
   html = setMeta(html, "name", "twitter:title", title);
   html = setMeta(html, "name", "twitter:description", post.description);
+  html = setMeta(html, "name", "title", title);
+  html = setMeta(html, "name", "twitter:url", url);
   html = setCanonical(html, url);
   html = setRobots(html, true);
 
