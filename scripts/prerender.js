@@ -19,7 +19,7 @@ const ROOT = path.resolve(__dirname, "..");
 const DIST = path.join(ROOT, "dist");
 const SITE = "https://www.revaultai.com";
 
-const { PAGES } = await import(path.join(ROOT, "src/lib/seo.js"));
+const { PAGES, NOINDEX } = await import(path.join(ROOT, "src/lib/seo.js"));
 const { POSTS } = await import(path.join(ROOT, "src/blog/posts.js"));
 
 const template = fs.readFileSync(path.join(DIST, "index.html"), "utf8");
@@ -87,7 +87,7 @@ for (const [slug, meta] of Object.entries(PAGES)) {
   html = setMeta(html, "name", "title", meta.title);
   html = setMeta(html, "name", "twitter:url", url);
   html = setCanonical(html, url);
-  html = setRobots(html, true);
+  html = setRobots(html, !NOINDEX.has(slug));
   html = injectBody(html, `<h1>${esc(meta.title)}</h1><p>${esc(meta.description)}</p><p><a href="/">RevaultAI</a> — a curated gallery for AI-generated film.</p>`);
   writeRoute(routePath, html);
   count++;

@@ -90,7 +90,7 @@ export const PAGES = {
 };
 
 // Pages that should never appear in search results.
-const NOINDEX = new Set(["settings", "admin", "set-password", "email-confirmed", "purchase-success", "feed", "generate"]);
+export const NOINDEX = new Set(["settings", "admin", "set-password", "email-confirmed", "purchase-success", "feed", "generate"]);
 
 import { POSTS } from "../blog/posts.js";
 
