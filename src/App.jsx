@@ -1104,6 +1104,13 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission }) {
     { key: "seedance-2.0", label: "Seedance 2.0 — Flagship (720p)", costPerSecond: 6, durations: [5, 10, 15] },
     { key: "veo-3.1", label: "Veo 3.1 — Native Audio", costPerSecond: 4, durations: [4, 6, 8] },
   ];
+ const IMAGE_MODELS = [
+    { key: "seedream-5.0", label: "Seedream 5.0 — Fast", credits: 1 },
+    { key: "nano-banana-2", label: "Nano Banana 2 — Consistent characters", credits: 2 },
+  ];
+  const [imgPrompt, setImgPrompt] = useState("");
+  const [imgModel, setImgModel] = useState("seedream-5.0");
+  const [imgGenBusy, setImgGenBusy] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [model, setModel] = useState("wan-2.6");
   const [duration, setDuration] = useState(5);
@@ -1115,6 +1122,26 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission }) {
   const [imageUrl, setImageUrl] = useState(null);
   const [imageName, setImageName] = useState("");
   const [imageBusy, setImageBusy] = useState(false);
+  async function handleGenerateImage() {
+    if (!imgPrompt.trim()) { notify("Describe the image you want."); return; }
+    setImgGenBusy(true);
+    try {
+      const token = await getSessionToken();
+      const r = await fetch("/api/generate-image", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: imgPrompt, model: imgModel }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.imageUrl) { notify(j.error || "Image generation failed."); setImgGenBusy(false); return; }
+      setImageUrl(j.imageUrl);
+      setImageName("Generated: " + imgPrompt.slice(0, 40));
+      loadProfile?.();
+    } catch (err) {
+      notify("Image generation failed: " + err.message);
+    }
+    setImgGenBusy(false);
+  }
   async function handleImagePick(file) {
     if (!file) return;
     if (!/^image\/(jpeg|png|webp)$/.test(file.type)) { notify("Image must be JPG, PNG, or WebP."); return; }
@@ -1322,6 +1349,25 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission }) {
               ) : (
                 <input type="file" accept="image/jpeg,image/png,image/webp" disabled={imageBusy} onChange={(e) => handleImagePick(e.target.files[0])} style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text)" }} />
               )}
+            </div>
+            <div className="gen-form-row" style={{ flexDirection: "column", alignItems: "stretch", gap: 8 }}>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.15em", color: "var(--accent)", textTransform: "uppercase" }}>Or generate a starting image</div>
+              <input
+                type="text"
+                value={imgPrompt}
+                onChange={(e) => setImgPrompt(e.target.value)}
+                placeholder="A lighthouse keeper at dawn, storm clearing"
+                style={{ width: "100%", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: 4, padding: "10px 12px", fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text)", boxSizing: "border-box" }}
+              />
+              <div className="gen-cost" style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+                <select className="gen-model-select" value={imgModel} onChange={(e) => setImgModel(e.target.value)}>
+                  {IMAGE_MODELS.map((m) => <option key={m.key} value={m.key}>{m.label}</option>)}
+                </select>
+                <span>Cost: {IMAGE_MODELS.find((m) => m.key === imgModel)?.credits ?? 1} credits</span>
+                <button className="gen-button" onClick={handleGenerateImage} disabled={imgGenBusy}>
+                  {imgGenBusy ? "Generating..." : "Generate image"}
+                </button>
+              </div>
             </div>
             <div className="gen-form-row">
               <div className="gen-cost">
