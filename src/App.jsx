@@ -1102,6 +1102,8 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission }) {
     { key: "kling-3.0", label: "Kling 3.0 — Cinematic", costPerSecond: 2, durations: [5, 10] },
     { key: "seedance-2.0-480", label: "Seedance 2.0 — Draft (480p)", costPerSecond: 3, durations: [5, 10, 15] },
     { key: "seedance-2.0", label: "Seedance 2.0 — Flagship (720p)", costPerSecond: 6, durations: [5, 10, 15] },
+    { key: "seedance-2.5-480", label: "Seedance 2.5 — Draft (480p, up to 30s)", costPerSecond: 6, durations: [5, 10, 15, 30] },
+    { key: "seedance-2.5", label: "Seedance 2.5 — Flagship (720p, up to 30s)", costPerSecond: 12, durations: [5, 10, 15, 30] },
     { key: "veo-3.1", label: "Veo 3.1 — Native Audio", costPerSecond: 4, durations: [4, 6, 8] },
   ];
  const IMAGE_MODELS = [

@@ -29,6 +29,20 @@ const MODELS = {
     durationParam: { 5: '5', 10: '10', 15: '15' },
     extraInput: { resolution: '480p' },
   },
+  'seedance-2.5': {
+    falId: 'bytedance/seedance-2.5/text-to-video',
+    imageFalId: 'bytedance/seedance-2.5/image-to-video',
+    creditsPerSecond: 12,
+    durationParam: { 5: '5', 10: '10', 15: '15', 30: '30' },
+    extraInput: { resolution: '720p', generate_audio: true },
+  },
+  'seedance-2.5-480': {
+    falId: 'bytedance/seedance-2.5/text-to-video',
+    imageFalId: 'bytedance/seedance-2.5/image-to-video',
+    creditsPerSecond: 6,
+    durationParam: { 5: '5', 10: '10', 15: '15', 30: '30' },
+    extraInput: { resolution: '480p', generate_audio: true },
+  },
   'veo-3.1': {
     falId: 'fal-ai/veo3.1/fast/text-to-video',
     imageFalId: 'fal-ai/veo3.1/fast/image-to-video',   // VERIFY on fal
