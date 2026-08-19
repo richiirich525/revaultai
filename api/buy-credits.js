@@ -13,6 +13,10 @@ const CREDIT_PACKS = {
     priceId: 'price_1ThLEkQOsoMQrPgCp5U5OhuI', // $15
     credits: 200,
   },
+  studio: {
+    priceId: 'price_1U6FZmQOsoMQrPgCRlafdQWp', // $32
+    credits: 500,
+  },
 };
 
 export default async function handler(req, res) {

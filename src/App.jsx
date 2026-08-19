@@ -545,6 +545,9 @@ function BuyCreditsSection({ user, profile, notify }) {
         <button onClick={() => handleBuyCredits("creator")} disabled={buying !== null}>
           {buying === "creator" ? "Redirecting…" : "Creator — 200 credits ($15)"}
         </button>
+        <button onClick={() => handleBuyCredits("studio")} disabled={buying !== null}>
+          {buying === "studio" ? "Redirecting…" : "Studio — 500 credits ($32)"}
+        </button>
       </div>
     </div>
   );
