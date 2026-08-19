@@ -42,6 +42,42 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Webhook signature invalid: " + err.message });
   }
 
+  if (event.type === "charge.refunded") {
+    const charge = event.data.object;
+
+    const sessions = await stripe.checkout.sessions.list({
+      payment_intent: charge.payment_intent,
+      limit: 1,
+    });
+    const refundedSession = sessions.data[0];
+    const refundMeta = refundedSession?.metadata || {};
+
+    if (refundMeta.type === "credit_purchase" && refundMeta.user_id) {
+      const supabase = createClient(
+        requireEnv("VITE_SUPABASE_URL"),
+        requireEnv("SUPABASE_SERVICE_ROLE_KEY")
+      );
+
+      const granted = parseInt(refundMeta.credits, 10) || 0;
+      const ratio = charge.amount ? charge.amount_refunded / charge.amount : 1;
+      const toRevoke = Math.round(granted * ratio);
+
+      const { data: revoked, error: revokeError } = await supabase.rpc("revoke_credits", {
+        p_user_id: refundMeta.user_id,
+        p_amount: toRevoke,
+        p_reference: "refund_" + charge.id,
+      });
+
+      if (revokeError) {
+        console.error("revoke_credits failed:", revokeError);
+        return res.status(500).json({ error: "Revoke failed" });
+      }
+      console.log("Refund processed — revoked", revoked, "of", toRevoke, "credits");
+    }
+
+    return res.status(200).json({ received: true });
+  }
+
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
     const meta = session.metadata || {};
