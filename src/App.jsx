@@ -7,6 +7,7 @@ import { applySEO } from "./lib/seo.js";
 import { BlogPage, BlogPostPage } from "./BlogPage.jsx";
 import Comments from "./Comments.jsx";
 import AiVideoGeneratorPage from "./AiVideoGeneratorPage.jsx";
+import HomeFeatures from "./HomeFeatures.jsx";
 import { updateCommentsEnabled } from "./lib/comments.js";
 import {
   fetchCreations,
@@ -939,7 +940,7 @@ function SpotlightSection({ creations, onView }) {
   );
 }
 
-function HomePage({ creations, setPage, setDetailId }) {
+function HomePage({ creations, setPage, setDetailId, user, onSignInClick }) {
   const premiumCreations = creations.filter((c) => c.is_premium && c.premium_status === "Approved");
   const openCreations    = creations.filter((c) => !c.is_premium);
   function goDetail(id) { setDetailId(id); setPage("detail"); }
@@ -951,11 +952,11 @@ function HomePage({ creations, setPage, setDetailId }) {
           <div className="hero-tagline">The AI era doesn't<br />need more content.</div>
           <span className="hero-tagline-accent">It needs curation.</span>
           <p className="hero-sub" style={{ color: "var(--text)", fontSize: 16, fontWeight: 500, lineHeight: 1.6, maxWidth: 440, marginBottom: 16 }}>Home to the world's best AI films, short films, images, prompts, workflows, and creative experiments.</p>
-          <p className="hero-sub">RevaultAI is a curated archive of exceptional AI-native creativity. Discover cinematic films, short films, visual art, prompt collections, workflows, and creative experiments from creators pushing the medium forward.</p>
           <button className="hero-link" onClick={() => setPage("explore")}>Explore the Archive <span className="hero-link-arrow">&rarr;</span></button>
         </div>
         <div className="hero-right"><img src="https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?w=1400&q=90" alt="Cinematic AI visual" /></div>
       </section>
+      <HomeFeatures setPage={setPage} user={user} onSignInClick={onSignInClick} />
       <SpotlightSection creations={creations} onView={goDetail} />
       <section className="section">
         <div className="section-header"><div><div className="section-label">Curated</div><div className="section-sublabel">Premium creations from top-tier artists.</div></div><span className="section-link" onClick={() => setPage("explore")}>View All &rarr;</span></div>
@@ -3260,7 +3261,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
 
   function renderPage() {
     switch (page) {
-      case "home":    return <HomePage creations={creations} setPage={setPage} setDetailId={setDetailId} />;
+      case "home":    return <HomePage creations={creations} setPage={setPage} setDetailId={setDetailId} user={user} onSignInClick={() => setAuthOpen(true)} />;
       case "explore": return <ExplorePage creations={creations} setPage={setPage} setDetailId={setDetailId} dbLoaded={dbLoaded} />;
       case "creators":return <CreatorsPage setPage={setPage} setCreatorUser={setCreatorUser} />;
       case "feed":    return <FollowFeedPage user={user} setPage={setPage} setDetailId={setDetailId} setCreatorUser={setCreatorUser} />;
