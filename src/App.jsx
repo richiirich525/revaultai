@@ -1118,7 +1118,7 @@ function ExplorePage({ creations, setPage, setDetailId, dbLoaded }) {
   );
 }
 
-function GeneratePage({ user, profile, notify, setPage, setGenSubmission }) {
+function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setProfile }) {
   const GEN_MODELS = [
     { key: "wan-2.6", label: "Wan 2.6 — Fast", costPerSecond: 1, durations: [5, 10, 15] },
     { key: "kling-3.0", label: "Kling 3.0 — Cinematic", costPerSecond: 2, durations: [5, 10] },
@@ -1352,6 +1352,11 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission }) {
         <div className="page-hdr-sub">Turn a prompt into a film clip. {COST} credits per 5-second video.</div>
       </div>
       <section className="section">
+        {user && (
+          <div style={{ maxWidth: 680, margin: "0 auto" }}>
+            <BuyCreditsSection user={user} profile={profile} notify={notify} />
+          </div>
+        )}
         {!user ? (
           <div className="empty-state"><div className="empty-text">Sign in to generate videos.</div></div>
         ) : (
@@ -3259,7 +3264,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       case "explore": return <ExplorePage creations={creations} setPage={setPage} setDetailId={setDetailId} dbLoaded={dbLoaded} />;
       case "creators":return <CreatorsPage setPage={setPage} setCreatorUser={setCreatorUser} />;
       case "feed":    return <FollowFeedPage user={user} setPage={setPage} setDetailId={setDetailId} setCreatorUser={setCreatorUser} />;
-      case "generate": return <GeneratePage user={user} profile={profile} notify={notify} setPage={setPage} setGenSubmission={setGenSubmission} />;
+      case "generate": return <GeneratePage user={user} profile={profile} notify={notify} setPage={setPage} setGenSubmission={setGenSubmission} setProfile={setProfile} />;
       case "profile": return <ProfilePage username={creatorUser} creations={creations} setPage={setPage} setDetailId={setDetailId} user={user} />;
       case "detail":  return <DetailPage id={detailId} dbLoaded={dbLoaded} creations={creations} setCreations={setCreations} user={user} profile={profile} setProfile={setProfile} purchasedIds={purchasedIds} purchasesLoaded={purchasesLoaded} setPage={setPage} setCreatorUser={setCreatorUser}onSignInClick={() => setAuthOpen(true)} notify={notify} />;
       case "settings": if (!user) return <div className="page"><div className="empty-state"><div className="empty-text">Sign in to access profile settings.</div></div></div>; return <SettingsPage user={user} profile={profile} setProfile={setProfile} notify={notify} />;
