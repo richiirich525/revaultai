@@ -443,6 +443,9 @@ function normalizeContactUrl(raw) {
   if (parsed.protocol !== "https:") return { ok: false, error: "Link must start with https:// (or be an email address)." };
   return { ok: true, url: parsed.href };
 }
+function youtubeThumb(id, res = "maxresdefault") {
+  return `https://i.ytimg.com/vi/${id}/${res}.jpg`;
+}
 function parseYouTubeId(raw) {
   const v = (raw ?? "").trim();
   if (!v) return null;
@@ -893,7 +896,16 @@ function handleMouseLeave() {
   return (
     <div className="creation-card" data-id={creation.id} onClick={() => onClick(creation.id)} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
       <div className="creation-thumb">
-        <img src={creation.thumbnail_image || creation.hero_image} alt={creation.title} />
+        <img
+          src={creation.youtube_id ? youtubeThumb(creation.youtube_id) : (creation.thumbnail_image || creation.hero_image)}
+          alt={creation.title}
+          onError={(e) => {
+            if (creation.youtube_id && !e.target.dataset.fellBack) {
+              e.target.dataset.fellBack = "1";
+              e.target.src = youtubeThumb(creation.youtube_id, "hqdefault");
+            }
+          }}
+        />
         {hasPreview && (
   creation.preview_video.includes("image.mux.com") || creation.preview_video.includes("stream.mux.com")
     ? <img src={creation.preview_video} alt="preview" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0, transition: "opacity 0.4s ease", pointerEvents: "none" }} className="preview-gif" />
@@ -916,7 +928,7 @@ function SpotlightSection({ creations, onView }) {
       <div className="spotlight-grid">
         {items.map((item) => (
           <div key={item.id} className="spotlight-card" onClick={() => onView(item.id)}>
-            <img src={item.hero_image} alt={item.title} />
+            <img src={item.youtube_id ? youtubeThumb(item.youtube_id) : item.hero_image} alt={item.title} />
             <div className="spotlight-overlay" />
             <div className="spotlight-info"><div className="spotlight-cat">{item.category}</div><div className="spotlight-title">{item.title}</div><div className="spotlight-creator">by {item.creator.display_name}</div></div>
           </div>
@@ -1817,7 +1829,7 @@ function DetailPage({ id, creations, setCreations, user, profile, setProfile, pu
   if (!creation) return <div className="page"><div className="empty-state"><div className="empty-text">{dbLoaded ? "Creation not found." : "Loading film..."}</div></div></div>;
   const licenseCheck = creation.license_url ? normalizeContactUrl(creation.license_url) : null;
   const licenseUrl = licenseCheck && licenseCheck.ok ? licenseCheck.url : "";
-  const isPending = creation.premium_status === "Pending"; const hasVideo = !!creation.video_url; const posterImg = creation.thumbnail_image || creation.hero_image; const purchased = purchasedIds.has(creation.id); const unlocked = !creation.is_premium || purchased;
+  const isPending = creation.premium_status === "Pending"; const hasVideo = !!creation.video_url; const posterImg = creation.youtube_id ? youtubeThumb(creation.youtube_id) : (creation.thumbnail_image || creation.hero_image); const purchased = purchasedIds.has(creation.id); const unlocked = !creation.is_premium || purchased;
 const purchaseLoading = creation.is_premium && !purchasesLoaded; const priceLabel = creation.price_cents ? "$" + (creation.price_cents / 100).toFixed(2) : "$4.99";
   async function handleBuy() {
   if (!user) { notify("Sign in to purchase."); return; }

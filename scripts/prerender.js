@@ -182,7 +182,7 @@ try {
 
     const { data: creations, error: cErr } = await supabase
       .from("creations")
-      .select("id, title, prompt_full, category, user_id, premium_status")
+      .select("id, title, prompt_full, category, user_id, premium_status, youtube_id")
       .not("premium_status", "in", '("Pending","Rejected")')
       .limit(2000);
     if (cErr) console.warn("[prerender] creations query error:", cErr.message);
@@ -200,6 +200,11 @@ try {
       html = setMeta(html, "property", "og:description", desc);
       html = setMeta(html, "property", "og:url", pageUrl);
       html = setMeta(html, "name", "twitter:url", pageUrl);
+      if (c.youtube_id) {
+        const thumb = `https://i.ytimg.com/vi/${c.youtube_id}/maxresdefault.jpg`;
+        html = setMeta(html, "property", "og:image", thumb);
+        html = setMeta(html, "name", "twitter:image", thumb);
+      }
       html = setCanonical(html, pageUrl);
       html = setRobots(html, true);
       html = injectBody(html, `<h1>${esc(c.title)}</h1><p>An AI-generated ${esc(String(c.category || "film").toLowerCase())} by ${esc(who)} on RevaultAI.</p><h2>Production note</h2><p>${esc(c.prompt_full || "")}</p>`);
