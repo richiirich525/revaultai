@@ -390,6 +390,7 @@ function Nav({ page, setPage, user, profile, onSignInClick, onSignOut }) {
         <div className={"nav-link" + (page === "creators" ? " active" : "")} onClick={() => setPage("creators")}>Creators</div>
         {user && <div className={"nav-link" + (page === "feed" ? " active" : "")} onClick={() => setPage("feed")}>Following</div>}
         {user && <div className={"nav-link" + (page === "generate" ? " active" : "")} onClick={() => setPage("generate")}>Generate</div>}
+        <div className={"nav-link" + (page === "prompt-builder" ? " active" : "")} onClick={() => setPage("prompt-builder")}>Prompt Builder</div>
         <div className={"nav-link" + (page === "submit" ? " active" : "")} onClick={() => setPage("submit")}>Submit</div>
         {!user && <div className={"nav-link" + (page === "become-creator" ? " active" : "")} onClick={() => setPage("become-creator")}>Join</div>}
         {user && isAdmin(user) && <div className={"nav-link" + (page === "admin" ? " active" : "")} onClick={() => setPage("admin")}>Admin</div>}
