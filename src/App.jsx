@@ -443,6 +443,13 @@ function normalizeContactUrl(raw) {
   if (parsed.protocol !== "https:") return { ok: false, error: "Link must start with https:// (or be an email address)." };
   return { ok: true, url: parsed.href };
 }
+function parseYouTubeId(raw) {
+  const v = (raw ?? "").trim();
+  if (!v) return null;
+  if (/^[A-Za-z0-9_-]{11}$/.test(v)) return v;
+  const m = v.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
 function toolLinksToText(arr) {
   return (Array.isArray(arr) ? arr : []).map((t) => `${t.name} | ${t.url}`).join("\n");
 }
@@ -892,7 +899,7 @@ function handleMouseLeave() {
     ? <img src={creation.preview_video} alt="preview" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0, transition: "opacity 0.4s ease", pointerEvents: "none" }} className="preview-gif" />
     : null
 )}
-        {(hasPreview || !!creation.video_url) && <div className="video-indicator">&#9654; Film</div>}
+        {(hasPreview || !!creation.video_url || !!creation.youtube_id) && <div className="video-indicator">&#9654; Film</div>}
         <div className="creation-badge">{isPending ? <Badge type="review" /> : creation.is_premium ? <Badge type="Premium" /> : <Badge type="Open" />}</div>
         <div className="creation-info"><div className="creation-info-title">{creation.title}</div><div className="creation-info-creator">by {creation.creator.display_name}</div></div>
       </div>
@@ -1885,7 +1892,18 @@ const purchaseLoading = creation.is_premium && !purchasesLoaded; const priceLabe
   }
   return (
     <div className="page detail-page">
-      <div className="detail-cinema"><div className="detail-cinema-inner"><div className="detail-back" onClick={() => setPage("explore")}>&larr; Archive</div>{hasVideo ? (
+      <div className="detail-cinema"><div className="detail-cinema-inner"><div className="detail-back" onClick={() => setPage("explore")}>&larr; Archive</div>{creation.youtube_id ? (
+  <div style={{ position: "relative", width: "100%", aspectRatio: "16/9", background: "#000" }}>
+    <iframe
+      src={`https://www.youtube-nocookie.com/embed/${creation.youtube_id}?rel=0&modestbranding=1`}
+      title={creation.title}
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      allowFullScreen
+      referrerPolicy="strict-origin-when-cross-origin"
+      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }}
+    />
+  </div>
+) : hasVideo ? (
   creation.mux_playback_id ? (
     <MuxPlayer
       playbackId={creation.mux_playback_id}
@@ -2011,7 +2029,7 @@ if (!item?._fromDb) { notify("Cannot modify seed creations."); return; }
 }
 
 function SubmitPage({ setCreations, notify, setPage, user, profile, prefill }) {
-  const [form, setForm] = useState({ title: "", tools: "", category: "Abstract", prompt: "", isPremium: false, licenseUrl: "" });
+  const [form, setForm] = useState({ title: "", tools: "", category: "Abstract", prompt: "", isPremium: false, licenseUrl: "", youtubeUrl: "" });
   const [videoFile, setVideoFile] = useState(null); const [uploadState, setUploadState] = useState("idle"); const [uploadPct, setUploadPct] = useState(0); const [uploadResult, setUploadResult] = useState(null); const [uploadError, setUploadError] = useState(null); const [dragover, setDragover] = useState(false); const [submitting, setSubmitting] = useState(false);
   function updateField(key, value) { setForm((prev) => ({ ...prev, [key]: value })); }
   function formatBytes(b) { if (b < 1024 * 1024) return (b / 1024).toFixed(1) + " KB"; return (b / (1024 * 1024)).toFixed(1) + " MB"; }
@@ -2108,6 +2126,9 @@ track("upload_completed");
     if ((videoFile || prefill?.videoUrl) && uploadState !== "done") { notify("Please wait for your video to finish uploading."); return; }
     const license = normalizeContactUrl(form.licenseUrl);
     if (!license.ok) { notify(license.error); return; }
+    const ytId = form.youtubeUrl.trim() ? parseYouTubeId(form.youtubeUrl) : null;
+    if (form.youtubeUrl.trim() && !ytId) { notify("That doesn't look like a YouTube link."); return; }
+    if (!ytId && !videoFile && !prefill?.videoUrl) { notify("Upload a film or link one from YouTube."); return; }
     setSubmitting(true);
     const autoApprove = profile?.auto_approve === true;
     const toolList = form.tools.split(",").map((t) => t.trim()).filter(Boolean);
@@ -2133,6 +2154,15 @@ track("upload_completed");
     }
 
     const newCreation = { id: "u" + Date.now(), title: form.title.trim(), creator: { username: profile?.username ?? user?.email?.split("@")[0] ?? "you", display_name: profile?.display_name ?? user?.email?.split("@")[0] ?? "You", avatar_url: profile?.avatar_url ?? "" }, hero_image: resolvedUpload?.thumbnail_image || fallbackThumb, thumbnail_image: resolvedUpload?.thumbnail_image || fallbackThumb, video_url: resolvedUpload?.video_url || "", preview_video: resolvedUpload?.preview_video || "", tools_used: toolList.length > 0 ? toolList : ["Unknown"], category: form.category, is_premium: form.isPremium, premium_status: form.isPremium ? (autoApprove ? "Approved" : "Pending") : null, prompt_preview: form.isPremium ? form.prompt.trim().slice(0, 120) + "..." : null, prompt_full: form.prompt.trim(), spotlight: false, mux_asset_id: resolvedUpload?.mux_asset_id || null, mux_playback_id: resolvedUpload?.mux_playback_id || null, license_url: license.url, user_id: user?.id ?? null };
+    if (ytId) {
+      newCreation.youtube_id = ytId;
+      newCreation.hero_image = `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg`;
+      newCreation.thumbnail_image = `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg`;
+      newCreation.video_url = "";
+      newCreation.preview_video = "";
+      newCreation.is_premium = false;
+      newCreation.premium_status = "Pending";
+    }
     
 setCreations((prev) => [newCreation, ...prev]);
 const { data: saved, error } = await insertCreation(newCreation, user, profile);
@@ -2196,6 +2226,11 @@ const { data: saved, error } = await insertCreation(newCreation, user, profile);
 {uploadState === "done" && <div className="upload-success">&#10003;&nbsp; Upload complete</div>}
               {uploadState === "error" && <><div className="upload-error">{uploadError}</div><button className="btn-primary" style={{ marginTop: 10, padding: "9px 20px", fontSize: 11 }} onClick={uploadToR2}>Retry Upload</button></>}</>
             )}
+          </div>
+          <div className="form-group">
+            <label className="form-label">Or link a YouTube film</label>
+            <input className="form-input" type="text" inputMode="url" placeholder="https://www.youtube.com/watch?v=..." value={form.youtubeUrl} onChange={(e) => updateField("youtubeUrl", e.target.value)} maxLength={200} disabled={!!videoFile || !!prefill?.videoUrl} />
+            <div className="form-hint">Already have the film on your own channel? Link it instead of uploading. Linked films are reviewed before they appear, stream from YouTube, and can't be offered for sale.</div>
           </div>
           <div className="form-group"><label className="form-label">Tools Used</label><input className="form-input" placeholder="Sora, Runway, MidJourney" value={form.tools} onChange={(e) => updateField("tools", e.target.value)} /></div>
           <div className="form-group"><label className="form-label">Category</label><select className="form-select" value={form.category} onChange={(e) => updateField("category", e.target.value)}>{CATEGORIES.map((o) => <option key={o} value={o}>{o}</option>)}</select></div>
