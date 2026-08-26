@@ -107,6 +107,10 @@ for (const [slug, meta] of Object.entries(PAGES)) {
   html = setMeta(html, "property", "og:title", title);
   html = setMeta(html, "property", "og:description", desc);
   html = setMeta(html, "property", "og:url", url);
+  html = setMeta(html, "name", "title", title);
+  html = setMeta(html, "name", "twitter:title", title);
+  html = setMeta(html, "name", "twitter:description", desc);
+  html = setMeta(html, "name", "twitter:url", url);
   html = setCanonical(html, url);
   html = setRobots(html, true);
   html = injectBody(html, `<h1>The Vault Journal</h1><p>${esc(desc)}</p><ul>${items}</ul>`);
