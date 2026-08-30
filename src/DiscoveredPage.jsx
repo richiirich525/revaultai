@@ -50,6 +50,10 @@ export default function DiscoveredPage() {
         .dv-director a:hover { text-decoration: underline; }
         .dv-note { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); line-height: 1.8; }
         .dv-intro { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); line-height: 1.95; max-width: 620px; margin-bottom: 40px; }
+        .dv-actions { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; }
+        .dv-actions a { color: var(--muted); text-decoration: none; }
+        .dv-actions a:hover { color: var(--accent); }
+        .dv-dot { color: var(--muted); margin: 0 8px; }
         @media (max-width: 860px) { .dv-grid { grid-template-columns: 1fr; } }
       `}</style>
 
@@ -109,6 +113,11 @@ export default function DiscoveredPage() {
                       : f.director_name}
                   </div>
                   {f.note && <div className="dv-note">{f.note}</div>}
+                  <div className="dv-actions">
+                    <a href={`mailto:rich@revaultai.com?subject=${encodeURIComponent(`Claiming my film: ${f.title}`)}&body=${encodeURIComponent(`Hi Richard,\n\n"${f.title}" is my film and I'd like to claim it on RevaultAI.\n\n`)}`}>Is this your film? Claim it</a>
+                    <span className="dv-dot">&middot;</span>
+                    <a href={`mailto:rich@revaultai.com?subject=${encodeURIComponent(`Removal request: ${f.title}`)}&body=${encodeURIComponent(`Hi Richard,\n\nPlease remove "${f.title}" from the Discovered section.\n\n`)}`}>Request removal</a>
+                  </div>
                 </div>
               </div>
             ))}
