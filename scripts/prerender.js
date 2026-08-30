@@ -233,6 +233,54 @@ try {
       writeRoute("/creator/" + p.username, html);
       count++;
     }
+        // ---- Discovered: bake the curated films into the static page ----
+    const { data: discovered, error: dErr } = await supabase
+      .from("discovered_films")
+      .select("title, youtube_id, director_name, director_url, award, note")
+      .eq("published", true)
+      .order("sort_order", { ascending: true });
+    if (dErr) console.warn("[prerender] discovered query error:", dErr.message);
+
+    if (discovered?.length) {
+      const meta = PAGES.discovered;
+      const pageUrl = SITE + "/discovered";
+      let html = template;
+      html = setTitle(html, meta.title);
+      html = setMeta(html, "name", "title", meta.title);
+      html = setMeta(html, "name", "description", meta.description);
+      html = setMeta(html, "property", "og:title", meta.title);
+      html = setMeta(html, "property", "og:description", meta.description);
+      html = setMeta(html, "property", "og:url", pageUrl);
+      html = setMeta(html, "name", "twitter:title", meta.title);
+      html = setMeta(html, "name", "twitter:description", meta.description);
+      html = setMeta(html, "name", "twitter:url", pageUrl);
+      html = setCanonical(html, pageUrl);
+      html = setRobots(html, true);
+
+      html = injectJsonLd(html, {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        name: "Discovered — Exceptional AI Films",
+        itemListElement: discovered.map((f, i) => ({
+          "@type": "ListItem",
+          position: i + 1,
+          item: {
+            "@type": "VideoObject",
+            name: f.title,
+            description: f.note || `An AI-generated film by ${f.director_name}.`,
+            thumbnailUrl: `https://i.ytimg.com/vi/${f.youtube_id}/hqdefault.jpg`,
+            embedUrl: `https://www.youtube-nocookie.com/embed/${f.youtube_id}`,
+            creator: { "@type": "Person", name: f.director_name },
+          },
+        })),
+      });
+
+      const items = discovered.map((f) =>
+        `<li><strong>${esc(f.title)}</strong> — directed by ${f.director_url ? `<a href="${esc(f.director_url)}">${esc(f.director_name)}</a>` : esc(f.director_name)}${f.award ? ` (${esc(f.award)})` : ""}${f.note ? `<br>${esc(f.note)}` : ""}</li>`
+      ).join("");
+      html = injectBody(html, `<h1>Discovered — Exceptional AI Films From Around the Web</h1><p>${esc(meta.description)}</p><ul>${items}</ul>`);
+      writeRoute("/discovered", html);
+    }
   } else {
     console.warn("[prerender] Supabase env not found — skipping film and creator pages.");
   }
