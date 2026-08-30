@@ -1013,6 +1013,12 @@ function HomePage({ creations, setPage, setDetailId, user, onSignInClick }) {
         <div className="creation-grid">{openCreations.slice(0, 4).map((c) => <CreationCard key={c.id} creation={c} onClick={goDetail} />)}</div>
       </section>
       <DiscoveredStrip setPage={setPage} />
+      {premiumCreations.length > 0 && (
+        <section className="section">
+          <div className="section-header"><div><div className="section-label">Premium Films</div><div className="section-sublabel">Own the film. Support the creator.</div></div><span className="section-link" onClick={() => setPage("explore")}>View All &rarr;</span></div>
+          <div className="creation-grid">{premiumCreations.slice(0, 4).map((c) => <CreationCard key={c.id} creation={c} onClick={goDetail} />)}</div>
+        </section>
+      )}
       <section className="section" style={{ textAlign: "center", borderTop: "1px solid var(--border)", background: "var(--bg)" }}>
         <div style={{ maxWidth: 640, margin: "0 auto" }}>
           <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.22em", color: "var(--accent)", textTransform: "uppercase", marginBottom: 18 }}>For Creators</div>
