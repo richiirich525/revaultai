@@ -9,7 +9,7 @@ import { supabase } from "./lib/supabase.js";
   first, the iframe loads only when a film is played (keeps the page fast).
 */
 
-export default function DiscoveredPage() {
+  export default function DiscoveredPage({ setPage }) {
   const [films, setFilms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [playing, setPlaying] = useState(null); // id of the film currently playing
@@ -121,8 +121,14 @@ export default function DiscoveredPage() {
                 </div>
               </div>
             ))}
-          </div>
+                                  </div>
         )}
+        <div style={{ marginTop: 56, paddingTop: 32, borderTop: "1px solid var(--border)", textAlign: "center" }}>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 1.9, maxWidth: 520, margin: "0 auto 20px" }}>
+            These films live elsewhere. <strong style={{ color: "var(--text)" }}>The vault</strong> is where our creators publish their own — reviewed, credited, and theirs.
+          </div>
+          <button className="btn-ghost" onClick={() => setPage("explore")}>Explore the Vault</button>
+        </div>
       </section>
     </div>
   );

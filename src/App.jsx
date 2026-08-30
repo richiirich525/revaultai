@@ -1109,7 +1109,7 @@ function ExplorePage({ creations, setPage, setDetailId, dbLoaded }) {
             <div className="creation-grid">
               {filtered.slice(0, visible).map((c) => <CreationCard key={c.id} creation={c} onClick={goDetail} />)}
             </div>
-            {visible < filtered.length && (
+               {visible < filtered.length && (
               <div className="load-more">
                 <button className="btn-load" onClick={() => setVisible((v) => v + 12)}>
                   Load more ({filtered.length - visible} remaining)
@@ -1118,7 +1118,13 @@ function ExplorePage({ creations, setPage, setDetailId, dbLoaded }) {
             )}
           </>
         )}
-      </section>
+        <div style={{ marginTop: 56, paddingTop: 32, borderTop: "1px solid var(--border)", textAlign: "center" }}>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 1.9, maxWidth: 520, margin: "0 auto 20px" }}>
+            Looking for more? <strong style={{ color: "var(--text)" }}>Discovered</strong> is our hand-picked exhibition of exceptional AI films from around the web, streaming from their directors' own channels.
+          </div>
+          <button className="btn-ghost" onClick={() => setPage("discovered")}>Visit Discovered</button>
+        </div>
+      </section>               
     </div>
   );
 }
@@ -3342,7 +3348,7 @@ case "dmca":      return <LegalPage setPage={setPage} page="dmca" />;
 case "ai-disclaimer": return <LegalPage setPage={setPage} page="ai-disclaimer" />;
       case "purchase-success": return <PurchaseSuccessPage setPage={setPage} setDetailId={setDetailId} creations={creations} />;
       case "founding-creators": return <FoundingCreatorsPage />;
-      case "discovered": return <DiscoveredPage />;
+      case "discovered": return <DiscoveredPage setPage={setPage} />;
       case "ai-video-generator": return <AiVideoGeneratorPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} />;
       case "blog": return <BlogPage setPage={setPage} openPost={openPost} />;
       case "blog-post": return <BlogPostPage slug={blogSlug} setPage={setPage} />;
