@@ -1008,11 +1008,11 @@ function HomePage({ creations, setPage, setDetailId, user, onSignInClick }) {
       </section>
       <HomeFeatures setPage={setPage} user={user} onSignInClick={onSignInClick} />
       <SpotlightSection creations={creations} onView={goDetail} />
+<DiscoveredStrip setPage={setPage} />
       <section className="section">
         <div className="section-header"><div><div className="section-label">Open Archive</div><div className="section-sublabel">Free access to outstanding AI creations.</div></div><span className="section-link" onClick={() => setPage("explore")}>View All &rarr;</span></div>
         <div className="creation-grid">{openCreations.slice(0, 4).map((c) => <CreationCard key={c.id} creation={c} onClick={goDetail} />)}</div>
       </section>
-      <DiscoveredStrip setPage={setPage} />
       {premiumCreations.length > 0 && (
         <section className="section">
           <div className="section-header"><div><div className="section-label">Premium Films</div><div className="section-sublabel">Own the film. Support the creator.</div></div><span className="section-link" onClick={() => setPage("explore")}>View All &rarr;</span></div>
