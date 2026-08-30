@@ -2392,7 +2392,7 @@ function LegalPage({ setPage, page }) {
         <h2>7. Changes to Terms</h2>
         <p>We may update these terms at any time. Continued use of RevaultAI after changes constitutes acceptance of the new terms.</p>
         <h2>8. Contact</h2>
-        <p>For questions about these terms, contact us at richardgarland999@gmail.com.</p>
+        <p>For questions about these terms, contact us at rich@revaultai.com.</p>
       `
     },
     privacy: {
@@ -2412,7 +2412,7 @@ function LegalPage({ setPage, page }) {
         <h2>6. Security</h2>
         <p>We use industry-standard security practices including encrypted connections and hashed credentials. No system is perfectly secure and we cannot guarantee absolute security.</p>
         <h2>7. Contact</h2>
-        <p>For privacy questions or data deletion requests, contact us at richardgarland999@gmail.com.</p>
+        <p>For privacy questions or data deletion requests, contact us at rich@revaultai.com.</p>
       `
     },
     refunds: {
@@ -2424,7 +2424,7 @@ function LegalPage({ setPage, page }) {
         <h2>Eligible Refunds</h2>
         <p>We will issue a full refund if: the content was not delivered due to a technical error on our end, or the content significantly differs from what was described.</p>
         <h2>How to Request a Refund</h2>
-        <p>Contact us at richardgarland999@gmail.com within 7 days of purchase with your order details. We review all requests within 3 business days.</p>
+        <p>Contact us at rich@revaultai.com within 7 days of purchase with your order details. We review all requests within 3 business days.</p>
         <h2>Chargebacks</h2>
         <p>Filing a chargeback without contacting us first may result in account suspension. We encourage you to reach out directly — we want to make things right.</p>
       `
@@ -2436,7 +2436,7 @@ function LegalPage({ setPage, page }) {
         <h2>Copyright Policy</h2>
         <p>RevaultAI respects intellectual property rights and expects users to do the same. We respond to valid DMCA takedown notices in accordance with the Digital Millennium Copyright Act.</p>
         <h2>Reporting Infringement</h2>
-        <p>If you believe content on RevaultAI infringes your copyright, send a written notice to richardgarland999@gmail.com including:</p>
+        <p>If you believe content on RevaultAI infringes your copyright, send a written notice to rich@revaultai.com including:</p>
         <ul>
           <li>Your contact information</li>
           <li>A description of the copyrighted work</li>
@@ -2600,10 +2600,10 @@ function FAQPage({ setPage }) {
 }
 function ContactPage({ setPage }) {
   const contacts = [
-    { category: "General Support", description: "Questions about your account, purchases, or how the platform works.", email: "richardgarland999@gmail.com", response: "We respond within 48 hours." },
-    { category: "Creator Inquiries", description: "Questions about submitting work, prompt pricing, or becoming a featured creator.", email: "richardgarland999@gmail.com", response: "We respond within 48 hours." },
-    { category: "Copyright and DMCA", description: "To report infringing content or file a DMCA takedown notice.", email: "richardgarland999@gmail.com", response: "We respond within 24 hours." },
-    { category: "Business and Partnerships", description: "Licensing inquiries, brand partnerships, or press requests.", email: "richardgarland999@gmail.com", response: "We respond within 5 business days." },
+    { category: "General Support", description: "Questions about your account, purchases, or how the platform works.", email: "rich@revaultai.com", response: "We respond within 48 hours." },
+    { category: "Creator Inquiries", description: "Questions about submitting work, prompt pricing, or becoming a featured creator.", email: "rich@revaultai.com", response: "We respond within 48 hours." },
+    { category: "Copyright and DMCA", description: "To report infringing content or file a DMCA takedown notice.", email: "rich@revaultai.com", response: "We respond within 24 hours." },
+    { category: "Business and Partnerships", description: "Licensing inquiries, brand partnerships, or press requests.", email: "rich@revaultai.com", response: "We respond within 5 business days." },
   ];
   return (
     <div className="page">
@@ -2711,7 +2711,7 @@ function PremiumPromptsPage({ setPage }) {
 
         <div style={{ borderTop: "1px solid var(--border)", padding: "32px 0" }}>
           <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 700, color: "var(--text)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 16 }}>How It Works</div>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 1.9 }}>Everything in the RevaultAI gallery streams free, in full — no paywall, no locked previews. Every film is also published with its complete production note: the full prompt, tools, and creative decisions behind the work, open for anyone to learn from. When a creator marks a film as premium, you have the option to buy it: a full-quality download to own, and a direct way to support the person who made it.</div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 1.9 }}>Everything in the RevaultAI gallery streams free, in full — no paywall, no locked previews. Every film is also published with its production note — how the work was made, in the creator's own words. For some that's the full prompt; for a multi-shot film it might be the workflow, the model choices, or the decisions that shaped it. Either way it stays open for anyone to learn from. When a creator marks a film as premium, you have the option to buy it: a full-quality download to own, and a direct way to support the person who made it.</div>
         </div>
 
         <div style={{ borderTop: "1px solid var(--border)", padding: "32px 0" }}>
@@ -2738,6 +2738,11 @@ function PremiumPromptsPage({ setPage }) {
           ))}
         </div>
 
+                <div style={{ borderTop: "1px solid var(--border)", padding: "32px 0" }}>
+          <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 700, color: "var(--text)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 20 }}>For Creators: Selling Is Optional</div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 1.9 }}>You never have to sell anything. Most films in the gallery are free, and you can showcase your work here indefinitely without offering a single purchase. Premium is a switch you flip if and when you want it — and if you do, you keep 80% of net revenue on every sale.</div>
+        </div>
+        
         <div style={{ borderTop: "1px solid var(--border)", padding: "32px 0" }}>
           <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 700, color: "var(--text)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 20 }}>Ownership and Usage</div>
           <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 1.9, marginBottom: 16 }}>Buying a film grants you a personal-use copy of the work. Creators retain full ownership and copyright of their films. Reselling or redistributing purchased films is not permitted. For commercial licensing, use the License This link on the film's page to arrange it with the creator directly.</div>
