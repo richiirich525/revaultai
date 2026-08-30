@@ -23,6 +23,9 @@ export function rowToCreation(row) {
     mux_playback_id: row.mux_playback_id,
     mux_asset_id:    row.mux_asset_id,
     youtube_id:      row.youtube_id ?? null,
+    vimeo_id:        row.vimeo_id ?? null,
+    vimeo_hash:      row.vimeo_hash ?? null,
+
     is_premium:      row.is_premium,
     premium_status:  row.premium_status,
     price_cents:     row.price_cents ?? 499,
@@ -63,6 +66,8 @@ export function creationToRow(creation, user, profile) {
     mux_asset_id:     creation.mux_asset_id ?? null,
     mux_playback_id:  creation.mux_playback_id ?? null,
     youtube_id:       creation.youtube_id ?? null,
+    vimeo_id:         creation.vimeo_id ?? null,
+    vimeo_hash:       creation.vimeo_hash ?? null,
   };
   
   return row;

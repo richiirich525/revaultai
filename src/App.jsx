@@ -451,6 +451,25 @@ function normalizeContactUrl(raw) {
 function youtubeThumb(id, res = "maxresdefault") {
   return `https://i.ytimg.com/vi/${id}/${res}.jpg`;
 }
+function parseVimeoUrl(raw) {
+  const v = (raw ?? "").trim();
+  if (!v) return null;
+  if (/^\d{6,12}$/.test(v)) return { id: v, hash: null };
+  const m = v.match(/vimeo\.com\/(?:video\/)?(\d{6,12})(?:[/?]h=|\/)?([A-Za-z0-9]+)?/);
+  if (!m) return null;
+  return { id: m[1], hash: m[2] && m[2].length >= 6 ? m[2] : null };
+}
+
+async function fetchVimeoThumb(id, hash) {
+  try {
+    const target = `https://vimeo.com/${id}${hash ? "/" + hash : ""}`;
+    const r = await fetch(`https://vimeo.com/api/oembed.json?url=${encodeURIComponent(target)}&width=1280`);
+    if (!r.ok) return null;
+    const j = await r.json();
+    return j.thumbnail_url || null;
+  } catch { return null; }
+}
+
 function parseYouTubeId(raw) {
   const v = (raw ?? "").trim();
   if (!v) return null;
@@ -916,7 +935,7 @@ function handleMouseLeave() {
     ? <img src={creation.preview_video} alt="preview" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0, transition: "opacity 0.4s ease", pointerEvents: "none" }} className="preview-gif" />
     : null
 )}
-        {(hasPreview || !!creation.video_url || !!creation.youtube_id) && <div className="video-indicator">&#9654; Film</div>}
+        {(hasPreview || !!creation.video_url || !!creation.youtube_id || !!creation.vimeo_id) && <div className="video-indicator">&#9654; Film</div>}
         <div className="creation-badge">{isPending ? <Badge type="review" /> : creation.is_premium ? <Badge type="Premium" /> : <Badge type="Open" />}</div>
         <div className="creation-info"><div className="creation-info-title">{creation.title}</div><div className="creation-info-creator">by {creation.creator.display_name}</div></div>
       </div>
@@ -2002,7 +2021,18 @@ const purchaseLoading = creation.is_premium && !purchasesLoaded; const priceLabe
   }
   return (
     <div className="page detail-page">
-      <div className="detail-cinema"><div className="detail-cinema-inner"><div className="detail-back" onClick={() => setPage("explore")}>&larr; Archive</div>{creation.youtube_id ? (
+      <div className="detail-cinema"><div className="detail-cinema-inner"><div className="detail-back" onClick={() => setPage("explore")}>&larr; Archive</div>{creation.vimeo_id ? (
+  <div style={{ position: "relative", width: "100%", aspectRatio: "16/9", background: "#000" }}>
+    <iframe
+      src={`https://player.vimeo.com/video/${creation.vimeo_id}${creation.vimeo_hash ? `?h=${creation.vimeo_hash}&` : "?"}title=0&byline=0&portrait=0`}
+      title={creation.title}
+      allow="autoplay; fullscreen; picture-in-picture"
+      allowFullScreen
+      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }}
+    />
+  </div>
+) : creation.youtube_id ? (
+
   <div style={{ position: "relative", width: "100%", aspectRatio: "16/9", background: "#000" }}>
     <iframe
       src={`https://www.youtube-nocookie.com/embed/${creation.youtube_id}?rel=0&modestbranding=1`}
@@ -2236,9 +2266,11 @@ track("upload_completed");
     if ((videoFile || prefill?.videoUrl) && uploadState !== "done") { notify("Please wait for your video to finish uploading."); return; }
     const license = normalizeContactUrl(form.licenseUrl);
     if (!license.ok) { notify(license.error); return; }
-    const ytId = form.youtubeUrl.trim() ? parseYouTubeId(form.youtubeUrl) : null;
-    if (form.youtubeUrl.trim() && !ytId) { notify("That doesn't look like a YouTube link."); return; }
-    if (!ytId && !videoFile && !prefill?.videoUrl) { notify("Upload a film or link one from YouTube."); return; }
+const linkRaw = form.youtubeUrl.trim();
+    const ytId = linkRaw ? parseYouTubeId(linkRaw) : null;
+    const vimeo = !ytId && linkRaw ? parseVimeoUrl(linkRaw) : null;
+    if (linkRaw && !ytId && !vimeo) { notify("That doesn't look like a YouTube or Vimeo link."); return; }
+    if (!ytId && !vimeo && !videoFile && !prefill?.videoUrl) { notify("Upload a film or link one from YouTube or Vimeo."); return; }
     setSubmitting(true);
     const autoApprove = profile?.auto_approve === true;
     const toolList = form.tools.split(",").map((t) => t.trim()).filter(Boolean);
@@ -2273,6 +2305,18 @@ track("upload_completed");
       newCreation.is_premium = false;
       newCreation.premium_status = "Pending";
     }
+    if (vimeo) {
+      const thumb = await fetchVimeoThumb(vimeo.id, vimeo.hash);
+      newCreation.vimeo_id = vimeo.id;
+      newCreation.vimeo_hash = vimeo.hash;
+      newCreation.hero_image = thumb || newCreation.hero_image;
+      newCreation.thumbnail_image = thumb || newCreation.thumbnail_image;
+      newCreation.video_url = "";
+      newCreation.preview_video = "";
+      newCreation.is_premium = false;
+      newCreation.premium_status = "Pending";
+    }
+
     
 setCreations((prev) => [newCreation, ...prev]);
 const { data: saved, error } = await insertCreation(newCreation, user, profile);
@@ -2338,8 +2382,8 @@ const { data: saved, error } = await insertCreation(newCreation, user, profile);
             )}
           </div>
           <div className="form-group">
-            <label className="form-label">Or link a YouTube film</label>
-            <input className="form-input" type="text" inputMode="url" placeholder="https://www.youtube.com/watch?v=..." value={form.youtubeUrl} onChange={(e) => updateField("youtubeUrl", e.target.value)} maxLength={200} disabled={!!videoFile || !!prefill?.videoUrl} />
+          <label className="form-label">Or link a YouTube or Vimeo film</label>
+          <input className="form-input" type="text" inputMode="url" placeholder="https://youtube.com/watch?v=...  or  https://vimeo.com/123456789" value={form.youtubeUrl} onChange={(e) => updateField("youtubeUrl", e.target.value)} maxLength={200} disabled={!!videoFile || !!prefill?.videoUrl} />
             <div className="form-hint">Already have the film on your own channel? Link it instead of uploading. Linked films are reviewed before they appear, stream from YouTube, and can't be offered for sale.</div>
           </div>
           <div className="form-group"><label className="form-label">Tools Used</label><input className="form-input" placeholder="Sora, Runway, MidJourney" value={form.tools} onChange={(e) => updateField("tools", e.target.value)} /></div>

@@ -30,6 +30,26 @@ import { supabase } from "./lib/supabase.js";
     return () => { cancelled = true; };
   }, []);
 
+  const [vimeoThumbs, setVimeoThumbs] = useState({});
+  useEffect(() => {
+    const needed = films.filter((f) => f.vimeo_id && !f.thumbnail_url);
+    if (!needed.length) return;
+    let cancelled = false;
+    (async () => {
+      const out = {};
+      for (const f of needed) {
+        try {
+          const target = `https://vimeo.com/${f.vimeo_id}${f.vimeo_hash ? "/" + f.vimeo_hash : ""}`;
+          const r = await fetch(`https://vimeo.com/api/oembed.json?url=${encodeURIComponent(target)}&width=1280`);
+          if (r.ok) { const j = await r.json(); if (j.thumbnail_url) out[f.id] = j.thumbnail_url; }
+        } catch { /* skip */ }
+      }
+      if (!cancelled) setVimeoThumbs(out);
+    })();
+    return () => { cancelled = true; };
+  }, [films]);
+
+
   return (
     <div className="page">
       <style>{`
@@ -80,21 +100,23 @@ import { supabase } from "./lib/supabase.js";
             {films.map((f) => (
               <div className="dv-card" key={f.id}>
                 <div className="dv-player" onClick={() => setPlaying(f.id)}>
-                  {playing === f.id ? (
+                                    {playing === f.id ? (
                     <iframe
-                      src={`https://www.youtube-nocookie.com/embed/${f.youtube_id}?rel=0&modestbranding=1&autoplay=1`}
+                      src={f.vimeo_id
+                        ? `https://player.vimeo.com/video/${f.vimeo_id}${f.vimeo_hash ? `?h=${f.vimeo_hash}&` : "?"}autoplay=1&title=0&byline=0&portrait=0`
+                        : `https://www.youtube-nocookie.com/embed/${f.youtube_id}?rel=0&modestbranding=1&autoplay=1`}
                       title={f.title}
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
                       allowFullScreen
                       referrerPolicy="strict-origin-when-cross-origin"
                     />
                   ) : (
                     <>
                       <img
-                        src={`https://i.ytimg.com/vi/${f.youtube_id}/maxresdefault.jpg`}
+                        src={f.thumbnail_url || (f.vimeo_id ? vimeoThumbs[f.id] : `https://i.ytimg.com/vi/${f.youtube_id}/maxresdefault.jpg`) || ""}
                         alt={f.title}
                         onError={(e) => {
-                          if (!e.target.dataset.fellBack) {
+                          if (f.youtube_id && !e.target.dataset.fellBack) {
                             e.target.dataset.fellBack = "1";
                             e.target.src = `https://i.ytimg.com/vi/${f.youtube_id}/hqdefault.jpg`;
                           }
