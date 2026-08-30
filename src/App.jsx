@@ -2287,8 +2287,12 @@ const { data: saved, error } = await insertCreation(newCreation, user, profile);
           </div>
           <div className="form-group"><label className="form-label">Tools Used</label><input className="form-input" placeholder="Sora, Runway, MidJourney" value={form.tools} onChange={(e) => updateField("tools", e.target.value)} /></div>
           <div className="form-group"><label className="form-label">Category</label><select className="form-select" value={form.category} onChange={(e) => updateField("category", e.target.value)}>{CATEGORIES.map((o) => <option key={o} value={o}>{o}</option>)}</select></div>
-          <div className="form-group"><label className="form-label">Prompt *</label><textarea className="form-textarea" placeholder="Describe your full prompt in detail..." value={form.prompt} onChange={(e) => updateField("prompt", e.target.value)} /></div>
-          <div className="form-group"><div className="toggle-row"><div className={"toggle" + (form.isPremium ? " on" : "")} onClick={() => updateField("isPremium", !form.isPremium)}><div className="toggle-knob" /></div><div><div className="toggle-label">Premium Prompt</div><div className="toggle-sub">{form.isPremium ? "Prompt paywalled, requires admin approval." : "Prompt freely visible to all."}</div></div></div></div>
+          <div className="form-group">
+            <label className="form-label">Production Note *</label>
+            <textarea className="form-textarea" placeholder="How was this made? Prompts, tools, models, camera and lighting choices, editing, sound — whatever you'd want another filmmaker to know." value={form.prompt} onChange={(e) => updateField("prompt", e.target.value)} />
+            <div className="form-hint">This is published with your film. It doesn't have to be a single prompt — for a multi-shot film, a description of your process, workflow or key decisions works just as well. Write as much or as little as the work deserves.</div>
+          </div>
+          <div className="form-group"><div className="toggle-row"><div className={"toggle" + (form.isPremium ? " on" : "")} onClick={() => updateField("isPremium", !form.isPremium)}><div className="toggle-knob" /></div><div><div className="toggle-label">Offer as a Premium Film</div><div className="toggle-sub">{form.isPremium ? "Viewers can buy a full-quality download. The film still streams free and your production note stays public. Requires review." : "Free to watch and download-free. Your production note is public either way."}</div></div>         </div></div>
           <div className="form-group">
             <label className="form-label">License This Link</label>
             <input className="form-input" type="text" inputMode="url" placeholder="https://yoursite.com/licensing  or  you@email.com" value={form.licenseUrl} onChange={(e) => updateField("licenseUrl", e.target.value)} maxLength={500} />
@@ -2644,7 +2648,7 @@ function GuidelinesPage({ setPage }) {
           <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 700, color: "var(--text)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 20 }}>Quality Requirements</div>
           {[
             ["Clear title", "Your title should describe the work — not just 'Untitled' or 'Test'."],
-            ["Complete prompt", "Free prompts minimum 50 words. Premium prompts minimum 150 words with model settings, camera direction, and lighting notes."],
+            ["Meaningful production note", "Tell us how the work was made. For a single generation, that's usually the prompt itself. For a multi-shot film, a workflow description, model choices, or the key creative decisions is exactly right. There's no word count — we're looking for something another filmmaker could learn from."],
             ["Original work", "You must own or have rights to the content you submit. AI-generated content must be your original creative work."],
             ["High-quality video", "Minimum 1080p. No watermarks, no platform logos, no TikTok borders. No slideshows of static images — content must have motion."],
             ["Cinematic first frame", "Mux generates your thumbnail from frame 0. Make it count. No black frames or title cards at the start."],
