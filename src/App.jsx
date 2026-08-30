@@ -944,6 +944,52 @@ function SpotlightSection({ creations, onView }) {
   );
 }
 
+function DiscoveredStrip({ setPage }) {
+  const [films, setFilms] = useState([]);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("discovered_films")
+        .select("id, title, youtube_id, director_name")
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: false })
+        .limit(4);
+      if (!cancelled) setFilms(data ?? []);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  if (films.length === 0) return null;
+
+  return (
+    <section className="section">
+      <div className="section-header"><div><div className="section-label" style={{ cursor: "pointer" }} onClick={() => setPage("discovered")}>Discovered</div><div className="section-sublabel">Exceptional AI films from around the web.</div></div><span className="section-link" onClick={() => setPage("discovered")}>View All &rarr;</span></div>
+      <div className="creation-grid">
+        {films.map((f) => (
+          <div key={f.id} className="creation-card" onClick={() => setPage("discovered")} style={{ cursor: "pointer" }}>
+            <div className="creation-thumb" style={{ position: "relative", overflow: "hidden" }}>
+              <img
+                src={`https://i.ytimg.com/vi/${f.youtube_id}/maxresdefault.jpg`}
+                alt={f.title}
+                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                onError={(e) => { if (!e.target.dataset.fellBack) { e.target.dataset.fellBack = "1"; e.target.src = `https://i.ytimg.com/vi/${f.youtube_id}/hqdefault.jpg`; } }}
+              />
+              <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <span style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(14,15,20,0.7)", border: "1px solid rgba(255,255,255,0.25)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text)", fontSize: 15, paddingLeft: 3 }}>&#9654;</span>
+              </div>
+            </div>
+            <div style={{ padding: "14px 16px" }}>
+              <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 14, fontWeight: 700, color: "var(--text)", marginBottom: 4 }}>{f.title}</div>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--muted)", letterSpacing: "0.06em" }}>Directed by {f.director_name}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function HomePage({ creations, setPage, setDetailId, user, onSignInClick }) {
   const premiumCreations = creations.filter((c) => c.is_premium && c.premium_status === "Approved");
   const openCreations    = creations.filter((c) => !c.is_premium);
@@ -963,18 +1009,15 @@ function HomePage({ creations, setPage, setDetailId, user, onSignInClick }) {
       <HomeFeatures setPage={setPage} user={user} onSignInClick={onSignInClick} />
       <SpotlightSection creations={creations} onView={goDetail} />
       <section className="section">
-        <div className="section-header"><div><div className="section-label">Curated</div><div className="section-sublabel">Premium creations from top-tier artists.</div></div><span className="section-link" onClick={() => setPage("explore")}>View All &rarr;</span></div>
-        <div className="creation-grid">{premiumCreations.slice(0, 4).map((c) => <CreationCard key={c.id} creation={c} onClick={goDetail} />)}</div>
-      </section>
-      <section className="section">
         <div className="section-header"><div><div className="section-label">Open Archive</div><div className="section-sublabel">Free access to outstanding AI creations.</div></div><span className="section-link" onClick={() => setPage("explore")}>View All &rarr;</span></div>
         <div className="creation-grid">{openCreations.slice(0, 4).map((c) => <CreationCard key={c.id} creation={c} onClick={goDetail} />)}</div>
       </section>
+      <DiscoveredStrip setPage={setPage} />
       <section className="section" style={{ textAlign: "center", borderTop: "1px solid var(--border)", background: "var(--bg)" }}>
         <div style={{ maxWidth: 640, margin: "0 auto" }}>
           <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.22em", color: "var(--accent)", textTransform: "uppercase", marginBottom: 18 }}>For Creators</div>
           <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "clamp(32px, 4vw, 48px)", fontWeight: 300, color: "var(--text)", marginBottom: 18, lineHeight: 1.15 }}>Build your creative legacy.</div>
-          <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.8, maxWidth: 520, margin: "0 auto 36px" }}>Share your work, grow your audience, monetize premium prompts, and become part of a curated archive of AI-native creativity.</p>
+          <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.8, maxWidth: 520, margin: "0 auto 36px" }}>Share your work, grow your audience, sell your films, and become part of a curated archive of AI-native creativity.</p>
           <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
             <button className="btn-primary" onClick={() => setPage("become-creator")}>Become a Creator</button>
             <button className="btn-ghost" onClick={() => setPage("creators")}>Explore Creators</button>
