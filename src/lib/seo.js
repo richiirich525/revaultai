@@ -64,6 +64,11 @@ export const PAGES = {
     description:
       "Showcase your AI films, build a creator profile, sell premium work, and keep 80% of net revenue. Join the RevaultAI creator community.",
   },
+    discovered: {
+    title: "Discovered — Exceptional AI Films From Around the Web | RevaultAI",
+    description:
+      "A hand-picked exhibition of remarkable AI-generated films from across the web, credited to their directors and streaming from their own channels.",
+  },
   "ai-video-generator": {
     title: "AI Video Generator — Seedance, Veo, Kling & Wan | RevaultAI",
     description:

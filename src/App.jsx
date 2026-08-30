@@ -8,6 +8,7 @@ import { BlogPage, BlogPostPage } from "./BlogPage.jsx";
 import Comments from "./Comments.jsx";
 import AiVideoGeneratorPage from "./AiVideoGeneratorPage.jsx";
 import HomeFeatures from "./HomeFeatures.jsx";
+import DiscoveredPage from "./DiscoveredPage.jsx";
 import { updateCommentsEnabled } from "./lib/comments.js";
 import {
   fetchCreations,
@@ -3232,6 +3233,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       if (path.startsWith("/creator/")) { const u = decodeURIComponent(path.slice(9)); creatorUserRef.current = u; setCreatorUserState(u); setPageState("profile"); return; }
       if (path === "/blog" || path === "/blog/") { setPageState("blog"); return; }
       if (path === "/ai-video-generator" || path === "/ai-video-generator/") { setPageState("ai-video-generator"); return; }
+      if (path === "/discovered" || path === "/discovered/") { setPageState("discovered"); return; }
       if (path.startsWith("/blog/")) { const s = decodeURIComponent(path.slice(6)); blogSlugRef.current = s; setBlogSlugState(s); setPageState("blog-post"); return; }
       const slug = path.slice(1).replace(/\/$/, "");
       if (KNOWN_PAGES.includes(slug)) setPageState(slug); 
