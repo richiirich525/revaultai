@@ -390,6 +390,7 @@ function Nav({ page, setPage, user, profile, onSignInClick, onSignOut }) {
         <div className={"nav-link" + (page === "home" ? " active" : "")} onClick={() => setPage("home")}>Home</div>
         <div className={"nav-link" + (page === "explore" ? " active" : "")} onClick={() => setPage("explore")}>Explore</div>
         <div className={"nav-link" + (page === "creators" ? " active" : "")} onClick={() => setPage("creators")}>Creators</div>
+        <div className={"nav-link" + (page === "discovered" ? " active" : "")} onClick={() => setPage("discovered")}>Discovered</div>
         {user && <div className={"nav-link" + (page === "feed" ? " active" : "")} onClick={() => setPage("feed")}>Following</div>}
         {user && <div className={"nav-link" + (page === "generate" ? " active" : "")} onClick={() => setPage("generate")}>Generate</div>}
         <div className={"nav-link" + (page === "prompt-builder" ? " active" : "")} onClick={() => setPage("prompt-builder")}>Prompt Builder</div>
@@ -3341,6 +3342,7 @@ case "dmca":      return <LegalPage setPage={setPage} page="dmca" />;
 case "ai-disclaimer": return <LegalPage setPage={setPage} page="ai-disclaimer" />;
       case "purchase-success": return <PurchaseSuccessPage setPage={setPage} setDetailId={setDetailId} creations={creations} />;
       case "founding-creators": return <FoundingCreatorsPage />;
+      case "discovered": return <DiscoveredPage />;
       case "ai-video-generator": return <AiVideoGeneratorPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} />;
       case "blog": return <BlogPage setPage={setPage} openPost={openPost} />;
       case "blog-post": return <BlogPostPage slug={blogSlug} setPage={setPage} />;
