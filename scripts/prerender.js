@@ -21,6 +21,7 @@ const SITE = "https://www.revaultai.com";
 
 const { PAGES, NOINDEX } = await import(path.join(ROOT, "src/lib/seo.js"));
 const { POSTS } = await import(path.join(ROOT, "src/blog/posts.js"));
+const { MODELS } = await import(path.join(ROOT, "src/prompts/models.js"));
 
 const template = fs.readFileSync(path.join(DIST, "index.html"), "utf8");
 
@@ -164,6 +165,109 @@ for (const post of POSTS) {
   // The article HTML is the same content React renders.
   html = injectBody(html, `<article><h1>${esc(post.title)}</h1><p>By ${esc(post.author)} · ${esc(post.date)}</p>${post.content}</article>`);
   writeRoute("/blog/" + post.slug, html);
+  count++;
+}
+
+// ---- Prompt directory index ---------------------------------------------
+{
+  const meta = PAGES.prompts;
+  const url = SITE + "/prompts";
+  let html = template;
+  html = setTitle(html, meta.title);
+  html = setMeta(html, "name", "title", meta.title);
+  html = setMeta(html, "name", "description", meta.description);
+  html = setMeta(html, "property", "og:title", meta.title);
+  html = setMeta(html, "property", "og:description", meta.description);
+  html = setMeta(html, "property", "og:url", url);
+  html = setMeta(html, "name", "twitter:title", meta.title);
+  html = setMeta(html, "name", "twitter:description", meta.description);
+  html = setMeta(html, "name", "twitter:url", url);
+  html = setCanonical(html, url);
+  html = setRobots(html, true);
+  html = injectJsonLd(html, {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "AI Video Prompt Directory",
+    itemListElement: MODELS.map((m, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: m.name + " prompts",
+      url: SITE + "/prompts/" + m.slug,
+    })),
+  });
+  const items = MODELS.map((m) =>
+    `<li><a href="/prompts/${esc(m.slug)}"><strong>${esc(m.name)}</strong></a> (${esc(m.maker)}) — ${m.prompts.length} prompts built for ${esc(m.strength)}.</li>`
+  ).join("");
+  html = injectBody(html, `<h1>AI Video Prompts</h1><p>${esc(meta.description)}</p><ul>${items}</ul>`);
+  writeRoute("/prompts", html);
+  count++;
+}
+
+// ---- Prompt directory: one page per model -------------------------------
+for (const m of MODELS) {
+  const url = SITE + "/prompts/" + m.slug;
+  let html = template;
+  html = setTitle(html, m.title);
+  html = setMeta(html, "name", "title", m.title);
+  html = setMeta(html, "name", "description", m.description);
+  html = setMeta(html, "property", "og:title", m.title);
+  html = setMeta(html, "property", "og:description", m.description);
+  html = setMeta(html, "property", "og:url", url);
+  html = setMeta(html, "property", "og:type", "article");
+  html = setMeta(html, "name", "twitter:title", m.title);
+  html = setMeta(html, "name", "twitter:description", m.description);
+  html = setMeta(html, "name", "twitter:url", url);
+  html = setCanonical(html, url);
+  html = setRobots(html, true);
+
+  html = injectJsonLd(html, [
+    {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      name: m.name + " prompts",
+      description: m.description,
+      url,
+      itemListElement: m.prompts.map((p, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        name: p.title,
+      })),
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: [
+        {
+          "@type": "Question",
+          name: `How do I use these ${m.name} prompts?`,
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: `Copy any prompt on this page and paste it into ${m.name}, or generate it directly on RevaultAI. Each prompt is written for ${m.strength} and can be edited freely to suit your own scene.`,
+          },
+        },
+        {
+          "@type": "Question",
+          name: `Are these ${m.name} prompts free to use?`,
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Yes. Every prompt in the RevaultAI prompt directory is free to copy and use, with no account required.",
+          },
+        },
+      ],
+    },
+  ]);
+
+  const body = m.prompts
+    .map((p, i) => `<section><h2>${i + 1}. ${esc(p.title)}</h2><p>${esc(p.text)}</p></section>`)
+    .join("");
+  const also = MODELS.filter((x) => x.slug !== m.slug)
+    .map((x) => `<li><a href="/prompts/${esc(x.slug)}">${esc(x.name)} prompts</a></li>`)
+    .join("");
+  html = injectBody(
+    html,
+    `<h1>${esc(m.h1)}</h1><p>${esc(m.intro)}</p>${body}<h2>Also see</h2><ul>${also}</ul><p><a href="/prompt-builder">Build your own prompt free</a> — no account needed.</p>`
+  );
+  writeRoute("/prompts/" + m.slug, html);
   count++;
 }
 

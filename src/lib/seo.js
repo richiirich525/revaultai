@@ -83,6 +83,11 @@ export const PAGES = {
     title: "Video Prompt Builder — Free AI Video Prompt Generator | RevaultAI",
     description: "Turn a rough idea into a structured video prompt for Veo, Sora, Kling, Runway, Wan, Hailuo and Seedance. Free, no account needed.",
   },
+  prompts: {
+    title: "AI Video Prompts — Free Copy-and-Paste Prompt Directory",
+    description:
+      "Free director-grade video prompts for Seedance 2.5, Veo 3.1, and Kling 3.0. Copy, paste, and generate. No account needed.",
+  },
   contact: { title: "Contact — RevaultAI", description: "Support, creator inquiries, DMCA, and partnership contacts for RevaultAI." },
   terms: { title: "Terms of Service — RevaultAI", description: "The terms governing use of the RevaultAI platform." },
   privacy: { title: "Privacy Policy — RevaultAI", description: "How RevaultAI collects, uses, and protects your data." },
@@ -94,7 +99,17 @@ export const PAGES = {
   },
 };
 
-// Pages that should never appear in search results.
+import { MODELS } from "../prompts/models.js";
+
+// Prompt-directory model pages, built from the MODELS data so adding a model
+// automatically adds its route, title, and description.
+export const PROMPT_MODEL_PAGES = MODELS.map((m) => ({
+  path: "/prompts/" + m.slug,
+  title: m.title,
+  description: m.description,
+}));
+
+// Pages that should never appear in search results. 
 export const NOINDEX = new Set(["settings", "admin", "set-password", "email-confirmed", "purchase-success", "feed", "generate"]);
 
 import { POSTS } from "../blog/posts.js";

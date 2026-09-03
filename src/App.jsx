@@ -9,6 +9,7 @@ import Comments from "./Comments.jsx";
 import AiVideoGeneratorPage from "./AiVideoGeneratorPage.jsx";
 import HomeFeatures from "./HomeFeatures.jsx";
 import DiscoveredPage from "./DiscoveredPage.jsx";
+import { PromptIndexPage, PromptModelPage } from "./PromptPages.jsx";
 import { updateCommentsEnabled } from "./lib/comments.js";
 import {
   fetchCreations,
@@ -1065,6 +1066,8 @@ function HomePage({ creations, setPage, setDetailId, user, onSignInClick }) {
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("refunds")}>Refunds</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("dmca")}>DMCA</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("ai-disclaimer")}>AI Disclaimer</span>
+    <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("prompts")}>AI Video Prompts</span>
+    <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("prompt-builder")}></span>
   </div>
   <div className="footer-copy">&copy; 2026 RevaultAI</div>
 </footer>
@@ -3285,12 +3288,15 @@ const [page, setPageState]        = useState("home");
   // ---- URL routing ----
   const detailIdRef = useRef(null);
   const creatorUserRef = useRef(null);
-  const KNOWN_PAGES = ["home","explore","creators","feed","generate","settings","admin","submit","set-password","email-confirmed","terms","faq","contact","guidelines","premium-prompts","about","become-creator","privacy","refunds","dmca","ai-disclaimer","purchase-success","founding-creators","blog","ai-video-generator","prompt-builder"];
+  const KNOWN_PAGES = ["home","explore","creators","feed","generate","settings","admin","submit","set-password","email-confirmed","terms","faq","contact","guidelines","premium-prompts","about","become-creator","privacy","refunds","dmca","ai-disclaimer","purchase-success","founding-creators","blog","ai-video-generator","prompt-builder","prompts"];
 
   function setDetailId(id) { detailIdRef.current = id; setDetailIdState(id); }
   const blogSlugRef = useRef(null);
   const [blogSlug, setBlogSlugState] = useState(null);
   function openPost(slug) { blogSlugRef.current = slug; setBlogSlugState(slug); setPage("blog-post"); }
+  const promptSlugRef = useRef(null);
+  const [promptSlug, setPromptSlugState] = useState(null);
+  function openPromptModel(slug) { promptSlugRef.current = slug; setPromptSlugState(slug); setPage("prompt-model"); }
   function setCreatorUser(u) { creatorUserRef.current = u; setCreatorUserState(u); }
 
   function pathForPage(p) {
@@ -3298,6 +3304,7 @@ const [page, setPageState]        = useState("home");
     if (p === "detail") return detailIdRef.current ? "/film/" + detailIdRef.current : "/explore";
     if (p === "profile") return creatorUserRef.current ? "/creator/" + creatorUserRef.current : "/creators";
     if (p === "blog-post") return blogSlugRef.current ? "/blog/" + blogSlugRef.current : "/blog";
+if (p === "prompt-model") return promptSlugRef.current ? "/prompts/" + promptSlugRef.current : "/prompts";
     return "/" + p;
   }
 
@@ -3335,6 +3342,8 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       if (path === "/ai-video-generator" || path === "/ai-video-generator/") { setPageState("ai-video-generator"); return; }
       if (path === "/discovered" || path === "/discovered/") { setPageState("discovered"); return; }
       if (path.startsWith("/blog/")) { const s = decodeURIComponent(path.slice(6)); blogSlugRef.current = s; setBlogSlugState(s); setPageState("blog-post"); return; }
+      if (path === "/prompts" || path === "/prompts/") { setPageState("prompts"); return; }
+      if (path.startsWith("/prompts/")) { const s = decodeURIComponent(path.slice(9)); promptSlugRef.current = s; setPromptSlugState(s); setPageState("prompt-model"); return; }
       const slug = path.slice(1).replace(/\/$/, "");
       if (KNOWN_PAGES.includes(slug)) setPageState(slug); 
     }
@@ -3417,7 +3426,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
     switch (page) {
       case "home":    return <HomePage creations={creations} setPage={setPage} setDetailId={setDetailId} user={user} onSignInClick={() => setAuthOpen(true)} />;
       case "explore": return <ExplorePage creations={creations} setPage={setPage} setDetailId={setDetailId} dbLoaded={dbLoaded} />;
-         case "creators":return <CreatorsPage setPage={setPage} setCreatorUser={setCreatorUser} creations={creations} />;
+      case "creators":return <CreatorsPage setPage={setPage} setCreatorUser={setCreatorUser} creations={creations} />;
       case "feed":    return <FollowFeedPage user={user} setPage={setPage} setDetailId={setDetailId} setCreatorUser={setCreatorUser} />;
       case "generate": return <GeneratePage user={user} profile={profile} notify={notify} setPage={setPage} setGenSubmission={setGenSubmission} setProfile={setProfile} />;
       case "profile": return <ProfilePage username={creatorUser} creations={creations} setPage={setPage} setDetailId={setDetailId} user={user} />;
@@ -3435,16 +3444,18 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       case "about": return <AboutPage setPage={setPage} />;
       case "become-creator": return <BecomeCreatorPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} />;
       case "prompt-builder": return <PromptBuilderPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} />;
-case "privacy":   return <LegalPage setPage={setPage} page="privacy" />;
-case "refunds":   return <LegalPage setPage={setPage} page="refunds" />;
-case "dmca":      return <LegalPage setPage={setPage} page="dmca" />;
-case "ai-disclaimer": return <LegalPage setPage={setPage} page="ai-disclaimer" />;
+      case "privacy":   return <LegalPage setPage={setPage} page="privacy" />;
+      case "refunds":   return <LegalPage setPage={setPage} page="refunds" />;
+      case "dmca":      return <LegalPage setPage={setPage} page="dmca" />;
+      case "ai-disclaimer": return <LegalPage setPage={setPage} page="ai-disclaimer" />;
       case "purchase-success": return <PurchaseSuccessPage setPage={setPage} setDetailId={setDetailId} creations={creations} />;
       case "founding-creators": return <FoundingCreatorsPage />;
       case "discovered": return <DiscoveredPage setPage={setPage} />;
       case "ai-video-generator": return <AiVideoGeneratorPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} />;
       case "blog": return <BlogPage setPage={setPage} openPost={openPost} />;
       case "blog-post": return <BlogPostPage slug={blogSlug} setPage={setPage} />;
+      case "prompts": return <PromptIndexPage setPage={setPage} openPromptModel={openPromptModel} />;
+      case "prompt-model": return <PromptModelPage slug={promptSlug} setPage={setPage} openPromptModel={openPromptModel} />;
       default: return null;
     }
   }
