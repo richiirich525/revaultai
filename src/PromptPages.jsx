@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MODELS, getModel } from "./prompts/models.js";
+import { MODELS, getModel, genresFor } from "./prompts/models.js";
 
 /*
   PromptPages — RevaultAI
@@ -29,6 +29,12 @@ const styles = `
   .pd-model-name { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
   .pd-model-maker { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: var(--accent); text-transform: uppercase; margin-bottom: 12px; }
   .pd-model-desc { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); line-height: 1.8; }
+  .pd-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+  .pd-chip { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; background: none; border: 1px solid var(--border); color: var(--muted); padding: 8px 15px; border-radius: 3px; cursor: pointer; transition: all 0.2s; }
+  .pd-chip:hover { color: var(--text); border-color: var(--muted); }
+  .pd-chip.active { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
+  .pd-genre { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
+  .pd-count { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.08em; margin-bottom: 20px; }
   .pd-also { border-top: 1px solid var(--border); margin-top: 48px; padding-top: 32px; }
   .pd-also-label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
   @media (max-width: 860px) { .pd-grid { grid-template-columns: 1fr; } .pd-prompt { font-size: 11px; padding: 14px 15px; } }
@@ -70,7 +76,7 @@ export function PromptIndexPage({ setPage, openPromptModel }) {
             <div key={m.slug} className="pd-model" onClick={() => openPromptModel(m.slug)}>
               <div className="pd-model-name">{m.name}</div>
               <div className="pd-model-maker">{m.maker}</div>
-              <div className="pd-model-desc">{m.prompts.length} prompts built for {m.strength}.</div>
+              <div className="pd-model-desc">{m.prompts.length} prompts across {genresFor(m).length} genres, built for {m.strength}.</div>
             </div>
           ))}
         </div>
@@ -82,6 +88,7 @@ export function PromptIndexPage({ setPage, openPromptModel }) {
 export function PromptModelPage({ slug, setPage, openPromptModel }) {
   const model = getModel(slug);
   const [copied, setCopied] = useState(null);
+  const [genre, setGenre] = useState("All");
 
   if (!model) {
     return (
@@ -94,16 +101,18 @@ export function PromptModelPage({ slug, setPage, openPromptModel }) {
     );
   }
 
-  async function copy(i, text) {
+  async function copy(key, text) {
     try {
       await navigator.clipboard.writeText(text);
-      setCopied(i);
+      setCopied(key);
       setTimeout(() => setCopied(null), 1800);
     } catch {
       setCopied(null);
     }
   }
 
+  const available = genresFor(model);
+  const shown = genre === "All" ? model.prompts : model.prompts.filter((p) => p.genre === genre);
   const others = MODELS.filter((m) => m.slug !== model.slug);
 
   return (
@@ -118,13 +127,22 @@ export function PromptModelPage({ slug, setPage, openPromptModel }) {
       <section className="section">
         <div className="pd-intro">{model.intro}</div>
         <CtaBanner setPage={setPage} />
-        {model.prompts.map((p, i) => (
-          <div className="pd-card" key={i}>
-            <div className="pd-card-num">Prompt {i + 1}</div>
+        <div className="pd-filters">
+          <button className={"pd-chip" + (genre === "All" ? " active" : "")} onClick={() => setGenre("All")}>All ({model.prompts.length})</button>
+          {available.map((g) => (
+            <button key={g} className={"pd-chip" + (genre === g ? " active" : "")} onClick={() => setGenre(g)}>{g}</button>
+          ))}
+        </div>
+        <div className="pd-count">
+          Showing {shown.length} of {model.prompts.length} prompts{genre !== "All" ? " \u00b7 " + genre : ""}
+        </div>
+        {shown.map((p, i) => (
+          <div className="pd-card" key={p.title}>
+            <div className="pd-card-num">Prompt {i + 1} <span className="pd-genre">\u00b7 {p.genre}</span></div>
             <div className="pd-card-title">{p.title}</div>
             <div className="pd-prompt">{p.text}</div>
-            <button className={"pd-copy" + (copied === i ? " done" : "")} onClick={() => copy(i, p.text)}>
-              {copied === i ? "\u2713 Copied" : "Copy prompt"}
+            <button className={"pd-copy" + (copied === p.title ? " done" : "")} onClick={() => copy(p.title, p.text)}>
+              {copied === p.title ? "\u2713 Copied" : "Copy prompt"}
             </button>
           </div>
         ))}
