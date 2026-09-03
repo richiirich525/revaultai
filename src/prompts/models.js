@@ -35,6 +35,26 @@ export const MODELS = [
         title: "The Unbroken Corridor",
         text: `A continuous 30-second single take following a nurse pushing a gurney down a hospital corridor at 3am, camera trailing at hip height on a 24mm lens, gliding smoothly without a single cut. Overhead fluorescents pass rhythmically, each one sweeping light across the sheets and the nurse's face in a repeating pulse. The gurney's wheels carry real momentum through turns; the sheet ripples with correct fabric physics from the movement of air. Corridor geometry stays spatially consistent through two turns and a set of swinging doors that part and settle naturally. Cold, desaturated palette, hard top light, natural motion blur, ambient hum of fluorescent ballast and squeaking casters.`,
       },
+      {
+        title: "Rain Never Stops in Sector Nine",
+        text: `A continuous 30-second single take following a trench-coated detective walking the length of a flooded neon arcade in a rain-drowned megacity, camera dollying backward ahead of him at chest height on a 35mm anamorphic lens, never cutting. Standing water displaces around each footfall with correct fluid behavior and settles behind him. Holographic advertisements reflect and fracture across the moving surface of the water, their light shifting continuously over his face as he passes beneath each one. His sodden coat carries real weight, dragging with a half-second lag behind his movement. Deep chiaroscuro, magenta and electric cyan against near-black, volumetric rain, anamorphic streak flares, natural motion blur, stable spatial continuity, ambient downpour and distant transit hum.`,
+      },
+      {
+        title: "The Siege Ladder",
+        text: `A continuous 30-second single take rising alongside a scaling ladder as armored soldiers climb the outer wall of a besieged medieval fortress at dawn. Camera begins low among churned mud and shields, then cranes upward in one unbroken move, tracking the climbers rung by rung to the battlements above. The ladder flexes and shudders under distributed weight with convincing structural physics. Arrows strike the timber and stone with correct impact and deflection; chainmail carries real mass, shifting and ringing against itself with each pull upward. Pitch smoke drifts through cold dawn light. Desaturated steel and mud palette, hard low sun, deep focus, heavy filmic grain, roaring battle ambience.`,
+      },
+      {
+        title: "The Dissolving Room",
+        text: `A continuous 30-second single take inside a windowless white room where the architecture slowly dissolves into falling sand. Camera moves in one unbroken slow orbit around a wooden chair at the center, 40mm lens, maintaining consistent spatial geometry as the walls disintegrate grain by grain. Sand falls with accurate granular physics, pooling and slumping into drifts across the floor, sliding as the piles exceed their angle of repose. The chair remains untouched and perfectly solid. A single hard light source from above narrows steadily, deepening the shadows across the growing dunes. Stark high-contrast lighting, monochrome bone-white and shadow, no cuts, subtle sound of pouring grain and settling weight.`,
+      },
+      {
+        title: "Basement Tape, 03:14",
+        text: `A continuous 30-second single take from a handheld camcorder descending a wooden basement staircase, camera bobbing with the operator's footsteps at 24mm, harsh onboard light throwing a single hard cone into the dark. Dust hangs and swirls through the beam with convincing volumetric behavior; the stairs flex and creak under real weight. At the bottom the light sweeps across a concrete floor, a floor drain, and a door standing slightly open that was not open before. The camera hesitates, breath audible, then pushes forward. Overexposed hotspot at the center of the beam falling to total black at the edges, heavy digital noise, timecode burn, no cuts, only footsteps and breathing.`,
+      },
+      {
+        title: "Ascension of the Drowned Cathedral",
+        text: `A continuous 30-second single take rising through the flooded nave of a colossal gothic cathedral, camera beginning submerged among broken pews and lifting in one unbroken vertical move up through the water's surface and into the vaulted air above, 28mm lens, no cuts. The surface breaks with accurate fluid dynamics, sheeting off the lens and settling into ripples that continue to propagate outward. Shafts of pale light fall through shattered stained glass, refracting differently above and below the waterline. Suspended particulate drifts with correct buoyancy. Cold blue-green underwater tones giving way to warm dust-filled gold above, deep focus, immersive filmic grain, muffled underwater sound resolving into cathedral reverb.`,
+      },
     ],
   },
 
@@ -70,6 +90,26 @@ export const MODELS = [
         title: "The Deposition",
         text: `A locked-off medium shot of an elderly man seated at a bare table in a fluorescent-lit deposition room, 35mm lens, flat frontal lighting that deliberately reveals every crease, liver spot, and tremor in his hands. He waits, breathing audibly, then answers with quiet defiance, lips precisely synced: "I signed it. I read every word before I did." A slight tightening at the corner of his mouth follows. The unforgiving overhead light and pale institutional walls remove all flattery from the image. High-fidelity facial texture, subtle involuntary micro-movements, ambient air-conditioning drone and the tap of a stenographer's keys.`,
       },
+      {
+        title: "The Informant's Terms",
+        text: `A tight close-up of a woman in her forties seated in a rain-streaked car at night, face lit only by the shifting magenta and cyan of a holographic billboard outside, 85mm lens, extremely shallow depth of field. Rain shadows crawl across her skin; every pore, the smudged liner beneath one eye, and the faint scar along her jaw render at high fidelity. She speaks low and fast, lips fully synchronized: "You get the file, I get a new name, and neither of us was ever here." Her eyes flick once to the mirror on the final word. Neon-noir palette, hard side key, deep black fill, ambient rain on the roof and the low idle of the engine.`,
+      },
+      {
+        title: "Oath at the War Table",
+        text: `A slow push-in from medium to close-up on a grey-bearded warlord standing over a candlelit war table in a stone hall, 50mm lens. Firelight flickers across weathered skin, rendering deep creases, wind-burn, and the wet shine of tired eyes at high fidelity. He looks up and speaks with weary authority, lips precisely synced: "We hold the bridge until sundown. After that, it will not matter who holds it." A muscle works in his jaw after the line. Warm single-source candlelight against cold stone, heavy chiaroscuro, shallow focus, ambient crackle of flame, distant rain, and the shift of armor off-frame.`,
+      },
+      {
+        title: "The Interview That Never Happened",
+        text: `A locked-off medium close-up of a man in his fifties seated against a blank grey wall, flat frontal lighting, 40mm lens. The image is rendered with unforgiving textural fidelity — sweat at the temple, a nervous swallow, the slight asymmetry of a forced smile. He begins confidently, lips fully synced: "There was never any building on that site. I would remember." Mid-sentence his own reflection in the dark glass behind him fails to move with him. His expression does not change; he keeps talking. Clinical documentary lighting, no score, the faint hiss of a recording device and room tone. Naturalistic performance, subtle involuntary micro-movements.`,
+      },
+      {
+        title: "The Cartographer of Nothing",
+        text: `An extreme close-up of a woman's face floating in a featureless white void, 100mm lens, lit by an impossible soft light with no visible source and no cast shadow. Skin texture, fine hairs, and the moisture line of the lower lid are rendered at extreme fidelity against the total emptiness behind her. She speaks slowly, as if remembering the words rather than choosing them, lips fully synchronized: "I drew the map before there was any country. That was the mistake." Her pupils dilate slightly on the final word. Flat shadowless illumination, monochrome bone-white palette, no ambient sound at all except her voice and a single sustained low tone.`,
+      },
+      {
+        title: "Camera Two, Last Entry",
+        text: `A handheld close-up of a young man holding a camcorder at arm's length in a dark stairwell, his face lit hard and unevenly from below by the camera's onboard light, 24mm lens with visible barrel distortion. The harsh underlighting reveals every detail — dilated pupils, sweat, a split lip, the tremor in his breathing. He whispers directly into the lens, lips precisely synced: "If anyone finds this, don't come looking. Just don't come looking." He glances off-frame, then kills the light. Overexposed hotspot falling to crushed black, heavy digital noise, timecode overlay, only breath and distant structural creaking in the audio.`,
+      },
     ],
   },
 
@@ -104,6 +144,26 @@ export const MODELS = [
       {
         title: "The Charge",
         text: `A low-angle tracking shot at knee height moving backward ahead of a mass of protestors surging forward down a wide avenue, 28mm lens, camera retreating at pace to stay just in front of the front rank. Hundreds of individuals fill the depth of the frame with distinct gaits, gestures, and collisions — banners lurching, one figure stumbling and being pulled upright by another. Tear gas canisters trail smoke that billows and shears across the crowd with convincing fluid dynamics. Overturned barricades scrape and shift under the press of bodies. Overcast flat daylight, desaturated palette, hard handheld shake, overwhelming ambient shouting and footfall.`,
+      },
+      {
+        title: "Wet Street, Full Sprint",
+        text: `An aggressive handheld chase shot following a courier sprinting through a rain-flooded neon canyon at street level, camera at 21mm running behind and slightly below, matching pace and taking impacts. Dense crowds of pedestrians under transparent umbrellas react individually — turning, recoiling, breaking apart around the runner with distinct non-repeating motion. He slides across the hood of a stopped hovercar with genuine body mechanics and recovers into a full stride. Spray fans from every footfall. Saturated magenta and cyan reflections churning across black water, heavy motion blur, whip-pan at the corner, roaring rain and crowd audio.`,
+      },
+      {
+        title: "The Line Breaks",
+        text: `A low-angle tracking shot at knee height retreating ahead of a medieval shield wall collapsing under cavalry impact, 28mm lens, camera moving fast to stay just ahead of the crush. Hundreds of armored infantry fill the frame in depth with distinct individual motion — bracing, stumbling, being driven backward, shields splintering. Horses collide with the line with full mass and momentum, riders pitching forward with realistic body physics. Mud sprays and clods arc through the air with accurate ballistics. Overcast flat daylight, desaturated steel and earth palette, violent handheld shake, deep depth of field to hold the scale, overwhelming ambient roar and impact.`,
+      },
+      {
+        title: "Gravity Is a Suggestion",
+        text: `A continuous kinetic shot following a dancer falling upward through a rotating corridor whose orientation shifts every few seconds, camera tumbling with her at 18mm, maintaining her centered as the world revolves around them both. Her body moves with full athletic commitment — extension, contraction, controlled landings against surfaces that become floors the instant she touches them. Loose fabric and scattered paper move with correct physics relative to each shifting gravity vector. Hard directional light rotates with the architecture, sweeping across her at speed. Saturated primary color blocking against white void, aggressive camera motion, motion blur, percussive sound design synced to each impact.`,
+      },
+      {
+        title: "Run the Corridor",
+        text: `A frantic handheld camcorder shot sprinting down a long institutional corridor, camera swinging wildly at 24mm as the operator runs, onboard light strobing across peeling walls and doorframes. Three other figures run ahead, their gaits distinct and panicked, one glancing back mid-stride with full-body torsion. A door is shoulder-charged open with real force and rebounds off the wall. Loose debris scatters and skitters underfoot with accurate physics. Overexposed hotspot with crushed black edges, severe motion blur, digital noise, timecode overlay, audio of pounding footfalls, ragged breathing, and something heavy keeping pace behind.`,
+      },
+      {
+        title: "Market Riot",
+        text: `A fast crane-down into a market square as a crowd of hundreds turns from commerce to panic in a single continuous movement, 35mm lens, camera descending from high wide into the thick of the crowd at head height. Individuals react at staggered intervals with entirely distinct behavior — some running, some frozen, some pushing against the flow. Market stalls collapse under the press with correct structural failure, produce scattering and rolling with accurate physics. Fabric awnings tear and whip. Hard midday sun, high contrast, dust kicked into the light beams, handheld chaos once the camera lands, deafening layered crowd audio.`,
       },
     ],
   },
