@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MODELS, getModel, genresFor } from "./prompts/models.js";
+import { MODELS, getModel, genresFor, GENRE_PAGES, getGenrePage, promptsByGenre } from "./prompts/models.js";
 
 /*
   PromptPages — RevaultAI
@@ -35,6 +35,9 @@ const styles = `
   .pd-chip.active { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
   .pd-genre { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
   .pd-count { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.08em; margin-bottom: 20px; }
+  .pd-model-tag { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); border: 1px solid rgba(123,63,228,0.35); border-radius: 3px; padding: 4px 10px; display: inline-block; margin-bottom: 12px; cursor: pointer; }
+  .pd-model-tag:hover { background: var(--accent-dim); }
+  .pd-genre-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
   .pd-also { border-top: 1px solid var(--border); margin-top: 48px; padding-top: 32px; }
   .pd-also-label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
   @media (max-width: 860px) { .pd-grid { grid-template-columns: 1fr; } .pd-prompt { font-size: 11px; padding: 14px 15px; } }
@@ -55,7 +58,7 @@ function CtaBanner({ setPage }) {
   );
 }
 
-export function PromptIndexPage({ setPage, openPromptModel }) {
+export function PromptIndexPage({ setPage, openPromptModel, openPromptGenre }) {
   return (
     <div className="page">
       <style>{styles}</style>
@@ -80,12 +83,20 @@ export function PromptIndexPage({ setPage, openPromptModel }) {
             </div>
           ))}
         </div>
+        <div className="pd-also">
+          <div className="pd-also-label">Browse by genre</div>
+          <div className="pd-genre-links">
+            {GENRE_PAGES.map((g) => (
+              <button key={g.slug} className="pd-chip" onClick={() => openPromptGenre(g.slug)}>{g.genre}</button>
+            ))}
+          </div>
+        </div>
       </section>
     </div>
   );
 }
 
-export function PromptModelPage({ slug, setPage, openPromptModel }) {
+export function PromptModelPage({ slug, setPage, openPromptModel, openPromptGenre }) {
   const model = getModel(slug);
   const [copied, setCopied] = useState(null);
   const [genre, setGenre] = useState("All");
@@ -147,6 +158,15 @@ export function PromptModelPage({ slug, setPage, openPromptModel }) {
           </div>
         ))}
         <div className="pd-also">
+          <div className="pd-also-label">Browse this genre across all models</div>
+          <div className="pd-genre-links">
+            {available.map((g) => {
+              const gp = GENRE_PAGES.find((x) => x.genre === g);
+              return gp ? <button key={g} className="pd-chip" onClick={() => openPromptGenre(gp.slug)}>{g}</button> : null;
+            })}
+          </div>
+        </div>
+        <div className="pd-also">
           <div className="pd-also-label">Also see</div>
           <div className="pd-grid">
             {others.map((m) => (
@@ -155,6 +175,69 @@ export function PromptModelPage({ slug, setPage, openPromptModel }) {
                 <div className="pd-model-maker">{m.maker}</div>
                 <div className="pd-model-desc">{m.prompts.length} prompts for {m.strength}.</div>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+export function PromptGenrePage({ slug, setPage, openPromptModel, openPromptGenre }) {
+  const page = getGenrePage(slug);
+  const [copied, setCopied] = useState(null);
+
+  if (!page) {
+    return (
+      <div className="page">
+        <div className="empty-state">
+          <div className="empty-text">Genre not found.</div>
+          <button className="btn-ghost" style={{ marginTop: 20 }} onClick={() => setPage("prompts")}>All prompt sets</button>
+        </div>
+      </div>
+    );
+  }
+
+  const prompts = promptsByGenre(page.genre);
+  const others = GENRE_PAGES.filter((g) => g.slug !== page.slug);
+
+  async function copy(key, text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(key);
+      setTimeout(() => setCopied(null), 1800);
+    } catch {
+      setCopied(null);
+    }
+  }
+
+  return (
+    <div className="page">
+      <style>{styles}</style>
+      <div className="back-btn" onClick={() => setPage("prompts")}>&larr; Prompt Directory</div>
+      <div className="page-hdr">
+        <div className="page-hdr-eyebrow">{page.genre}</div>
+        <div className="page-hdr-title">{page.h1}</div>
+        <div className="page-hdr-sub">{prompts.length} free prompts across {MODELS.length} models.</div>
+      </div>
+      <section className="section">
+        <div className="pd-intro">{page.intro}</div>
+        <CtaBanner setPage={setPage} />
+        {prompts.map((p) => (
+          <div className="pd-card" key={p.modelSlug + p.title}>
+            <div className="pd-model-tag" onClick={() => openPromptModel(p.modelSlug)}>For {p.modelName}</div>
+            <div className="pd-card-title">{p.title}</div>
+            <div className="pd-prompt">{p.text}</div>
+            <button className={"pd-copy" + (copied === p.modelSlug + p.title ? " done" : "")} onClick={() => copy(p.modelSlug + p.title, p.text)}>
+              {copied === p.modelSlug + p.title ? "\u2713 Copied" : "Copy prompt"}
+            </button>
+          </div>
+        ))}
+        <div className="pd-also">
+          <div className="pd-also-label">Other genres</div>
+          <div className="pd-genre-links">
+            {others.map((g) => (
+              <button key={g.slug} className="pd-chip" onClick={() => openPromptGenre(g.slug)}>{g.genre}</button>
             ))}
           </div>
         </div>

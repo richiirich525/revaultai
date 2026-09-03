@@ -218,3 +218,96 @@ export function genresFor(model) {
   const seen = new Set((model?.prompts ?? []).map((p) => p.genre));
   return GENRES.filter((g) => seen.has(g));
 }
+
+// ---------------------------------------------------------------------------
+// Genre pages — cross-cut views that pull matching prompts from every model.
+// Adding a genre here (and tagging prompts with it) creates a new indexed page.
+// ---------------------------------------------------------------------------
+
+export const GENRE_PAGES = [
+  {
+    slug: "cyberpunk-noir",
+    genre: "Cyberpunk Noir",
+    title: "Cyberpunk Noir AI Video Prompts — Free & Copy-Ready",
+    description:
+      "Free cyberpunk noir prompts for Seedance 2.5, Veo 3.1, and Kling 3.0. Neon, rain, and chiaroscuro, written for each model. No account needed.",
+    h1: "Cyberpunk Noir AI Video Prompts",
+    intro:
+      "Rain-slick streets, holographic signage, and light that only ever arrives at an angle. These cyberpunk noir prompts are written separately for each model, so the same genre plays to different strengths — long unbroken takes, spoken performance, or full-speed pursuit.",
+  },
+  {
+    slug: "epic-fantasy",
+    genre: "Epic Fantasy",
+    title: "Epic Fantasy AI Video Prompts — Free & Copy-Ready",
+    description:
+      "Free epic medieval fantasy prompts for Seedance 2.5, Veo 3.1, and Kling 3.0. Sieges, war councils, and armies at scale. No account needed.",
+    h1: "Epic Medieval Fantasy AI Video Prompts",
+    intro:
+      "Siege ladders, war tables, and shield walls breaking under cavalry. These epic fantasy prompts are written for scale and weight — armor that carries mass, structures that fail convincingly, and crowds that behave like armies rather than copies.",
+  },
+  {
+    slug: "surreal",
+    genre: "Surreal",
+    title: "Surreal & Abstract AI Video Prompts — Free to Use",
+    description:
+      "Free surreal and abstract art prompts for Seedance 2.5, Veo 3.1, and Kling 3.0. Dissolving rooms, shifting gravity, impossible light. No account needed.",
+    h1: "Surreal and Abstract AI Video Prompts",
+    intro:
+      "Rooms that dissolve into sand, gravity that changes its mind, faces lit by a source that cannot exist. These surreal prompts use precise physical and optical language to keep impossible images coherent rather than merely strange.",
+  },
+  {
+    slug: "found-footage-horror",
+    genre: "Found Footage Horror",
+    title: "Found Footage Horror AI Prompts — Free & Copy-Ready",
+    description:
+      "Free found footage horror prompts for Seedance 2.5, Veo 3.1, and Kling 3.0. Camcorder grain, hard onboard light, and dread. No account needed.",
+    h1: "Found Footage Horror AI Video Prompts",
+    intro:
+      "Onboard light that blows out the center and crushes the edges, timecode burn, and a camera operator whose breathing is part of the sound design. These found footage prompts are written to look recorded rather than shot.",
+  },
+  {
+    slug: "action",
+    genre: "Action",
+    title: "Action Scene AI Video Prompts — Chases, Fights, Crowds",
+    description:
+      "Free action prompts for Seedance 2.5, Veo 3.1, and Kling 3.0. Chases, fights, and dense crowd scenes with real physical weight. No account needed.",
+    h1: "Action Scene AI Video Prompts",
+    intro:
+      "Pursuits, hand-to-hand fights, and crowds at full scale. These action prompts are written around velocity and mass — body mechanics that land with weight, camera work that keeps pace, and crowds whose members move independently.",
+  },
+  {
+    slug: "drama",
+    genre: "Drama",
+    title: "Dramatic Dialogue AI Video Prompts — Free to Use",
+    description:
+      "Free dramatic scene prompts for Seedance 2.5, Veo 3.1, and Kling 3.0. Performance, dialogue, and close-ups that hold. No account needed.",
+    h1: "Dramatic Scene AI Video Prompts",
+    intro:
+      "Quiet rooms, hard conversations, and faces the camera stays on. These dramatic prompts are built around performance — written-out dialogue for models that lip-sync, and lighting chosen to reveal expression rather than flatter it.",
+  },
+  {
+    slug: "cinematic-realism",
+    genre: "Cinematic Realism",
+    title: "Cinematic Realism AI Video Prompts — Free to Use",
+    description:
+      "Free cinematic realism prompts for Seedance 2.5, Veo 3.1, and Kling 3.0. Real spaces, real light, real physics. No account needed.",
+    h1: "Cinematic Realism AI Video Prompts",
+    intro:
+      "Working kitchens, foundry floors, and streets in the rain. These realism prompts lean on accurate material behavior and motivated light — the kind of shot that reads as filmed rather than generated.",
+  },
+];
+
+export function getGenrePage(slug) {
+  return GENRE_PAGES.find((g) => g.slug === slug) ?? null;
+}
+
+// All prompts of a given genre, across every model, each tagged with its model.
+export function promptsByGenre(genre) {
+  const out = [];
+  for (const m of MODELS) {
+    for (const p of m.prompts) {
+      if (p.genre === genre) out.push({ ...p, modelName: m.name, modelSlug: m.slug, maker: m.maker });
+    }
+  }
+  return out;
+}

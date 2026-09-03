@@ -9,7 +9,7 @@ import Comments from "./Comments.jsx";
 import AiVideoGeneratorPage from "./AiVideoGeneratorPage.jsx";
 import HomeFeatures from "./HomeFeatures.jsx";
 import DiscoveredPage from "./DiscoveredPage.jsx";
-import { PromptIndexPage, PromptModelPage } from "./PromptPages.jsx";
+import { PromptIndexPage, PromptModelPage, PromptGenrePage } from "./PromptPages.jsx";
 import { updateCommentsEnabled } from "./lib/comments.js";
 import {
   fetchCreations,
@@ -3297,6 +3297,9 @@ const [page, setPageState]        = useState("home");
   const promptSlugRef = useRef(null);
   const [promptSlug, setPromptSlugState] = useState(null);
   function openPromptModel(slug) { promptSlugRef.current = slug; setPromptSlugState(slug); setPage("prompt-model"); }
+  const promptGenreRef = useRef(null);
+  const [promptGenre, setPromptGenreState] = useState(null);
+  function openPromptGenre(slug) { promptGenreRef.current = slug; setPromptGenreState(slug); setPage("prompt-genre"); }
   function setCreatorUser(u) { creatorUserRef.current = u; setCreatorUserState(u); }
 
   function pathForPage(p) {
@@ -3304,7 +3307,8 @@ const [page, setPageState]        = useState("home");
     if (p === "detail") return detailIdRef.current ? "/film/" + detailIdRef.current : "/explore";
     if (p === "profile") return creatorUserRef.current ? "/creator/" + creatorUserRef.current : "/creators";
     if (p === "blog-post") return blogSlugRef.current ? "/blog/" + blogSlugRef.current : "/blog";
-if (p === "prompt-model") return promptSlugRef.current ? "/prompts/" + promptSlugRef.current : "/prompts";
+    if (p === "prompt-model") return promptSlugRef.current ? "/prompts/" + promptSlugRef.current : "/prompts";
+    if (p === "prompt-genre") return promptGenreRef.current ? "/prompts/genre/" + promptGenreRef.current : "/prompts";
     return "/" + p;
   }
 
@@ -3343,6 +3347,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       if (path === "/discovered" || path === "/discovered/") { setPageState("discovered"); return; }
       if (path.startsWith("/blog/")) { const s = decodeURIComponent(path.slice(6)); blogSlugRef.current = s; setBlogSlugState(s); setPageState("blog-post"); return; }
       if (path === "/prompts" || path === "/prompts/") { setPageState("prompts"); return; }
+      if (path.startsWith("/prompts/genre/")) { const s = decodeURIComponent(path.slice(15)); promptGenreRef.current = s; setPromptGenreState(s); setPageState("prompt-genre"); return; }
       if (path.startsWith("/prompts/")) { const s = decodeURIComponent(path.slice(9)); promptSlugRef.current = s; setPromptSlugState(s); setPageState("prompt-model"); return; }
       const slug = path.slice(1).replace(/\/$/, "");
       if (KNOWN_PAGES.includes(slug)) setPageState(slug); 
@@ -3454,8 +3459,9 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       case "ai-video-generator": return <AiVideoGeneratorPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} />;
       case "blog": return <BlogPage setPage={setPage} openPost={openPost} />;
       case "blog-post": return <BlogPostPage slug={blogSlug} setPage={setPage} />;
-      case "prompts": return <PromptIndexPage setPage={setPage} openPromptModel={openPromptModel} />;
-      case "prompt-model": return <PromptModelPage slug={promptSlug} setPage={setPage} openPromptModel={openPromptModel} />;
+      case "prompts": return <PromptIndexPage setPage={setPage} openPromptModel={openPromptModel} openPromptGenre={openPromptGenre} />;
+      case "prompt-model": return <PromptModelPage slug={promptSlug} setPage={setPage} openPromptModel={openPromptModel} openPromptGenre={openPromptGenre} />;
+      case "prompt-genre": return <PromptGenrePage slug={promptGenre} setPage={setPage} openPromptModel={openPromptModel} openPromptGenre={openPromptGenre} />;
       default: return null;
     }
   }

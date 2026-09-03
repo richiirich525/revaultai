@@ -21,7 +21,7 @@ const SITE = "https://www.revaultai.com";
 
 const { PAGES, NOINDEX } = await import(path.join(ROOT, "src/lib/seo.js"));
 const { POSTS } = await import(path.join(ROOT, "src/blog/posts.js"));
-const { MODELS } = await import(path.join(ROOT, "src/prompts/models.js"));
+const { MODELS, GENRE_PAGES, promptsByGenre } = await import(path.join(ROOT, "src/prompts/models.js"));
 
 const template = fs.readFileSync(path.join(DIST, "index.html"), "utf8");
 
@@ -268,6 +268,50 @@ for (const m of MODELS) {
     `<h1>${esc(m.h1)}</h1><p>${esc(m.intro)}</p>${body}<h2>Also see</h2><ul>${also}</ul><p><a href="/prompt-builder">Build your own prompt free</a> — no account needed.</p>`
   );
   writeRoute("/prompts/" + m.slug, html);
+  count++;
+}
+
+// ---- Prompt directory: one page per genre, across all models ------------
+for (const g of GENRE_PAGES) {
+  const url = SITE + "/prompts/genre/" + g.slug;
+  const prompts = promptsByGenre(g.genre);
+  if (!prompts.length) continue;
+  let html = template;
+  html = setTitle(html, g.title);
+  html = setMeta(html, "name", "title", g.title);
+  html = setMeta(html, "name", "description", g.description);
+  html = setMeta(html, "property", "og:title", g.title);
+  html = setMeta(html, "property", "og:description", g.description);
+  html = setMeta(html, "property", "og:url", url);
+  html = setMeta(html, "property", "og:type", "article");
+  html = setMeta(html, "name", "twitter:title", g.title);
+  html = setMeta(html, "name", "twitter:description", g.description);
+  html = setMeta(html, "name", "twitter:url", url);
+  html = setCanonical(html, url);
+  html = setRobots(html, true);
+  html = injectJsonLd(html, {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: g.h1,
+    description: g.description,
+    url,
+    itemListElement: prompts.map((p, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: `${p.title} (${p.modelName})`,
+    })),
+  });
+  const body = prompts
+    .map((p) => `<section><h2>${esc(p.title)} — for ${esc(p.modelName)}</h2><p>${esc(p.text)}</p></section>`)
+    .join("");
+  const also = GENRE_PAGES.filter((x) => x.slug !== g.slug)
+    .map((x) => `<li><a href="/prompts/genre/${esc(x.slug)}">${esc(x.genre)} prompts</a></li>`)
+    .join("");
+  html = injectBody(
+    html,
+    `<h1>${esc(g.h1)}</h1><p>${esc(g.intro)}</p>${body}<h2>Other genres</h2><ul>${also}</ul><p><a href="/prompt-builder">Build your own prompt free</a> — no account needed.</p>`
+  );
+  writeRoute("/prompts/genre/" + g.slug, html);
   count++;
 }
 
