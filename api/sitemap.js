@@ -2,6 +2,7 @@
 // Served at https://www.revaultai.com/sitemap.xml via the vercel.json rewrite.
 
 import { POSTS } from "../src/blog/posts.js";
+import { MODELS } from "../src/prompts/models.js";
 import { createClient } from "@supabase/supabase-js";
 
 const SITE = "https://www.revaultai.com";
@@ -53,8 +54,14 @@ export default async function handler(req, res) {
     urlEntry({ loc: SITE + path, priority, changefreq })
   );
 
-  for (const p of POSTS) {
+    for (const p of POSTS) {
     entries.push(urlEntry({ loc: SITE + "/blog/" + p.slug, lastmod: p.date, changefreq: "monthly", priority: "0.7" }));
+  }
+
+  // Prompt directory — index plus one page per model.
+  entries.push(urlEntry({ loc: SITE + "/prompts", changefreq: "weekly", priority: "0.9" }));
+  for (const m of MODELS) {
+    entries.push(urlEntry({ loc: SITE + "/prompts/" + m.slug, changefreq: "monthly", priority: "0.8" }));
   }
 
   try {
