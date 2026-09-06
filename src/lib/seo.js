@@ -88,6 +88,7 @@ export const PAGES = {
     description:
       "Free director-grade video prompts for Seedance 2.5, Veo 3.1, and Kling 3.0. Copy, paste, and generate. No account needed.",
   },
+  search: { title: "Search — RevaultAI", description: "Search films, creators, Discovered, prompts and the Journal across RevaultAI." },
   contact: { title: "Contact — RevaultAI", description: "Support, creator inquiries, DMCA, and partnership contacts for RevaultAI." },
   terms: { title: "Terms of Service — RevaultAI", description: "The terms governing use of the RevaultAI platform." },
   privacy: { title: "Privacy Policy — RevaultAI", description: "How RevaultAI collects, uses, and protects your data." },
@@ -110,7 +111,7 @@ export const PROMPT_MODEL_PAGES = MODELS.map((m) => ({
 }));
 
 // Pages that should never appear in search results. 
-export const NOINDEX = new Set(["settings", "admin", "set-password", "email-confirmed", "purchase-success", "feed", "generate"]);
+export const NOINDEX = new Set(["settings", "admin", "set-password", "email-confirmed", "purchase-success", "feed", "generate", "search"]);
 
 import { POSTS } from "../blog/posts.js";
 

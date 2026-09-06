@@ -10,6 +10,7 @@ import AiVideoGeneratorPage from "./AiVideoGeneratorPage.jsx";
 import HomeFeatures from "./HomeFeatures.jsx";
 import DiscoveredPage from "./DiscoveredPage.jsx";
 import { PromptIndexPage, PromptModelPage, PromptGenrePage } from "./PromptPages.jsx";
+import SearchPage from "./SearchPage.jsx";
 import { updateCommentsEnabled } from "./lib/comments.js";
 import {
   fetchCreations,
@@ -401,6 +402,15 @@ function Nav({ page, setPage, user, profile, onSignInClick, onSignOut }) {
         {user && <div className={"nav-link" + (page === "settings" ? " active" : "")} onClick={() => setPage("settings")}>Profile</div>}
       </div>
       <div className="nav-right">
+        <button
+          type="button"
+          aria-label="Search"
+          title="Search"
+          onClick={() => setPage("search")}
+          style={{ background: "none", border: "none", color: page === "search" ? "var(--accent)" : "var(--muted)", cursor: "pointer", fontSize: 16, lineHeight: 1, padding: 4, display: "inline-flex", alignItems: "center" }}
+        >
+          &#9906;
+        </button>
         {user ? (
           <div className="nav-user">
             <div className="nav-user-avatar" onClick={() => setPage("settings")} title="Profile Settings">
@@ -3288,7 +3298,7 @@ const [page, setPageState]        = useState("home");
   // ---- URL routing ----
   const detailIdRef = useRef(null);
   const creatorUserRef = useRef(null);
-  const KNOWN_PAGES = ["home","explore","creators","feed","generate","settings","admin","submit","set-password","email-confirmed","terms","faq","contact","guidelines","premium-prompts","about","become-creator","privacy","refunds","dmca","ai-disclaimer","purchase-success","founding-creators","blog","ai-video-generator","prompt-builder","prompts"];
+  const KNOWN_PAGES = ["home","explore","creators","feed","generate","settings","admin","submit","set-password","email-confirmed","terms","faq","contact","guidelines","premium-prompts","about","become-creator","privacy","refunds","dmca","ai-disclaimer","purchase-success","founding-creators","blog","ai-video-generator","prompt-builder","prompts","search"];
 
   function setDetailId(id) { detailIdRef.current = id; setDetailIdState(id); }
   const blogSlugRef = useRef(null);
@@ -3459,6 +3469,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       case "ai-video-generator": return <AiVideoGeneratorPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} />;
       case "blog": return <BlogPage setPage={setPage} openPost={openPost} />;
       case "blog-post": return <BlogPostPage slug={blogSlug} setPage={setPage} openPost={openPost} />;
+      case "search": return <SearchPage creations={creations} setPage={setPage} setDetailId={setDetailId} setCreatorUser={setCreatorUser} openPost={openPost} openPromptModel={openPromptModel} />;
       case "prompts": return <PromptIndexPage setPage={setPage} openPromptModel={openPromptModel} openPromptGenre={openPromptGenre} />;
       case "prompt-model": return <PromptModelPage slug={promptSlug} setPage={setPage} openPromptModel={openPromptModel} openPromptGenre={openPromptGenre} />;
       case "prompt-genre": return <PromptGenrePage slug={promptGenre} setPage={setPage} openPromptModel={openPromptModel} openPromptGenre={openPromptGenre} />;
