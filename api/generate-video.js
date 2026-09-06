@@ -8,12 +8,16 @@ const MODELS = {
     imageFalId: 'wan/v2.6/image-to-video',   // VERIFY on fal
     creditsPerSecond: 1,
     durationParam: { 5: '5', 10: '10', 15: '15' },
+    aspectRatios: ['16:9', '9:16', '1:1'],
   },
   'kling-3.0': {
     falId: 'fal-ai/kling-video/v3/standard/text-to-video',
     imageFalId: 'fal-ai/kling-video/v3/standard/image-to-video',   // VERIFY on fal
     creditsPerSecond: 2,
     durationParam: { 5: '5', 10: '10' },
+    aspectRatios: ['16:9', '9:16', '1:1'],
+    // Kling v3 image-to-video infers ratio from the start image and ignores this field.
+    aspectIgnoredWithImage: true,
   },
   'seedance-2.0': {
     falId: 'bytedance/seedance-2.0/fast/text-to-video',
@@ -48,6 +52,7 @@ const MODELS = {
     imageFalId: 'fal-ai/veo3.1/fast/image-to-video',   // VERIFY on fal
     creditsPerSecond: 4,
     durationParam: { 4: '4s', 6: '6s', 8: '8s' },
+    aspectRatios: ['16:9', '9:16'],
   },
 };
 
@@ -70,7 +75,7 @@ export default async function handler(req, res) {
     }
 
     // 2. Validate input
-    const { prompt, model, duration, imageUrl } = req.body;
+    const { prompt, model, duration, imageUrl, aspectRatio } = req.body;
     const selected = MODELS[model];
     if (!selected) return res.status(400).json({ error: 'Unknown model' });
     if (imageUrl && !selected.imageFalId) {
@@ -79,6 +84,10 @@ export default async function handler(req, res) {
     const seconds = Number(duration) || 5;
     if (!selected.durationParam[seconds]) {
       return res.status(400).json({ error: 'Invalid duration' });
+    }
+    const ratio = aspectRatio || '16:9';
+    if (!(selected.aspectRatios || ['16:9']).includes(ratio)) {
+      return res.status(400).json({ error: 'That model does not support that aspect ratio' });
     }
     const cost = selected.creditsPerSecond * seconds;
     if (!prompt || !prompt.trim() || prompt.length > 2000) {
@@ -119,6 +128,7 @@ export default async function handler(req, res) {
         input: {
           prompt: prompt.trim(),
           duration: selected.durationParam[seconds],
+          ...(imageUrl && selected.aspectIgnoredWithImage ? {} : { aspect_ratio: ratio }),
           ...(imageUrl ? { image_url: imageUrl } : {}),
           ...(selected.extraInput || {}),
         },
