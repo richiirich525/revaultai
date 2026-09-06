@@ -13,6 +13,8 @@ import { supabase } from "./lib/supabase.js";
   const [films, setFilms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [playing, setPlaying] = useState(null); // id of the film currently playing
+  const [genre, setGenre] = useState("All");
+  const [visible, setVisible] = useState(12);
 
   useEffect(() => {
     let cancelled = false;
@@ -27,8 +29,17 @@ import { supabase } from "./lib/supabase.js";
       setFilms(data ?? []);
       setLoading(false);
     })();
-    return () => { cancelled = true; };
+       return () => { cancelled = true; };
   }, []);
+
+  const GENRE_ORDER = ["Sci-Fi", "Action", "Thriller", "Horror", "Fantasy", "Drama", "Comedy", "Animation", "Documentary"];
+  const present = GENRE_ORDER.filter((g) => films.some((f) => f.genre === g));
+  const filtered = genre === "All" ? films : films.filter((f) => f.genre === genre);
+  const shown = filtered.slice(0, visible);
+
+  function pickGenre(g) { setGenre(g); setVisible(12); }
+
+  
 
   const [vimeoThumbs, setVimeoThumbs] = useState({});
   useEffect(() => {
@@ -74,6 +85,12 @@ import { supabase } from "./lib/supabase.js";
         .dv-actions a { color: var(--muted); text-decoration: none; }
         .dv-actions a:hover { color: var(--accent); }
         .dv-dot { color: var(--muted); margin: 0 8px; }
+        .dv-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 32px; }
+        .dv-chip { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; background: none; border: 1px solid var(--border); color: var(--muted); padding: 8px 15px; border-radius: 3px; cursor: pointer; transition: all 0.2s; }
+        .dv-chip:hover { color: var(--text); border-color: var(--muted); }
+        .dv-chip.active { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
+        .dv-genre { display: inline-block; font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+        .dv-more { text-align: center; margin-top: 40px; }
         @media (max-width: 860px) { .dv-grid { grid-template-columns: 1fr; } }
       `}</style>
 
@@ -91,13 +108,21 @@ import { supabase } from "./lib/supabase.js";
           hand-picked. If you think yours belongs, write to rich@revaultai.com.
         </div>
 
+        {!loading && films.length > 0 && (
+          <div className="dv-filters">
+            <button className={"dv-chip" + (genre === "All" ? " active" : "")} onClick={() => pickGenre("All")}>All ({films.length})</button>
+            {present.map((g) => (
+              <button key={g} className={"dv-chip" + (genre === g ? " active" : "")} onClick={() => pickGenre(g)}>{g}</button>
+            ))}
+          </div>
+        )}
         {loading ? (
           <div className="empty-state"><div className="empty-text">Loading films...</div></div>
         ) : films.length === 0 ? (
           <div className="empty-state"><div className="empty-text">The first films are being selected now.</div></div>
         ) : (
           <div className="dv-grid">
-            {films.map((f) => (
+            {shown.map((f) => (
               <div className="dv-card" key={f.id}>
                 <div className="dv-player" onClick={() => setPlaying(f.id)}>
                                     {playing === f.id ? (
@@ -127,6 +152,7 @@ import { supabase } from "./lib/supabase.js";
                   )}
                 </div>
                 <div className="dv-body">
+                  {f.genre && <div className="dv-genre">{f.genre}</div>}
                   {f.award && <div className="dv-award">{f.award}</div>}
                   <div className="dv-title">{f.title}</div>
                   <div className="dv-director">
@@ -144,6 +170,13 @@ import { supabase } from "./lib/supabase.js";
               </div>
             ))}
                                   </div>
+        )}
+        {!loading && filtered.length > visible && (
+          <div className="dv-more">
+            <button className="btn-ghost" onClick={() => setVisible((v) => v + 12)}>
+              Load more ({filtered.length - visible} remaining)
+            </button>
+          </div>
         )}
         <div style={{ marginTop: 56, paddingTop: 32, borderTop: "1px solid var(--border)", textAlign: "center" }}>
           <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 1.9, maxWidth: 520, margin: "0 auto 20px" }}>
