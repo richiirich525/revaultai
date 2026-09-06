@@ -4,6 +4,364 @@
 
 export const POSTS = [
   {
+    slug: "ai-video-camera-shots-movements",
+    title: "15 Camera Shots & Movements Every AI Filmmaker Should Know",
+    seoTitle: "15 AI Video Camera Shots & Movements (+ Prompt Examples)",
+    description:
+      "Learn 15 essential camera shots and movements for AI video, with cinematic prompt examples for dolly shots, tracking shots, crane shots, orbit shots, POV, handheld and more.",
+    date: "2026-09-05",
+    author: "Richard Garland",
+    category: "Guides",
+    readingTime: "12 min",
+    faq: [
+      ["What camera movements work well in AI video prompts?", "Common movements include push-ins and pull-outs, tracking shots, pans, tilts, orbit shots, crane movements, aerial shots and handheld camera movement. The best choice depends on what the shot needs to communicate."],
+      ["Should every AI-generated shot have camera movement?", "No. A locked camera can be more effective than movement when you want stillness, tension, symmetry or uninterrupted attention on a performance."],
+      ["How do I describe camera movement in an AI video prompt?", "Be direct. Describe where the camera begins, how it moves relative to the subject and, when important, where it ends. For example: \"The camera slowly tracks backward in front of the subject at walking speed.\""],
+      ["What's the difference between a pan and a tracking shot?", "A pan rotates the camera horizontally from its position. A tracking shot moves the camera through physical space with or around the subject."],
+      ["How should I prompt camera movement for image-to-video?", "Focus primarily on what should change after the starting frame: subject movement, environmental movement and camera behavior. Avoid unnecessarily redescribing visual information already established by the source image."],
+      ["Can I combine multiple camera movements?", "Yes, but use compound movements deliberately. A simple, well-defined movement is often easier to control than several competing camera instructions."],
+    ],
+    content: `
+<p>Generating a beautiful image is one thing. Directing a shot is another.</p>
+
+<p>One of the fastest ways to make AI-generated video feel more intentional is to stop treating the camera as an invisible observer. Where is the camera? How close is it to the subject? Is it moving? Why is it moving? What should the audience learn or feel because of that movement?</p>
+
+<p>Modern AI video models increasingly understand the language of cinematography: close-ups, wide shots, tracking shots, push-ins, crane movements, handheld cameras, POV shots and more. But simply stuffing cinematic terminology into a prompt isn't enough. The goal isn't to make the camera move. The goal is to give the camera a reason to move.</p>
+
+<p>Here are 15 shots and camera movements every AI filmmaker should have in their toolkit. If you want the wider framework first, it sits alongside our <a href="/blog/how-to-write-ai-video-prompts">prompting guide</a>.</p>
+
+<h2>First: Shot Size and Camera Movement Aren't the Same Thing</h2>
+
+<p>Before we start, there's an important distinction. A <strong>shot size</strong> describes how the subject is framed:</p>
+
+<ul>
+<li>Extreme wide shot</li>
+<li>Wide shot</li>
+<li>Medium shot</li>
+<li>Close-up</li>
+<li>Extreme close-up</li>
+</ul>
+
+<p>A <strong>camera movement</strong> describes what the camera does during the shot:</p>
+
+<ul>
+<li>Pan</li>
+<li>Tilt</li>
+<li>Dolly</li>
+<li>Tracking</li>
+<li>Crane</li>
+<li>Orbit</li>
+</ul>
+
+<p>You can combine the two. For example:</p>
+
+<div class="example">Medium close-up of a detective sitting alone at a diner counter. The camera slowly pushes toward her as she realizes the man reflected in the window has been watching her.</div>
+
+<p>Now we know both how the shot begins and how the camera behaves. That's much more useful than simply writing "cinematic shot of a detective."</p>
+
+<h2>1. Establishing Shot</h2>
+
+<p>An establishing shot introduces the audience to a location and establishes geography before the story moves closer. These are often wide or extreme-wide compositions.</p>
+
+<h3>Best for</h3>
+
+<p>Opening scenes, introducing new locations, establishing scale, transitions between locations and giving the audience spatial context.</p>
+
+<h3>Prompt example</h3>
+
+<div class="example">Extreme wide establishing shot of an isolated research station surrounded by an enormous frozen landscape at blue hour. Tiny figures cross the snow toward the illuminated station. Wind drives loose snow across the foreground. The camera remains still, emphasizing the enormous scale and isolation of the environment.</div>
+
+<h3>Directing tip</h3>
+
+<p>Don't use an establishing shot simply because films have them. Ask what the environment tells us. A tiny character surrounded by a massive landscape can communicate isolation before the character says a word.</p>
+
+<h2>2. Close-Up</h2>
+
+<p>A close-up brings the audience directly into a character's emotional space. Faces are the obvious use, but close-ups can also focus on meaningful objects.</p>
+
+<h3>Best for</h3>
+
+<p>Emotion, reactions, important details, dialogue, suspense and reveals.</p>
+
+<h3>Prompt example</h3>
+
+<div class="example">Close-up of a woman sitting inside a parked car at night. Passing headlights briefly sweep across her face. Her eyes remain fixed on something outside the windshield as her expression slowly changes from confusion to recognition. Shallow depth of field. The camera remains locked.</div>
+
+<p>Notice that the camera doesn't need to move. Sometimes stillness is the direction.</p>
+
+<h2>3. Extreme Close-Up</h2>
+
+<p>An extreme close-up isolates a tiny detail and makes it important. An eye. A trigger finger. A drop of sweat. A key turning inside a lock.</p>
+
+<h3>Prompt example</h3>
+
+<div class="example">Extreme close-up of an astronaut's eye behind a scratched helmet visor. A tiny blue light begins blinking in the reflection of her pupil. Her eye shifts toward it. Very shallow depth of field. Locked camera.</div>
+
+<p>Extreme close-ups are particularly effective as inserts between wider shots.</p>
+
+<h2>4. Low-Angle Shot</h2>
+
+<p>Place the camera below the subject and point upward. The result can make a character or object appear powerful, imposing, heroic or threatening.</p>
+
+<h3>Prompt example</h3>
+
+<div class="example">Low-angle medium shot of a lone swordsman standing beneath towering neon signs in heavy rain. His coat moves in the wind as he slowly draws his sword. The camera remains low near street level, looking upward as glowing advertisements loom behind him.</div>
+
+<p>The angle itself tells part of the story.</p>
+
+<h2>5. High-Angle Shot</h2>
+
+<p>Now reverse the relationship. Place the camera above the subject and look downward. A high angle can emphasize vulnerability, geography, isolation or simply reveal information unavailable from eye level.</p>
+
+<h3>Prompt example</h3>
+
+<div class="example">High-angle wide shot looking down into an abandoned hotel lobby. A single traveler enters through the revolving doors and stops beneath the enormous chandelier. The camera remains stationary as the traveler looks around the empty room.</div>
+
+<p>Camera angle is not merely decoration. It changes the audience's relationship with the subject.</p>
+
+<h2>6. Dolly Push-In</h2>
+
+<p>A push-in physically moves the camera closer to the subject. It's one of the most useful movements in cinematic storytelling.</p>
+
+<h3>Best for</h3>
+
+<p>Realization, tension, emotional emphasis, discovery and drawing attention to an important moment.</p>
+
+<h3>Prompt example</h3>
+
+<div class="example">Medium shot of an elderly man opening an old wooden box in a dark attic. He discovers a photograph inside and freezes. The camera slowly dollies forward into a close-up as recognition appears on his face. Dust floats through a narrow beam of afternoon sunlight.</div>
+
+<p>The important part isn't "camera pushes in." It's why it pushes in at that moment. Here, the camera reacts to the character's realization.</p>
+
+<h2>7. Dolly Pull-Out</h2>
+
+<p>A pull-out does the opposite. The camera moves away from the subject. This can reveal new information, increase scale or make someone appear increasingly alone.</p>
+
+<h3>Prompt example</h3>
+
+<div class="example">Close shot of a child standing beneath a streetlamp at night holding a red balloon. The camera slowly dollies backward, revealing dozens of identical abandoned balloons scattered across the empty street. The child remains perfectly still.</div>
+
+<p>The movement becomes a reveal. We begin with one piece of information and end with another.</p>
+
+<h2>8. Tracking Shot</h2>
+
+<p>A tracking shot moves with the subject. Instead of watching someone cross the frame, the camera travels alongside, behind or ahead of them.</p>
+
+<h3>Best for</h3>
+
+<p>Walking scenes, running, action, exploration, entrances and immersive sequences.</p>
+
+<h3>Prompt example</h3>
+
+<div class="example">Side-profile tracking shot following a bicycle courier racing through a crowded futuristic market. The camera travels alongside her at matching speed as pedestrians, steam and holographic advertisements streak through the background. She weaves around a delivery vehicle without slowing.</div>
+
+<p>The subject and camera now have a relationship, so specify that relationship. Don't just prompt "tracking shot" — try "the camera tracks beside her at matching speed." There are more <a href="/prompts">prompt examples</a> to adapt in the library.</p>
+
+<h2>9. Pan</h2>
+
+<p>A pan rotates the camera horizontally from a fixed position. Think of turning your head left or right.</p>
+
+<h3>Best for</h3>
+
+<p>Following movement, revealing information beside the subject, surveying environments and transitioning attention between characters.</p>
+
+<h3>Prompt example</h3>
+
+<div class="example">Wide shot inside an empty 1970s television studio. The camera slowly pans from left to right across abandoned cameras and dusty lighting equipment before revealing a single television monitor still broadcasting in the corner.</div>
+
+<p>Again, the movement has a destination. The pan isn't there to look cinematic. It's there to reveal the monitor.</p>
+
+<h2>10. Tilt</h2>
+
+<p>A tilt rotates the camera vertically, up or down.</p>
+
+<h3>Best for</h3>
+
+<p>Revealing height, introducing characters, architecture, scale and dramatic entrances.</p>
+
+<h3>Prompt example</h3>
+
+<div class="example">The shot begins on polished black shoes stepping onto a rain-soaked sidewalk. The camera slowly tilts upward, revealing a tailored black suit, gloved hands and finally the expressionless face of the person wearing it. Neon reflections ripple across the pavement behind them.</div>
+
+<p>This is essentially controlled information delivery. The audience doesn't see everything immediately. You decide when they see it.</p>
+
+<h2>11. Orbit Shot</h2>
+
+<p>The camera moves in an arc around the subject. Orbit shots can make a character feel important, create dramatic dimensionality, reveal the environment around them or heighten a pivotal moment.</p>
+
+<h3>Prompt example</h3>
+
+<div class="example">Medium shot of a violinist performing alone on the roof of a skyscraper at sunrise. The camera slowly orbits around her as the city skyline shifts behind her. Her coat and hair move naturally in the wind while she continues playing.</div>
+
+<p>One warning: more camera movement isn't automatically better camera movement. If a gentle partial orbit communicates the shot, you may not need an enormous 360-degree rotation.</p>
+
+<h2>12. Crane / Jib Shot</h2>
+
+<p>A crane-style movement changes the camera's vertical position through space. It can begin close to the subject and rise to reveal the world around them, or descend from a large environment into an intimate scene.</p>
+
+<h3>Prompt example</h3>
+
+<div class="example">The shot begins at street level behind a musician performing beneath a flickering marquee. The camera rises slowly above him, then above the theater entrance, revealing an enormous crowd filling the entire city block.</div>
+
+<p>This is a great scale-reveal movement. Start small. End big.</p>
+
+<h2>13. Handheld Shot</h2>
+
+<p>Not every shot should glide perfectly through space. Handheld movement introduces small imperfections that can make a scene feel immediate, documentary-like, chaotic or intimate.</p>
+
+<h3>Prompt example</h3>
+
+<div class="example">Handheld medium shot following a journalist moving quickly through a crowded train station during an evacuation. People rush past the lens in both directions. The camera struggles slightly to keep pace as she pushes through the crowd.</div>
+
+<p>The important word here is not just "handheld." Describe the behavior of the handheld camera. Subtle? Nervous? Aggressive? Following someone? Trying to keep up? Those choices affect the feeling of the shot.</p>
+
+<h2>14. POV Shot</h2>
+
+<p>A point-of-view shot places the camera approximately where a character's eyes would be. The audience experiences the scene from that character's perspective.</p>
+
+<h3>Prompt example</h3>
+
+<div class="example">First-person POV moving slowly through a dark apartment while holding a flashlight. The beam sweeps across framed photographs, an overturned chair and an open bedroom door at the end of the hallway. The camera hesitates before approaching the doorway.</div>
+
+<p>POV works especially well when camera behavior reflects character behavior. Notice the camera hesitates. That's not traditional camera terminology. It's direction.</p>
+
+<h2>15. Aerial / Drone Shot</h2>
+
+<p>An aerial shot places the camera high above the environment. It can establish geography, follow movement, reveal patterns or create tremendous scale.</p>
+
+<h3>Prompt example</h3>
+
+<div class="example">High aerial tracking shot above a lone vehicle crossing a winding desert road at sunrise. The camera follows from behind and gradually gains altitude, revealing hundreds of abandoned vehicles scattered across the surrounding desert.</div>
+
+<p>Aerial shots become much more interesting when they do something besides simply say "drone shot of a desert." Give the shot a beginning and an end.</p>
+
+<h2>The Most Important Technique: Give Camera Movement a Purpose</h2>
+
+<p>Here's a useful rule. Don't ask what camera movement looks coolest. Ask what the audience should know or feel by the end of this shot that they didn't know at the beginning. Then choose the camera movement.</p>
+
+<ul>
+<li><strong>Reveal information</strong> — use a pan, tilt, pull-out or crane movement.</li>
+<li><strong>Increase emotional intensity</strong> — try a slow push-in.</li>
+<li><strong>Stay connected to a moving character</strong> — use a tracking shot.</li>
+<li><strong>Communicate instability</strong> — consider handheld movement.</li>
+<li><strong>Show scale</strong> — use a pull-out, crane or aerial movement.</li>
+<li><strong>Make the audience inhabit the character's experience</strong> — use POV.</li>
+</ul>
+
+<p>Camera movement becomes storytelling instead of decoration.</p>
+
+<h2>Combine Subject Motion, Environmental Motion and Camera Motion</h2>
+
+<p>One of the biggest mistakes in writing <a href="/blog/how-to-write-ai-video-prompts">AI video prompts</a> is treating all motion as one thing. Instead, think in layers.</p>
+
+<h3>Subject motion</h3>
+
+<p>What does the character or object do? "A woman walks toward the elevator."</p>
+
+<h3>Environmental motion</h3>
+
+<p>What moves around the subject? "Her coat shifts in the wind while steam drifts from a nearby vent."</p>
+
+<h3>Camera motion</h3>
+
+<p>What does the camera do? "The camera tracks backward in front of her at walking speed."</p>
+
+<p>Put them together:</p>
+
+<div class="example">Medium tracking shot of a woman walking quickly toward an elevator in an underground parking garage. The camera tracks backward directly in front of her at walking speed. Her coat moves slightly as ventilation fans push air through the garage, while steam drifts from a pipe in the background.</div>
+
+<p>Now the model receives three different kinds of movement instead of a vague request for a "dynamic cinematic shot."</p>
+
+<h2>Don't Over-Direct Every Shot</h2>
+
+<p>There's another trap. Once filmmakers discover camera terminology, prompts can turn into this:</p>
+
+<div class="example">Dolly tracking orbit crane shot, camera pans left while tilting upward and zooming backward with handheld cinematic drone movement...</div>
+
+<p>Congratulations. You've invented a camera operator's nightmare.</p>
+
+<p>More instructions don't necessarily produce more control. Start with the one movement that matters most, then iterate. If the shot works but feels too static, add another carefully chosen element. If the camera is doing something strange, simplify. Direction is partly knowing what to leave out.</p>
+
+<h2>Camera Movement for Image-to-Video</h2>
+
+<p>Image-to-video deserves special attention. Your starting image already establishes much of the subject, composition, environment and visual style. That means the prompt can often spend more of its attention on what changes after frame one.</p>
+
+<p>Instead of repeating everything visible in the image:</p>
+
+<div class="example">Cinematic woman wearing a red coat standing on a rainy street with neon signs...</div>
+
+<p>Try directing the motion:</p>
+
+<div class="example">She slowly turns toward the camera as wind moves her hair and coat. The camera gently pushes closer while neon reflections ripple across the wet pavement behind her.</div>
+
+<p>The image handles much of the <em>what</em>. The prompt directs much of the <em>what happens next</em> — the same is true whether you <a href="/generate">generate</a> the shot from a still or from text.</p>
+
+<h2>A Reusable Camera Prompt Formula</h2>
+
+<p>When you're unsure how to structure a shot, try:</p>
+
+<div class="callout"><strong>[Shot size] + [subject / action] + [camera movement] + [environmental motion] + [lighting / style] + [end state]</strong></div>
+
+<p>For example:</p>
+
+<div class="example">Wide shot of a lone astronaut walking across a frozen lake. The camera slowly tracks beside her at matching speed while snow blows across the ice. Cold blue twilight, distant mountains barely visible through fog. The camera gradually falls behind as she continues toward a faint light in the distance.</div>
+
+<p>Notice the last sentence. The shot has an ending. That's useful because filmmaking isn't just composition. It's change over time.</p>
+
+<p>If assembling all of that by hand feels like a lot, the <a href="/prompt-builder">Video Prompt Builder</a> scaffolds each part for you.</p>
+
+<h2>Before You Generate: Ask These Five Questions</h2>
+
+<p>Before sending your next AI video prompt, ask yourself:</p>
+
+<ul>
+<li>Where is the camera?</li>
+<li>How is the subject framed?</li>
+<li>Does the camera move?</li>
+<li>Why does it move?</li>
+<li>Where should the shot end?</li>
+</ul>
+
+<p>If you can answer those five questions, you're no longer merely describing an image. You're beginning to direct a shot.</p>
+
+<h2>Final Thought: Think Like a Director, Not a Prompt Engineer</h2>
+
+<p>The terminology matters. But memorizing words like dolly, crane and tracking shot isn't the real skill. The real skill is understanding why a filmmaker would choose one over another.</p>
+
+<p>A push-in can tell us: "Pay attention." A pull-out can tell us: "There's more here than you realized." A tracking shot can tell us: "Come with this character." A locked camera can tell us: "You aren't allowed to look away."</p>
+
+<p>The best AI video prompts aren't necessarily the ones with the most technical terminology. They're the ones where the camera, subject, environment and story are all trying to accomplish the same thing. Shot choice is one piece of a larger <a href="/blog/how-to-make-ai-short-film">AI filmmaking workflow</a> — so don't just tell the model what the camera does. Decide what the shot means.</p>
+
+<div class="cta-inline">
+<strong>Build Your Next Shot</strong>
+<p>Have the idea but don't want to assemble all the filmmaking language yourself? Use the RevaultAI Video Prompt Builder to turn a rough concept into a structured video prompt with camera direction, lighting, action, setting, visual style and more. Free. No account required.</p>
+<a class="cta-btn" href="/prompt-builder">Build a Video Prompt</a>
+</div>
+
+<h2>Frequently Asked Questions</h2>
+
+<h3>What camera movements work well in AI video prompts?</h3>
+<p>Common movements include push-ins and pull-outs, tracking shots, pans, tilts, orbit shots, crane movements, aerial shots and handheld camera movement. The best choice depends on what the shot needs to communicate.</p>
+
+<h3>Should every AI-generated shot have camera movement?</h3>
+<p>No. A locked camera can be more effective than movement when you want stillness, tension, symmetry or uninterrupted attention on a performance.</p>
+
+<h3>How do I describe camera movement in an AI video prompt?</h3>
+<p>Be direct. Describe where the camera begins, how it moves relative to the subject and, when important, where it ends. For example: "The camera slowly tracks backward in front of the subject at walking speed."</p>
+
+<h3>What's the difference between a pan and a tracking shot?</h3>
+<p>A pan rotates the camera horizontally from its position. A tracking shot moves the camera through physical space with or around the subject.</p>
+
+<h3>How should I prompt camera movement for image-to-video?</h3>
+<p>Focus primarily on what should change after the starting frame: subject movement, environmental movement and camera behavior. Avoid unnecessarily redescribing visual information already established by the source image.</p>
+
+<h3>Can I combine multiple camera movements?</h3>
+<p>Yes, but use compound movements deliberately. A simple, well-defined movement is often easier to control than several competing camera instructions.</p>
+
+<p class="editorial-note">AI video models evolve quickly, and their handling of camera language changes over time. The techniques here are deliberately model-agnostic — always check the current capabilities of the tools in your workflow.</p>
+`,
+  },
+  {
     slug: "how-to-write-ai-video-prompts",
     title: "How to Write AI Video Prompts: A Filmmaker's Guide to Better Generations",
     seoTitle: "How to Write AI Video Prompts: Complete 2026 Guide",
@@ -80,7 +438,7 @@ export const POSTS = [
 <li><strong>Aerial / drone</strong> — moves through the scene from above</li>
 </ul>
 
-<p>These aren't interchangeable vocabulary words. They change how a shot feels, and movement should have a reason. If a character realizes she's being followed, "slow dolly inward as her expression changes from confusion to fear" gradually closes the space between us and her. But "static wide shot as she realizes someone is standing motionless behind her" creates tension precisely through stillness. Cinematic camera movement isn't automatically better than a locked camera — sometimes not moving is the directing choice.</p>
+<p>These aren't interchangeable vocabulary words. They change how a shot feels, and movement should have a reason. If a character realizes she's being followed, "slow dolly inward as her expression changes from confusion to fear" gradually closes the space between us and her. But "static wide shot as she realizes someone is standing motionless behind her" creates tension precisely through stillness. Cinematic camera movement isn't automatically better than a locked camera — sometimes not moving is the directing choice. For a shot-by-shot tour of each move and when to reach for it, see our guide to the <a href="/blog/ai-video-camera-shots-movements">camera shots and movements</a> every AI filmmaker should know.</p>
 
 <h3>6. Lighting Is Storytelling</h3>
 
@@ -370,7 +728,7 @@ export const POSTS = [
 
 <h3>Build a shot list before generating</h3>
 
-<p>For each shot, decide the subject, action, location, shot size, camera angle, camera movement, lighting, approximate duration, dialogue or sound, and what must remain consistent from the previous shot. This simple step saves a remarkable amount of wasted generation.</p>
+<p>For each shot, decide the subject, action, location, shot size, camera angle, camera movement, lighting, approximate duration, dialogue or sound, and what must remain consistent from the previous shot. This simple step saves a remarkable amount of wasted generation. If you're still building that vocabulary, our guide to <a href="/blog/ai-video-camera-shots-movements">camera shots and movements</a> breaks down the options one at a time.</p>
 
 <h2>3. Establish the Visual Language</h2>
 

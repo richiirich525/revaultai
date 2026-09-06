@@ -3425,7 +3425,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
   
   useEffect(() => { window.scrollTo(0, 0); }, [page]);
 
-  useEffect(() => { applySEO({ page, detailId, creatorUser, creations }); }, [page, detailId, creatorUser, creations]);
+  useEffect(() => { applySEO({ page, detailId, creatorUser, creations }); }, [page, detailId, creatorUser, creations, blogSlug]);
 
   function renderPage() {
     switch (page) {
@@ -3458,7 +3458,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       case "discovered": return <DiscoveredPage setPage={setPage} />;
       case "ai-video-generator": return <AiVideoGeneratorPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} />;
       case "blog": return <BlogPage setPage={setPage} openPost={openPost} />;
-      case "blog-post": return <BlogPostPage slug={blogSlug} setPage={setPage} />;
+      case "blog-post": return <BlogPostPage slug={blogSlug} setPage={setPage} openPost={openPost} />;
       case "prompts": return <PromptIndexPage setPage={setPage} openPromptModel={openPromptModel} openPromptGenre={openPromptGenre} />;
       case "prompt-model": return <PromptModelPage slug={promptSlug} setPage={setPage} openPromptModel={openPromptModel} openPromptGenre={openPromptGenre} />;
       case "prompt-genre": return <PromptGenrePage slug={promptGenre} setPage={setPage} openPromptModel={openPromptModel} openPromptGenre={openPromptGenre} />;

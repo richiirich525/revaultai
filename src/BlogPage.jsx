@@ -85,7 +85,7 @@ export function BlogPage({ setPage, openPost }) {
   );
 }
 
-export function BlogPostPage({ slug, setPage }) {
+export function BlogPostPage({ slug, setPage, openPost }) {
   const post = getPost(slug);
   if (!post) {
     return (
@@ -102,6 +102,13 @@ export function BlogPostPage({ slug, setPage }) {
     const href = a.getAttribute("href") || "";
     if (href.startsWith("/")) {
       e.preventDefault();
+      // Post-to-post links need the blog-post route with its slug, not a raw
+      // "blog/<slug>" page string.
+      if (href.startsWith("/blog/") && typeof openPost === "function") {
+        openPost(href.slice(6).replace(/\/$/, ""));
+        window.scrollTo(0, 0);
+        return;
+      }
       const slugPart = href.slice(1).replace(/\/$/, "");
       setPage(slugPart || "home");
     }
