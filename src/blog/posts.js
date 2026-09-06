@@ -4,6 +4,315 @@
 
 export const POSTS = [
   {
+    slug: "ai-video-character-consistency",
+    title: "How to Keep Characters Consistent in AI Video",
+    seoTitle: "AI Character Consistency: How to Keep the Same Character Across Video Shots",
+    description:
+      "Learn how to keep characters consistent across AI-generated video shots using reference images, visual anchors, controlled prompting, shot planning, first frames and practical filmmaking workflows.",
+    date: "2026-09-05",
+    author: "Richard Garland",
+    category: "Guides",
+    readingTime: "15 min",
+    faq: [
+      ["Why do AI video characters change between shots?", "Each generation may need to reconstruct parts of the character from the information you provide. If visual references, descriptions, wardrobe or other identity cues change between shots, the output can drift. Using stable references and repeatable character descriptions can reduce that variation."],
+      ["What is the best way to keep the same character in AI video?", "Start with strong reference images, maintain a stable identity description, lock important wardrobe and visual traits, reuse successful frames when possible and track continuity from shot to shot."],
+      ["Do reference images help with AI character consistency?", "Yes. Reference-image workflows can give supported video models visual information about the character instead of relying entirely on text."],
+      ["Should I use text-to-video or image-to-video for character consistency?", "Both can be useful, but image-to-video or reference-based workflows give you an existing visual identity to build from. Text-to-video can still work well for exploration and establishing initial character designs."],
+      ["How many character reference images should I make?", "There is no universal number. A practical starting set is a clear portrait, three-quarter view, profile and full-body image, especially if those angles will appear in your film."],
+      ["How do I keep wardrobe consistent in AI video?", "Write down the costume precisely and reuse the same description across relevant shots. Treat wardrobe changes as deliberate continuity events rather than letting each generation reinterpret what the character is wearing."],
+      ["What should I do if a character starts changing during a generated clip?", "Use the portion that remains convincing and cut before the drift becomes distracting. Alternate angles, inserts and reaction shots can preserve both continuity and pacing."],
+    ],
+    content: `
+<p>You generate the first shot. The character looks great. The second shot looks great too. There's just one problem: it looks like a different person.</p>
+
+<p>The hairstyle shifted. The jacket changed. The face got narrower. The character aged ten years. By shot four, your protagonist has somehow become their own distant cousin.</p>
+
+<p>Character consistency is one of the most important challenges in AI filmmaking, because a film depends on the audience believing that the person in shot one is the same person in shot two.</p>
+
+<p>The solution is not simply "use the same prompt again." Consistency comes from building a repeatable visual identity and carrying that identity through your entire generation workflow. That means thinking more like a production designer, cinematographer and continuity supervisor — and less like someone generating isolated clips. Here's how.</p>
+
+<h2>What Does Character Consistency Actually Mean?</h2>
+
+<p>Character consistency does not mean every shot should look identical. A real character changes across a film. They turn their head. They change expressions. They walk into different lighting. They get wet in the rain. They remove a jacket. They move from a close-up to a wide shot.</p>
+
+<p>Consistency means that beneath those changes, the character remains recognizably the same person. You're trying to preserve identity while allowing performance. Think of consistency in layers:</p>
+
+<ul>
+<li><strong>Identity</strong> — the features that make the character recognizable.</li>
+<li><strong>Wardrobe</strong> — what they are wearing.</li>
+<li><strong>Hair and makeup</strong> — color, shape, length, styling and distinctive details.</li>
+<li><strong>Props</strong> — glasses, jewelry, bags, weapons, tools, accessories.</li>
+<li><strong>Body characteristics</strong> — height, build, posture and silhouette.</li>
+<li><strong>Visual style</strong> — realistic, animated, painterly, graphic, cinematic and so on.</li>
+<li><strong>Continuity state</strong> — what has happened to the character so far.</li>
+</ul>
+
+<p>That last point matters: if a shirt became dirty in the previous shot, it shouldn't magically become clean in the next one. That's where AI filmmaking starts becoming actual filmmaking.</p>
+
+<h2>1. Design the Character Before You Generate the Film</h2>
+
+<p>Don't invent your protagonist again in every prompt. Create the character first. Before generating scene one, define the person clearly enough that you can recognize what belongs to them and what doesn't. The same principle that drives good <a href="/blog/how-to-write-ai-video-prompts">AI video prompting</a> applies here — decide what matters before you generate.</p>
+
+<p>For example:</p>
+
+<div class="example">Woman in her early 30s, angular face, deep brown skin, short natural curls, dark brown eyes, small scar through the left eyebrow, athletic build, charcoal field jacket over a faded burgundy shirt, thin silver chain.</div>
+
+<p>Notice that some traits are ordinary and some are distinctive. The distinctive ones matter: short natural curls, a scar through the left eyebrow, the charcoal field jacket, the burgundy shirt, the silver chain. Those become visual anchors.</p>
+
+<p>A generic description like "beautiful woman in a jacket" gives the model enormous freedom. Freedom is useful when exploring. It's less useful when you're trying to cast the same lead actor for twelve shots.</p>
+
+<h2>2. Create a Character Reference Before Production</h2>
+
+<p>One of the strongest ways to preserve a character is to establish visual references before generating your scenes. That might be:</p>
+
+<ul>
+<li>A clean portrait</li>
+<li>A waist-up image</li>
+<li>A full-body image</li>
+<li>Front and side views</li>
+<li>Several expressions</li>
+<li>A simple turnaround sheet</li>
+<li>Multiple angles of the same wardrobe</li>
+</ul>
+
+<p>The goal is not to make a pretty image. The goal is to create source material your later shots can reference. A good reference image should make the character easy to read. Avoid hiding important identity traits behind:</p>
+
+<ul>
+<li>Extreme shadows</li>
+<li>Hair covering the face</li>
+<li>Heavy motion blur</li>
+<li>Tiny framing</li>
+<li>Complicated foreground objects</li>
+<li>Dramatic distortion</li>
+</ul>
+
+<p>You can make the film dramatic later. First, establish the actor.</p>
+
+<h2>3. Separate Fixed Traits From Variable Traits</h2>
+
+<p>Create two mental lists.</p>
+
+<h3>Fixed</h3>
+
+<p>Things that should remain stable: face, hair, eye color, body type, age, core wardrobe, distinctive accessories.</p>
+
+<h3>Variable</h3>
+
+<p>Things allowed to change: expression, pose, camera angle, lighting, environment, action, dirt, weather, temporary props.</p>
+
+<div class="callout"><strong>Fixed:</strong> short natural curls, eyebrow scar, charcoal jacket, burgundy shirt, silver necklace.<br><br><strong>Variable:</strong> running, frightened expression, night lighting, rain, side-profile shot.</div>
+
+<p>Now your prompt isn't redesigning the character. It's putting the same character into a new situation.</p>
+
+<h2>4. Keep Your Character Description Stable</h2>
+
+<p>If one prompt says "short curly black hair, angular face, dark brown skin" and the next says "soft curls, elegant face, warm brown complexion," you may understand those as the same person. The model may not.</p>
+
+<p>When identity matters, don't rewrite for style every time. Use a stable core description — think of it as your character's production ID.</p>
+
+<div class="example">Maya, early 30s, angular face, deep brown skin, short natural black curls, dark brown eyes, small scar through the left eyebrow, athletic build.</div>
+
+<p>Reuse that core wording across relevant shots. The scene changes; the identity block doesn't. The <a href="/prompts">prompt examples</a> in the library show how a block like this sits inside a full shot prompt.</p>
+
+<h2>5. Don't Overload the Character With Tiny Details</h2>
+
+<p>Details matter, but useful details matter more than sheer quantity. A 200-word facial description isn't necessarily more consistent than five strong visual anchors.</p>
+
+<p>Prioritize characteristics that survive different shot sizes. Ask: "What would make this character recognizable from across the room?" Those traits usually make the best anchors.</p>
+
+<h2>6. Use Wardrobe as a Continuity Tool</h2>
+
+<p>Wardrobe is underrated in AI character consistency. Even when facial identity drifts slightly, strong wardrobe continuity can help the viewer perceive the character as the same person.</p>
+
+<p>Instead of "black clothes," use "charcoal canvas field jacket with four front pockets over a faded burgundy crew-neck shirt." For important characters, maintain a costume note:</p>
+
+<div class="example">Maya — Scenes 1–4<br><br>Charcoal field jacket<br>Burgundy shirt<br>Black utility pants<br>Silver necklace<br>Brown boots</div>
+
+<p>If the jacket comes off in scene five, record it. Traditional productions literally employ people to track continuity. AI filmmakers need the same mindset.</p>
+
+<h2>7. Start New Shots From Strong Existing Frames</h2>
+
+<p>When your workflow supports <a href="/generate">image-to-video</a>, a good frame from an existing shot can become extremely valuable. Instead of asking the model to reconstruct the character entirely from text, give it a visual starting point.</p>
+
+<p>Say shot one ends with the character standing beside the elevator. Take a clean frame from that moment and use it as the starting image for shot two, where the character enters the elevator. Now shot two inherits visual information directly from shot one.</p>
+
+<p>This can help carry costume, hair, lighting, environment, prop position and spatial composition. Think of strong frames as continuity assets — don't throw them away after generation.</p>
+
+<h2>8. Build a Continuity Chain</h2>
+
+<p>For longer films, don't think "generate 12 independent clips." Think "shot 1 creates material for shot 2, shot 2 creates material for shot 3."</p>
+
+<ul>
+<li><strong>Shot 1</strong> — medium shot of Maya entering the warehouse.</li>
+<li><strong>Shot 2</strong> — use a frame from shot 1 as visual reference; side tracking shot as she crosses the warehouse.</li>
+<li><strong>Shot 3</strong> — use a frame from shot 2; close-up as she sees something off-screen.</li>
+<li><strong>Shot 4</strong> — use the established character reference again if the close-up has drifted.</li>
+</ul>
+
+<p>You're creating a chain instead of repeatedly returning to zero.</p>
+
+<h2>9. Be Careful When Changing Camera Angle</h2>
+
+<p>Characters often drift when the camera sees them from a dramatically different perspective. If a particular <a href="/blog/ai-video-camera-shots-movements">camera angle</a> matters, build references for it.</p>
+
+<p>Your character sheet might include a front view, three-quarter view, profile, full body and rear silhouette. You're reducing how much visual information the system has to improvise.</p>
+
+<p>This is especially useful for hair, jackets, tattoos, backpacks, hats, prosthetics and asymmetrical details. If your character has a scar over the left eyebrow, don't accidentally let it migrate to the right one every time the camera moves.</p>
+
+<h2>10. Keep Style Consistent Too</h2>
+
+<p>Sometimes the person stays recognizable but the world changes around them. Shot one looks like naturalistic 35mm photography. Shot two looks digitally sharp. Shot three suddenly becomes glossy commercial lighting. That's still a continuity problem.</p>
+
+<p>Reuse important visual language: lens feel, lighting direction, contrast, color palette, texture, film grain, depth of field, aspect ratio and production design. Character consistency and style consistency reinforce each other.</p>
+
+<h2>11. Control Lighting Changes Carefully</h2>
+
+<p>The same face can look dramatically different under different light. That's true in real cinematography, and it's even more important with AI.</p>
+
+<p>If your character starts under soft window light and the next shot puts them under harsh green overhead lighting, some perceived identity change is natural. Ask: "Did the facial structure change, or did the lighting change?" Those aren't the same problem.</p>
+
+<p>When testing consistency, compare shots under reasonably similar lighting first. Then introduce intentional lighting variation once you're confident the identity is stable.</p>
+
+<h2>12. Use Close-Ups Strategically</h2>
+
+<p>Close-ups expose identity errors. That makes them difficult — but also useful. If a character will appear throughout a film, generate a few strong close-ups early. Those frames can become valuable identity references later.</p>
+
+<p>A wide shot might preserve wardrobe while losing facial detail. A close-up does the opposite. Think face reference plus body reference plus wardrobe reference, not just one hero image.</p>
+
+<h2>13. Maintain a Character Bible</h2>
+
+<p>If you're making more than a few shots, create a simple character bible. For each major character, record identity, hair, eyes, distinguishing traits, wardrobe, behavior, visual references and continuity notes:</p>
+
+<div class="example">Name: Maya Torres<br><br>Age / physical identity: early 30s, angular face, deep brown skin, athletic build.<br>Hair: short natural black curls.<br>Eyes: dark brown.<br>Distinguishing traits: small scar through left eyebrow.<br>Wardrobe: charcoal field jacket, burgundy shirt, black utility pants, thin silver chain.<br>Behavior: controlled, observant, rarely makes large gestures.<br>Visual references: front portrait, three-quarter portrait, full body, profile.<br>Continuity notes: Scene 3 onward — jacket wet. Scene 5 — cut on right cheek. Scene 7 onward — no jacket.</div>
+
+<p>You're no longer relying on memory. You're managing production continuity.</p>
+
+<h2>14. Treat Environments the Same Way</h2>
+
+<p>Character consistency gets easier when the environment is also controlled. Maintain reusable environment descriptions too.</p>
+
+<div class="example">Narrow underground parking garage, pale concrete columns, low fluorescent ceiling lights, yellow bay numbers, damp floor reflecting overhead fixtures.</div>
+
+<p>Then reuse it when the character returns there. Consistency is often less about forcing one thing to remain stable and more about reducing unnecessary variation everywhere else.</p>
+
+<h2>15. Generate Coverage, Not Miracles</h2>
+
+<p>Don't expect one perfect generation to solve an entire sequence. Professional filmmaking is built from coverage. Generate options. For an important moment, you may want a wide shot, a medium shot, a close-up, a reaction shot, an insert and an alternate take.</p>
+
+<p>Then edit the strongest consistent material together. If one generation looks perfect for six seconds and falls apart at the end, use the six seconds. You're making a film, not submitting the raw generation for inspection. Editing is part of the consistency workflow.</p>
+
+<h2>16. Cut Before the Character Breaks</h2>
+
+<p>AI-generated shots sometimes begin strong and deteriorate later. The face changes. Hands become strange. Clothing morphs. Background objects drift.</p>
+
+<p>Do not feel obligated to use the entire clip. If the usable portion is 3.7 seconds, use 3.7 seconds. Cut to another angle. Cut to a reaction. Cut to an object. Cut to a wide shot. Filmmakers have been hiding imperfections with editing for more than a century. AI doesn't change that.</p>
+
+<h2>17. Use Inserts to Protect Continuity</h2>
+
+<p>Suppose your protagonist walks toward a safe, enters a combination and opens it. You don't necessarily need their face visible the entire time. Your sequence could be:</p>
+
+<ul>
+<li><strong>Shot 1</strong> — medium shot of Maya approaching the safe.</li>
+<li><strong>Shot 2</strong> — insert of her hand turning the dial.</li>
+<li><strong>Shot 3</strong> — close-up of the lock clicking.</li>
+<li><strong>Shot 4</strong> — reaction shot of Maya as the door opens.</li>
+</ul>
+
+<p>That gives you more editorial control and reduces how long the model has to preserve full-body identity continuously. The insert also makes the sequence feel more cinematic. Consistency and storytelling can solve each other's problems.</p>
+
+<h2>18. Build Sequences Around What AI Does Well</h2>
+
+<p>Sometimes consistency problems begin at the script stage. If your scene requires twelve characters, constant costume changes, fast physical interactions, complex blocking, continuous dialogue, major lighting changes, multiple locations and no cuts, you've designed a difficult generation problem.</p>
+
+<p>Instead, design the sequence as shots — the same discipline behind any <a href="/blog/how-to-make-ai-short-film">AI filmmaking workflow</a>. That doesn't mean making your story less ambitious. It means directing it. Break one complicated event into manageable visual beats.</p>
+
+<h2>19. Don't Confuse Character Consistency With Character Stiffness</h2>
+
+<p>There is a bad version of consistency: the character looks identical because they never move naturally. Same expression. Same angle. Same lighting. Same pose. That's not filmmaking.</p>
+
+<p>Your goal is stable identity plus changing performance. The character should be able to smile, cry, run, turn away, enter another room, stand in sunlight and appear in shadow while remaining recognizable. Consistency is the foundation. Performance is what you build on top of it.</p>
+
+<h2>A Practical Character Consistency Workflow</h2>
+
+<h3>Step 1: Define the character</h3>
+<p>Write a short identity description with four to seven durable visual anchors. The <a href="/prompt-builder">Video Prompt Builder</a> can scaffold the rest of the shot around it.</p>
+
+<h3>Step 2: Create reference images</h3>
+<p>Generate a clean portrait, three-quarter view and full-body image.</p>
+
+<h3>Step 3: Lock wardrobe</h3>
+<p>Write down exactly what they are wearing.</p>
+
+<h3>Step 4: Lock your visual style</h3>
+<p>Keep the core cinematography, palette and texture stable.</p>
+
+<h3>Step 5: Plan the shots</h3>
+<p>Know when you'll need close-ups, profiles, full-body shots and difficult angles.</p>
+
+<h3>Step 6: Generate your first strong shot</h3>
+<p>Treat successful frames as production assets.</p>
+
+<h3>Step 7: Reuse references</h3>
+<p>Use character references, first frames or prior successful frames whenever the generation workflow supports them.</p>
+
+<h3>Step 8: Update continuity notes</h3>
+<p>Track clothing damage, props, injuries, weather and location.</p>
+
+<h3>Step 9: Generate coverage</h3>
+<p>Create alternate angles rather than expecting one generation to carry the entire scene.</p>
+
+<h3>Step 10: Edit aggressively</h3>
+<p>Cut before visual identity deteriorates.</p>
+
+<p>That workflow won't eliminate every inconsistency. But it changes the problem from "I hope the model remembers my character" to "I am actively controlling continuity." That's a much better filmmaking position.</p>
+
+<h2>The Biggest Mistake: Starting Every Shot From Scratch</h2>
+
+<div class="callout">If you remember only one thing from this guide, make it this: stop recreating your protagonist from zero every time you generate a shot.</div>
+
+<p>Reuse character descriptions, reference images, wardrobe definitions, successful frames, visual style, location descriptions and continuity notes. The more of your film's visual language you carry forward, the less the model has to reinvent.</p>
+
+<h2>Final Thought: Consistency Is a Production Discipline</h2>
+
+<p>Character consistency isn't one magic setting. It's a workflow. Traditional filmmakers maintain continuity through casting, wardrobe, hair, makeup, lighting, production design, camera logs, script supervision and editing. AI filmmakers need versions of the same disciplines. Your tools are different; the principle isn't.</p>
+
+<p>Create the character. Define what makes them recognizable. Build references. Track what changes. Carry successful visual information from shot to shot. Then use editing to turn those pieces into a continuous performance.</p>
+
+<p>The goal isn't to generate twelve perfect clips. The goal is to make the audience believe they're watching one character live through twelve shots. That's filmmaking.</p>
+
+<div class="cta-inline">
+<strong>Build a More Consistent Shot</strong>
+<p>Already know who your character is? Use the RevaultAI Video Prompt Builder to turn your scene idea into a structured prompt with subject, action, environment, camera, lighting, style and motion. Free. No account required.</p>
+<a class="cta-btn" href="/prompt-builder">Build a Video Prompt</a>
+</div>
+
+<h2>Frequently Asked Questions</h2>
+
+<h3>Why do AI video characters change between shots?</h3>
+<p>Each generation may need to reconstruct parts of the character from the information you provide. If visual references, descriptions, wardrobe or other identity cues change between shots, the output can drift. Using stable references and repeatable character descriptions can reduce that variation.</p>
+
+<h3>What is the best way to keep the same character in AI video?</h3>
+<p>Start with strong reference images, maintain a stable identity description, lock important wardrobe and visual traits, reuse successful frames when possible and track continuity from shot to shot.</p>
+
+<h3>Do reference images help with AI character consistency?</h3>
+<p>Yes. Reference-image workflows can give supported video models visual information about the character instead of relying entirely on text.</p>
+
+<h3>Should I use text-to-video or image-to-video for character consistency?</h3>
+<p>Both can be useful, but image-to-video or reference-based workflows give you an existing visual identity to build from. Text-to-video can still work well for exploration and establishing initial character designs.</p>
+
+<h3>How many character reference images should I make?</h3>
+<p>There is no universal number. A practical starting set is a clear portrait, three-quarter view, profile and full-body image, especially if those angles will appear in your film.</p>
+
+<h3>How do I keep wardrobe consistent in AI video?</h3>
+<p>Write down the costume precisely and reuse the same description across relevant shots. Treat wardrobe changes as deliberate continuity events rather than letting each generation reinterpret what the character is wearing.</p>
+
+<h3>What should I do if a character starts changing during a generated clip?</h3>
+<p>Use the portion that remains convincing and cut before the drift becomes distracting. Alternate angles, inserts and reaction shots can preserve both continuity and pacing.</p>
+
+<p class="editorial-note">AI video tools change quickly, and reference-image and character features vary between models and versions. The workflow here is deliberately model-agnostic — check the current capabilities of the tools you use.</p>
+`,
+  },
+  {
     slug: "ai-video-camera-shots-movements",
     title: "15 Camera Shots & Movements Every AI Filmmaker Should Know",
     seoTitle: "15 AI Video Camera Shots & Movements (+ Prompt Examples)",
@@ -399,7 +708,7 @@ export const POSTS = [
 
 <p>Who or what are we looking at? Instead of "a woman," try "a woman in her early thirties wearing a weathered orange utility jacket." Instead of "a robot," try "a battered silver delivery robot with one flickering blue eye."</p>
 
-<p>Give the model enough to establish the subject without burying it under irrelevant detail. Ask what visually defines them, and what actually matters to this shot. If a detail needs to stay consistent across multiple shots — clothing, hairstyle, age, a particular prop — it's worth establishing clearly.</p>
+<p>Give the model enough to establish the subject without burying it under irrelevant detail. Ask what visually defines them, and what actually matters to this shot. If a detail needs to stay consistent across multiple shots — clothing, hairstyle, age, a particular prop — it's worth establishing clearly, and worth reusing the same wording each time; our guide to <a href="/blog/ai-video-character-consistency">character consistency in AI video</a> covers the wider workflow.</p>
 
 <h3>2. Action</h3>
 
@@ -798,7 +1107,7 @@ export const POSTS = [
 
 <p>Keep a simple continuity sheet covering character details (hair, face, age, wardrobe, accessories), location details (architecture, major objects, lighting, time of day) and cinematography (palette, lens character, depth of field, camera behavior). Where possible, use approved frames from earlier shots as references for later ones.</p>
 
-<p>Perfect pixel-level consistency isn't always necessary. Perceptual consistency is. The audience needs to believe they're still watching the same person in the same world.</p>
+<p>Perfect pixel-level consistency isn't always necessary. Perceptual consistency is. The audience needs to believe they're still watching the same person in the same world. For a full workflow, see our guide to how to <a href="/blog/ai-video-character-consistency">keep characters consistent across shots</a>.</p>
 
 <h2>9. Extend When a Shot Needs More Time</h2>
 
