@@ -3009,9 +3009,16 @@ function PromptBuilderPage({ setPage, user, onSignInClick }) {
     setResult(null);
     setCopied(false);
     try {
+      const headers = { "Content-Type": "application/json" };
+      if (user) {
+        try {
+          const token = await getSessionToken();
+          if (token) headers["Authorization"] = "Bearer " + token;
+        } catch { /* anonymous build is fine */ }
+      }
       const res = await fetch("/api/build-prompt", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ idea, model, style, strength, aspectRatio }),
       });
       const data = await res.json();

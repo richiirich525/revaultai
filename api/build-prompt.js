@@ -130,6 +130,15 @@ export default async function handler(req, res) {
   try {
     const { idea, model, style, strength, aspectRatio } = req.body || {};
 
+    // Optional: if the caller is signed in, we save the build to their history.
+    // Anonymous builds still work — this just stays null.
+    let userId = null;
+    const authHeader = req.headers.authorization || "";
+    if (authHeader.startsWith("Bearer ")) {
+      const { data: { user } } = await supabase.auth.getUser(authHeader.slice(7));
+      userId = user?.id ?? null;
+    }
+
     // --- Validate input ---
     if (typeof idea !== "string" || idea.trim().length < 3) {
       return res.status(400).json({ error: "Describe your idea in a few more words." });
@@ -222,6 +231,21 @@ ${idea.trim()}`;
 
     // --- Log the build (fire and forget) ---
     await supabase.from("prompt_builds").insert({ ip_hash: ipHash, target_model: model });
+
+    // --- Save to the creator's history if they're signed in ---
+    if (userId) {
+      const { error: histError } = await supabase.from("prompt_history").insert({
+        user_id: userId,
+        idea: idea.trim().slice(0, 500),
+        target_model: model,
+        style: style || "none",
+        strength: strength || "balanced",
+        aspect_ratio: aspectRatio || null,
+        title: typeof built.title === "string" ? built.title.slice(0, 200) : null,
+        prompt: built.prompt.slice(0, 4000),
+      });
+      if (histError) console.error("prompt_history insert failed:", histError);
+    }
 
     return res.status(200).json({
       model: target.label,
