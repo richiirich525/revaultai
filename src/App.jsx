@@ -3185,8 +3185,8 @@ function PromptBuilderPage({ setPage, user, onSignInClick }) {
   ];
 
   async function handleBuild() {
-    if (idea.trim().length < 3) {
-      setError("Describe your idea in a few more words.");
+    if (idea.trim().length < 3 && !refImage) {
+      setError("Describe your idea in a few more words, or attach a reference frame.");
       return;
     }
     setLoading(true);
