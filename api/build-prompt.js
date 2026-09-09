@@ -44,6 +44,55 @@ const TARGET_MODELS = {
   },
 };
 
+// Cinematic style presets. Each supplies concrete craft language the LLM must
+// work into the shot. These are shown to the user, not hidden — the point is to
+// teach the vocabulary, not to conceal it.
+const STYLES = {
+  none: { label: "No style preset", directives: "" },
+  "anamorphic-70s": {
+    label: "70s Anamorphic",
+    directives:
+      "Shot on 2x anamorphic glass with oval bokeh and horizontal blue flares, mild barrel distortion, 2.39:1 framing. Kodak 5247 stock character: warm halation on highlights, gentle grain, slightly lifted blacks, muted earth-toned grade.",
+  },
+  "neo-noir": {
+    label: "Neo-Noir Cyberpunk",
+    directives:
+      "Hard low-key chiaroscuro with a single hard key and deep unlit shadow. Practical neon sources in magenta and cyan reflected in wet surfaces. Volumetric haze, high contrast, crushed blacks, teal-and-magenta grade, rain or steam in the air.",
+  },
+  "imax-70": {
+    label: "IMAX 70mm",
+    directives:
+      "Large-format clarity: extreme depth of field, edge-to-edge sharpness, minimal grain, immense scale in the frame. Wide static or slow deliberate camera. Natural high-dynamic-range light, restrained grade, 1.43:1 sense of height.",
+  },
+  "doc-16mm": {
+    label: "Documentary 16mm",
+    directives:
+      "Handheld 16mm with visible grain, slightly soft resolution, available light only, occasional focus hunting and imperfect framing. Naturalistic colour, no grade beyond a mild lift, observational distance.",
+  },
+  "technicolor": {
+    label: "Technicolor Golden Age",
+    directives:
+      "Saturated three-strip Technicolor palette: vivid primaries, glowing skin tones, painted-backdrop depth. Soft studio key with strong fill, low contrast, no true black, classical composition and staging.",
+  },
+  "realtime-engine": {
+    label: "Real-Time Engine (UE5)",
+    directives:
+      "Real-time rendered look: physically based materials, ray-traced reflections and global illumination, volumetric fog, crisp specular detail, slight over-perfection in surfaces. Game-cinematic camera with smooth interpolated motion.",
+  },
+};
+
+const STRENGTHS = {
+  subtle: "Apply the style preset lightly — let it colour the lighting and grade without dominating the description.",
+  balanced: "Apply the style preset clearly and evenly across camera, lighting, palette and style.",
+  heavy: "Commit fully to the style preset. It should be the defining characteristic of the shot, shaping every technical choice.",
+};
+
+const RATIOS = {
+  "16:9": "Compose for 16:9 landscape: use horizontal space, wider shot sizes, lateral camera movement.",
+  "9:16": "Compose for 9:16 vertical: favour tighter framing, vertical layering front-to-back, subject centred with headroom, and vertical camera movement over lateral pans.",
+  "1:1": "Compose for a 1:1 square frame: centred subject, symmetrical staging, minimal lateral movement.",
+};
+
 const SYSTEM_PROMPT = `You are a cinematography-literate prompt engineer for AI video models. You turn a rough idea into one precise, shootable prompt.
 
 Return ONLY a JSON object. No markdown fences, no preamble, no commentary. Use exactly this schema:
@@ -79,7 +128,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { idea, model } = req.body || {};
+    const { idea, model, style, strength, aspectRatio } = req.body || {};
 
     // --- Validate input ---
     if (typeof idea !== "string" || idea.trim().length < 3) {
@@ -92,6 +141,9 @@ export default async function handler(req, res) {
     if (!target) {
       return res.status(400).json({ error: "Pick a target model." });
     }
+    const chosenStyle = STYLES[style] || STYLES.none;
+    const chosenStrength = STRENGTHS[strength] || STRENGTHS.balanced;
+    const chosenRatio = RATIOS[aspectRatio] || null;
 
     // --- Rate limit by IP ---
     const forwarded = req.headers["x-forwarded-for"] || "";
@@ -116,7 +168,13 @@ export default async function handler(req, res) {
     // --- Call the model ---
     const userMessage = `Target model: ${target.label}
 Model notes: ${target.notes}
-
+${chosenStyle.directives ? `
+Cinematic style preset — ${chosenStyle.label}:
+${chosenStyle.directives}
+${chosenStrength}
+` : ""}${chosenRatio ? `
+Framing: ${chosenRatio}
+` : ""}
 Rough idea:
 ${idea.trim()}`;
 
@@ -165,7 +223,14 @@ ${idea.trim()}`;
     // --- Log the build (fire and forget) ---
     await supabase.from("prompt_builds").insert({ ip_hash: ipHash, target_model: model });
 
-    return res.status(200).json({ model: target.label, built });
+    return res.status(200).json({
+      model: target.label,
+      built,
+      // Returned so the UI can show the craft language that shaped the result.
+      applied: chosenStyle.directives
+        ? { style: chosenStyle.label, directives: chosenStyle.directives, strength: strength || "balanced" }
+        : null,
+    });
   } catch (error) {
     console.error("build-prompt failed:", error);
     return res.status(500).json({ error: "Something went wrong building your prompt." });

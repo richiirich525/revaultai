@@ -2947,6 +2947,9 @@ function AboutPage({ setPage }) {
 function PromptBuilderPage({ setPage, user, onSignInClick }) {
   const [idea, setIdea] = useState("");
   const [model, setModel] = useState("veo");
+  const [style, setStyle] = useState("none");
+  const [strength, setStrength] = useState("balanced");
+  const [aspectRatio, setAspectRatio] = useState("16:9");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [result, setResult] = useState(null);
@@ -2960,6 +2963,28 @@ function PromptBuilderPage({ setPage, user, onSignInClick }) {
     ["wan", "Wan"],
     ["hailuo", "Hailuo"],
     ["seedance", "Seedance"],
+  ];
+
+  const styleOptions = [
+    ["none", "No style preset"],
+    ["anamorphic-70s", "70s Anamorphic"],
+    ["neo-noir", "Neo-Noir Cyberpunk"],
+    ["imax-70", "IMAX 70mm"],
+    ["doc-16mm", "Documentary 16mm"],
+    ["technicolor", "Technicolor Golden Age"],
+    ["realtime-engine", "Real-Time Engine (UE5)"],
+  ];
+
+  const strengthOptions = [
+    ["subtle", "Subtle"],
+    ["balanced", "Balanced"],
+    ["heavy", "Heavy"],
+  ];
+
+  const ratioOptions = [
+    ["16:9", "16:9 Landscape"],
+    ["9:16", "9:16 Vertical"],
+    ["1:1", "1:1 Square"],
   ];
 
   const fields = [
@@ -2987,7 +3012,7 @@ function PromptBuilderPage({ setPage, user, onSignInClick }) {
       const res = await fetch("/api/build-prompt", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idea, model }),
+        body: JSON.stringify({ idea, model, style, strength, aspectRatio }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -3061,6 +3086,76 @@ function PromptBuilderPage({ setPage, user, onSignInClick }) {
             ))}
           </div>
 
+          <div style={labelStyle}>Cinematic style</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 28 }}>
+            {styleOptions.map(([value, label]) => (
+              <button
+                key={value}
+                onClick={() => setStyle(value)}
+                style={{
+                  border: style === value ? "1px solid var(--accent)" : "1px solid var(--border)",
+                  background: style === value ? "var(--bg)" : "transparent",
+                  color: style === value ? "var(--accent)" : "var(--muted)",
+                  borderRadius: 4,
+                  padding: "8px 16px",
+                  fontFamily: "'DM Mono', monospace",
+                  fontSize: 11,
+                  letterSpacing: "0.08em",
+                  cursor: "pointer",
+                }}
+              >{label}</button>
+            ))}
+          </div>
+
+          <div style={{ display: "flex", gap: 28, flexWrap: "wrap", marginBottom: 28 }}>
+            {style !== "none" && (
+              <div>
+                <div style={labelStyle}>Style strength</div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  {strengthOptions.map(([value, label]) => (
+                    <button
+                      key={value}
+                      onClick={() => setStrength(value)}
+                      style={{
+                        border: strength === value ? "1px solid var(--accent)" : "1px solid var(--border)",
+                        background: strength === value ? "var(--bg)" : "transparent",
+                        color: strength === value ? "var(--accent)" : "var(--muted)",
+                        borderRadius: 4,
+                        padding: "8px 16px",
+                        fontFamily: "'DM Mono', monospace",
+                        fontSize: 11,
+                        letterSpacing: "0.08em",
+                        cursor: "pointer",
+                      }}
+                    >{label}</button>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div>
+              <div style={labelStyle}>Aspect ratio</div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {ratioOptions.map(([value, label]) => (
+                  <button
+                    key={value}
+                    onClick={() => setAspectRatio(value)}
+                    style={{
+                      border: aspectRatio === value ? "1px solid var(--accent)" : "1px solid var(--border)",
+                      background: aspectRatio === value ? "var(--bg)" : "transparent",
+                      color: aspectRatio === value ? "var(--accent)" : "var(--muted)",
+                      borderRadius: 4,
+                      padding: "8px 16px",
+                      fontFamily: "'DM Mono', monospace",
+                      fontSize: 11,
+                      letterSpacing: "0.08em",
+                      cursor: "pointer",
+                    }}
+                  >{label}</button>
+                ))}
+              </div>
+            </div>
+          </div>
+
           <button className="btn-primary" onClick={handleBuild} disabled={loading} style={{ width: "100%", opacity: loading ? 0.6 : 1 }}>
             {loading ? "Building…" : "Build prompt"}
           </button>
@@ -3088,6 +3183,17 @@ function PromptBuilderPage({ setPage, user, onSignInClick }) {
             </div>
             <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--text)", lineHeight: 1.9 }}>{result.built.prompt}</div>
           </div>
+
+          {/* What the style preset added — shown, not hidden */}
+          {result.applied && (
+            <div style={{ border: "1px solid var(--border)", borderRadius: 8, padding: "24px 28px", marginBottom: 32, background: "var(--surface)" }}>
+              <div style={labelStyle}>Style applied — {result.applied.style} ({result.applied.strength})</div>
+              <div style={bodyStyle}>{result.applied.directives}</div>
+              <div style={{ ...bodyStyle, fontSize: 10, marginTop: 12, opacity: 0.75 }}>
+                This is the craft language layered into your prompt. Copy it, change it, or write your own — nothing here is hidden.
+              </div>
+            </div>
+          )}
 
           {/* The breakdown */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 20, marginBottom: 56 }}>
