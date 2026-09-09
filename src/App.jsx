@@ -282,6 +282,7 @@ const CSS = `
   @media (max-width: 760px) {
     .nav { position: static; padding: 0 20px; height: auto; min-height: 62px; flex-wrap: wrap; }
     .page { padding-top: 0; }
+    .nav { overflow: visible; }
     .nav-center { position: static; transform: none; width: 100%; order: 3; flex-wrap: wrap; gap: 10px 16px; justify-content: center; padding: 12px 0; border-top: 1px solid var(--border); margin-top: 12px; }
     .nav-link { font-size: 10px; } .nav-user-email { display: none; } .nav-logo { font-size: 12px; }
     .nav-signin { padding: 6px 14px; font-size: 10px; } .nav-signout { padding: 5px 12px; font-size: 9px; }
@@ -384,6 +385,39 @@ function isAdmin(user) { return !!user?.email && ["richardgarland999@gmail.com"]
 
 function Nav({ page, setPage, user, profile, onSignInClick, onSignOut }) {
   const avatarSrc = profile?.avatar_url ?? null;
+  const [createOpen, setCreateOpen] = useState(false);
+  const [acctOpen, setAcctOpen] = useState(false);
+
+  // Close either menu on any outside click or Escape.
+  useEffect(() => {
+    if (!createOpen && !acctOpen) return;
+    function close() { setCreateOpen(false); setAcctOpen(false); }
+    function onKey(e) { if (e.key === "Escape") close(); }
+    document.addEventListener("click", close);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("click", close);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [createOpen, acctOpen]);
+
+  const CREATE_PAGES = ["generate", "prompt-builder", "scene-breakdown", "prompts", "submit"];
+  const createActive = CREATE_PAGES.includes(page);
+
+  const menuStyle = {
+    position: "absolute", top: "calc(100% + 10px)", left: 0, minWidth: 210,
+    background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: 6,
+    padding: 6, zIndex: 200, boxShadow: "0 12px 32px rgba(0,0,0,0.5)",
+  };
+  const itemStyle = (on) => ({
+    display: "block", width: "100%", textAlign: "left", background: "none", border: "none",
+    padding: "10px 14px", borderRadius: 4, cursor: "pointer",
+    fontFamily: "'DM Mono', monospace", fontSize: 11, letterSpacing: "0.1em",
+    textTransform: "uppercase", color: on ? "var(--accent)" : "var(--muted)",
+  });
+
+  function go(p) { setPage(p); setCreateOpen(false); setAcctOpen(false); }
+
   return (
     <nav className="nav">
       <div className="nav-logo" onClick={() => setPage("home")}>
@@ -395,12 +429,28 @@ function Nav({ page, setPage, user, profile, onSignInClick, onSignOut }) {
         <div className={"nav-link" + (page === "creators" ? " active" : "")} onClick={() => setPage("creators")}>Creators</div>
         <div className={"nav-link" + (page === "discovered" ? " active" : "")} onClick={() => setPage("discovered")}>Discovered</div>
         {user && <div className={"nav-link" + (page === "feed" ? " active" : "")} onClick={() => setPage("feed")}>Following</div>}
-        {user && <div className={"nav-link" + (page === "generate" ? " active" : "")} onClick={() => setPage("generate")}>Generate</div>}
-        <div className={"nav-link" + (page === "prompt-builder" ? " active" : "")} onClick={() => setPage("prompt-builder")}>Prompt Builder</div>
-        <div className={"nav-link" + (page === "submit" ? " active" : "")} onClick={() => setPage("submit")}>Submit</div>
+
+        <div style={{ position: "relative" }} onClick={(e) => e.stopPropagation()}>
+          <div
+            className={"nav-link" + (createActive ? " active" : "")}
+            onClick={() => { setCreateOpen((o) => !o); setAcctOpen(false); }}
+            aria-haspopup="true"
+            aria-expanded={createOpen}
+          >
+            Create {createOpen ? "\u25B4" : "\u25BE"}
+          </div>
+          {createOpen && (
+            <div style={menuStyle} role="menu">
+              {user && <button style={itemStyle(page === "generate")} onClick={() => go("generate")}>Generate</button>}
+              <button style={itemStyle(page === "prompt-builder")} onClick={() => go("prompt-builder")}>Prompt Builder</button>
+              <button style={itemStyle(page === "scene-breakdown")} onClick={() => go("scene-breakdown")}>Scene Breakdown</button>
+              <button style={itemStyle(page === "prompts")} onClick={() => go("prompts")}>Prompt Library</button>
+              <button style={itemStyle(page === "submit")} onClick={() => go("submit")}>Submit a Film</button>
+            </div>
+          )}
+        </div>
+
         {!user && <div className={"nav-link" + (page === "become-creator" ? " active" : "")} onClick={() => setPage("become-creator")}>Join</div>}
-        {user && isAdmin(user) && <div className={"nav-link" + (page === "admin" ? " active" : "")} onClick={() => setPage("admin")}>Admin</div>}
-        {user && <div className={"nav-link" + (page === "settings" ? " active" : "")} onClick={() => setPage("settings")}>Profile</div>}
       </div>
       <div className="nav-right">
         <button
@@ -413,12 +463,25 @@ function Nav({ page, setPage, user, profile, onSignInClick, onSignOut }) {
           &#9906;
         </button>
         {user ? (
-          <div className="nav-user">
-            <div className="nav-user-avatar" onClick={() => setPage("settings")} title="Profile Settings">
+          <div className="nav-user" style={{ position: "relative" }} onClick={(e) => e.stopPropagation()}>
+            <div
+              className="nav-user-avatar"
+              onClick={() => { setAcctOpen((o) => !o); setCreateOpen(false); }}
+              title="Account"
+              style={{ cursor: "pointer" }}
+            >
               {avatarSrc ? <img src={avatarSrc} alt={profile?.display_name ?? "avatar"} onError={(e) => { e.target.style.display = "none"; }} /> : avatarInitial(profile?.display_name, user.email)}
             </div>
-            <span className="nav-user-email">{user.email}</span>
-            <button className="nav-signout" onClick={onSignOut}>Sign Out</button>
+            {acctOpen && (
+              <div style={{ ...menuStyle, left: "auto", right: 0, minWidth: 230 }} role="menu">
+                <div style={{ padding: "8px 14px 10px", fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--muted)", borderBottom: "1px solid var(--border)", marginBottom: 6, overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {user.email}
+                </div>
+                <button style={itemStyle(page === "settings")} onClick={() => go("settings")}>Profile Settings</button>
+                {isAdmin(user) && <button style={itemStyle(page === "admin")} onClick={() => go("admin")}>Admin</button>}
+                <button style={itemStyle(false)} onClick={() => { setAcctOpen(false); onSignOut(); }}>Sign Out</button>
+              </div>
+            )}
           </div>
         ) : (
           <button className="nav-signin" onClick={onSignInClick}>Sign In</button>
