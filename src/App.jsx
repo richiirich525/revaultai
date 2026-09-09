@@ -3090,6 +3090,51 @@ function PromptBuilderPage({ setPage, user, onSignInClick }) {
   const [style, setStyle] = useState("none");
   const [strength, setStrength] = useState("balanced");
   const [aspectRatio, setAspectRatio] = useState("16:9");
+  const [refImage, setRefImage] = useState(null);   // { data, media_type }
+  const [refPreview, setRefPreview] = useState("");
+  const [refName, setRefName] = useState("");
+
+  // Downscale in the browser so we never hit the request-size limit.
+  async function handleRefPick(file) {
+    if (!file) return;
+    if (!/^image\/(jpeg|png|webp|gif)$/.test(file.type)) {
+      setError("Reference frame must be JPG, PNG, WebP, or GIF.");
+      return;
+    }
+    setError(null);
+    try {
+      const dataUrl = await new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result);
+        r.onerror = () => reject(new Error("Could not read that file."));
+        r.readAsDataURL(file);
+      });
+      const img = await new Promise((resolve, reject) => {
+        const i = new Image();
+        i.onload = () => resolve(i);
+        i.onerror = () => reject(new Error("Could not open that image."));
+        i.src = dataUrl;
+      });
+      const MAX = 1024;
+      const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      const out = canvas.toDataURL("image/jpeg", 0.85);
+      setRefPreview(out);
+      setRefImage({ data: out.split(",")[1], media_type: "image/jpeg" });
+      setRefName(file.name);
+    } catch (err) {
+      setError(err.message || "Could not use that image.");
+    }
+  }
+
+  function clearRef() {
+    setRefImage(null);
+    setRefPreview("");
+    setRefName("");
+  }
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [result, setResult] = useState(null);
@@ -3159,7 +3204,7 @@ function PromptBuilderPage({ setPage, user, onSignInClick }) {
       const res = await fetch("/api/build-prompt", {
         method: "POST",
         headers,
-        body: JSON.stringify({ idea, model, style, strength, aspectRatio }),
+        body: JSON.stringify({ idea, model, style, strength, aspectRatio, image: refImage || undefined }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -3211,6 +3256,34 @@ function PromptBuilderPage({ setPage, user, onSignInClick }) {
             style={{ width: "100%", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: 4, padding: "14px 16px", fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--text)", lineHeight: 1.7, resize: "vertical", boxSizing: "border-box", marginBottom: 6 }}
           />
           <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: "var(--muted)", textAlign: "right", marginBottom: 24 }}>{idea.length} / 500</div>
+
+          <div style={labelStyle}>Reference frame (optional)</div>
+          <div style={{ border: "1px solid var(--border)", borderRadius: 4, padding: 14, marginBottom: 28, background: "var(--bg)" }}>
+            {refPreview ? (
+              <div style={{ display: "flex", gap: 14, alignItems: "flex-start", flexWrap: "wrap" }}>
+                <img src={refPreview} alt="Reference frame" style={{ width: 140, borderRadius: 4, display: "block" }} />
+                <div style={{ flex: 1, minWidth: 160 }}>
+                  <div style={{ ...bodyStyle, color: "var(--text)", marginBottom: 8 }}>{refName}</div>
+                  <div style={{ ...bodyStyle, fontSize: 10, marginBottom: 10 }}>
+                    The builder will read this frame and write the prompt from what it sees — then direct what happens next.
+                  </div>
+                  <button className="btn-ghost" style={{ padding: "6px 14px", fontSize: 10 }} onClick={clearRef}>Remove</button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  onChange={(e) => handleRefPick(e.target.files?.[0])}
+                  style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text)" }}
+                />
+                <div style={{ ...bodyStyle, fontSize: 10, marginTop: 10 }}>
+                  Attach a still and the builder writes the shot from it — subject, wardrobe, setting and light read from the image, then motion and camera directed from your note. Leave the note blank and it will choose a natural movement.
+                </div>
+              </>
+            )}
+          </div>
 
           <div style={labelStyle}>Target model</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 28 }}>

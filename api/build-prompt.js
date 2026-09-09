@@ -128,7 +128,21 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { idea, model, style, strength, aspectRatio } = req.body || {};
+    const { idea, model, style, strength, aspectRatio, image } = req.body || {};
+
+    // Optional reference frame. The client downscales before sending, so this
+    // stays well under both the Anthropic image limit and Vercel's body cap.
+    let refImage = null;
+    if (image && typeof image.data === "string" && typeof image.media_type === "string") {
+      const ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+      if (!ALLOWED.includes(image.media_type)) {
+        return res.status(400).json({ error: "Reference image must be JPG, PNG, WebP, or GIF." });
+      }
+      if (image.data.length > 5_000_000) {
+        return res.status(400).json({ error: "Reference image is too large. Try a smaller file." });
+      }
+      refImage = { type: "image", source: { type: "base64", media_type: image.media_type, data: image.data } };
+    }
 
     // Optional: if the caller is signed in, we save the build to their history.
     // Anonymous builds still work — this just stays null.
@@ -140,7 +154,12 @@ export default async function handler(req, res) {
     }
 
     // --- Validate input ---
-    if (typeof idea !== "string" || idea.trim().length < 3) {
+    const hasIdea = typeof idea === "string" && idea.trim().length >= 3;
+    const hasImage = !!(image && typeof image.data === "string");
+    if (!hasIdea && !hasImage) {
+      return res.status(400).json({ error: "Describe your idea in a few more words, or attach a reference frame." });
+    }
+    if (typeof idea !== "string") {
       return res.status(400).json({ error: "Describe your idea in a few more words." });
     }
     if (idea.length > MAX_IDEA_LENGTH) {
@@ -175,6 +194,15 @@ export default async function handler(req, res) {
     }
 
     // --- Call the model ---
+    const imageInstruction = refImage
+      ? `
+A reference frame is attached. Treat it as the FIRST FRAME of the shot.
+Describe the subject, wardrobe, setting, lighting and palette from what you actually see in the image — do not invent details that contradict it.
+Then direct what happens next: the subject's motion, the camera's movement, and how the light or environment changes across the shot.
+${hasIdea ? "The creator's note below says what they want to happen." : "The creator gave no note, so choose a natural, motivated movement that suits the frame."}
+`
+      : "";
+
     const userMessage = `Target model: ${target.label}
 Model notes: ${target.notes}
 ${chosenStyle.directives ? `
@@ -184,8 +212,9 @@ ${chosenStrength}
 ` : ""}${chosenRatio ? `
 Framing: ${chosenRatio}
 ` : ""}
+${imageInstruction}
 Rough idea:
-${idea.trim()}`;
+${hasIdea ? idea.trim() : "(none given — work from the attached frame)"}`;
 
     const apiRes = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -198,7 +227,10 @@ ${idea.trim()}`;
         model: "claude-haiku-4-5-20251001",
         max_tokens: 1200,
         system: SYSTEM_PROMPT,
-        messages: [{ role: "user", content: userMessage }],
+        messages: [{
+          role: "user",
+          content: refImage ? [refImage, { type: "text", text: userMessage }] : userMessage,
+        }],
       }),
     });
 
