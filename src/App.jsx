@@ -1231,6 +1231,14 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
   const [model, setModel] = useState("wan-2.6");
   const [duration, setDuration] = useState(5);
   const [aspect, setAspect] = useState("16:9");
+  const [pbOpen, setPbOpen] = useState(false);
+  const [pbIdea, setPbIdea] = useState("");
+  const [pbModel, setPbModel] = useState("veo");
+  const [pbStyle, setPbStyle] = useState("none");
+  const [pbStrength, setPbStrength] = useState("balanced");
+  const [pbLoading, setPbLoading] = useState(false);
+  const [pbResult, setPbResult] = useState(null);
+  const [history, setHistory] = useState([]);
   useEffect(() => {
     const m = GEN_MODELS.find((x) => x.key === model);
     if (m && !m.durations.includes(duration)) setDuration(m.durations[0]);
@@ -1408,6 +1416,53 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
       notify("Could not prepare the download: " + err.message);
     }
   }
+  const PB_MODELS = [["veo","Veo"],["sora","Sora"],["kling","Kling"],["runway","Runway"],["wan","Wan"],["hailuo","Hailuo"],["seedance","Seedance"]];
+  const PB_STYLES = [["none","No preset"],["anamorphic-70s","70s Anamorphic"],["neo-noir","Neo-Noir"],["imax-70","IMAX 70mm"],["doc-16mm","Doc 16mm"],["technicolor","Technicolor"],["realtime-engine","Real-Time Engine"]];
+  const PB_STRENGTHS = [["subtle","Subtle"],["balanced","Balanced"],["heavy","Heavy"]];
+
+  async function loadHistory() {
+    if (!user?.id) return;
+    const { data } = await supabase
+      .from("prompt_history")
+      .select("id, title, prompt, style, created_at")
+      .order("created_at", { ascending: false })
+      .limit(8);
+    setHistory(data ?? []);
+  }
+  useEffect(() => { loadHistory(); }, [user?.id]);
+
+  async function handleBuildPrompt() {
+    if (pbIdea.trim().length < 3) { notify("Describe your idea in a few more words."); return; }
+    setPbLoading(true);
+    setPbResult(null);
+    try {
+      const headers = { "Content-Type": "application/json" };
+      try {
+        const token = await getSessionToken();
+        if (token) headers["Authorization"] = "Bearer " + token;
+      } catch { /* anonymous is fine */ }
+      const res = await fetch("/api/build-prompt", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ idea: pbIdea, model: pbModel, style: pbStyle, strength: pbStrength, aspectRatio: aspect }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { notify(data.error || "Could not build the prompt."); setPbLoading(false); return; }
+      setPbResult(data);
+      loadHistory();
+    } catch (err) {
+      notify("Could not reach the prompt builder.");
+    }
+    setPbLoading(false);
+  }
+
+  function usePrompt(text) {
+    setPrompt(text);
+    setPbOpen(false);
+    setPbResult(null);
+    notify("Prompt loaded — edit it or hit Generate.");
+  }
+
   async function handleGenerate() {
     if (!user) { notify("Sign in to generate."); return; }
     if (!prompt.trim()) { notify("Write a prompt first."); return; }
@@ -1455,6 +1510,77 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
           <div className="empty-state"><div className="empty-text">Sign in to generate videos.</div></div>
         ) : (
           <div className="gen-form">
+            <div style={{ marginBottom: 12 }}>
+              <button
+                type="button"
+                onClick={() => setPbOpen((o) => !o)}
+                style={{ background: "none", border: "none", color: "var(--accent)", cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", padding: 0 }}
+              >
+                {pbOpen ? "\u2013 Hide prompt builder" : "+ Need a prompt? Build one"}
+              </button>
+            </div>
+
+            {pbOpen && (
+              <div style={{ border: "1px solid var(--border)", borderRadius: 6, padding: 20, marginBottom: 16, background: "var(--bg3)" }}>
+                <textarea
+                  rows={3}
+                  maxLength={500}
+                  value={pbIdea}
+                  onChange={(e) => setPbIdea(e.target.value)}
+                  placeholder="A lighthouse keeper walks out at dawn as the storm finally breaks"
+                  style={{ width: "100%", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: 4, padding: "12px 14px", fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--text)", lineHeight: 1.7, resize: "vertical", boxSizing: "border-box", marginBottom: 14 }}
+                />
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
+                  <select className="gen-model-select" value={pbModel} onChange={(e) => setPbModel(e.target.value)}>
+                    {PB_MODELS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                  </select>
+                  <select className="gen-model-select" value={pbStyle} onChange={(e) => setPbStyle(e.target.value)}>
+                    {PB_STYLES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                  </select>
+                  {pbStyle !== "none" && (
+                    <select className="gen-model-select" value={pbStrength} onChange={(e) => setPbStrength(e.target.value)}>
+                      {PB_STRENGTHS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                    </select>
+                  )}
+                  <button className="gen-button" onClick={handleBuildPrompt} disabled={pbLoading}>
+                    {pbLoading ? "Building..." : "Build prompt"}
+                  </button>
+                </div>
+
+                {pbResult && (
+                  <div style={{ border: "1px solid var(--accent)", borderRadius: 4, padding: 16, background: "var(--bg)" }}>
+                    <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 14, fontWeight: 700, color: "var(--text)", marginBottom: 10 }}>{pbResult.built.title}</div>
+                    <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", lineHeight: 1.9, marginBottom: 12 }}>{pbResult.built.prompt}</div>
+                    {pbResult.applied && (
+                      <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--muted)", lineHeight: 1.8, borderTop: "1px solid var(--border)", paddingTop: 10, marginBottom: 12, opacity: 0.8 }}>
+                        <strong style={{ color: "var(--accent)" }}>{pbResult.applied.style} ({pbResult.applied.strength}):</strong> {pbResult.applied.directives}
+                      </div>
+                    )}
+                    <button className="gen-button" onClick={() => usePrompt(pbResult.built.prompt)}>Use this prompt</button>
+                  </div>
+                )}
+
+                {history.length > 0 && (
+                  <div style={{ marginTop: 16, borderTop: "1px solid var(--border)", paddingTop: 14 }}>
+                    <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: "0.16em", color: "var(--muted)", textTransform: "uppercase", marginBottom: 10 }}>Recent prompts</div>
+                    {history.map((h) => (
+                      <div
+                        key={h.id}
+                        onClick={() => usePrompt(h.prompt)}
+                        style={{ padding: "8px 10px", borderRadius: 4, cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", lineHeight: 1.6 }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = "var(--bg)"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                        title="Click to use this prompt"
+                      >
+                        <span style={{ color: "var(--text)" }}>{h.title || "Untitled"}</span>
+                        {h.style && h.style !== "none" ? <span style={{ opacity: 0.7 }}> · {h.style}</span> : null}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             <textarea
               className="gen-prompt"
               rows={4}
