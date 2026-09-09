@@ -11,6 +11,7 @@ import HomeFeatures from "./HomeFeatures.jsx";
 import DiscoveredPage from "./DiscoveredPage.jsx";
 import { PromptIndexPage, PromptModelPage, PromptGenrePage } from "./PromptPages.jsx";
 import SearchPage from "./SearchPage.jsx";
+import SceneBreakdownPage from "./SceneBreakdownPage.jsx";
 import { updateCommentsEnabled } from "./lib/comments.js";
 import {
   fetchCreations,
@@ -1077,6 +1078,7 @@ function HomePage({ creations, setPage, setDetailId, user, onSignInClick }) {
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("dmca")}>DMCA</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("ai-disclaimer")}>AI Disclaimer</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("prompts")}>AI Video Prompts</span>
+    <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("scene-breakdown")}>Scene Breakdown</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("prompt-builder")}></span>
   </div>
   <div className="footer-copy">&copy; 2026 RevaultAI</div>
@@ -1210,7 +1212,7 @@ function ExplorePage({ creations, setPage, setDetailId, dbLoaded }) {
   );
 }
 
-function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setProfile }) {
+function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setProfile, genPrefill, setGenPrefill }) {
   const GEN_MODELS = [
     { key: "wan-2.6", label: "Wan 2.6 — Fast", costPerSecond: 1, durations: [5, 10, 15], ratios: ["16:9", "9:16", "1:1"] },
     { key: "kling-3.0", label: "Kling 3.0 — Cinematic", costPerSecond: 2, durations: [5, 10], ratios: ["16:9", "9:16", "1:1"], ratioFromImage: true },
@@ -1231,6 +1233,18 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
   const [model, setModel] = useState("wan-2.6");
   const [duration, setDuration] = useState(5);
   const [aspect, setAspect] = useState("16:9");
+  // A shot handed over from the Scene Breakdown page.
+  useEffect(() => {
+    if (!genPrefill) return;
+    setPrompt(genPrefill.prompt || "");
+    const MAP = { veo: "veo-3.1", kling: "kling-3.0", wan: "wan-2.6", seedance: "seedance-2.5" };
+    const mapped = MAP[genPrefill.modelKey];
+    if (mapped) setModel(mapped);
+    if (genPrefill.aspectRatio) setAspect(genPrefill.aspectRatio);
+    setGenPrefill?.(null);
+    notify("Shot loaded — check the model and duration, then Generate.");
+  }, [genPrefill]);
+
   const [pbOpen, setPbOpen] = useState(false);
   const [pbIdea, setPbIdea] = useState("");
   const [pbModel, setPbModel] = useState("veo");
@@ -3558,7 +3572,7 @@ const [page, setPageState]        = useState("home");
   // ---- URL routing ----
   const detailIdRef = useRef(null);
   const creatorUserRef = useRef(null);
-  const KNOWN_PAGES = ["home","explore","creators","feed","generate","settings","admin","submit","set-password","email-confirmed","terms","faq","contact","guidelines","premium-prompts","about","become-creator","privacy","refunds","dmca","ai-disclaimer","purchase-success","founding-creators","blog","ai-video-generator","prompt-builder","prompts","search"];
+  const KNOWN_PAGES = ["home","explore","creators","feed","generate","settings","admin","submit","set-password","email-confirmed","terms","faq","contact","guidelines","premium-prompts","about","become-creator","privacy","refunds","dmca","ai-disclaimer","purchase-success","founding-creators","blog","ai-video-generator","prompt-builder","prompts","search","scene-breakdown"];
 
   function setDetailId(id) { detailIdRef.current = id; setDetailIdState(id); }
   const blogSlugRef = useRef(null);
@@ -3570,6 +3584,7 @@ const [page, setPageState]        = useState("home");
   const promptGenreRef = useRef(null);
   const [promptGenre, setPromptGenreState] = useState(null);
   function openPromptGenre(slug) { promptGenreRef.current = slug; setPromptGenreState(slug); setPage("prompt-genre"); }
+  const [genPrefill, setGenPrefill] = useState(null);
   function setCreatorUser(u) { creatorUserRef.current = u; setCreatorUserState(u); }
 
   function pathForPage(p) {
@@ -3703,7 +3718,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       case "explore": return <ExplorePage creations={creations} setPage={setPage} setDetailId={setDetailId} dbLoaded={dbLoaded} />;
       case "creators":return <CreatorsPage setPage={setPage} setCreatorUser={setCreatorUser} creations={creations} />;
       case "feed":    return <FollowFeedPage user={user} setPage={setPage} setDetailId={setDetailId} setCreatorUser={setCreatorUser} />;
-      case "generate": return <GeneratePage user={user} profile={profile} notify={notify} setPage={setPage} setGenSubmission={setGenSubmission} setProfile={setProfile} />;
+      case "generate": return <GeneratePage user={user} profile={profile} notify={notify} setPage={setPage} setGenSubmission={setGenSubmission} setProfile={setProfile} genPrefill={genPrefill} setGenPrefill={setGenPrefill} />;
       case "profile": return <ProfilePage username={creatorUser} creations={creations} setPage={setPage} setDetailId={setDetailId} user={user} />;
       case "detail":  return <DetailPage id={detailId} dbLoaded={dbLoaded} creations={creations} setCreations={setCreations} user={user} profile={profile} setProfile={setProfile} purchasedIds={purchasedIds} purchasesLoaded={purchasesLoaded} setPage={setPage} setCreatorUser={setCreatorUser}onSignInClick={() => setAuthOpen(true)} notify={notify} />;
       case "settings": if (!user) return <div className="page"><div className="empty-state"><div className="empty-text">Sign in to access profile settings.</div></div></div>; return <SettingsPage user={user} profile={profile} setProfile={setProfile} notify={notify} />;
@@ -3729,6 +3744,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       case "ai-video-generator": return <AiVideoGeneratorPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} />;
       case "blog": return <BlogPage setPage={setPage} openPost={openPost} />;
       case "blog-post": return <BlogPostPage slug={blogSlug} setPage={setPage} openPost={openPost} />;
+      case "scene-breakdown": return <SceneBreakdownPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} setGenPrefill={setGenPrefill} notify={notify} />;
       case "search": return <SearchPage creations={creations} setPage={setPage} setDetailId={setDetailId} setCreatorUser={setCreatorUser} openPost={openPost} openPromptModel={openPromptModel} />;
       case "prompts": return <PromptIndexPage setPage={setPage} openPromptModel={openPromptModel} openPromptGenre={openPromptGenre} />;
       case "prompt-model": return <PromptModelPage slug={promptSlug} setPage={setPage} openPromptModel={openPromptModel} openPromptGenre={openPromptGenre} />;

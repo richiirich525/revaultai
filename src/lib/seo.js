@@ -88,6 +88,10 @@ export const PAGES = {
     description:
       "Free director-grade video prompts for Seedance 2.5, Veo 3.1, and Kling 3.0. Copy, paste, and generate. No account needed.",
   },
+  "scene-breakdown": {
+    title: "Scene Breakdown — Free AI Shot List Generator | RevaultAI",
+    description: "Turn a scene into a numbered shot list with camera, lighting, duration and a full prompt per shot. Locked character continuity. Free, no account.",
+  },
   search: { title: "Search — RevaultAI", description: "Search films, creators, Discovered, prompts and the Journal across RevaultAI." },
   contact: { title: "Contact — RevaultAI", description: "Support, creator inquiries, DMCA, and partnership contacts for RevaultAI." },
   terms: { title: "Terms of Service — RevaultAI", description: "The terms governing use of the RevaultAI platform." },
