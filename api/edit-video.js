@@ -1,5 +1,28 @@
 import { fal } from '@fal-ai/client';
 import { createClient } from '@supabase/supabase-js';
+import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+
+// fal must be able to download the source clip, but our R2 bucket is private.
+// Hand it a temporary signed URL instead of the raw (unreachable) path.
+async function signIfOurs(url) {
+  const publicUrl = (process.env.R2_PUBLIC_URL ?? '').replace(/\/$/, '');
+  if (!publicUrl || typeof url !== 'string' || !url.startsWith(publicUrl + '/')) return url;
+  const key = decodeURIComponent(url.slice(publicUrl.length + 1));
+  const r2 = new S3Client({
+    region: 'auto',
+    endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: process.env.R2_ACCESS_KEY_ID,
+      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+    },
+  });
+  return getSignedUrl(
+    r2,
+    new GetObjectCommand({ Bucket: process.env.R2_BUCKET_NAME, Key: key }),
+    { expiresIn: 7200 }   // 2 hours — long jobs need time to start
+  );
+}
 
 // Post-generation edit catalog — server-side only, client sends an action key.
 // Same shape as MODELS in generate-video.js so extend/lip-sync slot in later.
@@ -116,18 +139,20 @@ export default async function handler(req, res) {
 
     // 6. Submit to fal
     try {
+      const signedVideoUrl = await signIfOurs(source.video_url);
+      const signedAudioUrl = audioUrl ? await signIfOurs(audioUrl) : audioUrl;
       const { request_id } = await fal.queue.submit(edit.falId, {
         input: edit.kind === 'lipsync'
-          ? { video_url: source.video_url, audio_url: audioUrl }
+          ? { video_url: signedVideoUrl, audio_url: signedAudioUrl }
           : edit.kind === 'extend'
           ? {
-              video_url: source.video_url,
+              video_url: signedVideoUrl,
               duration: Number(edit.extendSeconds),
               prompt: String(source.prompt || '').slice(0, 2000),
               ...(edit.extraInput || {}),
             }
           : {
-              video_url: source.video_url,
+              video_url: signedVideoUrl,
               ...(edit.extraInput || {}),
             },
         webhookUrl: 'https://www.revaultai.com/api/generation-webhook',
