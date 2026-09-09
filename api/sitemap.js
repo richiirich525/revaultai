@@ -18,6 +18,8 @@ const STATIC_PAGES = [
   ["/founding-creators", "0.7", "monthly"],
   ["/blog", "0.8", "weekly"],
   ["/ai-video-generator", "0.9", "monthly"],
+  ["/prompt-builder", "0.9", "monthly"],
+  ["/scene-breakdown", "0.9", "monthly"],
   ["/discovered", "0.8", "weekly"],
   ["/faq", "0.6", "monthly"],
   ["/guidelines", "0.6", "monthly"],
