@@ -3880,7 +3880,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       case "ai-video-generator": return <AiVideoGeneratorPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} />;
       case "blog": return <BlogPage setPage={setPage} openPost={openPost} />;
       case "blog-post": return <BlogPostPage slug={blogSlug} setPage={setPage} openPost={openPost} />;
-      case "scene-breakdown": return <SceneBreakdownPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} setGenPrefill={setGenPrefill} notify={notify} />;
+      case "scene-breakdown": return <SceneBreakdownPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} setGenPrefill={setGenPrefill} notify={notify} openPost={openPost} />;
       case "search": return <SearchPage creations={creations} setPage={setPage} setDetailId={setDetailId} setCreatorUser={setCreatorUser} openPost={openPost} openPromptModel={openPromptModel} />;
       case "prompts": return <PromptIndexPage setPage={setPage} openPromptModel={openPromptModel} openPromptGenre={openPromptGenre} />;
       case "prompt-model": return <PromptModelPage slug={promptSlug} setPage={setPage} openPromptModel={openPromptModel} openPromptGenre={openPromptGenre} />;

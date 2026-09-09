@@ -16,7 +16,8 @@ export const POSTS = [
     faq: [
       ["Why do AI video characters change between shots?", "Each generation may need to reconstruct parts of the character from the information you provide. If visual references, descriptions, wardrobe or other identity cues change between shots, the output can drift. Using stable references and repeatable character descriptions can reduce that variation."],
       ["What is the best way to keep the same character in AI video?", "Start with strong reference images, maintain a stable identity description, lock important wardrobe and visual traits, reuse successful frames when possible and track continuity from shot to shot."],
-      ["Do reference images help with AI character consistency?", "Yes. Reference-image workflows can give supported video models visual information about the character instead of relying entirely on text."],
+      ["How can I keep character descriptions consistent across multiple AI video prompts?", "Create one stable character description and reuse it rather than rewriting the character for every shot. RevaultAI's Scene Breakdown tool can automate this part of the workflow by locking character and location descriptions and repeating them across each shot in the generated shot list."],
+      ["Do reference images help with AI character consistency?", "Yes. Reference-image workflows can give supported video models visual information about the character instead of relying entirely on text. RevaultAI's Video Prompt Builder also accepts a reference still: it reads the subject, wardrobe, setting and lighting from the frame and structures the shot around them."],
       ["Should I use text-to-video or image-to-video for character consistency?", "Both can be useful, but image-to-video or reference-based workflows give you an existing visual identity to build from. Text-to-video can still work well for exploration and establishing initial character designs."],
       ["How many character reference images should I make?", "There is no universal number. A practical starting set is a clear portrait, three-quarter view, profile and full-body image, especially if those angles will appear in your film."],
       ["How do I keep wardrobe consistent in AI video?", "Write down the costume precisely and reuse the same description across relevant shots. Treat wardrobe changes as deliberate continuity events rather than letting each generation reinterpret what the character is wearing."],
@@ -138,6 +139,14 @@ export const POSTS = [
 
 <p>This can help carry costume, hair, lighting, environment, prop position and spatial composition. Think of strong frames as continuity assets — don't throw them away after generation.</p>
 
+<p>RevaultAI's <a href="/prompt-builder">Video Prompt Builder</a> can also work directly from a reference still. Attach a frame and the Builder analyzes the subject, wardrobe, setting and lighting already visible in the image. You then add a note describing what should happen next — the character turning toward camera, walking through the scene, reacting to something off-screen — and the Builder structures the motion and camera direction around that starting image. The note can also be left blank. Reference images are downscaled in the browser for analysis and aren't stored.</p>
+
+<p>This is useful when you already have a strong frame and don't want to reconstruct everything from text. For example:</p>
+
+<div class="example">Reference frame: Maya standing beside an elevator in the established charcoal jacket and burgundy shirt.<br><br>Creator note: "She hears the elevator arrive, turns toward the doors and takes one cautious step backward. Slow camera push-in."</div>
+
+<p>The image establishes most of the visual starting point — who she is, what she's wearing, where she is, how it's lit — while the note concentrates on what happens next. The Builder produces the structured prompt; generation itself still happens through your normal generation workflow.</p>
+
 <h2>8. Build a Continuity Chain</h2>
 
 <p>For longer films, don't think "generate 12 independent clips." Think "shot 1 creates material for shot 2, shot 2 creates material for shot 3."</p>
@@ -232,37 +241,66 @@ export const POSTS = [
 
 <p>Your goal is stable identity plus changing performance. The character should be able to smile, cry, run, turn away, enter another room, stand in sunlight and appear in shadow while remaining recognizable. Consistency is the foundation. Performance is what you build on top of it.</p>
 
+<h2>Use Scene Breakdown to Lock Continuity Across Shots</h2>
+
+<p>If you're turning a scene into multiple AI-generated shots, one of the easiest ways to create character drift is to rewrite the character and location slightly differently every time.</p>
+
+<p>RevaultAI's free <a href="/scene-breakdown">Scene Breakdown</a> tool is designed around that problem. Paste in a scene or logline and it turns the sequence into a numbered shot list — shot size, camera movement, lighting, a suggested duration sized for your target model, and a full generation prompt for every shot.</p>
+
+<p>The important part for continuity is what it doesn't change. Character and location descriptions are locked and repeated verbatim across the entire shot list. Instead of:</p>
+
+<div class="example">Shot 1: "woman with short curly hair…"<br><br>Shot 2: "woman with soft natural curls…"<br><br>Shot 3: "woman with short dark hair…"</div>
+
+<p>the same identity description carries from shot to shot. That doesn't guarantee perfect character consistency — the video model still has to generate the character — but it removes one unnecessary source of drift: changing the description yourself.</p>
+
+<p>Each shot can then be copied or sent directly into <a href="/generate">RevaultAI Generate</a> with the selected model and aspect ratio already set. Signed-in creators can have their breakdowns saved and reopen the shot list later.</p>
+
+<div class="cta-inline">
+<strong>Break Your Scene Into Consistent Shots</strong>
+<p>Turn a scene or logline into a structured shot list while keeping character and location descriptions locked across every shot. Free. No account required.</p>
+<a class="cta-btn" href="/scene-breakdown">Break Down a Scene</a>
+</div>
+
 <h2>A Practical Character Consistency Workflow</h2>
 
 <h3>Step 1: Define the character</h3>
-<p>Write a short identity description with four to seven durable visual anchors. The <a href="/prompt-builder">Video Prompt Builder</a> can scaffold the rest of the shot around it.</p>
+<p>Write a short identity description with four to seven durable visual anchors — the traits that would make the character recognizable from across the room.</p>
 
-<h3>Step 2: Create reference images</h3>
-<p>Generate a clean portrait, three-quarter view and full-body image.</p>
+<h3>Step 2: Create strong character references</h3>
+<p>Generate a clean portrait, three-quarter view, profile and full-body image, plus any angle you know the film will need.</p>
 
-<h3>Step 3: Lock wardrobe</h3>
-<p>Write down exactly what they are wearing.</p>
+<h3>Step 3: Lock wardrobe and distinguishing traits</h3>
+<p>Write down exactly what they are wearing and the details that must not drift — a scar, a chain, a particular jacket — in wording you can reuse.</p>
 
-<h3>Step 4: Lock your visual style</h3>
-<p>Keep the core cinematography, palette and texture stable.</p>
+<h3>Step 4: Establish visual style</h3>
+<p>Fix the core cinematography, palette, contrast and texture so the world stays as stable as the character.</p>
 
-<h3>Step 5: Plan the shots</h3>
-<p>Know when you'll need close-ups, profiles, full-body shots and difficult angles.</p>
+<h3>Step 5: Write the scene</h3>
+<p>Describe the beat you're shooting in plain prose before you think about individual shots.</p>
 
-<h3>Step 6: Generate your first strong shot</h3>
-<p>Treat successful frames as production assets.</p>
+<h3>Step 6: Break the scene into shots</h3>
+<p>Turn that prose into a shot list — sizes, angles, coverage. Scene Breakdown can do this automatically and, importantly, keeps the character and location wording identical across every shot it generates.</p>
 
-<h3>Step 7: Reuse references</h3>
-<p>Use character references, first frames or prior successful frames whenever the generation workflow supports them.</p>
+<h3>Step 7: Keep character and location descriptions stable</h3>
+<p>However you build the list, reuse the same identity and environment blocks in every shot prompt. The scene changes; the description doesn't.</p>
 
-<h3>Step 8: Update continuity notes</h3>
-<p>Track clothing damage, props, injuries, weather and location.</p>
+<h3>Step 8: Use reference frames when helpful</h3>
+<p>When you already have a strong frame, start from it rather than from text. The reference-frame Video Prompt Builder can read a still and structure the motion and camera around what's already in the image.</p>
 
-<h3>Step 9: Generate coverage</h3>
-<p>Create alternate angles rather than expecting one generation to carry the entire scene.</p>
+<h3>Step 9: Generate individual shots</h3>
+<p>Generate one shot at a time so each gets the model's full attention. Treat a successful frame as a production asset.</p>
 
-<h3>Step 10: Edit aggressively</h3>
-<p>Cut before visual identity deteriorates.</p>
+<h3>Step 10: Save strong frames as continuity assets</h3>
+<p>Keep the best frames from each shot. They become reference material and starting images for everything that follows.</p>
+
+<h3>Step 11: Generate coverage</h3>
+<p>Create alternate angles and takes rather than expecting one generation to carry the whole scene.</p>
+
+<h3>Step 12: Track continuity changes</h3>
+<p>Record clothing damage, props, injuries, weather and location state as they change, the way a script supervisor would.</p>
+
+<h3>Step 13: Edit aggressively</h3>
+<p>Cut before visual identity deteriorates. The usable portion of a clip is the clip.</p>
 
 <p>That workflow won't eliminate every inconsistency. But it changes the problem from "I hope the model remembers my character" to "I am actively controlling continuity." That's a much better filmmaking position.</p>
 
@@ -271,6 +309,15 @@ export const POSTS = [
 <div class="callout">If you remember only one thing from this guide, make it this: stop recreating your protagonist from zero every time you generate a shot.</div>
 
 <p>Reuse character descriptions, reference images, wardrobe definitions, successful frames, visual style, location descriptions and continuity notes. The more of your film's visual language you carry forward, the less the model has to reinvent.</p>
+
+<p>There are now two complementary ways to carry that information forward:</p>
+
+<ul>
+<li><strong>Textual continuity.</strong> Keep the character and location wording identical from shot to shot. <a href="/scene-breakdown">Scene Breakdown</a> does this across a multi-shot sequence by locking those descriptions and repeating them verbatim.</li>
+<li><strong>Visual continuity.</strong> Start a shot from an established frame instead of redescribing everything. A reference still gives the <a href="/prompt-builder">Video Prompt Builder</a> visual information — subject, wardrobe, setting, light — to build the next shot around.</li>
+</ul>
+
+<p>Neither is a guarantee. The model still generates the character every time. Used together, they just narrow how much it has to invent.</p>
 
 <h2>Final Thought: Consistency Is a Production Discipline</h2>
 
@@ -294,8 +341,11 @@ export const POSTS = [
 <h3>What is the best way to keep the same character in AI video?</h3>
 <p>Start with strong reference images, maintain a stable identity description, lock important wardrobe and visual traits, reuse successful frames when possible and track continuity from shot to shot.</p>
 
+<h3>How can I keep character descriptions consistent across multiple AI video prompts?</h3>
+<p>Create one stable character description and reuse it rather than rewriting the character for every shot. RevaultAI's Scene Breakdown tool can automate this part of the workflow by locking character and location descriptions and repeating them across each shot in the generated shot list.</p>
+
 <h3>Do reference images help with AI character consistency?</h3>
-<p>Yes. Reference-image workflows can give supported video models visual information about the character instead of relying entirely on text.</p>
+<p>Yes. Reference-image workflows can give supported video models visual information about the character instead of relying entirely on text. RevaultAI's Video Prompt Builder also accepts a reference still: it reads the subject, wardrobe, setting and lighting from the frame and structures the shot around them.</p>
 
 <h3>Should I use text-to-video or image-to-video for character consistency?</h3>
 <p>Both can be useful, but image-to-video or reference-based workflows give you an existing visual identity to build from. Text-to-video can still work well for exploration and establishing initial character designs.</p>

@@ -46,7 +46,7 @@ const styles = `
   @media (max-width: 760px) { .sb-wrap { padding: 0 24px; } .sb-card { padding: 22px; } }
 `;
 
-export default function SceneBreakdownPage({ setPage, user, onSignInClick, setGenPrefill, notify }) {
+export default function SceneBreakdownPage({ setPage, user, onSignInClick, setGenPrefill, notify, openPost }) {
   const [scene, setScene] = useState("");
   const [model, setModel] = useState("veo");
   const [style, setStyle] = useState("none");
@@ -304,6 +304,15 @@ export default function SceneBreakdownPage({ setPage, user, onSignInClick, setGe
                   <div className="sb-body">{d}</div>
                 </div>
               ))}
+            </div>
+            <div style={{ textAlign: "center", marginTop: 28, fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", lineHeight: 1.8 }}>
+              Working across a multi-shot sequence?{" "}
+              <span
+                onClick={() => openPost?.("ai-video-character-consistency")}
+                style={{ color: "var(--accent)", cursor: "pointer", borderBottom: "1px solid rgba(123,63,228,0.35)" }}
+              >
+                Learn how to keep characters consistent across AI video shots
+              </span>.
             </div>
           </div>
         </div>
