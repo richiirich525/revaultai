@@ -21,7 +21,6 @@ const EDITS = {
     kind: 'extend',
     extendSeconds: 5,
     creditsPerSecond: 3,   // $0.10/s cost — priced on total output length
-    extraInput: { mode: 'end' },
     label: 'Extend by 5s',
   },
   'extend-10': {
@@ -29,7 +28,6 @@ const EDITS = {
     kind: 'extend',
     extendSeconds: 10,
     creditsPerSecond: 3,
-    extraInput: { mode: 'end' },
     label: 'Extend by 10s',
   },
   'lipsync': {
@@ -124,7 +122,7 @@ export default async function handler(req, res) {
           : edit.kind === 'extend'
           ? {
               video_url: source.video_url,
-              duration: String(edit.extendSeconds),
+              duration: Number(edit.extendSeconds),
               prompt: String(source.prompt || '').slice(0, 2000),
               ...(edit.extraInput || {}),
             }
@@ -142,7 +140,8 @@ export default async function handler(req, res) {
 
       return res.status(200).json({ generationId: gen.id });
     } catch (falError) {
-      console.error('fal submit error (edit):', falError);
+         const detail = falError?.body?.detail ?? falError?.detail ?? falError?.message;
+      console.error('fal submit error (edit):', JSON.stringify(detail ?? falError));
       await supabase.rpc('add_credits', {
         p_user_id: user.id,
         p_amount: cost,
@@ -151,7 +150,7 @@ export default async function handler(req, res) {
       });
       await supabase
         .from('generations')
-        .update({ status: 'failed', error_message: 'Edit service rejected the job' })
+        .update({ status: 'failed', error_message: 'Edit rejected: ' + String(typeof detail === 'string' ? detail : JSON.stringify(detail)).slice(0, 300) })
         .eq('id', gen.id);
       return res.status(502).json({ error: 'Edit failed to start — credits refunded' });
     }
