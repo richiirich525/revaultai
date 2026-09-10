@@ -88,6 +88,10 @@ export const PAGES = {
     description:
       "Free director-grade video prompts for Seedance 2.5, Veo 3.1, and Kling 3.0. Copy, paste, and generate. No account needed.",
   },
+  "continuity-check": {
+    title: "AI Video Continuity Checker — Free Shot List Review | RevaultAI",
+    description: "Paste your shot prompts and get a script supervisor's read: characters described two ways, wardrobe drift, unmotivated lighting. Free, no account.",
+  },
   "which-model": {
     title: "Which AI Video Model Should You Use? — Free Tool | RevaultAI",
     description: "Describe your shot and get a straight answer: which model fits, how long to make it, and what it costs. Veo, Kling, Wan and Seedance compared. Free.",

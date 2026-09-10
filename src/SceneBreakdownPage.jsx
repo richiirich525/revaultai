@@ -76,7 +76,7 @@ const styles = `
   @media (max-width: 760px) { .sb-wrap { padding: 0 24px; } .sb-card { padding: 22px; } }
 `;
 
-export default function SceneBreakdownPage({ setPage, user, onSignInClick, setGenPrefill, notify, openPost }) {
+export default function SceneBreakdownPage({ setPage, user, onSignInClick, setGenPrefill, notify, openPost, setCcPrefill }) {
   const [scene, setScene] = useState("");
   const [model, setModel] = useState("veo");
   const [style, setStyle] = useState("none");
@@ -416,6 +416,7 @@ export default function SceneBreakdownPage({ setPage, user, onSignInClick, setGe
             </div>
             <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
               <button className="btn-primary" onClick={() => (user ? setPage("generate") : onSignInClick?.())}>{user ? "Open the generator" : "Create your account"}</button>
+              <button className="btn-ghost" onClick={() => { setCcPrefill?.({ shots: b.shots.map((s) => s.prompt), lockedIds }); setPage("continuity-check"); }}>Check continuity</button>
               <button className="btn-ghost" onClick={() => setPage("prompt-builder")}>Try the Prompt Builder</button>
             </div>
           </div>

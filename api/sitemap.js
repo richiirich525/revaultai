@@ -21,6 +21,7 @@ const STATIC_PAGES = [
   ["/prompt-builder", "0.9", "monthly"],
   ["/scene-breakdown", "0.9", "monthly"],
   ["/which-model", "0.9", "monthly"],
+  ["/continuity-check", "0.9", "monthly"],
   ["/discovered", "0.8", "weekly"],
   ["/faq", "0.6", "monthly"],
   ["/guidelines", "0.6", "monthly"],
