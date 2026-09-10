@@ -28,7 +28,11 @@ export default async function handler(req, res) {
   }
 
   const { fileType } = req.body;
-  const allowedTypes = ["video/mp4", "video/quicktime", "video/webm"];
+  const allowedTypes = [
+    "video/mp4", "video/quicktime", "video/webm",
+    "image/jpeg", "image/png", "image/webp",
+    "audio/mpeg", "audio/wav", "audio/mp4", "audio/aac", "audio/ogg", "audio/x-m4a",
+  ];
   if (!allowedTypes.includes(fileType)) {
     return res.status(400).json({ error: `File type "${fileType}" is not allowed.` });
   }
@@ -37,9 +41,19 @@ export default async function handler(req, res) {
     "video/mp4": ".mp4",
     "video/quicktime": ".mov",
     "video/webm": ".webm",
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "image/webp": ".webp",
+    "audio/mpeg": ".mp3",
+    "audio/wav": ".wav",
+    "audio/mp4": ".m4a",
+    "audio/aac": ".aac",
+    "audio/ogg": ".ogg",
+    "audio/x-m4a": ".m4a",
   };
-  const ext = extMap[fileType] || ".mp4";
-  const key = `videos/${randomUUID()}${ext}`;
+  const ext = extMap[fileType] || ".bin";
+  const folder = fileType.startsWith("image/") ? "images" : fileType.startsWith("audio/") ? "audio" : "videos";
+  const key = `${folder}/${randomUUID()}${ext}`;
 
   const accountId = process.env.R2_ACCOUNT_ID;
   const accessKeyId = process.env.R2_ACCESS_KEY_ID;

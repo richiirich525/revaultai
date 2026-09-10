@@ -34,8 +34,36 @@ export default async function handler(req, res) {
     }
 
     const { type, id } = req.body || {};
-    if (!id || !["creation", "generation"].includes(type)) {
+    if (!id || !["creation", "generation", "vault"].includes(type)) {
       return res.status(400).json({ error: "Invalid request" });
+    }
+
+    // Vault entries hold up to three reference images and return them all at
+    // once, so the card can render without a round trip per image.
+    if (type === "vault") {
+      const { data: entry } = await supabase
+        .from("vault_entries")
+        .select("user_id, images")
+        .eq("id", id)
+        .maybeSingle();
+      if (!entry || entry.user_id !== user.id) {
+        return res.status(403).json({ error: "Not authorized to access these images." });
+      }
+      const publicBase = (process.env.R2_PUBLIC_URL ?? "").replace(/\/$/, "");
+      const r2c = getR2Client();
+      const urls = [];
+      for (const stored of (Array.isArray(entry.images) ? entry.images : []).slice(0, 3)) {
+        if (typeof stored !== "string" || !stored.startsWith(publicBase + "/")) continue;
+        const k = decodeURIComponent(stored.slice(publicBase.length + 1));
+        urls.push(
+          await getSignedUrl(
+            r2c,
+            new GetObjectCommand({ Bucket: process.env.R2_BUCKET_NAME, Key: k }),
+            { expiresIn: 3600 }
+          )
+        );
+      }
+      return res.status(200).json({ urls });
     }
 
     let storedUrl = null;

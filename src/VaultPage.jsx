@@ -8,7 +8,8 @@ import { supabase } from "./lib/supabase.js";
   to its owner and the client writes directly.
 */
 
-const BLANK = { kind: "character", name: "", description: "", wardrobe: "", distinguishing: "", notes: "" };
+const BLANK = { kind: "character", name: "", description: "", wardrobe: "", distinguishing: "", notes: "", images: [] };
+const MAX_IMAGES = 3;
 
 const styles = `
   .vt-wrap { max-width: 860px; margin: 0 auto; padding: 0 48px; }
@@ -35,6 +36,57 @@ export default function VaultPage({ user, onSignInClick, setPage, notify }) {
   const [saving, setSaving] = useState(false);
   const [filter, setFilter] = useState("all");
   const [error, setError] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [previews, setPreviews] = useState({});   // entryId -> [signed urls]
+
+  async function pickImage(file) {
+    if (!file) return;
+    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) { setError("Images must be JPG, PNG or WebP."); return; }
+    if (file.size > 8 * 1024 * 1024) { setError("Image must be under 8 MB."); return; }
+    if ((form.images?.length ?? 0) >= MAX_IMAGES) { setError(`Up to ${MAX_IMAGES} images per entry.`); return; }
+    setUploading(true); setError(null);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      const r = await fetch("/api/get-upload-url", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+        body: JSON.stringify({ fileType: file.type }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.uploadUrl) throw new Error(j.error || "Could not prepare the upload.");
+      await new Promise((resolve, reject) => {
+        const x = new XMLHttpRequest();
+        x.open("PUT", j.uploadUrl);
+        x.setRequestHeader("Content-Type", file.type);
+        x.addEventListener("load", () => (x.status >= 200 && x.status < 300) ? resolve() : reject(new Error("Upload failed (" + x.status + ")")));
+        x.addEventListener("error", () => reject(new Error("Network error during upload")));
+        x.send(file);
+      });
+      setForm((f) => ({ ...f, images: [...(f.images ?? []), j.videoPublicUrl] }));
+    } catch (err) {
+      setError(err.message || "Upload failed.");
+    }
+    setUploading(false);
+  }
+
+  function removeImage(i) {
+    setForm((f) => ({ ...f, images: (f.images ?? []).filter((_, n) => n !== i) }));
+  }
+
+  async function loadPreviews(entry) {
+    if (!entry.images?.length || previews[entry.id]) return;
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const r = await fetch("/api/get-video-url", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + sess?.session?.access_token, "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "vault", id: entry.id }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (r.ok && Array.isArray(j.urls)) setPreviews((p) => ({ ...p, [entry.id]: j.urls }));
+    } catch { /* preview is best-effort */ }
+  }
 
   async function load() {
     if (!user?.id) { setEntries([]); setLoading(false); return; }
@@ -46,6 +98,7 @@ export default function VaultPage({ user, onSignInClick, setPage, notify }) {
     if (e) console.warn("[RevaultAI] Could not load vault:", e.message);
     setEntries(data ?? []);
     setLoading(false);
+    for (const e of data ?? []) loadPreviews(e);
   }
   useEffect(() => { load(); }, [user?.id]);
 
@@ -64,6 +117,7 @@ export default function VaultPage({ user, onSignInClick, setPage, notify }) {
       wardrobe: form.wardrobe?.trim().slice(0, 600) || null,
       distinguishing: form.distinguishing?.trim().slice(0, 400) || null,
       notes: form.notes?.trim().slice(0, 600) || null,
+      images: (form.images ?? []).slice(0, MAX_IMAGES),
     };
     let e;
     if (editingId) {
@@ -86,6 +140,7 @@ export default function VaultPage({ user, onSignInClick, setPage, notify }) {
       wardrobe: entry.wardrobe ?? "",
       distinguishing: entry.distinguishing ?? "",
       notes: entry.notes ?? "",
+      images: Array.isArray(entry.images) ? entry.images : [],
     });
     setEditingId(entry.id);
     setError(null);
@@ -194,6 +249,38 @@ export default function VaultPage({ user, onSignInClick, setPage, notify }) {
               </>
             )}
 
+            <div className="vt-label">Reference images (up to {MAX_IMAGES})</div>
+            <div style={{ border: "1px solid var(--border)", borderRadius: 4, padding: 14, marginBottom: 16, background: "var(--bg)" }}>
+              {(form.images ?? []).length > 0 && (
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+                  {form.images.map((_, i) => (
+                    <div key={i} style={{ position: "relative" }}>
+                      <div style={{ width: 92, height: 92, borderRadius: 4, border: "1px solid var(--border)", background: "var(--surface)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Mono', monospace", fontSize: 9, color: "var(--muted)", letterSpacing: "0.1em" }}>
+                        IMAGE {i + 1}
+                      </div>
+                      <button
+                        onClick={() => removeImage(i)}
+                        style={{ position: "absolute", top: -6, right: -6, width: 20, height: 20, borderRadius: "50%", border: "1px solid var(--border)", background: "var(--bg)", color: "#C25B5B", cursor: "pointer", fontSize: 12, lineHeight: 1, padding: 0 }}
+                        title="Remove"
+                      >&times;</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {(form.images ?? []).length < MAX_IMAGES && (
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  disabled={uploading}
+                  onChange={(e) => { pickImage(e.target.files?.[0]); e.target.value = ""; }}
+                  style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text)" }}
+                />
+              )}
+              <div className="vt-body" style={{ fontSize: 10, marginTop: 10, opacity: 0.8 }}>
+                {uploading ? "Uploading…" : "For your own reference — a portrait, a three-quarter view and a full body carry the most information. These aren't sent to the models; attach one manually when you generate."}
+              </div>
+            </div>
+
             <div className="vt-label">Notes (not sent to the model)</div>
             <input
               className="vt-input"
@@ -230,7 +317,14 @@ export default function VaultPage({ user, onSignInClick, setPage, notify }) {
               <div className="vt-card" key={e.id}>
                 <div className="vt-kind">{e.kind}</div>
                 <div className="vt-card-name">{e.name}</div>
-                <div className="vt-body" style={{ marginTop: 8 }}>{e.description}</div>
+                {previews[e.id]?.length > 0 && (
+                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 12 }}>
+                    {previews[e.id].map((u, i) => (
+                      <img key={i} src={u} alt={e.name + " reference " + (i + 1)} style={{ width: 110, height: 110, objectFit: "cover", borderRadius: 4, border: "1px solid var(--border)", display: "block" }} />
+                    ))}
+                  </div>
+                )}
+                <div className="vt-body" style={{ marginTop: 12 }}>{e.description}</div>
                 {e.wardrobe && (
                   <div className="vt-field">
                     <div className="vt-field-label">Wardrobe</div>
