@@ -88,6 +88,10 @@ export const PAGES = {
     description:
       "Free director-grade video prompts for Seedance 2.5, Veo 3.1, and Kling 3.0. Copy, paste, and generate. No account needed.",
   },
+  "which-model": {
+    title: "Which AI Video Model Should You Use? — Free Tool | RevaultAI",
+    description: "Describe your shot and get a straight answer: which model fits, how long to make it, and what it costs. Veo, Kling, Wan and Seedance compared. Free.",
+  },
   "scene-breakdown": {
     title: "Scene Breakdown — Free AI Shot List Generator | RevaultAI",
     description: "Turn a scene into a numbered shot list with camera, lighting, duration and a full prompt per shot. Locked character continuity. Free, no account.",
