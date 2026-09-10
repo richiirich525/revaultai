@@ -35,6 +35,8 @@ const styles = `
   .pd-chip.active { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
   .pd-genre { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
   .pd-count { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.08em; margin-bottom: 20px; }
+  .pd-note { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); line-height: 1.85; border-left: 2px solid var(--accent); padding: 2px 0 2px 14px; margin: 0 0 14px 0; opacity: 0.9; }
+  .pd-note b { color: var(--accent); font-weight: 400; letter-spacing: 0.12em; text-transform: uppercase; font-size: 9px; display: block; margin-bottom: 5px; }
   .pd-model-tag { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); border: 1px solid rgba(123,63,228,0.35); border-radius: 3px; padding: 4px 10px; display: inline-block; margin-bottom: 12px; cursor: pointer; }
   .pd-model-tag:hover { background: var(--accent-dim); }
   .pd-genre-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
@@ -152,6 +154,7 @@ export function PromptModelPage({ slug, setPage, openPromptModel, openPromptGenr
             <div className="pd-card-num">Prompt {i + 1} <span className="pd-genre">\u00b7 {p.genre}</span></div>
             <div className="pd-card-title">{p.title}</div>
             <div className="pd-prompt">{p.text}</div>
+            {p.note && <div className="pd-note"><b>Continuity note</b>{p.note}</div>}
             <button className={"pd-copy" + (copied === p.title ? " done" : "")} onClick={() => copy(p.title, p.text)}>
               {copied === p.title ? "\u2713 Copied" : "Copy prompt"}
             </button>
@@ -228,11 +231,24 @@ export function PromptGenrePage({ slug, setPage, openPromptModel, openPromptGenr
             <div className="pd-model-tag" onClick={() => openPromptModel(p.modelSlug)}>For {p.modelName}</div>
             <div className="pd-card-title">{p.title}</div>
             <div className="pd-prompt">{p.text}</div>
+            {p.note && <div className="pd-note"><b>Continuity note</b>{p.note}</div>}
             <button className={"pd-copy" + (copied === p.modelSlug + p.title ? " done" : "")} onClick={() => copy(p.modelSlug + p.title, p.text)}>
               {copied === p.modelSlug + p.title ? "\u2713 Copied" : "Copy prompt"}
             </button>
           </div>
         ))}
+        {page.slug === "continuity" && (
+          <div className="pd-cta" style={{ marginTop: 8 }}>
+            <div className="pd-cta-label">Free, no account</div>
+            <div className="pd-cta-text">
+              Writing prompts this way is the manual version. Paste a shot list into the Continuity Check and it reads them the way a script supervisor does — flagging the character described two ways, the jacket that changes colour, the light that moves without reason. Or start further back: Scene Breakdown turns a scene into a shot list with the character and location descriptions locked and repeated word-for-word across every shot, so the drift never gets written in the first place. Both are free, with no sign-in and no credits.
+            </div>
+            <div className="pd-cta-row">
+              <button className="btn-primary" onClick={() => setPage("continuity-check")}>Check a shot list</button>
+              <button className="btn-ghost" onClick={() => setPage("scene-breakdown")}>Break down a scene</button>
+            </div>
+          </div>
+        )}
         <div className="pd-also">
           <div className="pd-also-label">Other genres</div>
           <div className="pd-genre-links">

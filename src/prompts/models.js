@@ -65,6 +65,24 @@ export const MODELS = [
         genre: "Surreal",
         text: `A continuous 30-second single take rising through the flooded nave of a colossal gothic cathedral, camera beginning submerged among broken pews and lifting in one unbroken vertical move up through the water's surface and into the vaulted air above, 28mm lens, no cuts. The surface breaks with accurate fluid dynamics, sheeting off the lens and settling into ripples that continue to propagate outward. Shafts of pale light fall through shattered stained glass, refracting differently above and below the waterline. Suspended particulate drifts with correct buoyancy. Cold blue-green underwater tones giving way to warm dust-filled gold above, deep focus, immersive filmic grain, muffled underwater sound resolving into cathedral reverb.`,
       },
+       {
+        title: "The Long Descent",
+        genre: "Continuity",
+        text: `A continuous 30-second single take following Maya Torres descending the exterior fire escape of a rain-soaked tenement at blue hour. Maya Torres is a woman in her early thirties, angular face, deep brown skin, short natural black curls, small scar through the left eyebrow, athletic build, wearing a charcoal canvas field jacket with four front pockets over a faded burgundy crew-neck shirt, black utility pants and brown leather boots. Camera begins in a low wide anamorphic framing at 35mm and descends alongside her in one unbroken vertical move, holding her in the left third of frame throughout. Rainwater sheets off the charcoal canvas of her jacket with accurate weight and runoff, beading at the collar and shedding from the hem; the fabric carries visible sodden mass and lags behind her movement. Wet iron treads throw hard specular highlights under a single sodium streetlamp camera-left, unchanged for the length of the take. Deep focus, natural motion blur, filmic grain, no cuts, ambient downpour and ringing metal.`,
+        note: `The full character block — face, hair, scar, and every garment — is written as one contiguous string that can be reproduced verbatim in the next shot without re-composition. The light is anchored to a single named source in a fixed position ("one sodium streetlamp camera-left, unchanged"), so an audit reading the next shot can verify the key direction hasn't silently moved.`,
+      },
+      {
+        title: "Workshop, Unbroken",
+        genre: "Continuity",
+        text: `A continuous 30-second single take inside Halvorsen's boat workshop, a long timber-framed room with sawdust-covered plank floors, hulls in frame along the left wall, one high north-facing window camera-right and a row of caged bulbs overhead. Elias Halvorsen is a man in his sixties, weathered pale skin, deep vertical creases at the mouth, close-cropped grey hair, heavy build, wearing a faded blue cotton work shirt with the sleeves rolled above the elbow, a stained canvas apron and steel-toed boots. Camera enters at chest height on a 28mm lens and glides forward in one uninterrupted Steadicam move down the length of the hull as he planes a strake. Curled shavings lift and fall with correct mass, settling into the sawdust; airborne dust drifts through the north window light with convincing volumetric density. Cool daylight from camera-right against the warm tungsten of the caged bulbs, both sources constant. Shallow depth of field, handheld micro-movement, no cuts.`,
+        note: `Character and location are each written as a single self-contained block, so the same two strings can be dropped into every shot of the sequence without paraphrase. Both light sources are named with a fixed direction and declared constant, which gives a continuity audit an explicit anchor to check subsequent shots against rather than inferring intent.`,
+      },
+      {
+        title: "The Ward at Four",
+        genre: "Continuity",
+        text: `A continuous 30-second single take following Sister Adaeze Okonjo down the east corridor of St. Brendan's ward at 4am — a narrow corridor of pale green tiled walls, a scuffed grey linoleum floor and evenly spaced overhead fluorescent panels, one panel flickering near the far doors. Adaeze Okonjo is a woman in her forties, dark brown skin, high cheekbones, hair braided close to the scalp and gathered at the nape, slim build, wearing pale blue scrubs, a navy cardigan with the left cuff pushed up over a plain steel watch and white leather clogs. Camera trails at hip height on a 24mm lens, gliding smoothly without a single cut as she pushes a gurney. The overhead panels pass in a repeating rhythm, sweeping cold top light across her face and the sheets; the flickering panel intermittently breaks that rhythm. The gurney carries real momentum through a right turn, the sheet rippling with correct fabric physics from displaced air. Cold desaturated palette, natural motion blur, fluorescent ballast hum and squeaking casters.`,
+        note: `Every mutable detail a supervisor would catch is pinned in the string itself: which cuff is pushed up, which panel flickers, which direction the corridor turns. Wardrobe is enumerated garment by garment rather than summarised as "scrubs", so a later shot that changes the cardigan or drops the watch reads as a flagged discrepancy instead of ambiguity.`,
+      },
     ],
   },
 
@@ -130,6 +148,24 @@ export const MODELS = [
         genre: "Found Footage Horror",
         text: `A handheld close-up of a young man holding a camcorder at arm's length in a dark stairwell, his face lit hard and unevenly from below by the camera's onboard light, 24mm lens with visible barrel distortion. The harsh underlighting reveals every detail — dilated pupils, sweat, a split lip, the tremor in his breathing. He whispers directly into the lens, lips precisely synced: "If anyone finds this, don't come looking. Just don't come looking." He glances off-frame, then kills the light. Overexposed hotspot falling to crushed black, heavy digital noise, timecode overlay, only breath and distant structural creaking in the audio.`,
       },
+     {
+        title: "The Statement, Take One",
+        genre: "Continuity",
+        text: `A locked-off medium close-up of Elena Márquez seated at a bare steel table in a windowless interview room with pale institutional walls and a single overhead fluorescent panel directly above her, 40mm lens. Elena Márquez is a woman in her fifties, olive skin, deep nasolabial lines, greying black hair pulled into a low knot with two loose strands at the right temple, a small mole beneath the left eye, wearing a charcoal wool blazer over a white cotton shirt buttoned to the collar and a thin gold chain. The unforgiving overhead light reveals every crease, the shine at her temple and the fine tremor in her hands, rendered at high textural fidelity. She waits, breathing audibly, then answers with quiet defiance, lips precisely synchronised: "I signed it. I read every word before I did." A slight tightening at the corner of her mouth follows. Ambient air-conditioning drone and the tap of a stenographer's keys, no score.`,
+        note: `The spoken line is written out in full so a reverse or reaction shot can carry the identical dialogue text without drift, and the two loose strands at the right temple give an audit a specific, checkable detail rather than a general impression of hairstyle. Light is declared as a single named fixture in a fixed position, so any subsequent shot lit from a different angle in the same room registers as unmotivated.`,
+      },
+      {
+        title: "Across the Booth",
+        genre: "Continuity",
+        text: `A medium two-shot across a diner booth at 3am, 40mm lens, shallow focus favouring the man camera-left. Daniel Ruiz is a man in his late thirties, tan skin, three-day stubble, dark hair pushed back and slightly damp at the hairline, a healing split on the lower lip, wearing an olive canvas jacket over a grey t-shirt and a plain leather watch strap on the left wrist. Opposite him, Claire Bennett is a woman in her late thirties, fair freckled skin, auburn hair cut to the jaw and tucked behind the right ear, wearing a rust-coloured wool coat over a black turtleneck. Cold fluorescent overhead mixed with warm red neon spilling through the window camera-right, both constant. Daniel says, evenly, lips precisely synchronised: "You knew before I did. Just say it." Claire does not answer immediately; her eyes move first, then her mouth opens slightly and closes. Refrigeration hum, a spoon against ceramic off-frame, no music.`,
+        note: `Two characters are described in separate contiguous blocks with explicit screen positions, so the reverse angle can reuse both strings unchanged while only the framing description differs. Asymmetric details — hair tucked behind the right ear, watch on the left wrist — are stated by side, which is the specific failure mode that flips between shots when a description is loose.`,
+      },
+      {
+        title: "Last Broadcast",
+        genre: "Continuity",
+        text: `A tight close-up of Rosalind Achebe in a soundproofed radio booth, lit only by the amber glow of the console below her camera-left, 100mm lens, extremely shallow depth of field with only her eyes in critical focus. Rosalind Achebe is a woman in her late twenties, dark brown skin, close-cropped natural hair, a small silver stud in the right nostril, wearing black wire-framed headphones, a heather-grey sweatshirt with the collar cut away and no jewellery at the neck. Skin texture, the fine hairs at her temple and the condensation of her breath on the microphone windscreen are rendered at high fidelity. She leans in and speaks with practised warmth, fully lip-synchronised: "If you're still awake out there — this one is for you." Her expression shifts from performance to something genuine across the final three words. Low-key amber against deep blue shadow, soft top fill, natural film grain, the ambient hush of an isolated booth.`,
+        note: `The negative detail — "no jewellery at the neck" — is as load-bearing as the positive ones, because a later shot that adds a necklace is the kind of drift an audit can only flag if absence was stated. Light is anchored to a practical source with a named direction, so the amber key remains verifiable across the sequence rather than being re-invented per shot.`,
+      }, 
     ],
   },
 
@@ -195,6 +231,24 @@ export const MODELS = [
         genre: "Action",
         text: `A fast crane-down into a market square as a crowd of hundreds turns from commerce to panic in a single continuous movement, 35mm lens, camera descending from high wide into the thick of the crowd at head height. Individuals react at staggered intervals with entirely distinct behavior — some running, some frozen, some pushing against the flow. Market stalls collapse under the press with correct structural failure, produce scattering and rolling with accurate physics. Fabric awnings tear and whip. Hard midday sun, high contrast, dust kicked into the light beams, handheld chaos once the camera lands, deafening layered crowd audio.`,
       },
+    {
+        title: "Through the Cordon",
+        genre: "Continuity",
+        text: `An aggressive handheld tracking shot at shoulder height on a 24mm lens, chasing Tomás Ferreira as he sprints through a police cordon into a packed night market. Tomás Ferreira is a man in his mid-twenties, brown skin, shaved head, a thin silver hoop in the left ear, wiry build, wearing a black nylon courier jacket with a reflective stripe across the back, grey cargo shorts and a canvas satchel worn across the body from right shoulder to left hip. Hundreds of shoppers fill the frame with individual, non-repeating behaviour — turning, stepping aside, colliding, recoiling — under strings of bare bulbs and hanging neon signage. He vaults a produce crate with correct body mechanics, the satchel swinging out and back with accurate mass and returning to the same crossed position on landing. Steam bursts across the lens from a food stall camera-left. Saturated reds and greens over wet pavement, heavy motion blur, roaring crowd audio.`,
+        note: `The satchel is described with an explicit orientation and stated to return to that position after the vault, which stops a following shot from flipping the strap to the other shoulder without it reading as an error. Because crowd behaviour is specified as non-repeating rather than as a fixed arrangement, an audit won't flag the changing background as drift while still holding the foreground character to the letter.`,
+      },
+      {
+        title: "The Stairwell",
+        genre: "Continuity",
+        text: `A continuous kinetic tracking shot of a hand-to-hand fight descending a narrow concrete stairwell, camera tight at 18mm, moving with the combatants and absorbing their impacts. Ivo Karadžić is a man in his forties, pale skin, broken nose set slightly to the left, close-cropped dark hair going grey at the temples, heavy build, wearing a torn white undershirt and dark work trousers with a split at the right knee. He grapples with a second fighter in a black bomber jacket. Weight transfers fully through the shoulders and hips, feet resetting between strikes; bodies slam into a steel railing that shudders on impact and dust falls from the ceiling with each collision. Ivo is thrown down half a flight and lands hard with realistic momentum and recovery, the split at the right knee widening. Bare bulbs swing violently from the impacts, throwing wildly moving shadows. Desaturated concrete palette, harsh raking light, aggressive handheld motion.`,
+        note: `Damage is written as a progression — the split at the right knee exists before the fall and widens because of it — which gives an audit a causal chain rather than an unexplained change of wardrobe between shots. The broken nose is specified as set to the left, so a reverse angle that mirrors the character's face is caught rather than passing as a lighting difference.`,
+      },
+      {
+        title: "The Avenue",
+        genre: "Continuity",
+        text: `A low-angle tracking shot at knee height on a 28mm lens, retreating ahead of a mass of protestors surging down a wide avenue at midday. At the front rank is Nadia Belkacem, a woman in her thirties, light brown skin, dark hair tied back with a red bandana knotted at the nape, wearing a faded army-green jacket with a torn left sleeve over a white shirt and carrying a folded cardboard placard in her right hand. Hundreds of individuals fill the depth of the frame with distinct gaits, gestures and collisions; one figure stumbles and is pulled upright by another. Tear gas canisters trail smoke that billows and shears across the crowd with convincing fluid dynamics. Overturned barricades scrape and shift under the press of bodies. Overcast flat daylight, no direct sun, desaturated palette, hard handheld shake, overwhelming ambient shouting and footfall.`,
+        note: `The placard is pinned to a specific hand and the sleeve tear to a specific side, which are exactly the details that migrate across shots when a description says only "carrying a sign" or "torn jacket". Declaring the light as overcast with no direct sun sets a soft, directionless key that a later shot cannot contradict with hard shadows without the audit catching it.`,
+      },  
     ],
   },
 ];
@@ -225,6 +279,16 @@ export function genresFor(model) {
 // ---------------------------------------------------------------------------
 
 export const GENRE_PAGES = [
+  {
+    slug: "continuity",
+    genre: "Continuity",
+    title: "Continuity Prompts for AI Video — Stop Character Drift",
+    description:
+      "Free AI video prompts built to survive a continuity audit. Locked wardrobe, anchored lighting and side-specific detail for Seedance, Veo and Kling.",
+    h1: "Continuity Prompts: Writing Shots That Don't Drift",
+    intro:
+      "A character who changes between shot one and shot four isn't a model failure — it's usually a description failure. These prompts are written the way a script supervisor would want them: wardrobe enumerated garment by garment, asymmetric details pinned to a side, light anchored to a named source in a fixed position, and damage written as a causal progression. Each one carries a note explaining what makes it hold up when the next shot reuses it.",
+  },
   {
     slug: "cyberpunk-noir",
     genre: "Cyberpunk Noir",

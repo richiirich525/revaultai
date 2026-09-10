@@ -258,7 +258,7 @@ for (const m of MODELS) {
   ]);
 
   const body = m.prompts
-    .map((p, i) => `<section><h2>${i + 1}. ${esc(p.title)}</h2><p>${esc(p.text)}</p></section>`)
+    .map((p, i) => `<section><h2>${i + 1}. ${esc(p.title)}</h2><p>${esc(p.text)}</p>${p.note ? `<p><strong>Continuity note:</strong> ${esc(p.note)}</p>` : ""}</section>`)
     .join("");
   const also = MODELS.filter((x) => x.slug !== m.slug)
     .map((x) => `<li><a href="/prompts/${esc(x.slug)}">${esc(x.name)} prompts</a></li>`)
@@ -302,7 +302,7 @@ for (const g of GENRE_PAGES) {
     })),
   });
   const body = prompts
-    .map((p) => `<section><h2>${esc(p.title)} — for ${esc(p.modelName)}</h2><p>${esc(p.text)}</p></section>`)
+    .map((p) => `<section><h2>${esc(p.title)} — for ${esc(p.modelName)}</h2><p>${esc(p.text)}</p>${p.note ? `<p><strong>Continuity note:</strong> ${esc(p.note)}</p>` : ""}</section>`)
     .join("");
   const also = GENRE_PAGES.filter((x) => x.slug !== g.slug)
     .map((x) => `<li><a href="/prompts/genre/${esc(x.slug)}">${esc(x.genre)} prompts</a></li>`)
