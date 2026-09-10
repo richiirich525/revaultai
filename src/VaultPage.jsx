@@ -38,6 +38,7 @@ export default function VaultPage({ user, onSignInClick, setPage, notify }) {
   const [error, setError] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [previews, setPreviews] = useState({});   // entryId -> [signed urls]
+  const [localPreviews, setLocalPreviews] = useState([]);  // object URLs for the form, index-matched to form.images
 
   async function pickImage(file) {
     if (!file) return;
@@ -64,6 +65,7 @@ export default function VaultPage({ user, onSignInClick, setPage, notify }) {
         x.send(file);
       });
       setForm((f) => ({ ...f, images: [...(f.images ?? []), j.videoPublicUrl] }));
+      setLocalPreviews((p) => [...p, URL.createObjectURL(file)]);
     } catch (err) {
       setError(err.message || "Upload failed.");
     }
@@ -72,6 +74,17 @@ export default function VaultPage({ user, onSignInClick, setPage, notify }) {
 
   function removeImage(i) {
     setForm((f) => ({ ...f, images: (f.images ?? []).filter((_, n) => n !== i) }));
+    setLocalPreviews((p) => {
+      if (p[i]?.startsWith("blob:")) URL.revokeObjectURL(p[i]);
+      return p.filter((_, n) => n !== i);
+    });
+  }
+
+  function clearLocalPreviews() {
+    setLocalPreviews((p) => {
+      p.forEach((u) => { if (u?.startsWith("blob:")) URL.revokeObjectURL(u); });
+      return [];
+    });
   }
 
   async function loadPreviews(entry) {
@@ -103,7 +116,7 @@ export default function VaultPage({ user, onSignInClick, setPage, notify }) {
   useEffect(() => { load(); }, [user?.id]);
 
   function set(k, v) { setForm((f) => ({ ...f, [k]: v })); }
-  function reset() { setForm(BLANK); setEditingId(null); setError(null); }
+  function reset() { setForm(BLANK); setEditingId(null); setError(null); clearLocalPreviews(); }
 
   async function save() {
     if (!form.name.trim()) { setError("Give this entry a name."); return; }
@@ -142,6 +155,8 @@ export default function VaultPage({ user, onSignInClick, setPage, notify }) {
       notes: entry.notes ?? "",
       images: Array.isArray(entry.images) ? entry.images : [],
     });
+    clearLocalPreviews();
+    setLocalPreviews(previews[entry.id] ?? []);
     setEditingId(entry.id);
     setError(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -255,9 +270,17 @@ export default function VaultPage({ user, onSignInClick, setPage, notify }) {
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
                   {form.images.map((_, i) => (
                     <div key={i} style={{ position: "relative" }}>
-                      <div style={{ width: 92, height: 92, borderRadius: 4, border: "1px solid var(--border)", background: "var(--surface)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Mono', monospace", fontSize: 9, color: "var(--muted)", letterSpacing: "0.1em" }}>
-                        IMAGE {i + 1}
-                      </div>
+                      {localPreviews[i] ? (
+                        <img
+                          src={localPreviews[i]}
+                          alt={"Reference " + (i + 1)}
+                          style={{ width: 92, height: 92, objectFit: "cover", borderRadius: 4, border: "1px solid var(--border)", display: "block" }}
+                        />
+                      ) : (
+                        <div style={{ width: 92, height: 92, borderRadius: 4, border: "1px solid var(--border)", background: "var(--surface)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Mono', monospace", fontSize: 9, color: "var(--muted)", letterSpacing: "0.1em" }}>
+                          IMAGE {i + 1}
+                        </div>
+                      )}
                       <button
                         onClick={() => removeImage(i)}
                         style={{ position: "absolute", top: -6, right: -6, width: 20, height: 20, borderRadius: "50%", border: "1px solid var(--border)", background: "var(--bg)", color: "#C25B5B", cursor: "pointer", fontSize: 12, lineHeight: 1, padding: 0 }}
