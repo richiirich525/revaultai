@@ -113,7 +113,24 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { scene, model, style, strength, aspectRatio } = req.body || {};
+    const { scene, model, style, strength, aspectRatio, locked } = req.body || {};
+
+    // Vault entries the creator selected. Their text is authoritative: the
+    // model is told to reproduce it verbatim, and we overwrite whatever it
+    // returns with the original wording before sending it back.
+    const lockedEntries = Array.isArray(locked)
+      ? locked
+          .filter((e) => e && typeof e.name === "string" && typeof e.description === "string")
+          .slice(0, 8)
+          .map((e) => ({
+            kind: e.kind === "location" ? "location" : "character",
+            name: e.name.slice(0, 80),
+            description: [e.description, e.wardrobe, e.distinguishing]
+              .filter((p) => typeof p === "string" && p.trim())
+              .join(" ")
+              .slice(0, 1200),
+          }))
+      : [];
 
     // --- Validate ---
     if (typeof scene !== "string" || scene.trim().length < 15) {
@@ -166,6 +183,12 @@ Apply this style consistently to EVERY shot. Style continuity matters as much as
 ` : ""}${chosenRatio ? `
 Framing: ${chosenRatio}
 ` : ""}
+${lockedEntries.length ? `
+LOCKED ENTRIES — these come from the creator's vault and are FIXED:
+${lockedEntries.map((e) => `- [${e.kind}] ${e.name}: ${e.description}`).join("\n")}
+
+Reproduce each locked description EXACTLY as written above, word for word, inside the "prompt" of every shot in which that character or location appears. Do not rephrase, shorten, expand or restyle them. Put these entries in your "characters" and "locations" arrays using exactly this wording. You may write additional characters or locations that the scene needs and that are not listed here.
+` : ""}
 Scene to break down:
 ${scene.trim()}`;
 
@@ -212,6 +235,16 @@ ${scene.trim()}`;
     built.shots = built.shots.slice(0, MAX_SHOTS);
     built.characters = Array.isArray(built.characters) ? built.characters : [];
     built.locations = Array.isArray(built.locations) ? built.locations : [];
+
+    // True lock: the creator's own wording wins over anything the model wrote.
+    for (const entry of lockedEntries) {
+      const bucket = entry.kind === "location" ? built.locations : built.characters;
+      const existing = bucket.find(
+        (x) => typeof x?.name === "string" && x.name.trim().toLowerCase() === entry.name.trim().toLowerCase()
+      );
+      if (existing) existing.description = entry.description;
+      else bucket.push({ name: entry.name, description: entry.description });
+    }
 
     // --- Log for rate limiting ---
     await supabase.from("prompt_builds").insert({ ip_hash: ipHash, target_model: model });
