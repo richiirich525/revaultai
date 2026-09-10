@@ -13,6 +13,21 @@ const MODELS = [
   ["veo", "Veo"], ["sora", "Sora"], ["kling", "Kling"], ["runway", "Runway"],
   ["wan", "Wan"], ["hailuo", "Hailuo"], ["seedance", "Seedance"],
 ];
+// Per-second credit costs, mirroring the generator's model list. Only models
+// actually available on /generate appear here — if the breakdown targets Sora,
+// Runway or Hailuo the estimate is hidden rather than guessed at.
+const COST_MODELS = [
+  { family: "wan", key: "wan-2.6", label: "Wan 2.6", perSec: 1, maxSeconds: 15 },
+  { family: "kling", key: "kling-3.0", label: "Kling 3.0", perSec: 2, maxSeconds: 10 },
+  { family: "seedance", key: "seedance-2.0-480", label: "Seedance 2.0 Draft", perSec: 3, maxSeconds: 15 },
+  { family: "veo", key: "veo-3.1", label: "Veo 3.1", perSec: 4, maxSeconds: 8 },
+  { family: "seedance", key: "seedance-2.0", label: "Seedance 2.0 Flagship", perSec: 6, maxSeconds: 15 },
+  { family: "seedance", key: "seedance-2.5-480", label: "Seedance 2.5 Draft", perSec: 6, maxSeconds: 30 },
+  { family: "seedance", key: "seedance-2.5", label: "Seedance 2.5 Flagship", perSec: 12, maxSeconds: 30 },
+];
+
+// The model a given breakdown target maps to by default on /generate.
+const PRIMARY_BY_FAMILY = { wan: "wan-2.6", kling: "kling-3.0", veo: "veo-3.1", seedance: "seedance-2.5" };
 const STYLES = [
   ["none", "No preset"], ["anamorphic-70s", "70s Anamorphic"], ["neo-noir", "Neo-Noir"],
   ["imax-70", "IMAX 70mm"], ["doc-16mm", "Doc 16mm"], ["technicolor", "Technicolor"],
@@ -43,6 +58,13 @@ const styles = `
   .sb-actions { display: flex; gap: 10px; flex-wrap: wrap; }
   .sb-hist { padding: 10px 12px; border-radius: 4px; cursor: pointer; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); line-height: 1.6; }
   .sb-hist:hover { background: var(--bg); }
+  .sb-cost { border: 1px solid var(--accent); border-radius: 8px; padding: 24px 26px; margin-bottom: 28px; background: var(--surface); }
+  .sb-cost-total { font-family: 'Syne', sans-serif; font-size: 30px; font-weight: 700; color: var(--text); line-height: 1; }
+  .sb-cost-sub { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: var(--muted); margin-top: 8px; }
+  .sb-cost-row { display: flex; flex-wrap: wrap; gap: 10px 20px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .sb-cost-alt { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); letter-spacing: 0.06em; }
+  .sb-cost-alt b { color: var(--text); font-weight: 400; }
+  .sb-cost-note { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); line-height: 1.7; margin-top: 12px; opacity: 0.8; }
   @media (max-width: 760px) { .sb-wrap { padding: 0 24px; } .sb-card { padding: 22px; } }
 `;
 
@@ -123,6 +145,21 @@ export default function SceneBreakdownPage({ setPage, user, onSignInClick, setGe
   }
 
   const b = result?.built;
+
+  // Estimate what this shot list costs to generate. Hidden entirely when the
+  // target model isn't one we can generate on.
+  const totalSeconds = (b?.shots ?? []).reduce((sum, s) => sum + (Number(s.duration_seconds) || 0), 0);
+  const targetFamily = result?.modelKey;
+  const primaryKey = PRIMARY_BY_FAMILY[targetFamily];
+  const primary = COST_MODELS.find((m) => m.key === primaryKey);
+  const longestShot = (b?.shots ?? []).reduce((max, s) => Math.max(max, Number(s.duration_seconds) || 0), 0);
+
+  const alternates = primary
+    ? COST_MODELS
+        .filter((m) => m.key !== primary.key)
+        .map((m) => ({ ...m, cost: m.perSec * totalSeconds, overLimit: longestShot > m.maxSeconds }))
+        .sort((x, y) => x.cost - y.cost)
+    : [];
 
   return (
     <div className="page">
@@ -217,6 +254,29 @@ export default function SceneBreakdownPage({ setPage, user, onSignInClick, setGe
             <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 40, fontWeight: 300, color: "var(--text)", lineHeight: 1.2 }}>{b.title}</div>
             {b.logline && <div className="sb-body" style={{ maxWidth: 520, margin: "12px auto 0" }}>{b.logline}</div>}
           </div>
+
+          {primary && totalSeconds > 0 && (
+            <div className="sb-cost">
+              <div className="sb-label">Estimated generation cost</div>
+              <div className="sb-cost-total">{primary.perSec * totalSeconds} credits</div>
+              <div className="sb-cost-sub">
+                {b.shots.length} shots · {totalSeconds}s total · {primary.label} at {primary.perSec} credit{primary.perSec === 1 ? "" : "s"}/second
+              </div>
+              {alternates.length > 0 && (
+                <div className="sb-cost-row">
+                  {alternates.map((m) => (
+                    <span className="sb-cost-alt" key={m.key}>
+                      {m.label} <b>{m.cost}</b>{m.overLimit ? "*" : ""}
+                    </span>
+                  ))}
+                </div>
+              )}
+              <div className="sb-cost-note">
+                Estimates only — you're charged per second of output when you generate, and failed generations are refunded.
+                {alternates.some((m) => m.overLimit) && " * Some shots are longer than this model's maximum, so they'd need splitting or shortening."}
+              </div>
+            </div>
+          )}
 
           {result.applied && (
             <div className="sb-locked" style={{ marginBottom: 28 }}>
