@@ -1101,10 +1101,13 @@ function HomePage({ creations, setPage, setDetailId, user, onSignInClick }) {
           <div className="hero-eyebrow">AI-Native Creative Platform</div>
           <div className="hero-tagline">The AI era doesn't<br />need more content.</div>
           <span className="hero-tagline-accent">It needs curation.</span>
-          <p className="hero-sub" style={{ color: "var(--text)", fontSize: 16, fontWeight: 500, lineHeight: 1.6, maxWidth: 440, marginBottom: 16 }}>Home to the world's best AI films, short films, images, prompts, workflows, and creative experiments.</p>
-          <button className="hero-link" onClick={() => setPage("explore")}>Explore the Archive <span className="hero-link-arrow">&rarr;</span></button>
+          <p className="hero-sub" style={{ color: "var(--text)", fontSize: 16, fontWeight: 500, lineHeight: 1.6, maxWidth: 440, marginBottom: 24 }}>Home to the world's best AI films, short films, images, prompts, workflows, and creative experiments.</p>
+          <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
+            <button className="btn-primary" onClick={() => setPage("explore")}>Explore Films</button>
+            <button className="btn-ghost" onClick={() => (user ? setPage("generate") : onSignInClick?.())}>Create Now</button>
+          </div>
         </div>
-        <div className="hero-right"><img src="https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?w=1400&q=90" alt="Cinematic AI visual" /></div>
+        <div className="hero-right"><img src="/hero-vault.png" alt="A filmmaker standing before an illuminated screen inside an open vault" /></div>
       </section>
       <HomeFeatures setPage={setPage} user={user} onSignInClick={onSignInClick} />
       <SpotlightSection creations={creations} onView={goDetail} />
