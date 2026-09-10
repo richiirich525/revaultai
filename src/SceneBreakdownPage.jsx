@@ -58,6 +58,14 @@ const styles = `
   .sb-actions { display: flex; gap: 10px; flex-wrap: wrap; }
   .sb-hist { padding: 10px 12px; border-radius: 4px; cursor: pointer; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); line-height: 1.6; }
   .sb-hist:hover { background: var(--bg); }
+  .sb-vault { border: 1px solid var(--border); border-radius: 6px; padding: 18px 20px; margin-bottom: 24px; background: var(--bg); }
+  .sb-vault-item { display: flex; align-items: flex-start; gap: 10px; padding: 9px 10px; border-radius: 4px; cursor: pointer; transition: background 0.15s; }
+  .sb-vault-item:hover { background: var(--surface); }
+  .sb-vault-box { width: 14px; height: 14px; border: 1px solid var(--border); border-radius: 3px; flex-shrink: 0; margin-top: 3px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--accent); line-height: 1; }
+  .sb-vault-box.on { border-color: var(--accent); background: var(--accent-dim); }
+  .sb-vault-name { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text); letter-spacing: 0.06em; }
+  .sb-vault-kind { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-left: 8px; }
+  .sb-vault-desc { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); line-height: 1.65; margin-top: 3px; }
   .sb-cost { border: 1px solid var(--accent); border-radius: 8px; padding: 24px 26px; margin-bottom: 28px; background: var(--surface); }
   .sb-cost-total { font-family: 'Syne', sans-serif; font-size: 30px; font-weight: 700; color: var(--text); line-height: 1; }
   .sb-cost-sub { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: var(--muted); margin-top: 8px; }
@@ -79,6 +87,23 @@ export default function SceneBreakdownPage({ setPage, user, onSignInClick, setGe
   const [result, setResult] = useState(null);
   const [copied, setCopied] = useState(null);
   const [history, setHistory] = useState([]);
+  const [vault, setVault] = useState([]);
+  const [lockedIds, setLockedIds] = useState([]);
+
+  async function loadVault() {
+    if (!user?.id) { setVault([]); return; }
+    const { data } = await supabase
+      .from("vault_entries")
+      .select("id, kind, name, description, wardrobe, distinguishing")
+      .order("kind", { ascending: true })
+      .order("name", { ascending: true });
+    setVault(data ?? []);
+  }
+  useEffect(() => { loadVault(); }, [user?.id]);
+
+  function toggleLocked(id) {
+    setLockedIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
+  }
 
   async function loadHistory() {
     if (!user?.id) { setHistory([]); return; }
@@ -106,7 +131,14 @@ export default function SceneBreakdownPage({ setPage, user, onSignInClick, setGe
       const res = await fetch("/api/scene-breakdown", {
         method: "POST",
         headers,
-        body: JSON.stringify({ scene, model, style, strength, aspectRatio: aspect }),
+        body: JSON.stringify({
+          scene,
+          model,
+          style,
+          strength,
+          aspectRatio: aspect,
+          locked: vault.filter((v) => lockedIds.includes(v.id)),
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) setError(data.error || "Something went wrong. Try again.");
@@ -187,6 +219,47 @@ export default function SceneBreakdownPage({ setPage, user, onSignInClick, setGe
             style={{ marginBottom: 6 }}
           />
           <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: "var(--muted)", textAlign: "right", marginBottom: 24 }}>{scene.length} / 1500</div>
+
+          {user && (
+            <>
+              <div className="sb-label">Lock from your vault (optional)</div>
+              <div className="sb-vault">
+                {vault.length === 0 ? (
+                  <div className="sb-body" style={{ fontSize: 10 }}>
+                    Nothing saved yet.{" "}
+                    <span onClick={() => setPage("vault")} style={{ color: "var(--accent)", cursor: "pointer" }}>Build your vault</span>{" "}
+                    and your characters and locations drop in here, locked word-for-word across every shot.
+                  </div>
+                ) : (
+                  <>
+                    {vault.map((v) => {
+                      const on = lockedIds.includes(v.id);
+                      return (
+                        <div key={v.id} className="sb-vault-item" onClick={() => toggleLocked(v.id)}>
+                          <div className={"sb-vault-box" + (on ? " on" : "")}>{on ? "\u2713" : ""}</div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div>
+                              <span className="sb-vault-name">{v.name}</span>
+                              <span className="sb-vault-kind">{v.kind}</span>
+                            </div>
+                            <div className="sb-vault-desc">
+                              {v.description.length > 120 ? v.description.slice(0, 120) + "…" : v.description}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <div className="sb-body" style={{ fontSize: 10, marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--border)", opacity: 0.8 }}>
+                      {lockedIds.length > 0
+                        ? `${lockedIds.length} locked — this exact wording appears in every shot they're in.`
+                        : "Select anyone appearing in this scene. Their saved description is used verbatim, never rephrased."}{" "}
+                      <span onClick={() => setPage("vault")} style={{ color: "var(--accent)", cursor: "pointer" }}>Manage vault</span>
+                    </div>
+                  </>
+                )}
+              </div>
+            </>
+          )}
 
           <div className="sb-label">Target model</div>
           <div className="sb-chiprow">
