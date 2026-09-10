@@ -91,7 +91,7 @@ const CSS = `
   .hero { min-height: 60vh; display: grid; grid-template-columns: 1fr 1fr; position: relative; overflow: hidden; }
   .hero-left { display: flex; flex-direction: column; justify-content: center; padding: 48px 56px; position: relative; z-index: 2; }
   .hero-right { position: relative; overflow: hidden; }
-  .hero-right img { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.75) saturate(0.85); display: block; animation: heroKenBurns 18s ease-in-out infinite alternate; }
+  .hero-right img { width: 100%; height: 100%; object-fit: cover; object-position: 60% center; filter: brightness(0.75) saturate(0.85); display: block; animation: heroKenBurns 18s ease-in-out infinite alternate; }
   @keyframes heroKenBurns { 0% { transform: scale(1.0); } 50% { transform: scale(1.06) translate(-1%, 0.8%); } 100% { transform: scale(1.08) translate(-0.6%, 1%); } }
   .hero-right::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to right, var(--bg) 0%, transparent 30%); pointer-events: none; z-index: 1; }
   .hero-eyebrow { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.22em; color: var(--muted); text-transform: uppercase; margin-bottom: 28px; }
@@ -289,7 +289,9 @@ const CSS = `
     .nav-center { position: static; transform: none; width: 100%; order: 3; flex-wrap: wrap; gap: 10px 16px; justify-content: center; padding: 12px 0; border-top: 1px solid var(--border); margin-top: 12px; }
     .nav-link { font-size: 10px; } .nav-user-email { display: none; } .nav-logo { font-size: 12px; }
     .nav-signin { padding: 6px 14px; font-size: 10px; } .nav-signout { padding: 5px 12px; font-size: 9px; }
-    .hero { grid-template-columns: 1fr; min-height: auto; } .hero-left { padding: 32px 24px; } .hero-right { min-height: 300px; }
+    .hero { grid-template-columns: 1fr; min-height: auto; } .hero-left { padding: 32px 24px; }
+    .hero-right { min-height: 0; aspect-ratio: 16 / 9; }
+    .hero-right img { width: 100%; height: 100%; object-fit: cover; object-position: 65% center; }
     .hero-tagline, .hero-tagline-accent { font-size: 28px; } .hero-eyebrow { font-size: 9px; margin-bottom: 20px; } .hero-sub { font-size: 13px; margin-bottom: 28px; }
     .section { padding: 40px 24px; } .section-header { flex-direction: column; align-items: flex-start; gap: 12px; }
     .spotlight-section-wrap { padding: 48px 24px; }
