@@ -1104,7 +1104,7 @@ function HomePage({ creations, setPage, setDetailId, user, onSignInClick }) {
           <p className="hero-sub" style={{ color: "var(--text)", fontSize: 16, fontWeight: 500, lineHeight: 1.6, maxWidth: 440, marginBottom: 24 }}>Home to the world's best AI films, short films, images, prompts, workflows, and creative experiments.</p>
           <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
             <button className="btn-primary" onClick={() => setPage("explore")}>Explore Films</button>
-            <button className="btn-ghost" onClick={() => (user ? setPage("generate") : onSignInClick?.())}>Create Now</button>
+            <button className="btn-ghost" onClick={() => setPage(user ? "generate" : "ai-video-generator")}>Create Now</button>
           </div>
         </div>
         <div className="hero-right"><img src="/hero-vault.png" alt="A filmmaker standing before an illuminated screen inside an open vault" /></div>
