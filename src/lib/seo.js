@@ -88,6 +88,10 @@ export const PAGES = {
     description:
       "Free director-grade video prompts for Seedance 2.5, Veo 3.1, and Kling 3.0. Copy, paste, and generate. No account needed.",
   },
+  "frame-planner": {
+    title: "Frame Planner — Plan the First and Last Frame | RevaultAI",
+    description: "Decide where your shot starts and where it lands. Two frame descriptions, an image prompt for each, and the motion between. Free, no account.",
+  },
   coverage: {
     title: "Coverage Planner — What Your Scene Needs to Cut | RevaultAI",
     description: "Plan the shots an editor actually needs: master, singles, over-the-shoulders, reactions, inserts — plus what's missing and what it costs you. Free, no account.",
