@@ -11,6 +11,39 @@ import { supabase } from "./lib/supabase.js";
 const BLANK = { kind: "character", name: "", description: "", wardrobe: "", distinguishing: "", notes: "", images: [] };
 const MAX_IMAGES = 3;
 
+const KINDS = [
+  ["character", "Character"],
+  ["location", "Location"],
+  ["prop", "Prop"],
+  ["look", "Look"],
+];
+
+const PLACEHOLDERS = {
+  character: {
+    name: "Maya",
+    description: "Woman in her early 30s, angular face, deep brown skin, short natural black curls, dark brown eyes, athletic build.",
+  },
+  location: {
+    name: "Underground parking garage",
+    description: "Narrow underground parking garage, pale concrete columns, low fluorescent ceiling lights, yellow bay numbers, damp floor reflecting the overhead fixtures.",
+  },
+  prop: {
+    name: "Maya's camera",
+    description: "Battered black Canon AE-1 with a cracked viewfinder, brown leather strap worn shiny at the edges, a strip of gaffer tape over the film counter.",
+  },
+  look: {
+    name: "1970s paranoid thriller",
+    description: "40mm anamorphic with oval bokeh and mild barrel distortion. Soft motivated practicals, hard sunset backlight, warm amber highlights against cyan shadows. Kodak-like grain, restrained halation, slow controlled camera movement, no handheld.",
+  },
+};
+
+const HELP = {
+  character: "This exact text goes into every shot they appear in. Concrete and visual beats long — four to seven strong anchors carry further than a paragraph of adjectives.",
+  location: "This exact text goes into every shot set here. Name the materials, the light sources and the dressing rather than the mood.",
+  prop: "This exact text goes into every shot the prop appears in. Specific beats generic — a battered black Canon AE-1 holds where 'a camera' drifts.",
+  look: "A Look applies to the whole scene, not one subject. Every shot in a breakdown inherits it — lens, lighting, palette, texture and camera behaviour.",
+};
+
 const styles = `
   .vt-wrap { max-width: 860px; margin: 0 auto; padding: 0 48px; }
   .vt-label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.2em; color: var(--accent); text-transform: uppercase; margin-bottom: 8px; }
@@ -172,8 +205,7 @@ export default function VaultPage({ user, onSignInClick, setPage, notify }) {
   }
 
   const shown = filter === "all" ? entries : entries.filter((e) => e.kind === filter);
-  const characters = entries.filter((e) => e.kind === "character").length;
-  const locations = entries.filter((e) => e.kind === "location").length;
+  const countOf = (k) => entries.filter((e) => e.kind === k).length;
 
   if (!user) {
     return (
@@ -199,20 +231,20 @@ export default function VaultPage({ user, onSignInClick, setPage, notify }) {
       <div className="page-hdr">
         <div className="page-hdr-eyebrow">Continuity</div>
         <div className="page-hdr-title">The Vault</div>
-        <div className="page-hdr-sub">Save a character or location once, then lock it into every shot of a scene.</div>
+        <div className="page-hdr-sub">Your production bible — characters, locations, props and looks, locked into every shot.</div>
       </div>
 
       <section className="section">
         <div className="vt-wrap">
           <div className="vt-body" style={{ maxWidth: 620, marginBottom: 32 }}>
-            Continuity breaks when you describe the same character slightly differently each time. Write the description once here, and Scene Breakdown will reproduce it word-for-word in every shot that features them — no paraphrasing, no drift.
+            Continuity breaks when you describe the same thing slightly differently each time. Write it once here — a character, a location, a prop — and Scene Breakdown reproduces it word-for-word in every shot it appears in. A Look works differently: it's the project's visual language, and every shot in a breakdown inherits it.
           </div>
 
           <div style={{ border: "1px solid var(--border)", borderRadius: 8, padding: 28, background: "var(--surface)", marginBottom: 40 }}>
             <div className="vt-label">{editingId ? "Edit entry" : "New entry"}</div>
 
             <div style={{ display: "flex", gap: 8, marginBottom: 18 }}>
-              {[["character", "Character"], ["location", "Location"]].map(([v, l]) => (
+              {KINDS.map(([v, l]) => (
                 <button key={v} className={"vt-chip" + (form.kind === v ? " on" : "")} onClick={() => set("kind", v)}>{l}</button>
               ))}
             </div>
@@ -223,22 +255,20 @@ export default function VaultPage({ user, onSignInClick, setPage, notify }) {
               value={form.name}
               maxLength={80}
               onChange={(e) => set("name", e.target.value)}
-              placeholder={form.kind === "character" ? "Maya" : "Underground parking garage"}
+              placeholder={PLACEHOLDERS[form.kind]?.name ?? ""}
             />
 
-            <div className="vt-label">Locked description</div>
+            <div className="vt-label">{form.kind === "look" ? "Style directives" : "Locked description"}</div>
             <textarea
               className="vt-textarea"
               rows={4}
               maxLength={1200}
               value={form.description}
               onChange={(e) => set("description", e.target.value)}
-              placeholder={form.kind === "character"
-                ? "Woman in her early 30s, angular face, deep brown skin, short natural black curls, dark brown eyes, athletic build."
-                : "Narrow underground parking garage, pale concrete columns, low fluorescent ceiling lights, yellow bay numbers, damp floor reflecting the overhead fixtures."}
+              placeholder={PLACEHOLDERS[form.kind]?.description ?? ""}
             />
             <div className="vt-body" style={{ fontSize: 10, marginTop: -8, marginBottom: 16, opacity: 0.8 }}>
-              This exact text goes into every shot. Concrete and visual beats long — four to seven strong anchors carry further than a paragraph of adjectives.
+              {HELP[form.kind]}
             </div>
 
             {form.kind === "character" && (
@@ -327,8 +357,11 @@ export default function VaultPage({ user, onSignInClick, setPage, notify }) {
 
           <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
             <button className={"vt-chip" + (filter === "all" ? " on" : "")} onClick={() => setFilter("all")}>All ({entries.length})</button>
-            <button className={"vt-chip" + (filter === "character" ? " on" : "")} onClick={() => setFilter("character")}>Characters ({characters})</button>
-            <button className={"vt-chip" + (filter === "location" ? " on" : "")} onClick={() => setFilter("location")}>Locations ({locations})</button>
+            {KINDS.map(([v, l]) => (
+              <button key={v} className={"vt-chip" + (filter === v ? " on" : "")} onClick={() => setFilter(v)}>
+                {l}s ({countOf(v)})
+              </button>
+            ))}
           </div>
 
           {loading ? (

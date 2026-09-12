@@ -358,7 +358,7 @@ export default function SceneBreakdownPage({ setPage, user, onSignInClick, setGe
             </div>
           )}
 
-          {(b.characters?.length > 0 || b.locations?.length > 0) && (
+          {(b.characters?.length > 0 || b.locations?.length > 0 || b.props?.length > 0) && (
             <div style={{ marginBottom: 36 }}>
               <div className="sb-label" style={{ marginBottom: 12 }}>Locked descriptions — repeated word-for-word in every shot</div>
               {(b.characters ?? []).map((c, i) => (
@@ -367,6 +367,15 @@ export default function SceneBreakdownPage({ setPage, user, onSignInClick, setGe
                   <div className="sb-body">{c.description}</div>
                   <button className="btn-ghost" style={{ marginTop: 12, padding: "6px 14px", fontSize: 10 }} onClick={() => copyPrompt("c" + i, c.description)}>
                     {copied === "c" + i ? "Copied" : "Copy"}
+                  </button>
+                </div>
+              ))}
+              {(b.props ?? []).map((p, i) => (
+                <div className="sb-locked" key={"p" + i}>
+                  <div className="sb-locked-name">{p.name}</div>
+                  <div className="sb-body">{p.description}</div>
+                  <button className="btn-ghost" style={{ marginTop: 12, padding: "6px 14px", fontSize: 10 }} onClick={() => copyPrompt("p" + i, p.description)}>
+                    {copied === "p" + i ? "Copied" : "Copy"}
                   </button>
                 </div>
               ))}

@@ -118,12 +118,13 @@ export default async function handler(req, res) {
     // Vault entries the creator selected. Their text is authoritative: the
     // model is told to reproduce it verbatim, and we overwrite whatever it
     // returns with the original wording before sending it back.
-    const lockedEntries = Array.isArray(locked)
+    const KINDS = ["character", "location", "prop", "look"];
+    const allSelected = Array.isArray(locked)
       ? locked
           .filter((e) => e && typeof e.name === "string" && typeof e.description === "string")
-          .slice(0, 8)
+          .slice(0, 10)
           .map((e) => ({
-            kind: e.kind === "location" ? "location" : "character",
+            kind: KINDS.includes(e.kind) ? e.kind : "character",
             name: e.name.slice(0, 80),
             description: [e.description, e.wardrobe, e.distinguishing]
               .filter((p) => typeof p === "string" && p.trim())
@@ -131,6 +132,11 @@ export default async function handler(req, res) {
               .slice(0, 1200),
           }))
       : [];
+
+    // Looks are project-wide style, not per-subject. Everything else is
+    // matched by name and reproduced verbatim in the shots it appears in.
+    const lookEntries = allSelected.filter((e) => e.kind === "look");
+    const lockedEntries = allSelected.filter((e) => e.kind !== "look");
 
     // --- Validate ---
     if (typeof scene !== "string" || scene.trim().length < 15) {
@@ -183,7 +189,12 @@ Apply this style consistently to EVERY shot. Style continuity matters as much as
 ` : ""}${chosenRatio ? `
 Framing: ${chosenRatio}
 ` : ""}
-${lockedEntries.length ? `
+${lookEntries.length ? `
+PROJECT LOOK — the visual language for this entire scene:
+${lookEntries.map((e) => `${e.name}: ${e.description}`).join("\n")}
+
+Apply this look to EVERY shot without exception. It governs lens, lighting, palette, texture and camera behaviour throughout. Weave it into each shot's prompt naturally rather than appending it as a list.
+` : ""}${lockedEntries.length ? `
 LOCKED ENTRIES — these come from the creator's vault and are FIXED:
 ${lockedEntries.map((e) => `- [${e.kind}] ${e.name}: ${e.description}`).join("\n")}
 
@@ -237,8 +248,12 @@ ${scene.trim()}`;
     built.locations = Array.isArray(built.locations) ? built.locations : [];
 
     // True lock: the creator's own wording wins over anything the model wrote.
+    built.props = Array.isArray(built.props) ? built.props : [];
     for (const entry of lockedEntries) {
-      const bucket = entry.kind === "location" ? built.locations : built.characters;
+      const bucket =
+        entry.kind === "location" ? built.locations :
+        entry.kind === "prop" ? built.props :
+        built.characters;
       const existing = bucket.find(
         (x) => typeof x?.name === "string" && x.name.trim().toLowerCase() === entry.name.trim().toLowerCase()
       );
