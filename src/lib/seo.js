@@ -88,6 +88,10 @@ export const PAGES = {
     description:
       "Free director-grade video prompts for Seedance 2.5, Veo 3.1, and Kling 3.0. Copy, paste, and generate. No account needed.",
   },
+  coverage: {
+    title: "Coverage Planner — What Your Scene Needs to Cut | RevaultAI",
+    description: "Plan the shots an editor actually needs: master, singles, over-the-shoulders, reactions, inserts — plus what's missing and what it costs you. Free, no account.",
+  },
   "shot-director": {
     title: "Shot Director — Three Ways to Shoot Any Moment | RevaultAI",
     description: "Describe a dramatic beat and get three directorial approaches: shot size, lens, camera move, lighting, blocking and a full prompt for each. Free, no account.",

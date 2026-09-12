@@ -16,6 +16,7 @@ import WhichModelPage from "./WhichModelPage.jsx";
 import VaultPage from "./VaultPage.jsx";
 import ContinuityCheckPage from "./ContinuityCheckPage.jsx";
 import ShotDirectorPage from "./ShotDirectorPage.jsx";
+import CoveragePage from "./CoveragePage.jsx";
 import { updateCommentsEnabled } from "./lib/comments.js";
 import {
   fetchCreations,
@@ -452,6 +453,7 @@ function Nav({ page, setPage, user, profile, onSignInClick, onSignOut }) {
               <button style={itemStyle(page === "scene-breakdown")} onClick={() => go("scene-breakdown")}>Scene Breakdown</button>
               {user && <button style={itemStyle(page === "vault")} onClick={() => go("vault")}>The Vault</button>}
               <button style={itemStyle(page === "shot-director")} onClick={() => go("shot-director")}>Shot Director</button>
+              <button style={itemStyle(page === "coverage")} onClick={() => go("coverage")}>Coverage Planner</button>
               <button style={itemStyle(page === "continuity-check")} onClick={() => go("continuity-check")}>Continuity Check</button>
               <button style={itemStyle(page === "which-model")} onClick={() => go("which-model")}>Which Model?</button>
               <button style={itemStyle(page === "prompts")} onClick={() => go("prompts")}>Prompt Library</button>
@@ -3721,7 +3723,7 @@ const [page, setPageState]        = useState("home");
   // ---- URL routing ----
   const detailIdRef = useRef(null);
   const creatorUserRef = useRef(null);
-  const KNOWN_PAGES = ["home","explore","creators","feed","generate","settings","admin","submit","set-password","email-confirmed","terms","faq","contact","guidelines","premium-prompts","about","become-creator","privacy","refunds","dmca","ai-disclaimer","purchase-success","founding-creators","blog","ai-video-generator","prompt-builder","prompts","search","scene-breakdown","which-model","vault","continuity-check","shot-director"];
+  const KNOWN_PAGES = ["home","explore","creators","feed","generate","settings","admin","submit","set-password","email-confirmed","terms","faq","contact","guidelines","premium-prompts","about","become-creator","privacy","refunds","dmca","ai-disclaimer","purchase-success","founding-creators","blog","ai-video-generator","prompt-builder","prompts","search","scene-breakdown","which-model","vault","continuity-check","shot-director","coverage"];
 
   function setDetailId(id) { detailIdRef.current = id; setDetailIdState(id); }
   const blogSlugRef = useRef(null);
@@ -3894,6 +3896,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       case "ai-video-generator": return <AiVideoGeneratorPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} />;
       case "blog": return <BlogPage setPage={setPage} openPost={openPost} />;
       case "blog-post": return <BlogPostPage slug={blogSlug} setPage={setPage} openPost={openPost} />;
+      case "coverage": return <CoveragePage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} setGenPrefill={setGenPrefill} setCcPrefill={setCcPrefill} />;
       case "shot-director": return <ShotDirectorPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} setGenPrefill={setGenPrefill} />;
       case "continuity-check": return <ContinuityCheckPage setPage={setPage} user={user} ccPrefill={ccPrefill} setCcPrefill={setCcPrefill} />;
       case "vault": return <VaultPage user={user} onSignInClick={() => setAuthOpen(true)} setPage={setPage} notify={notify} />;
