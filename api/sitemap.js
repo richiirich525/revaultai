@@ -22,6 +22,7 @@ const STATIC_PAGES = [
   ["/scene-breakdown", "0.9", "monthly"],
   ["/which-model", "0.9", "monthly"],
   ["/continuity-check", "0.9", "monthly"],
+  ["/shot-director", "0.9", "monthly"],
   ["/discovered", "0.8", "weekly"],
   ["/faq", "0.6", "monthly"],
   ["/guidelines", "0.6", "monthly"],

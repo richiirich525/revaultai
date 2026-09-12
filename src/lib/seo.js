@@ -88,6 +88,10 @@ export const PAGES = {
     description:
       "Free director-grade video prompts for Seedance 2.5, Veo 3.1, and Kling 3.0. Copy, paste, and generate. No account needed.",
   },
+  "shot-director": {
+    title: "Shot Director — Three Ways to Shoot Any Moment | RevaultAI",
+    description: "Describe a dramatic beat and get three directorial approaches: shot size, lens, camera move, lighting, blocking and a full prompt for each. Free, no account.",
+  },
   "continuity-check": {
     title: "AI Video Continuity Checker — Free Shot List Review | RevaultAI",
     description: "Paste your shot prompts and get a script supervisor's read: characters described two ways, wardrobe drift, unmotivated lighting. Free, no account.",
