@@ -108,7 +108,7 @@ export default function ContinuityCheckPage({ setPage, user, ccPrefill, setCcPre
         <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 58, fontWeight: 300, color: "var(--text)", marginBottom: 16, lineHeight: 1.1 }}>Continuity Check</h1>
         <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 300, color: "var(--muted)", marginBottom: 24, fontStyle: "italic" }}>A script supervisor for your shot list.</div>
         <div className="cc-body" style={{ fontSize: 12, maxWidth: 560, margin: "0 auto" }}>
-          Paste the prompts for a sequence and this reads them the way a script supervisor reads a shooting script — looking for the character described two different ways, the jacket that changes colour, the light that moves for no reason. It flags what drifts and quotes the exact wording. It doesn't rewrite anything.
+          Paste the prompts for a sequence and this reads them the way a script supervisor reads a shooting script — looking for the character described two different ways, the jacket that changes colour, the light that moves for no reason, the reverse angle that quietly crosses the 180-degree line. It flags what drifts and quotes the exact wording. It doesn't rewrite anything.
         </div>
       </div>
 
@@ -215,6 +215,7 @@ export default function ContinuityCheckPage({ setPage, user, ccPrefill, setCcPre
                 ["Descriptions that drift", "The same character written two ways across shots. This is the most common cause of a protagonist who looks like their own cousin by shot four."],
                 ["Wardrobe and props", "A jacket that changes colour, a bag that vanishes, a prop that appears without ever being picked up."],
                 ["Unmotivated light", "The same moment in the same room lit from a different direction. Light may change — it just needs a reason in the shots."],
+                ["Screen direction", "The 180-degree rule: who's camera-left, who's camera-right, and which way people travel. Crossing the axis without cause is the cut that makes an audience lose their bearings without knowing why."],
                 ["What it won't flag", "Coverage isn't an error. Different shot sizes, angles and camera moves of the same subject are normal filmmaking, and a change your story causes is a change, not a mistake."],
               ].map(([t, d], i) => (
                 <div key={i} style={{ border: "1px solid var(--border)", borderRadius: 8, padding: "26px 24px", background: "var(--bg)" }}>
