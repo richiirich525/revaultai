@@ -248,6 +248,14 @@ const CSS = `
   .gen-form { max-width: 680px; margin: 0 auto 40px; }
   .gen-prompt { width: 100%; padding: 16px; background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 14px; line-height: 1.6; resize: vertical; }
   .gen-prompt:focus { outline: none; border-color: var(--accent); }
+  .pf { border: 1px solid var(--border); border-radius: 6px; padding: 16px 18px; margin-bottom: 14px; background: var(--bg3); }
+  .pf-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .pf-title { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); }
+  .pf-verdict { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; }
+  .pf-row { display: flex; gap: 10px; align-items: flex-start; padding: 5px 0; font-family: 'DM Mono', monospace; font-size: 11px; line-height: 1.7; }
+  .pf-mark { flex-shrink: 0; width: 14px; text-align: center; }
+  .pf-k { color: var(--text); }
+  .pf-d { color: var(--muted); }
   .gen-form-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
   .gen-cost { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.12em; color: var(--muted); text-transform: uppercase; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
   .gen-model-select { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text); background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; padding: 8px 10px; cursor: pointer; }
@@ -1333,6 +1341,15 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
   const [pbLoading, setPbLoading] = useState(false);
   const [pbResult, setPbResult] = useState(null);
   const [history, setHistory] = useState([]);
+  const [vaultNames, setVaultNames] = useState([]);
+
+  useEffect(() => {
+    (async () => {
+      if (!user?.id) { setVaultNames([]); return; }
+      const { data } = await supabase.from("vault_entries").select("name, kind");
+      setVaultNames(data ?? []);
+    })();
+  }, [user?.id]);
   useEffect(() => {
     const m = GEN_MODELS.find((x) => x.key === model);
     if (m && !m.durations.includes(duration)) setDuration(m.durations[0]);
@@ -1557,6 +1574,56 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
     notify("Prompt loaded — edit it or hit Generate.");
   }
 
+  // Preflight — reads signals we already have. No API call, no delay.
+  const preflight = (() => {
+    const m = GEN_MODELS.find((x) => x.key === model);
+    const words = prompt.trim().split(/\s+/).filter(Boolean).length;
+    const balance = profile?.credits ?? 0;
+    const lower = prompt.toLowerCase();
+    const mentioned = vaultNames.filter((v) => v.name && lower.includes(v.name.toLowerCase()));
+    const items = [];
+
+    items.push(
+      words === 0
+        ? { s: "bad", t: "Prompt", d: "Nothing to generate yet." }
+        : words < 15
+        ? { s: "warn", t: "Prompt", d: `${words} words — short prompts leave most of the shot to the model. 40–100 is the useful range.` }
+        : { s: "ok", t: "Prompt", d: `${words} words.` }
+    );
+
+    items.push(
+      m && m.durations.includes(duration)
+        ? { s: "ok", t: "Model & duration", d: `${m.label} at ${duration}s.` }
+        : { s: "bad", t: "Model & duration", d: "That duration isn't supported by this model." }
+    );
+
+    items.push({ s: "ok", t: "Aspect ratio", d: aspect + (aspect === "9:16" ? " — vertical, ready for Reels and TikTok." : "") });
+
+    items.push(
+      balance >= COST
+        ? { s: "ok", t: "Credits", d: `${COST} needed, ${balance} available.` }
+        : { s: "bad", t: "Credits", d: `${COST} needed, ${balance} available. Top up on your Profile page.` }
+    );
+
+    items.push(
+      imageUrl
+        ? { s: "ok", t: "Starting frame", d: "Attached — the model inherits your composition instead of inventing one." }
+        : { s: "info", t: "Starting frame", d: "None attached. Optional, but a still gives you far more control over how the shot opens." }
+    );
+
+    if (vaultNames.length > 0) {
+      items.push(
+        mentioned.length > 0
+          ? { s: "ok", t: "Vault", d: `${mentioned.map((v) => v.name).join(", ")} named in the prompt — check the locked description is in there too.` }
+          : { s: "info", t: "Vault", d: "No vault entries named in this prompt. If a saved character or location is in this shot, paste their locked description in." }
+      );
+    }
+
+    const blocking = items.filter((i) => i.s === "bad").length;
+    const warnings = items.filter((i) => i.s === "warn").length;
+    return { items, blocking, warnings, ready: blocking === 0 };
+  })();
+
   async function handleGenerate() {
     if (!user) { notify("Sign in to generate."); return; }
     if (!prompt.trim()) { notify("Write a prompt first."); return; }
@@ -1746,6 +1813,30 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
               <button className="gen-button" onClick={handleGenerate} disabled={submitting}>
                 {submitting ? "Starting..." : "Generate"}
               </button>
+            </div>
+            <div className="pf">
+              <div className="pf-head">
+                <span className="pf-title">Ready to generate?</span>
+                <span className="pf-verdict" style={{ color: preflight.ready ? (preflight.warnings ? "#E5B769" : "#4ADE80") : "#F87171" }}>
+                  {preflight.ready
+                    ? preflight.warnings
+                      ? "Ready, with notes"
+                      : "\u2713 Ready"
+                    : preflight.blocking + " thing" + (preflight.blocking === 1 ? "" : "s") + " to fix"}
+                </span>
+              </div>
+              {preflight.items.map((i, n) => {
+                const col = i.s === "ok" ? "#4ADE80" : i.s === "warn" ? "#E5B769" : i.s === "bad" ? "#F87171" : "var(--muted)";
+                const mark = i.s === "ok" ? "\u2713" : i.s === "bad" ? "\u2715" : i.s === "warn" ? "!" : "\u00b7";
+                return (
+                  <div className="pf-row" key={n}>
+                    <span className="pf-mark" style={{ color: col }}>{mark}</span>
+                    <span><span className="pf-k">{i.t}</span> <span className="pf-d">— {i.d}</span></span>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ display: "none" }}>
             </div>
           </div>
         )}
