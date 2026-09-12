@@ -31,6 +31,14 @@ const styles = `
   .wm-rec-meta { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 14px; }
   .wm-pick { display: inline-block; font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); border: 1px solid rgba(123,63,228,0.35); border-radius: 3px; padding: 3px 9px; margin-bottom: 10px; }
   .wm-trade { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); line-height: 1.8; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); opacity: 0.85; }
+  .wm-diff { border: 1px solid var(--border); border-radius: 8px; padding: 22px 24px; margin-bottom: 24px; background: var(--surface); }
+  .wm-diff-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  .wm-diff-score { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 700; line-height: 1; }
+  .wm-diff-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+  .wm-bar { height: 4px; border-radius: 2px; background: var(--bg3); overflow: hidden; margin-bottom: 16px; }
+  .wm-bar div { height: 100%; border-radius: 2px; }
+  .wm-flag { font-family: 'DM Mono', monospace; font-size: 11px; line-height: 1.8; color: var(--muted); display: flex; gap: 9px; margin-bottom: 5px; }
+  .wm-strategy { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text); line-height: 1.8; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
   .wm-caution { border: 1px solid rgba(248,113,113,0.35); background: rgba(248,113,113,0.06); border-radius: 6px; padding: 14px 18px; margin-bottom: 24px; font-family: 'DM Mono', monospace; font-size: 11px; color: #F8A0A0; line-height: 1.8; }
   @media (max-width: 760px) { .wm-wrap { padding: 0 24px; } .wm-card { padding: 22px; } }
 `;
@@ -120,6 +128,29 @@ export default function WhichModelPage({ setPage, user, onSignInClick, setGenPre
               {result.read}
             </div>
           )}
+
+          {result.difficulty && (() => {
+            const s = result.difficulty.score;
+            const col = s <= 3 ? "#4ADE80" : s <= 6 ? "#E5B769" : "#F87171";
+            return (
+              <div className="wm-diff">
+                <div className="wm-diff-head">
+                  <span className="wm-diff-score" style={{ color: col }}>{s}/10</span>
+                  <span className="wm-diff-label">{result.difficulty.label || "Difficulty"}</span>
+                </div>
+                <div className="wm-bar"><div style={{ width: (s * 10) + "%", background: col }} /></div>
+                {result.difficulty.factors.map((f, i) => (
+                  <div className="wm-flag" key={"f" + i}><span style={{ color: col }}>&#9888;</span><span>{f}</span></div>
+                ))}
+                {result.difficulty.safe.map((f, i) => (
+                  <div className="wm-flag" key={"s" + i}><span style={{ color: "#4ADE80" }}>&#10003;</span><span>{f}</span></div>
+                ))}
+                {result.difficulty.strategy && (
+                  <div className="wm-strategy"><strong style={{ color: "var(--accent)" }}>Suggested approach:</strong> {result.difficulty.strategy}</div>
+                )}
+              </div>
+            );
+          })()}
 
           {result.caution && <div className="wm-caution">{result.caution}</div>}
 

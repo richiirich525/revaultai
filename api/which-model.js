@@ -97,7 +97,14 @@ Return ONLY a JSON object. No markdown fences, no preamble. Use exactly this sch
       "tradeoff": "one honest sentence on what the creator gives up by choosing it"
     }
   ],
-  "caution": "empty string, or one sentence if the shot is genuinely hard for every model available - e.g. too long, too many characters, needs dialogue longer than any audio model allows"
+  "caution": "empty string, or one sentence if the shot is genuinely hard for every model available - e.g. too long, too many characters, needs dialogue longer than any audio model allows",
+  "difficulty": {
+    "score": 1,
+    "label": "one or two words: Straightforward / Moderate / Demanding / Very demanding",
+    "factors": ["short phrases naming what makes this shot hard to generate, most significant first"],
+    "safe": ["short phrases naming what is straightforward about it"],
+    "strategy": "empty string, or one concrete suggestion for improving the odds - splitting the shot, shortening the take, using a reference frame, simplifying the action"
+  }
 }
 
 Rules:
@@ -107,7 +114,19 @@ Rules:
 - If the shot needs a continuous take longer than a model supports, do not recommend that model for it.
 - Cost matters. If a cheap model genuinely does the job, rank it first and say so. Do not upsell.
 - Be concrete about cinematography. Reference the actual demands: motion, faces, crowds, duration, audio, camera movement.
-- The "caution" field is for real problems only. Leave it as an empty string when the shot is straightforward.`;
+- The "caution" field is for real problems only. Leave it as an empty string when the shot is straightforward.
+
+Difficulty scoring — score 1-10, where 1 is a locked close-up of one still subject and 10 is something no current model handles reliably. Judge it on what actually breaks generations:
+- Hands interacting with small objects, and fingers in general
+- More than one character, especially if they touch, cross paths or occlude each other
+- Rapid or complex camera movement combined with subject movement
+- Long continuous takes relative to the model's limit
+- Reflective, transparent or liquid surfaces
+- Spoken dialogue, and lip sync in particular
+- Text or signage that must be legible
+- Crowds, and any scene where background figures need consistent behaviour
+- Wardrobe or props that must stay consistent across the take
+List 2-5 factors and 1-3 safe points. Both should be short phrases, not sentences. The "strategy" field should be concrete and actionable, or empty when the shot is genuinely straightforward — do not invent advice for an easy shot.`;
 
 function hashIp(ip) {
   return crypto.createHash("sha256").update(IP_SALT + ip).digest("hex");
@@ -225,9 +244,21 @@ export default async function handler(req, res) {
       return res.status(502).json({ error: "The router returned no usable recommendation. Try again." });
     }
 
+    const d = out?.difficulty && typeof out.difficulty === "object" ? out.difficulty : null;
+    const difficulty = d
+      ? {
+          score: Math.min(10, Math.max(1, Math.round(Number(d.score) || 1))),
+          label: String(d.label || "").slice(0, 40),
+          factors: (Array.isArray(d.factors) ? d.factors : []).map((f) => String(f).slice(0, 120)).slice(0, 5),
+          safe: (Array.isArray(d.safe) ? d.safe : []).map((f) => String(f).slice(0, 120)).slice(0, 3),
+          strategy: String(d.strategy || "").slice(0, 300),
+        }
+      : null;
+
     await supabase.from("prompt_builds").insert({ ip_hash: ipHash, target_model: "router" });
 
     return res.status(200).json({
+      difficulty,
       read: String(out.read || "").slice(0, 400),
       caution: String(out.caution || "").slice(0, 400),
       recommendations: out.recommendations,
