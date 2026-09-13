@@ -37,7 +37,7 @@ const styles = `
   @media (max-width: 760px) { .tk-wrap { padding: 0 24px; } .tk-compare-grid { grid-template-columns: 1fr; } }
 `;
 
-export default function TakesPage({ user, onSignInClick, setPage, notify }) {
+export default function TakesPage({ user, onSignInClick, setPage, notify, activeProject }) {
   const [shots, setShots] = useState([]);
   const [gens, setGens] = useState([]);
   const [urls, setUrls] = useState({});
@@ -99,6 +99,16 @@ export default function TakesPage({ user, onSignInClick, setPage, notify }) {
 
   function toggleCompare(id) {
     setCompare((c) => (c.includes(id) ? c.filter((x) => x !== id) : c.length >= 2 ? [c[1], id] : [...c, id]));
+  }
+
+  // Filing a shot files its takes too — they belong together.
+  async function addShotToProject(shot) {
+    if (!activeProject) { notify?.("Set a project active first, on the Projects page."); return; }
+    const next = shot.project_id === activeProject.id ? null : activeProject.id;
+    await supabase.from("shots").update({ project_id: next }).eq("id", shot.id);
+    await supabase.from("generations").update({ project_id: next }).eq("shot_id", shot.id);
+    notify?.(next ? `Added to "${activeProject.name}".` : "Removed from the project.");
+    load();
   }
 
   async function removeShot(shot) {
@@ -170,6 +180,14 @@ export default function TakesPage({ user, onSignInClick, setPage, notify }) {
                         {takes.length} take{takes.length === 1 ? "" : "s"}
                         {shot.selected_generation_id ? " · one selected" : ""}
                       </span>
+                      {activeProject && (
+                        <button
+                          className={"tk-btn" + (shot.project_id === activeProject.id ? " on" : "")}
+                          onClick={() => addShotToProject(shot)}
+                        >
+                          {shot.project_id === activeProject.id ? "\u2713 In project" : "Add to project"}
+                        </button>
+                      )}
                       <button className="tk-btn" onClick={() => removeShot(shot)}>Remove</button>
                     </div>
                   </div>

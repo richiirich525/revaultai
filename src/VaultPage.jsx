@@ -196,6 +196,17 @@ export default function VaultPage({ user, onSignInClick, setPage, notify, active
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  async function addToProject(entry) {
+    if (!activeProject) { notify?.("Set a project active first, on the Projects page."); return; }
+    const { error: e } = await supabase
+      .from("vault_entries")
+      .update({ project_id: entry.project_id === activeProject.id ? null : activeProject.id })
+      .eq("id", entry.id);
+    if (e) { notify?.("Could not update: " + e.message); return; }
+    notify?.(entry.project_id === activeProject.id ? "Removed from the project." : `Added to "${activeProject.name}".`);
+    load();
+  }
+
   async function remove(entry) {
     if (!window.confirm(`Delete "${entry.name}"? Shot lists you've already generated keep their locked text.`)) return;
     const { error: e } = await supabase.from("vault_entries").delete().eq("id", entry.id);
@@ -402,6 +413,15 @@ export default function VaultPage({ user, onSignInClick, setPage, notify, active
                 )}
                 <div className="vt-actions">
                   <button className="btn-ghost" style={{ fontSize: 11 }} onClick={() => edit(e)}>Edit</button>
+                  {activeProject && (
+                    <button
+                      className="btn-ghost"
+                      style={{ fontSize: 11, color: e.project_id === activeProject.id ? "var(--accent)" : undefined }}
+                      onClick={() => addToProject(e)}
+                    >
+                      {e.project_id === activeProject.id ? "\u2713 In " + activeProject.name : "Add to " + activeProject.name}
+                    </button>
+                  )}
                   <button className="btn-ghost" style={{ fontSize: 11, color: "#C25B5B" }} onClick={() => remove(e)}>Delete</button>
                 </div>
               </div>
