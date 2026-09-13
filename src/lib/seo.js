@@ -143,7 +143,7 @@ export const PROMPT_MODEL_PAGES = MODELS.map((m) => ({
 }));
 
 // Pages that should never appear in search results. 
-export const NOINDEX = new Set(["settings", "admin", "set-password", "email-confirmed", "purchase-success", "feed", "generate", "search", "vault", "takes"]);
+export const NOINDEX = new Set(["settings", "admin", "set-password", "email-confirmed", "purchase-success", "feed", "generate", "search", "vault", "takes", "projects"]);
 
 import { POSTS } from "../blog/posts.js";
 

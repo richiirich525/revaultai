@@ -21,6 +21,7 @@ import FramePlannerPage from "./FramePlannerPage.jsx";
 import BlockingPage from "./BlockingPage.jsx";
 import AutopsyPage from "./AutopsyPage.jsx";
 import TakesPage from "./TakesPage.jsx";
+import ProjectsPage from "./ProjectsPage.jsx";
 import { updateCommentsEnabled } from "./lib/comments.js";
 import {
   fetchCreations,
@@ -407,7 +408,7 @@ function AuthModal({ onClose, notify }) {
 
 function isAdmin(user) { return !!user?.email && ["richardgarland999@gmail.com"].includes(user.email.toLowerCase()); }
 
-function Nav({ page, setPage, user, profile, onSignInClick, onSignOut }) {
+function Nav({ page, setPage, user, profile, onSignInClick, onSignOut, activeProject }) {
   const avatarSrc = profile?.avatar_url ?? null;
   const [createOpen, setCreateOpen] = useState(false);
   const [acctOpen, setAcctOpen] = useState(false);
@@ -469,6 +470,7 @@ function Nav({ page, setPage, user, profile, onSignInClick, onSignOut }) {
               <button style={itemStyle(page === "prompt-builder")} onClick={() => go("prompt-builder")}>Prompt Builder</button>
               <button style={itemStyle(page === "scene-breakdown")} onClick={() => go("scene-breakdown")}>Scene Breakdown</button>
               {user && <button style={itemStyle(page === "vault")} onClick={() => go("vault")}>The Vault</button>}
+              {user && <button style={itemStyle(page === "projects")} onClick={() => go("projects")}>Projects</button>}
               {user && <button style={itemStyle(page === "takes")} onClick={() => go("takes")}>Takes</button>}
               <button style={itemStyle(page === "shot-director")} onClick={() => go("shot-director")}>Shot Director</button>
               <button style={itemStyle(page === "coverage")} onClick={() => go("coverage")}>Coverage Planner</button>
@@ -486,6 +488,16 @@ function Nav({ page, setPage, user, profile, onSignInClick, onSignOut }) {
         {!user && <div className={"nav-link" + (page === "become-creator" ? " active" : "")} onClick={() => setPage("become-creator")}>Join</div>}
       </div>
       <div className="nav-right">
+        {user && activeProject && (
+          <button
+            type="button"
+            onClick={() => setPage("projects")}
+            title="Active project — click to change"
+            style={{ background: "none", border: "1px solid rgba(123,63,228,0.4)", borderRadius: 3, color: "var(--accent)", cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", padding: "4px 10px", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+          >
+            {activeProject.name}
+          </button>
+        )}
         <button
           type="button"
           aria-label="Search"
@@ -3953,7 +3965,7 @@ const [page, setPageState]        = useState("home");
   // ---- URL routing ----
   const detailIdRef = useRef(null);
   const creatorUserRef = useRef(null);
-  const KNOWN_PAGES = ["home","explore","creators","feed","generate","settings","admin","submit","set-password","email-confirmed","terms","faq","contact","guidelines","premium-prompts","about","become-creator","privacy","refunds","dmca","ai-disclaimer","purchase-success","founding-creators","blog","ai-video-generator","prompt-builder","prompts","search","scene-breakdown","which-model","vault","continuity-check","shot-director","coverage","frame-planner","blocking","autopsy","takes"];
+  const KNOWN_PAGES = ["home","explore","creators","feed","generate","settings","admin","submit","set-password","email-confirmed","terms","faq","contact","guidelines","premium-prompts","about","become-creator","privacy","refunds","dmca","ai-disclaimer","purchase-success","founding-creators","blog","ai-video-generator","prompt-builder","prompts","search","scene-breakdown","which-model","vault","continuity-check","shot-director","coverage","frame-planner","blocking","autopsy","takes","projects"];
 
   function setDetailId(id) { detailIdRef.current = id; setDetailIdState(id); }
   const blogSlugRef = useRef(null);
@@ -3968,6 +3980,28 @@ const [page, setPageState]        = useState("home");
   const [genPrefill, setGenPrefill] = useState(null);
   const [ccPrefill, setCcPrefill] = useState(null);
   const [apPrefill, setApPrefill] = useState(null);
+
+  // The active project is context only — nothing requires one, and it persists
+  // across sessions so you come back to where you were.
+  const [activeProject, setActiveProjectState] = useState(null);
+  function setActiveProject(p) {
+    setActiveProjectState(p);
+    try {
+      if (p) localStorage.setItem("revaultai.project", JSON.stringify({ id: p.id, name: p.name }));
+      else localStorage.removeItem("revaultai.project");
+    } catch { /* private browsing — the selection just won't persist */ }
+  }
+  useEffect(() => {
+    if (!user?.id) { setActiveProjectState(null); return; }
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem("revaultai.project") || "null"); } catch { saved = null; }
+    if (!saved?.id) return;
+    (async () => {
+      const { data } = await supabase.from("projects").select("*").eq("id", saved.id).maybeSingle();
+      setActiveProjectState(data ?? null);
+      if (!data) { try { localStorage.removeItem("revaultai.project"); } catch { /* ignore */ } }
+    })();
+  }, [user?.id]);
   function setCreatorUser(u) { creatorUserRef.current = u; setCreatorUserState(u); }
 
   function pathForPage(p) {
@@ -4127,6 +4161,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       case "ai-video-generator": return <AiVideoGeneratorPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} />;
       case "blog": return <BlogPage setPage={setPage} openPost={openPost} />;
       case "blog-post": return <BlogPostPage slug={blogSlug} setPage={setPage} openPost={openPost} />;
+      case "projects": return <ProjectsPage user={user} onSignInClick={() => setAuthOpen(true)} setPage={setPage} notify={notify} activeProject={activeProject} setActiveProject={setActiveProject} />;
       case "takes": return <TakesPage user={user} onSignInClick={() => setAuthOpen(true)} setPage={setPage} notify={notify} />;
       case "autopsy": return <AutopsyPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} setGenPrefill={setGenPrefill} apPrefill={apPrefill} setApPrefill={setApPrefill} />;
       case "blocking": return <BlockingPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} setGenPrefill={setGenPrefill} />;
@@ -4145,5 +4180,5 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
     }
   }
 
-  return (<><style>{CSS}</style><Nav page={page} setPage={setPage} user={user} profile={profile} onSignInClick={() => setAuthOpen(true)} onSignOut={handleSignOut} />{renderPage()}{authOpen && <AuthModal onClose={() => setAuthOpen(false)} notify={notify} />}{notifMsg && <Notification key={notifMsg} msg={notifMsg} onClose={() => setNotifMsg(null)} />}</>);
+  return (<><style>{CSS}</style><Nav activeProject={activeProject} page={page} setPage={setPage} user={user} profile={profile} onSignInClick={() => setAuthOpen(true)} onSignOut={handleSignOut} />{renderPage()}{authOpen && <AuthModal onClose={() => setAuthOpen(false)} notify={notify} />}{notifMsg && <Notification key={notifMsg} msg={notifMsg} onClose={() => setNotifMsg(null)} />}</>);
 }
