@@ -88,6 +88,10 @@ export const PAGES = {
     description:
       "Free director-grade video prompts for Seedance 2.5, Veo 3.1, and Kling 3.0. Copy, paste, and generate. No account needed.",
   },
+  autopsy: {
+    title: "Generation Autopsy — Why Your AI Video Failed | RevaultAI",
+    description: "Paste the prompt behind a disappointing generation and find out what in the wording broke it — with a revised prompt built to hold. Free, no account.",
+  },
   blocking: {
     title: "Blocking & Performance Director — Free Tool | RevaultAI",
     description: "Stage a scene: where characters stand and move relative to camera, playable acting direction, and delivery notes on every line. Free, no account.",
