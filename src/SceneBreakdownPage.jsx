@@ -76,7 +76,7 @@ const styles = `
   @media (max-width: 760px) { .sb-wrap { padding: 0 24px; } .sb-card { padding: 22px; } }
 `;
 
-export default function SceneBreakdownPage({ setPage, user, onSignInClick, setGenPrefill, notify, openPost, setCcPrefill }) {
+export default function SceneBreakdownPage({ setPage, user, onSignInClick, setGenPrefill, notify, openPost, setCcPrefill, activeProject }) {
   const [scene, setScene] = useState("");
   const [model, setModel] = useState("veo");
   const [style, setStyle] = useState("none");
@@ -138,6 +138,7 @@ export default function SceneBreakdownPage({ setPage, user, onSignInClick, setGe
           strength,
           aspectRatio: aspect,
           locked: vault.filter((v) => lockedIds.includes(v.id)),
+          projectId: activeProject?.id ?? null,
         }),
       });
       const data = await res.json().catch(() => ({}));

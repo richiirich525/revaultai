@@ -75,7 +75,8 @@ export default async function handler(req, res) {
     }
 
     // 2. Validate input
-    const { prompt, model, duration, imageUrl, aspectRatio } = req.body;
+    const { prompt, model, duration, imageUrl, aspectRatio, projectId } = req.body;
+    const pid = typeof projectId === "string" ? projectId : null;
 
     // Normalise a prompt so trivial edits still count as the same shot.
     const norm = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
@@ -128,6 +129,7 @@ export default async function handler(req, res) {
         status: 'queued',
         credits_spent: cost,
         duration_seconds: seconds,
+        project_id: pid,
       })
       .select()
       .single();
@@ -155,6 +157,7 @@ export default async function handler(req, res) {
             user_id: user.id,
             name: words.slice(0, 120),
             prompt: prompt.trim().slice(0, 2000),
+            project_id: pid,
           })
           .select("id")
           .single();

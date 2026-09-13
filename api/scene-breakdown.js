@@ -113,7 +113,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { scene, model, style, strength, aspectRatio, locked } = req.body || {};
+    const { scene, model, style, strength, aspectRatio, locked, projectId } = req.body || {};
 
     // Vault entries the creator selected. Their text is authoritative: the
     // model is told to reproduce it verbatim, and we overwrite whatever it

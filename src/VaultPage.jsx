@@ -61,7 +61,7 @@ const styles = `
   @media (max-width: 760px) { .vt-wrap { padding: 0 24px; } }
 `;
 
-export default function VaultPage({ user, onSignInClick, setPage, notify }) {
+export default function VaultPage({ user, onSignInClick, setPage, notify, activeProject }) {
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(BLANK);
@@ -164,6 +164,7 @@ export default function VaultPage({ user, onSignInClick, setPage, notify }) {
       distinguishing: form.distinguishing?.trim().slice(0, 400) || null,
       notes: form.notes?.trim().slice(0, 600) || null,
       images: (form.images ?? []).slice(0, MAX_IMAGES),
+      ...(editingId ? {} : { project_id: activeProject?.id ?? null }),
     };
     let e;
     if (editingId) {

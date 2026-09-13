@@ -1323,7 +1323,7 @@ function ExplorePage({ creations, setPage, setDetailId, dbLoaded }) {
   );
 }
 
-function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setProfile, genPrefill, setGenPrefill, setApPrefill }) {
+function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setProfile, genPrefill, setGenPrefill, setApPrefill, activeProject }) {
   const GEN_MODELS = [
     { key: "wan-2.6", label: "Wan 2.6 — Fast", costPerSecond: 1, durations: [5, 10, 15], ratios: ["16:9", "9:16", "1:1"] },
     { key: "kling-3.0", label: "Kling 3.0 — Cinematic", costPerSecond: 2, durations: [5, 10], ratios: ["16:9", "9:16", "1:1"], ratioFromImage: true },
@@ -1719,7 +1719,7 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
       const res = await fetch("/api/generate-video", {
         method: "POST",
         headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: prompt.trim(), model, duration, aspectRatio: aspect, imageUrl: imageUrl || undefined }),
+        body: JSON.stringify({ prompt: prompt.trim(), model, duration, aspectRatio: aspect, imageUrl: imageUrl || undefined, projectId: activeProject?.id ?? null }),
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -4138,7 +4138,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       case "explore": return <ExplorePage creations={creations} setPage={setPage} setDetailId={setDetailId} dbLoaded={dbLoaded} />;
       case "creators":return <CreatorsPage setPage={setPage} setCreatorUser={setCreatorUser} creations={creations} />;
       case "feed":    return <FollowFeedPage user={user} setPage={setPage} setDetailId={setDetailId} setCreatorUser={setCreatorUser} />;
-      case "generate": return <GeneratePage setApPrefill={setApPrefill} user={user} profile={profile} notify={notify} setPage={setPage} setGenSubmission={setGenSubmission} setProfile={setProfile} genPrefill={genPrefill} setGenPrefill={setGenPrefill} />;
+      case "generate": return <GeneratePage activeProject={activeProject} setApPrefill={setApPrefill} user={user} profile={profile} notify={notify} setPage={setPage} setGenSubmission={setGenSubmission} setProfile={setProfile} genPrefill={genPrefill} setGenPrefill={setGenPrefill} />;
       case "profile": return <ProfilePage username={creatorUser} creations={creations} setPage={setPage} setDetailId={setDetailId} user={user} />;
       case "detail":  return <DetailPage id={detailId} dbLoaded={dbLoaded} creations={creations} setCreations={setCreations} user={user} profile={profile} setProfile={setProfile} purchasedIds={purchasedIds} purchasesLoaded={purchasesLoaded} setPage={setPage} setCreatorUser={setCreatorUser}onSignInClick={() => setAuthOpen(true)} notify={notify} />;
       case "settings": if (!user) return <div className="page"><div className="empty-state"><div className="empty-text">Sign in to access profile settings.</div></div></div>; return <SettingsPage user={user} profile={profile} setProfile={setProfile} notify={notify} />;
@@ -4172,9 +4172,9 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       case "coverage": return <CoveragePage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} setGenPrefill={setGenPrefill} setCcPrefill={setCcPrefill} />;
       case "shot-director": return <ShotDirectorPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} setGenPrefill={setGenPrefill} />;
       case "continuity-check": return <ContinuityCheckPage setPage={setPage} user={user} ccPrefill={ccPrefill} setCcPrefill={setCcPrefill} />;
-      case "vault": return <VaultPage user={user} onSignInClick={() => setAuthOpen(true)} setPage={setPage} notify={notify} />;
+      case "vault": return <VaultPage activeProject={activeProject} user={user} onSignInClick={() => setAuthOpen(true)} setPage={setPage} notify={notify} />;
       case "which-model": return <WhichModelPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} setGenPrefill={setGenPrefill} />;
-      case "scene-breakdown": return <SceneBreakdownPage setCcPrefill={setCcPrefill} setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} setGenPrefill={setGenPrefill} notify={notify} openPost={openPost} />;
+      case "scene-breakdown": return <SceneBreakdownPage activeProject={activeProject} setCcPrefill={setCcPrefill} setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} setGenPrefill={setGenPrefill} notify={notify} openPost={openPost} />;
       case "search": return <SearchPage creations={creations} setPage={setPage} setDetailId={setDetailId} setCreatorUser={setCreatorUser} openPost={openPost} openPromptModel={openPromptModel} />;
       case "prompts": return <PromptIndexPage setPage={setPage} openPromptModel={openPromptModel} openPromptGenre={openPromptGenre} />;
       case "prompt-model": return <PromptModelPage slug={promptSlug} setPage={setPage} openPromptModel={openPromptModel} openPromptGenre={openPromptGenre} />;
