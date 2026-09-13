@@ -250,6 +250,11 @@ const CSS = `
   .gen-form { max-width: 680px; margin: 0 auto 40px; }
   .gen-prompt { width: 100%; padding: 16px; background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 14px; line-height: 1.6; resize: vertical; }
   .gen-prompt:focus { outline: none; border-color: var(--accent); }
+  .chain { border: 1px solid var(--accent); border-radius: 6px; padding: 16px 18px; margin-top: 12px; background: var(--bg3); }
+  .chain-video { width: 100%; max-width: 420px; border-radius: 4px; border: 1px solid var(--border); display: block; margin-bottom: 12px; background: #000; }
+  .chain-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+  .chain-slider { flex: 1; min-width: 180px; accent-color: var(--accent); }
+  .chain-t { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.08em; min-width: 74px; }
   .pf { border: 1px solid var(--border); border-radius: 6px; padding: 16px 18px; margin-bottom: 14px; background: var(--bg3); }
   .pf-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
   .pf-title { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); }
@@ -1415,6 +1420,68 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
   const [gens, setGens] = useState([]);
   const [videoUrls, setVideoUrls] = useState({});
   const videoUrlsRef = useRef({});
+  const [chainFor, setChainFor] = useState(null);      // generation id being scrubbed
+  const [chainTime, setChainTime] = useState(0);
+  const [chainMax, setChainMax] = useState(0);
+  const [chainBusy, setChainBusy] = useState(false);
+  const chainVideoRef = useRef(null);
+
+  function openChain(g) {
+    if (!videoUrls[g.id]) { notify("Still preparing playback for that clip — try again in a moment."); return; }
+    setChainFor(chainFor === g.id ? null : g.id);
+    setChainTime(0);
+    setChainMax(0);
+  }
+
+  // Grab the frame currently shown in the scrub video, upload it to R2, and
+  // set it as the starting frame for the next generation.
+  async function useFrame() {
+    const v = chainVideoRef.current;
+    if (!v) return;
+    setChainBusy(true);
+    try {
+      const canvas = document.createElement("canvas");
+      canvas.width = v.videoWidth;
+      canvas.height = v.videoHeight;
+      if (!canvas.width || !canvas.height) throw new Error("Couldn't read that frame — try again once the clip has loaded.");
+      canvas.getContext("2d").drawImage(v, 0, 0, canvas.width, canvas.height);
+
+      const blob = await new Promise((resolve, reject) => {
+        try {
+          canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Couldn't capture the frame."))), "image/jpeg", 0.92);
+        } catch {
+          reject(new Error("This clip can't be read into a frame — the storage bucket needs GET allowed in its CORS policy."));
+        }
+      });
+
+      const token = await getSessionToken();
+      const r = await fetch("/api/get-upload-url", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+        body: JSON.stringify({ fileType: "image/jpeg" }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.uploadUrl) throw new Error(j.error || "Could not prepare the upload.");
+
+      await new Promise((resolve, reject) => {
+        const x = new XMLHttpRequest();
+        x.open("PUT", j.uploadUrl);
+        x.setRequestHeader("Content-Type", "image/jpeg");
+        x.addEventListener("load", () => (x.status >= 200 && x.status < 300) ? resolve() : reject(new Error("Upload failed (" + x.status + ")")));
+        x.addEventListener("error", () => reject(new Error("Network error during upload")));
+        x.send(blob);
+      });
+
+      setImageUrl(j.videoPublicUrl);
+      setImageName("Frame at " + chainTime.toFixed(1) + "s");
+      setChainFor(null);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      notify("Frame set as your starting frame — write the next shot.");
+    } catch (err) {
+      notify(err.message || "Could not use that frame.");
+    }
+    setChainBusy(false);
+  }
   const COST = (GEN_MODELS.find((m) => m.key === model)?.costPerSecond ?? 1) * duration;
 
   async function loadGens() {
@@ -1879,9 +1946,70 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
                           <button className="gen-button" onClick={() => { setApPrefill?.({ prompt: g.prompt, modelKey: g.model }); setPage("autopsy"); }}>
                             Why didn't this work?
                           </button>
+                          <button className="gen-button" onClick={() => openChain(g)}>
+                            {chainFor === g.id ? "Close frame picker" : "Use a frame \u2192"}
+                          </button>
                         </>
                       )}
                     </div>
+                    {chainFor === g.id && videoUrls[g.id] && (
+                      <div className="chain">
+                        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.14em", color: "var(--accent)", textTransform: "uppercase", marginBottom: 10 }}>
+                          Pick the frame to carry forward
+                        </div>
+                        <video
+                          ref={chainVideoRef}
+                          className="chain-video"
+                          src={videoUrls[g.id]}
+                          crossOrigin="anonymous"
+                          preload="auto"
+                          muted
+                          playsInline
+                          onLoadedMetadata={(e) => {
+                            const d = e.currentTarget.duration || 0;
+                            setChainMax(d);
+                            const t = Math.max(0, d - 0.08);
+                            setChainTime(t);
+                            e.currentTarget.currentTime = t;
+                          }}
+                        />
+                        <div className="chain-row">
+                          <input
+                            className="chain-slider"
+                            type="range"
+                            min={0}
+                            max={chainMax || 0}
+                            step={0.05}
+                            value={chainTime}
+                            onChange={(e) => {
+                              const t = Number(e.target.value);
+                              setChainTime(t);
+                              if (chainVideoRef.current) chainVideoRef.current.currentTime = t;
+                            }}
+                          />
+                          <span className="chain-t">{chainTime.toFixed(2)}s</span>
+                        </div>
+                        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                          <button className="gen-button" onClick={useFrame} disabled={chainBusy}>
+                            {chainBusy ? "Capturing…" : "Use this frame"}
+                          </button>
+                          <button
+                            className="gen-button"
+                            onClick={() => {
+                              const t = Math.max(0, chainMax - 0.08);
+                              setChainTime(t);
+                              if (chainVideoRef.current) chainVideoRef.current.currentTime = t;
+                            }}
+                          >
+                            Jump to last frame
+                          </button>
+                        </div>
+                        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--muted)", lineHeight: 1.7, marginTop: 10, opacity: 0.8 }}>
+                          The frame becomes your starting frame for the next generation — the next shot inherits this composition, wardrobe and light instead of reconstructing them.
+                        </div>
+                      </div>
+                    )}
+
                     {lipsyncFor === g.id && (
                       <div style={{ marginTop: 12, padding: 14, background: "var(--bg3)", border: "1px solid var(--border)", borderRadius: 4 }}>
                         <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.1em", color: "var(--muted)", marginBottom: 10 }}>
