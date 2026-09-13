@@ -3991,17 +3991,7 @@ const [page, setPageState]        = useState("home");
       else localStorage.removeItem("revaultai.project");
     } catch { /* private browsing — the selection just won't persist */ }
   }
-  useEffect(() => {
-    if (!user?.id) { setActiveProjectState(null); return; }
-    let saved = null;
-    try { saved = JSON.parse(localStorage.getItem("revaultai.project") || "null"); } catch { saved = null; }
-    if (!saved?.id) return;
-    (async () => {
-      const { data } = await supabase.from("projects").select("*").eq("id", saved.id).maybeSingle();
-      setActiveProjectState(data ?? null);
-      if (!data) { try { localStorage.removeItem("revaultai.project"); } catch { /* ignore */ } }
-    })();
-  }, [user?.id]);
+  
   function setCreatorUser(u) { creatorUserRef.current = u; setCreatorUserState(u); }
 
   function pathForPage(p) {
