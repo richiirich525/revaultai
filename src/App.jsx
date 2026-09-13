@@ -468,10 +468,11 @@ function Nav({ page, setPage, user, profile, onSignInClick, onSignOut, activePro
           {createOpen && (
             <div style={menuStyle} role="menu">
               {user && <button style={itemStyle(page === "generate")} onClick={() => go("generate")}>Generate</button>}
+              <button style={itemStyle(page === "tools")} onClick={() => go("tools")}>All Tools</button>
+              <div style={{ height: 1, background: "var(--border)", margin: "6px 10px" }} />
               <button style={itemStyle(page === "prompt-builder")} onClick={() => go("prompt-builder")}>Prompt Builder</button>
               <button style={itemStyle(page === "scene-breakdown")} onClick={() => go("scene-breakdown")}>Scene Breakdown</button>
               {user && <button style={itemStyle(page === "vault")} onClick={() => go("vault")}>The Vault</button>}
-              <button style={itemStyle(page === "tools")} onClick={() => go("tools")}>All Tools</button>
               {user && <button style={itemStyle(page === "projects")} onClick={() => go("projects")}>Projects</button>}
               {user && <button style={itemStyle(page === "takes")} onClick={() => go("takes")}>Takes</button>}
               <button style={itemStyle(page === "shot-director")} onClick={() => go("shot-director")}>Shot Director</button>
