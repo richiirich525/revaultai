@@ -76,6 +76,19 @@ export default async function handler(req, res) {
 
     // 2. Validate input
     const { prompt, model, duration, imageUrl, aspectRatio } = req.body;
+
+    // Normalise a prompt so trivial edits still count as the same shot.
+    const norm = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+    // Rough similarity on word overlap — good enough to group takes, and a
+    // manual override exists on the takes page when it guesses wrong.
+    const similar = (a, b) => {
+      const A = new Set(norm(a).split(" ").filter((w) => w.length > 3));
+      const B = new Set(norm(b).split(" ").filter((w) => w.length > 3));
+      if (A.size === 0 || B.size === 0) return false;
+      let shared = 0;
+      for (const w of A) if (B.has(w)) shared++;
+      return shared / Math.max(A.size, B.size) >= 0.8;
+    };
     const selected = MODELS[model];
     if (!selected) return res.status(400).json({ error: 'Unknown model' });
     if (imageUrl && !selected.imageFalId) {
@@ -119,6 +132,40 @@ export default async function handler(req, res) {
       .select()
       .single();
     if (insertError) throw insertError;
+
+    // 4b. Group this generation into a shot. A near-identical prompt from the
+    //     last 24 hours joins that shot; anything else starts a new one.
+    try {
+      const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const { data: recent } = await supabase
+        .from("shots")
+        .select("id, prompt")
+        .eq("user_id", user.id)
+        .gte("created_at", dayAgo)
+        .order("created_at", { ascending: false })
+        .limit(15);
+
+      let shotId = (recent ?? []).find((s) => similar(s.prompt, prompt))?.id ?? null;
+
+      if (!shotId) {
+        const words = prompt.trim().split(/\s+/).slice(0, 6).join(" ");
+        const { data: newShot } = await supabase
+          .from("shots")
+          .insert({
+            user_id: user.id,
+            name: words.slice(0, 120),
+            prompt: prompt.trim().slice(0, 2000),
+          })
+          .select("id")
+          .single();
+        shotId = newShot?.id ?? null;
+      }
+
+      if (shotId) await supabase.from("generations").update({ shot_id: shotId }).eq("id", gen.id);
+    } catch (groupErr) {
+      // Grouping is a convenience — never fail a generation over it.
+      console.warn("shot grouping failed:", groupErr.message);
+    }
 
     // 5. Submit the job to fal, with our webhook for completion
     try {
