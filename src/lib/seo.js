@@ -92,6 +92,10 @@ export const PAGES = {
     title: "Generation Autopsy — Why Your AI Video Failed | RevaultAI",
     description: "Paste the prompt behind a disappointing generation and find out what in the wording broke it — with a revised prompt built to hold. Free, no account.",
   },
+  tools: {
+    title: "AI Filmmaking Tools — Free Shot Lists, Prompts & Checks | RevaultAI",
+    description: "Fifteen tools for planning, writing, checking and making an AI film. Scene breakdowns, coverage, blocking, continuity checks and more — most free, no account.",
+  },
   blocking: {
     title: "Blocking & Performance Director — Free Tool | RevaultAI",
     description: "Stage a scene: where characters stand and move relative to camera, playable acting direction, and delivery notes on every line. Free, no account.",

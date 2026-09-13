@@ -25,6 +25,7 @@ const STATIC_PAGES = [
   ["/shot-director", "0.9", "monthly"],
   ["/coverage", "0.9", "monthly"],
   ["/frame-planner", "0.9", "monthly"],
+  ["/tools", "0.9", "weekly"],
   ["/blocking", "0.9", "monthly"],
   ["/autopsy", "0.9", "monthly"],
   ["/discovered", "0.8", "weekly"],

@@ -22,6 +22,7 @@ import BlockingPage from "./BlockingPage.jsx";
 import AutopsyPage from "./AutopsyPage.jsx";
 import TakesPage from "./TakesPage.jsx";
 import ProjectsPage from "./ProjectsPage.jsx";
+import ToolsPage from "./ToolsPage.jsx";
 import { updateCommentsEnabled } from "./lib/comments.js";
 import {
   fetchCreations,
@@ -470,6 +471,7 @@ function Nav({ page, setPage, user, profile, onSignInClick, onSignOut, activePro
               <button style={itemStyle(page === "prompt-builder")} onClick={() => go("prompt-builder")}>Prompt Builder</button>
               <button style={itemStyle(page === "scene-breakdown")} onClick={() => go("scene-breakdown")}>Scene Breakdown</button>
               {user && <button style={itemStyle(page === "vault")} onClick={() => go("vault")}>The Vault</button>}
+              <button style={itemStyle(page === "tools")} onClick={() => go("tools")}>All Tools</button>
               {user && <button style={itemStyle(page === "projects")} onClick={() => go("projects")}>Projects</button>}
               {user && <button style={itemStyle(page === "takes")} onClick={() => go("takes")}>Takes</button>}
               <button style={itemStyle(page === "shot-director")} onClick={() => go("shot-director")}>Shot Director</button>
@@ -3965,7 +3967,7 @@ const [page, setPageState]        = useState("home");
   // ---- URL routing ----
   const detailIdRef = useRef(null);
   const creatorUserRef = useRef(null);
-  const KNOWN_PAGES = ["home","explore","creators","feed","generate","settings","admin","submit","set-password","email-confirmed","terms","faq","contact","guidelines","premium-prompts","about","become-creator","privacy","refunds","dmca","ai-disclaimer","purchase-success","founding-creators","blog","ai-video-generator","prompt-builder","prompts","search","scene-breakdown","which-model","vault","continuity-check","shot-director","coverage","frame-planner","blocking","autopsy","takes","projects"];
+  const KNOWN_PAGES = ["home","explore","creators","feed","generate","settings","admin","submit","set-password","email-confirmed","terms","faq","contact","guidelines","premium-prompts","about","become-creator","privacy","refunds","dmca","ai-disclaimer","purchase-success","founding-creators","blog","ai-video-generator","prompt-builder","prompts","search","scene-breakdown","which-model","vault","continuity-check","shot-director","coverage","frame-planner","blocking","autopsy","takes","projects","tools"];
 
   function setDetailId(id) { detailIdRef.current = id; setDetailIdState(id); }
   const blogSlugRef = useRef(null);
@@ -4164,6 +4166,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       case "ai-video-generator": return <AiVideoGeneratorPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} />;
       case "blog": return <BlogPage setPage={setPage} openPost={openPost} />;
       case "blog-post": return <BlogPostPage slug={blogSlug} setPage={setPage} openPost={openPost} />;
+      case "tools": return <ToolsPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} />;
       case "projects": return <ProjectsPage user={user} onSignInClick={() => setAuthOpen(true)} setPage={setPage} notify={notify} activeProject={activeProject} setActiveProject={setActiveProject} />;
       case "takes": return <TakesPage activeProject={activeProject} user={user} onSignInClick={() => setAuthOpen(true)} setPage={setPage} notify={notify} />;
       case "autopsy": return <AutopsyPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} setGenPrefill={setGenPrefill} apPrefill={apPrefill} setApPrefill={setApPrefill} />;
