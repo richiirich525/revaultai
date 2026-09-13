@@ -88,6 +88,10 @@ export const PAGES = {
     description:
       "Free director-grade video prompts for Seedance 2.5, Veo 3.1, and Kling 3.0. Copy, paste, and generate. No account needed.",
   },
+  blocking: {
+    title: "Blocking & Performance Director — Free Tool | RevaultAI",
+    description: "Stage a scene: where characters stand and move relative to camera, playable acting direction, and delivery notes on every line. Free, no account.",
+  },
   "frame-planner": {
     title: "Frame Planner — Plan the First and Last Frame | RevaultAI",
     description: "Decide where your shot starts and where it lands. Two frame descriptions, an image prompt for each, and the motion between. Free, no account.",
