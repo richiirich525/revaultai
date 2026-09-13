@@ -4022,6 +4022,19 @@ const [page, setPageState]        = useState("home");
   const [notifMsg, setNotifMsg]     = useState(null);
   const [user, setUser]             = useState(null);
   const [profile, setProfile]       = useState(null);
+
+  // Restore the saved project once we know who's signed in.
+  useEffect(() => {
+    if (!user?.id) { setActiveProjectState(null); return; }
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem("revaultai.project") || "null"); } catch { saved = null; }
+    if (!saved?.id) return;
+    (async () => {
+      const { data } = await supabase.from("projects").select("*").eq("id", saved.id).maybeSingle();
+      setActiveProjectState(data ?? null);
+      if (!data) { try { localStorage.removeItem("revaultai.project"); } catch { /* ignore */ } }
+    })();
+  }, [user?.id]);
   const [authOpen, setAuthOpen]     = useState(false);
   const [purchasedIds, setPurchasedIds] = useState(new Set());
 const [purchasesLoaded, setPurchasesLoaded] = useState(false);
