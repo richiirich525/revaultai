@@ -86,7 +86,7 @@ export default function HomeFeatures({ setPage, user, onSignInClick }) {
           <button className="btn-primary" onClick={() => (user ? setPage("generate") : onSignInClick?.())}>
             {user ? "Open the Generator" : "Start Generating"}
           </button>
-          <button className="btn-ghost" onClick={() => setPage("ai-video-generator")}>See the Tools</button>
+          <button className="btn-ghost" onClick={() => setPage("tools")}>See the tools</button>
           <button className="btn-ghost" onClick={() => setPage("explore")}>Browse the Gallery</button>
         </div>
       </div>
