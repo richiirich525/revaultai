@@ -1662,7 +1662,7 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
       const res = await fetch("/api/build-prompt", {
         method: "POST",
         headers,
-        body: JSON.stringify({ idea: pbIdea, model: pbModel, style: pbStyle, strength: pbStrength, aspectRatio: aspect }),
+        body: JSON.stringify({ idea: pbIdea, model: pbModel, style: pbStyle, strength: pbStrength, aspectRatio: aspect, projectId: activeProject?.id ?? null }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) { notify(data.error || "Could not build the prompt."); setPbLoading(false); return; }
@@ -3426,7 +3426,7 @@ function AboutPage({ setPage }) {
     </div>
   );
 }
-function PromptBuilderPage({ setPage, user, onSignInClick }) {
+function PromptBuilderPage({ setPage, user, onSignInClick, activeProject }) {
   const [idea, setIdea] = useState("");
   const [model, setModel] = useState("veo");
   const [style, setStyle] = useState("none");
@@ -3546,7 +3546,7 @@ function PromptBuilderPage({ setPage, user, onSignInClick }) {
       const res = await fetch("/api/build-prompt", {
         method: "POST",
         headers,
-        body: JSON.stringify({ idea, model, style, strength, aspectRatio, image: refImage || undefined }),
+        body: JSON.stringify({ idea, model, style, strength, aspectRatio, image: refImage || undefined, projectId: activeProject?.id ?? null }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -4175,7 +4175,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       case "premium-prompts": return <PremiumPromptsPage setPage={setPage} />;
       case "about": return <AboutPage setPage={setPage} />;
       case "become-creator": return <BecomeCreatorPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} />;
-      case "prompt-builder": return <PromptBuilderPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} />;
+      case "prompt-builder": return <PromptBuilderPage activeProject={activeProject} setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} />;
       case "privacy":   return <LegalPage setPage={setPage} page="privacy" />;
       case "refunds":   return <LegalPage setPage={setPage} page="refunds" />;
       case "dmca":      return <LegalPage setPage={setPage} page="dmca" />;

@@ -128,7 +128,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { idea, model, style, strength, aspectRatio, image } = req.body || {};
+    const { idea, model, style, strength, aspectRatio, image, projectId } = req.body || {};
 
     // Optional reference frame. The client downscales before sending, so this
     // stays well under both the Anthropic image limit and Vercel's body cap.
@@ -273,6 +273,7 @@ ${hasIdea ? idea.trim() : "(none given — work from the attached frame)"}`;
         style: style || "none",
         strength: strength || "balanced",
         aspect_ratio: aspectRatio || null,
+        project_id: typeof projectId === "string" ? projectId : null,
         title: typeof built.title === "string" ? built.title.slice(0, 200) : null,
         prompt: built.prompt.slice(0, 4000),
       });
