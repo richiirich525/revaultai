@@ -306,9 +306,22 @@ const CSS = `
   @media (max-width: 760px) {
     .nav { position: static; padding: 0 20px; height: auto; min-height: 62px; flex-wrap: wrap; }
     .page { padding-top: 0; }
-    .nav { overflow: visible; }
+    .nav { overflow: visible; position: relative; z-index: 1000; }
+    .nav-center { --menu-top: 0; }
     .nav-menu-wrap { position: static !important; }
-    .nav-menu { left: 12px !important; right: 12px !important; width: auto !important; min-width: 0 !important; max-height: 58vh !important; overflow-y: auto !important; }
+    .nav-menu {
+      position: fixed !important;
+      top: 150px !important;
+      left: 12px !important;
+      right: 12px !important;
+      width: auto !important;
+      min-width: 0 !important;
+      max-height: 58vh !important;
+      overflow-y: auto !important;
+      z-index: 9999 !important;
+      background: #0F1016 !important;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.8) !important;
+    }
     .nav-center { position: static; transform: none; width: 100%; order: 3; flex-wrap: wrap; gap: 10px 16px; justify-content: center; padding: 12px 0; border-top: 1px solid var(--border); margin-top: 12px; }
     .nav-link { font-size: 10px; } .nav-user-email { display: none; } .nav-logo { font-size: 12px; }
     .nav-signin { padding: 6px 14px; font-size: 10px; } .nav-signout { padding: 5px 12px; font-size: 9px; }
