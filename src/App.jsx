@@ -307,8 +307,8 @@ const CSS = `
     .nav { position: static; padding: 0 20px; height: auto; min-height: 62px; flex-wrap: wrap; }
     .page { padding-top: 0; }
     .nav { overflow: visible; }
-    .nav-center > div[style*="relative"] { position: static !important; }
-    .nav-center > div[style*="relative"] > div[role="menu"] { left: 12px !important; right: 12px !important; min-width: 0 !important; max-height: 60vh !important; }
+    .nav-menu-wrap { position: static !important; }
+    .nav-menu { left: 12px !important; right: 12px !important; width: auto !important; min-width: 0 !important; max-height: 58vh !important; overflow-y: auto !important; }
     .nav-center { position: static; transform: none; width: 100%; order: 3; flex-wrap: wrap; gap: 10px 16px; justify-content: center; padding: 12px 0; border-top: 1px solid var(--border); margin-top: 12px; }
     .nav-link { font-size: 10px; } .nav-user-email { display: none; } .nav-logo { font-size: 12px; }
     .nav-signin { padding: 6px 14px; font-size: 10px; } .nav-signout { padding: 5px 12px; font-size: 9px; }
@@ -462,7 +462,7 @@ function Nav({ page, setPage, user, profile, onSignInClick, onSignOut, activePro
         <div className={"nav-link" + (page === "discovered" ? " active" : "")} onClick={() => setPage("discovered")}>Discovered</div>
         {user && <div className={"nav-link" + (page === "feed" ? " active" : "")} onClick={() => setPage("feed")}>Following</div>}
 
-        <div style={{ position: "relative" }} onClick={(e) => e.stopPropagation()}>
+        <div className="nav-menu-wrap" style={{ position: "relative" }} onClick={(e) => e.stopPropagation()}>
           <div
             className={"nav-link" + (createActive ? " active" : "")}
             onClick={() => { setCreateOpen((o) => !o); setAcctOpen(false); }}
@@ -472,7 +472,7 @@ function Nav({ page, setPage, user, profile, onSignInClick, onSignOut, activePro
             Create {createOpen ? "\u25B4" : "\u25BE"}
           </div>
           {createOpen && (
-            <div style={menuStyle} role="menu">
+            <div className="nav-menu" style={menuStyle} role="menu">
               {user && <button style={itemStyle(page === "generate")} onClick={() => go("generate")}>Generate</button>}
               <button style={itemStyle(page === "tools")} onClick={() => go("tools")}>All Tools</button>
               <div style={{ height: 1, background: "var(--border)", margin: "6px 10px" }} />
@@ -527,7 +527,7 @@ function Nav({ page, setPage, user, profile, onSignInClick, onSignOut, activePro
               {avatarSrc ? <img src={avatarSrc} alt={profile?.display_name ?? "avatar"} onError={(e) => { e.target.style.display = "none"; }} /> : avatarInitial(profile?.display_name, user.email)}
             </div>
             {acctOpen && (
-              <div style={{ ...menuStyle, left: "auto", right: 0, minWidth: 230 }} role="menu">
+              <div className="nav-menu" style={{ ...menuStyle, left: "auto", right: 0, minWidth: 230 }} role="menu">
                 <div style={{ padding: "8px 14px 10px", fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--muted)", borderBottom: "1px solid var(--border)", marginBottom: 6, overflow: "hidden", textOverflow: "ellipsis" }}>
                   {user.email}
                 </div>
