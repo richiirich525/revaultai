@@ -307,6 +307,8 @@ const CSS = `
     .nav { position: static; padding: 0 20px; height: auto; min-height: 62px; flex-wrap: wrap; }
     .page { padding-top: 0; }
     .nav { overflow: visible; }
+    .nav-center > div[style*="relative"] { position: static !important; }
+    .nav-center > div[style*="relative"] > div[role="menu"] { left: 12px !important; right: 12px !important; min-width: 0 !important; max-height: 60vh !important; }
     .nav-center { position: static; transform: none; width: 100%; order: 3; flex-wrap: wrap; gap: 10px 16px; justify-content: center; padding: 12px 0; border-top: 1px solid var(--border); margin-top: 12px; }
     .nav-link { font-size: 10px; } .nav-user-email { display: none; } .nav-logo { font-size: 12px; }
     .nav-signin { padding: 6px 14px; font-size: 10px; } .nav-signout { padding: 5px 12px; font-size: 9px; }
@@ -432,8 +434,12 @@ function Nav({ page, setPage, user, profile, onSignInClick, onSignOut, activePro
 
   const menuStyle = {
     position: "absolute", top: "calc(100% + 10px)", left: 0, minWidth: 210,
-    background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: 6,
-    padding: 6, zIndex: 200, boxShadow: "0 12px 32px rgba(0,0,0,0.5)",
+    // Opaque fallback first — an undefined CSS variable renders transparent.
+    background: "#12131A", backgroundColor: "var(--surface, #12131A)",
+    border: "1px solid var(--border)", borderRadius: 6,
+    padding: 6, zIndex: 200, boxShadow: "0 12px 32px rgba(0,0,0,0.6)",
+    maxHeight: "min(70vh, 520px)", overflowY: "auto", overscrollBehavior: "contain",
+    WebkitOverflowScrolling: "touch",
   };
   const itemStyle = (on) => ({
     display: "block", width: "100%", textAlign: "left", background: "none", border: "none",
