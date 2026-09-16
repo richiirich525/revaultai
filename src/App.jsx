@@ -474,6 +474,7 @@ function Nav({ page, setPage, user, profile, onSignInClick, onSignOut, activePro
         <div className={"nav-link" + (page === "creators" ? " active" : "")} onClick={() => setPage("creators")}>Creators</div>
         <div className={"nav-link" + (page === "discovered" ? " active" : "")} onClick={() => setPage("discovered")}>Discovered</div>
         {user && <div className={"nav-link" + (page === "feed" ? " active" : "")} onClick={() => setPage("feed")}>Following</div>}
+        <div className={"nav-link" + (page === "submit" ? " active" : "")} onClick={() => setPage("submit")}>Submit</div>
 
         <div className="nav-menu-wrap" style={{ position: "relative" }} onClick={(e) => e.stopPropagation()}>
           <div
@@ -502,8 +503,7 @@ function Nav({ page, setPage, user, profile, onSignInClick, onSignOut, activePro
               <button style={itemStyle(page === "continuity-check")} onClick={() => go("continuity-check")}>Continuity Check</button>
               <button style={itemStyle(page === "which-model")} onClick={() => go("which-model")}>Which Model?</button>
               <button style={itemStyle(page === "prompts")} onClick={() => go("prompts")}>Prompt Library</button>
-              <button style={itemStyle(page === "submit")} onClick={() => go("submit")}>Submit a Film</button>
-            </div>
+          </div>
           )}
         </div>
 
@@ -544,6 +544,7 @@ function Nav({ page, setPage, user, profile, onSignInClick, onSignOut, activePro
                 <div style={{ padding: "8px 14px 10px", fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--muted)", borderBottom: "1px solid var(--border)", marginBottom: 6, overflow: "hidden", textOverflow: "ellipsis" }}>
                   {user.email}
                 </div>
+                <button style={itemStyle(page === "submit")} onClick={() => go("submit")}>Submit a Film</button>
                 <button style={itemStyle(page === "settings")} onClick={() => go("settings")}>Profile Settings</button>
                 {isAdmin(user) && <button style={itemStyle(page === "admin")} onClick={() => go("admin")}>Admin</button>}
                 <button style={itemStyle(false)} onClick={() => { setAcctOpen(false); onSignOut(); }}>Sign Out</button>
