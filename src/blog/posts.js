@@ -4,6 +4,139 @@
 
 export const POSTS = [
   {
+    slug: "why-ai-video-generations-fail",
+    title: "Why AI Video Generations Fail (and How to Fix Them)",
+    seoTitle: "Why AI Video Generation Fails (and How to Fix It)",
+    description:
+      "Why AI video generation fails isn't usually the model. Learn the real causes — overloaded prompts, conflicting camera direction, too many actions, and how to fix each one.",
+    date: "2026-09-15",
+    author: "Richard Garland",
+    category: "Guides",
+    readingTime: "11 min",
+    faq: [
+      ["Why does AI video ignore parts of my prompt?", "Most models weight a prompt rather than executing it as a strict checklist, and when a shot asks for several things at once, some instructions get less weight than others. The subject's action usually wins over camera behavior, and early details usually win over details buried at the end. If something keeps getting dropped, it's often competing with too many other instructions in the same shot rather than being unclear on its own."],
+      ["Why do AI video characters change during a shot?", "Identity has to be reconstructed by the model for every frame rather than tracked the way a camera tracks a real actor. The more the shot asks the character to do — more duration, more movement, more interaction with other characters or objects — the more chances there are for the reconstruction to drift from where it started. Shorter shots, simpler action and a strong reference frame all reduce how much drift has room to happen."],
+      ["Why are hands difficult in AI video?", "Hands have many small joints in constant relative motion, and that combination of fine detail and dense motion is exactly what current models handle least reliably. It gets worse the moment a hand interacts with an object, because the model has to resolve two shapes making convincing contact rather than one shape moving on its own. Framing hands smaller, keeping them still, or cutting away from the interaction all lower the risk."],
+      ["Should I regenerate or rewrite the prompt?", "Regenerate first if the shot is close — one clean take out of five is a sign the shot is achievable and you just need a better roll. Rewrite if every take fails in the same place, because that's a sign the prompt itself is asking for something the model consistently can't deliver, and no amount of regenerating will fix it."],
+      ["When should I split one shot into two?", "Split when a single shot description contains more than one distinct action, more than one camera instruction, or an interaction (a hand on an object, two characters meeting) alongside movement. If you can't describe the shot in one sentence without the word \"and\" doing a lot of work, it's usually two shots."],
+    ],
+    content: `
+<p>You had a clear picture in your head. What came back doesn't match it — an arm bends wrong, the camera drifts somewhere you didn't ask it to, a second character's face never quite resolves. The easy conclusion is "the model is bad." Sometimes that's true. Far more often, the generation was set up to fail before it ever rendered.</p>
+
+<p>AI video models don't execute a prompt like a checklist. They resolve a scene under a limited motion and attention budget, and when a shot asks for more than that budget allows, something gets dropped, blended or distorted — usually not the thing you'd choose. Most "bad generations" trace back to a specific, fixable cause: a prompt doing too much, camera instructions that contradict each other, an action too complex for the shot length, or a reference frame quietly fighting the motion you asked for.</p>
+
+<p>This is a troubleshooting guide, not a list of prompting tricks. Each section below is a distinct failure mode, why it happens, and what to change about the shot — not just the wording — to fix it.</p>
+
+<h2>The Prompt Is Trying to Do Too Much</h2>
+
+<p>The single most common cause of a disappointing generation is a prompt that asks for several outcomes at once and expects all of them to land with equal clarity. Every additional instruction — another action, another camera move, another piece of scene description — competes for the same limited attention. The model doesn't fail loudly when this happens; it quietly deprioritizes something.</p>
+
+<div class="example"><strong>Before:</strong> "A woman walks into the kitchen, opens the fridge, pulls out a bottle of wine, pours a glass, then turns and smiles at someone off-screen while the camera slowly circles her."</div>
+
+<p>That's five distinct actions plus a camera move, asked to happen in one continuous shot. The result is usually a blurred or skipped step — the pour never quite happens, or the smile arrives before she's turned. Splitting the intent fixes it:</p>
+
+<div class="example"><strong>After (Shot 1):</strong> "A woman opens a refrigerator and pulls out a bottle of wine. Static camera, waist-up."<br><br><strong>After (Shot 2):</strong> "The same woman pours wine into a glass on the counter, then looks up and smiles off-screen. Slow camera push-in."</div>
+
+<p>Two clean, achievable shots cut together will almost always beat one overloaded shot — and they're cheaper to iterate on, because a failed five-second shot doesn't need a full re-roll of everything else that worked.</p>
+
+<h2>Your Camera Instructions Conflict</h2>
+
+<p>Camera direction fails less often because it's vague and more often because it's contradictory. A prompt can describe two camera behaviors that cannot both be true, and the model has to pick one — or worse, try to satisfy both and produce something unstable.</p>
+
+<div class="example">"Locked camera" + "camera follows the subject"</div>
+
+<p>A locked camera doesn't move. A camera that follows the subject does. Asked for both, the model might start locked and then drift, might follow erratically, or might average the two into a shot that looks subtly wrong without an obvious cause. This kind of contradiction is often accidental — a prompt built up in pieces, with one clause written early and another added later without checking whether they still agree.</p>
+
+<p>Other common conflicts: "wide shot" paired with framing language that describes a close-up; "the camera stays behind her" paired with an action that requires seeing her face; a static tripod shot paired with "handheld energy." Before generating, read the camera instructions in isolation from the rest of the prompt and ask whether they describe one physical camera doing one thing. If it takes two different camera rigs to satisfy the prompt, the prompt needs to be resolved into one before it's sent.</p>
+
+<h2>Too Many Actions Happen at Once</h2>
+
+<p>This is related to an overloaded prompt, but it's specifically about temporal complexity — how much has to happen, in what order, within the shot's duration. A model generating video has to resolve motion across time, not just render a single convincing frame, and that gets exponentially harder as the number of sequential events increases.</p>
+
+<p>A shot with one clear action — a character turns their head, a door opens, a car passes — gives the model a simple motion arc to resolve from start to finish. A shot with three or four sequential actions asks it to resolve three or four motion arcs, in the right order, within the same short window. The most common failure mode is compression: actions that should happen one after another get blended together, or the last action in the sequence gets rushed or dropped entirely because the shot ran out of duration before it ran out of instructions.</p>
+
+<p>The fix isn't to write faster action — it's to reduce the number of discrete events. One clear action per shot is the safest default. If a sequence genuinely needs multiple beats, it usually needs multiple shots, not a longer single one.</p>
+
+<h2>Hands and Small Objects Are High-Risk</h2>
+
+<p>Hands fail more than almost any other part of the human body in AI video, and the reason is structural rather than a model oversight. A hand has many small joints in close proximity, in near-constant relative motion, and the model has to keep all of them coherent frame to frame while the rest of the body is also moving. That's a lot of fine detail packed into a small part of the frame — exactly the combination current models handle least reliably.</p>
+
+<p>It gets substantially harder the moment a hand interacts with an object. Picking up a cup, buttoning a shirt, holding a phone, shuffling papers — each of these requires the model to resolve two separate forms (hand and object) making physically convincing contact, with correct occlusion, grip and object behavior, all while both may be moving. This is a much harder problem than a hand simply existing at rest.</p>
+
+<p>Practical mitigations: frame hands smaller in the shot rather than in tight close-up, keep hand-object interaction to a minimum of one simple action, avoid asking for fast or fine manipulation (typing, dealing cards, tying a knot), and consider cutting away from the interaction itself — show the reach, cut, show the result. A convincing edit around a hard interaction often beats a full attempt to generate it in one continuous take.</p>
+
+<h2>Multiple Characters Increase Complexity</h2>
+
+<p>Every additional character in a shot multiplies the number of things that can go wrong, not just adds to it. With one character, the model manages one identity, one set of proportions, one line of action. With two or more, it also has to manage relative scale, believable blocking, eyelines that actually meet, and — often the most visible failure — keeping each character's identity distinct and consistent rather than letting features blend between them.</p>
+
+<p>Common multi-character failure patterns: faces that drift toward resembling each other over the course of a shot, characters that pass through one another during movement, eyelines that don't land on anything, and one character's wardrobe or features bleeding into the other's. These get worse with camera movement, worse with dialogue-driven action, and worse the longer the shot runs.</p>
+
+<p>If a scene needs multiple characters interacting, it's often more reliable as several single-character shots cut together — a shot on each character's reaction, an over-the-shoulder, an establishing wide — than one shot asking the model to manage everyone's identity and blocking simultaneously. Reserve true multi-character single shots for moments where the interaction itself is the point, and keep the action in them simple.</p>
+
+<h2>The Shot Is Too Long</h2>
+
+<p>Duration isn't free. Every additional second a model has to sustain the same character, environment and camera behavior is another chance for something to drift — a face to soften, a wardrobe detail to shift, a background element to warp. Continuity degrades gradually rather than failing all at once, which is why long single takes often start clean and end unrecognizable.</p>
+
+<p>This is a direct trade-off against the complexity covered above: a long shot with one simple, continuous action (a slow push-in on a still subject) can hold up fine, while a short shot with several actions can already be too much. Duration and action count need to be budgeted together, not considered separately. If a shot needs to run long, strip the action down to almost nothing else — long and simple, not long and busy.</p>
+
+<p>When a shot needs both length and complexity, that's usually a sign it should be several shots. A held long take is a specific, expensive choice in traditional filmmaking too — it should be a deliberate decision, not a default.</p>
+
+<h2>The Model Is Wrong for the Shot</h2>
+
+<p>Not every failure is a prompting problem. Video models have real differences in what they're strong at — some hold motion and physical action better, some are stronger on camera control, some prioritize single-frame polish over consistency across a longer take. A shot that's well-built on paper can still fail simply because it was sent to a model that isn't suited to that kind of shot.</p>
+
+<p>Before spending a generation on a shot with real complexity — fast motion, an unusual camera move, a long duration, an object interaction — it's worth checking how hard that specific shot actually is to generate, and on which model it's most likely to hold up, before any credits are spent. RevaultAI's <a href="/which-model">Which Model</a> tool takes a shot description and scores its difficulty against the available models, naming what's likely to break and recommending the model most likely to deliver it in fewer takes.</p>
+
+<h2>Your Reference Frame Is Working Against You</h2>
+
+<p>When a shot starts from a reference image, the frame you choose isn't just a starting point — it's a set of constraints the motion has to respect. If the composition and the requested movement disagree, the model has to resolve that disagreement, and the result is often an awkward compromise rather than either version.</p>
+
+<p>A frame with a character facing directly into camera doesn't leave obvious room for "the camera circles around her" — there's no established sense of the space behind her for the circle to move through. A tightly cropped frame doesn't leave room for a character to stand up or step back without immediately leaving frame in a way that reads as a cut, not a move. A frame with hard directional light doesn't hold up well against "the camera moves to reveal her from the other side," because the lighting logic breaks the moment the angle changes.</p>
+
+<p>Before using a reference frame, look at it the way a cinematographer would: where's the headroom, where's the negative space, which way does the light suggest the world continues, and does the requested camera or subject movement actually have somewhere to go. If the frame and the motion argue with each other, either change the requested motion or pick a different frame — don't ask the model to referee the disagreement.</p>
+
+<h2>Split Difficult Shots Into Simpler Shots</h2>
+
+<p>Most of the fixes above point at the same underlying move: when a shot is failing, the answer is often not a better prompt for the same shot — it's fewer things asked of any single shot.</p>
+
+<div class="example"><strong>One difficult shot:</strong> "A man sits at a desk, picks up a pen, signs a document, then stands and walks to the window while the camera pulls back and rises to a high angle."</div>
+
+<p>That's a hand-object interaction, a stand from a seated position, a walk, and a compound camera move — three or four of this guide's highest-risk categories stacked into one shot. Split by action and by camera setup instead:</p>
+
+<div class="example"><strong>Shot 1:</strong> "Close on a man's hand signing a document on a desk. Static camera." (isolates the hand interaction, framed to reduce risk)<br><br><strong>Shot 2:</strong> "A man stands from a desk and walks toward a window. Camera holds a medium wide shot, no movement."<br><br><strong>Shot 3:</strong> "Low-angle shot of the man at the window, camera slowly rises." (the compound camera move, now on its own with no competing action)</div>
+
+<p>Three simple, achievable shots cut together tell the same story as the one difficult shot — and each one is far more likely to come back usable on the first or second try.</p>
+
+<h2>Treat Generations Like Takes</h2>
+
+<p>On a traditional set, nobody expects take one to be the take that makes the cut. Actors miss a beat, a camera move overshoots, the light changes — you shoot several takes and select the one that works. AI generation is the same process compressed into seconds instead of hours, and it's worth treating it with the same expectations: a failed generation isn't a verdict on the shot, it's take three of eight.</p>
+
+<p>The part that traditional filmmaking does and most AI workflows skip is keeping the takes organized. RevaultAI's <a href="/takes">Takes</a> groups every generation from the same shot together automatically, so you can compare attempts side by side, mark the one that works, reject the ones that don't, and leave yourself a note on what changed between them — instead of losing track of which prompt tweak actually fixed the problem.</p>
+
+<h2>Use Generation Autopsy</h2>
+
+<p>Sometimes the cause isn't obvious just from reading the prompt back — it's clearer once someone (or something) that knows the common failure patterns looks at what you asked for and what went wrong. That's what RevaultAI's <a href="/autopsy">Generation Autopsy</a> tool is for.</p>
+
+<p>Autopsy currently reads two things: the original prompt you used, and your own description of what went wrong with the result. It does not analyze the video clip itself — it can't watch the footage, and it doesn't claim to. What it diagnoses is the wording, based on the same failure patterns covered in this guide: stacked actions, conflicting camera direction, high-risk hand or object interaction, duration mismatched to complexity, and so on.</p>
+
+<p>From that, it returns the likely causes ranked by confidence, the exact phrases in your prompt involved in each one, a specific fix for each cause, structural advice when the problem is bigger than wording (like a shot that needs to be split), a model suggestion when the issue is model-fit rather than prompt-fit, and a revised prompt built to hold up better on the next attempt.</p>
+
+<div class="cta-inline">
+<strong>Find Out Why Your Generation Failed</strong>
+<p>Free. No account required.</p>
+<a class="cta-btn" href="/autopsy">Run Generation Autopsy</a>
+</div>
+
+<p>The more specific your description of the failure, the sharper the diagnosis — "the hand melted into the cup" gives Autopsy far more to work with than "it looked wrong."</p>
+
+<h2>Building the Shot Right the First Time</h2>
+
+<p>Diagnosing a failed generation after the fact is useful, but the cheaper fix is building the shot correctly before you spend the generation. RevaultAI's <a href="/shot-director">Shot Director</a> and <a href="/frame-planner">Frame Planner</a> tools help structure a shot's camera, blocking and starting frame before it's sent to a model, and the <a href="/prompt-builder">Video Prompt Builder</a> scaffolds a complete prompt — subject, action, camera, lighting — so the structural problems this guide covers are less likely to end up in the prompt in the first place. When a shot is ready, <a href="/generate">Generate</a> is where it actually renders.</p>
+
+<p>Most failed generations aren't a verdict on what's possible — they're a shot that asked for too much, in conflicting directions, in too little time. Isolate the cause, simplify the shot, and the same idea usually renders the second or third time.</p>
+`,
+  },
+  {
     slug: "ai-video-character-consistency",
     title: "How to Keep Characters Consistent in AI Video",
     seoTitle: "AI Character Consistency: How to Keep the Same Character Across Video Shots",
