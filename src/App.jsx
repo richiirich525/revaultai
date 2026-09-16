@@ -3427,7 +3427,7 @@ function AboutPage({ setPage }) {
     </div>
   );
 }
-function PromptBuilderPage({ setPage, user, onSignInClick, activeProject }) {
+function PromptBuilderPage({ setPage, user, onSignInClick, activeProject, setGenPrefill }) {
   const [idea, setIdea] = useState("");
   const [model, setModel] = useState("veo");
   const [style, setStyle] = useState("none");
@@ -3773,7 +3773,21 @@ function PromptBuilderPage({ setPage, user, onSignInClick, activeProject }) {
             <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 40, fontWeight: 300, color: "var(--text)", marginBottom: 16, lineHeight: 1.2 }}>Now make the film.</div>
             <div style={{ ...bodyStyle, maxWidth: 480, margin: "0 auto 32px" }}>RevaultAI is a curated gallery for AI filmmakers — generate your film, publish it, and keep 80% of every sale.</div>
             <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
-              <button className="btn-primary" onClick={() => user ? setPage("generate") : onSignInClick?.()}>{user ? "Generate on RevaultAI" : "Create your account"}</button>
+              <button
+                className="btn-primary"
+                onClick={() => {
+                  if (!user) { onSignInClick?.(); return; }
+                  const MAP = { veo: "veo-3.1", kling: "kling-3.0", wan: "wan-2.6", seedance: "seedance-2.5" };
+                  setGenPrefill?.({
+                    prompt: result.built.prompt,
+                    generateModelKey: MAP[model],
+                    aspectRatio,
+                  });
+                  setPage("generate");
+                }}
+              >
+                {user ? "Generate on RevaultAI" : "Create your account"}
+              </button>
               <button className="btn-ghost" onClick={() => setPage("explore")}>Explore the archive</button>
             </div>
           </div>
@@ -4176,7 +4190,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       case "premium-prompts": return <PremiumPromptsPage setPage={setPage} />;
       case "about": return <AboutPage setPage={setPage} />;
       case "become-creator": return <BecomeCreatorPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} />;
-      case "prompt-builder": return <PromptBuilderPage activeProject={activeProject} setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} />;
+      case "prompt-builder": return <PromptBuilderPage setGenPrefill={setGenPrefill} activeProject={activeProject} setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} />;
       case "privacy":   return <LegalPage setPage={setPage} page="privacy" />;
       case "refunds":   return <LegalPage setPage={setPage} page="refunds" />;
       case "dmca":      return <LegalPage setPage={setPage} page="dmca" />;
