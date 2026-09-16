@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./lib/supabase.js";
+import StageBlueprint from "./StageBlueprint.jsx";
+import { readStage, describeStage, axisFor, sideOfAxis } from "./lib/stageGeometry.js";
 
 /*
   BlockingPage — RevaultAI
@@ -70,6 +72,9 @@ export default function BlockingPage({ setPage, user, onSignInClick, setGenPrefi
   const [error, setError] = useState(null);
   const [result, setResult] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [layout, setLayout] = useState(null);
+  const [baselineSide, setBaselineSide] = useState(null);
+  const [restaging, setRestaging] = useState(false);
   const [vault, setVault] = useState([]);
   const [lockedIds, setLockedIds] = useState([]);
 
@@ -99,11 +104,44 @@ export default function BlockingPage({ setPage, user, onSignInClick, setGenPrefi
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) setError(data.error || "Something went wrong. Try again.");
-      else setResult(data);
+      else {
+        setResult(data);
+        if (data.layout?.actors?.length) {
+          const norm = {
+            camera: { x: 50, y: 75, rotation: 0, ...(data.layout.camera || {}) },
+            actors: data.layout.actors.map((a, i) => ({ id: "a" + i, facing: 0, ...a })),
+          };
+          setLayout(norm);
+          const ax = axisFor(norm.actors);
+          setBaselineSide(ax ? sideOfAxis(ax, norm.camera) : null);
+        }
+      }
     } catch {
       setError("Couldn't reach the blocking director. Check your connection and try again.");
     }
     setLoading(false);
+  }
+
+  async function restage() {
+    if (!layout) return;
+    setRestaging(true);
+    try {
+      const res = await fetch("/api/blocking", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scene, dialogue, register, model,
+          locked: vault.filter((v) => lockedIds.includes(v.id)),
+          layout: { ...layout, read: describeStage(readStage(layout.camera, layout.actors)) },
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) setError(data.error || "Could not rewrite for this staging.");
+      else setResult({ ...data, layout: data.layout ?? layout });
+    } catch {
+      setError("Couldn't reach the blocking director.");
+    }
+    setRestaging(false);
   }
 
   async function copyPrompt() {
@@ -222,6 +260,33 @@ export default function BlockingPage({ setPage, user, onSignInClick, setGenPrefi
         <div className="bl-wrap" style={{ paddingBottom: 80 }}>
           {result.read && (
             <div className="bl-body" style={{ textAlign: "center", maxWidth: 540, margin: "0 auto 36px", fontSize: 12, color: "var(--text)" }}>{result.read}</div>
+          )}
+
+          {layout && (
+            <div style={{ marginBottom: 32 }}>
+              <div className="bl-label" style={{ marginBottom: 10 }}>The staging — drag to change it</div>
+              <StageBlueprint
+                camera={layout.camera}
+                actors={layout.actors}
+                baselineSide={baselineSide}
+                onChange={(next) => setLayout(next)}
+              />
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 12 }}>
+                <button className="btn-ghost" style={{ fontSize: 11 }} onClick={restage} disabled={restaging}>
+                  {restaging ? "Rewriting…" : "Rewrite for this staging"}
+                </button>
+                <button
+                  className="btn-ghost"
+                  style={{ fontSize: 11 }}
+                  onClick={() => {
+                    const ax = axisFor(layout.actors);
+                    setBaselineSide(ax ? sideOfAxis(ax, layout.camera) : null);
+                  }}
+                >
+                  Set this side as the baseline
+                </button>
+              </div>
+            </div>
           )}
 
           {result.blocking.length > 0 && (

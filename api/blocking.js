@@ -61,8 +61,18 @@ Return ONLY a JSON object. No markdown fences, no preamble. Use exactly this sch
     }
   ],
   "camera_relationship": "two or three sentences on how this blocking sits with the camera: where the axis is established, who holds camera-left and camera-right, and what the staging means for coverage and the 180-degree line",
+  "layout": {
+    "camera": { "x": 50, "y": 75, "rotation": 0 },
+    "actors": [ { "name": "name as used above", "x": 40, "y": 40, "facing": 180 } ]
+  },
   "prompt": "one flowing paragraph of 70-120 words folding the blocking and performance into a generation-ready shot description"
 }
+
+The "layout" is an overhead plan of the scene on a 100x100 stage, roughly 20 metres across, so 5 units is about a metre. Y increases downward. Rotation is degrees, 0 = pointing up the plan, increasing clockwise. Place the camera and every actor to match the blocking you wrote:
+- Distance from camera to subject sets the shot size. Under 12 units reads as a close-up, 18-28 as a medium, over 42 as a wide.
+- Each actor's "facing" is the direction they are turned, not where they are. Two people talking face each other.
+- Keep the camera on one side of the line between the first two actors — that is the 180-degree axis.
+- Use the whole stage. Do not cluster everyone at the centre.
 
 Rules:
 - NEVER rewrite, paraphrase, shorten or improve the creator's dialogue. Reproduce each line exactly as given, including punctuation. Your job is delivery, not writing.
@@ -82,7 +92,11 @@ export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   try {
-    const { scene, dialogue, register, model, locked } = req.body || {};
+    const { scene, dialogue, register, model, locked, layout } = req.body || {};
+
+    // A layout dragged on the blueprint. When present it is authoritative —
+    // the staging is a fact now, not something to invent.
+    const given = layout && typeof layout === "object" && Array.isArray(layout.actors) ? layout : null;
 
     if (typeof scene !== "string" || scene.trim().length < 10) {
       return res.status(400).json({ error: "Describe the scene in a few more words." });
@@ -146,6 +160,14 @@ Reproduce each locked description EXACTLY as written, word for word, inside the 
 DIALOGUE — reproduce each line EXACTLY as written. Do not rewrite, shorten or improve any of it:
 ${lines}
 ` : ""}
+${given ? `
+THE STAGING IS ALREADY SET. The creator has placed the camera and actors on the overhead plan:
+camera at (${Math.round(given.camera?.x ?? 50)}, ${Math.round(given.camera?.y ?? 75)}) rotated ${Math.round(given.camera?.rotation ?? 0)}°
+${given.actors.map((a) => `${a.name} at (${Math.round(a.x)}, ${Math.round(a.y)}) facing ${Math.round(a.facing ?? 0)}°`).join("\n")}
+${given.read ? `\nWhat that gives: ${given.read}` : ""}
+
+Write the blocking, performance and prompt to MATCH this staging exactly. Return this same layout unchanged in the "layout" field. Do not move anyone.
+` : ""}
 The scene:
 ${scene.trim()}`;
 
@@ -198,6 +220,7 @@ ${scene.trim()}`;
       blocking: (Array.isArray(out.blocking) ? out.blocking : []).slice(0, 10),
       performance: (Array.isArray(out.performance) ? out.performance : []).slice(0, 5),
       camera_relationship: String(out.camera_relationship || "").slice(0, 600),
+      layout: given ?? (out.layout && Array.isArray(out.layout?.actors) ? out.layout : null),
       prompt: String(out.prompt || "").slice(0, 2000),
     });
   } catch (error) {
