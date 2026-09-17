@@ -1705,7 +1705,12 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
         : { s: "bad", t: "Model & duration", d: "That duration isn't supported by this model." }
     );
 
-    items.push({ s: "ok", t: "Aspect ratio", d: aspect + (aspect === "9:16" ? " — vertical, ready for Reels and TikTok." : "") });
+    const ratios = m?.ratios ?? ["16:9"];
+    items.push(
+      ratios.includes(aspect)
+        ? { s: "ok", t: "Aspect ratio", d: aspect + (aspect === "9:16" ? " — vertical, ready for Reels and TikTok." : "") }
+        : { s: "bad", t: "Aspect ratio", d: `${m?.label ?? "This model"} doesn't support ${aspect}. Pick ${ratios.join(" or ")}.` }
+    );
 
     items.push(
       balance >= COST
