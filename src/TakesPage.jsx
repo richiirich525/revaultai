@@ -37,6 +37,17 @@ const styles = `
   @media (max-width: 760px) { .tk-wrap { padding: 0 24px; } .tk-compare-grid { grid-template-columns: 1fr; } }
 `;
 
+const REASONS = [
+  ["identity", "Identity drift", "Wrong face, or the character changed partway"],
+  ["anatomy", "Hands / anatomy", "Fingers, limbs, bodies that don't hold up"],
+  ["motion", "Motion", "Mushy, too slow, physics wrong"],
+  ["camera", "Camera", "Didn't follow the move, or moved unasked"],
+  ["adherence", "Prompt adherence", "Ignored part of what was asked for"],
+  ["continuity", "Continuity", "Wardrobe, props or lighting broke"],
+  ["performance", "Performance", "Expression or delivery wrong"],
+  ["artifact", "Artifact", "Warping, flicker, garbled text"],
+];
+
 export default function TakesPage({ user, onSignInClick, setPage, notify, activeProject }) {
   const [shots, setShots] = useState([]);
   const [gens, setGens] = useState([]);
@@ -90,6 +101,12 @@ export default function TakesPage({ user, onSignInClick, setPage, notify, active
     setGens((list) => list.map((x) => (x.id === gen.id ? { ...x, take_status: next } : x)));
   }
 
+  async function setReason(gen, reason) {
+    const next = gen.reject_reason === reason ? null : reason;
+    await supabase.from("generations").update({ reject_reason: next, take_status: "rejected" }).eq("id", gen.id);
+    setGens((list) => list.map((x) => (x.id === gen.id ? { ...x, reject_reason: next, take_status: "rejected" } : x)));
+  }
+
   async function saveNote(gen, note) {
     const clean = note.trim().slice(0, 400);
     if (clean === (gen.take_note ?? "")) return;
@@ -118,6 +135,36 @@ export default function TakesPage({ user, onSignInClick, setPage, notify, active
     notify?.("Shot removed.");
     load();
   }
+
+  // What a usable shot actually costs, from your own approvals.
+  const stats = (() => {
+    const done = gens.filter((g) => g.status === "complete" || g.status === "failed");
+    if (done.length === 0) return null;
+    const keepers = shots.filter((s) => s.selected_generation_id).length;
+    const credits = done.reduce((sum, g) => sum + (Number(g.credits_spent) || 0), 0);
+    const byReason = {};
+    for (const g of done) if (g.reject_reason) byReason[g.reject_reason] = (byReason[g.reject_reason] || 0) + 1;
+    const topReason = Object.entries(byReason).sort((a, b) => b[1] - a[1])[0] ?? null;
+
+    const byModel = {};
+    for (const g of done) {
+      const m = g.model || "unknown";
+      byModel[m] = byModel[m] || { attempts: 0, keepers: 0, credits: 0 };
+      byModel[m].attempts++;
+      byModel[m].credits += Number(g.credits_spent) || 0;
+      if (shots.some((s) => s.selected_generation_id === g.id)) byModel[m].keepers++;
+    }
+
+    return {
+      attempts: done.length,
+      keepers,
+      credits,
+      perKeeper: keepers > 0 ? Math.round(done.length / keepers * 10) / 10 : null,
+      creditsPerKeeper: keepers > 0 ? Math.round(credits / keepers) : null,
+      topReason: topReason ? { key: topReason[0], count: topReason[1] } : null,
+      byModel: Object.entries(byModel).filter(([, v]) => v.attempts >= 3).sort((a, b) => b[1].attempts - a[1].attempts),
+    };
+  })();
 
   if (!user) {
     return (
@@ -153,6 +200,44 @@ export default function TakesPage({ user, onSignInClick, setPage, notify, active
           <div className="tk-body" style={{ maxWidth: 620, marginBottom: 32 }}>
             Generating the same prompt again makes another take of the same shot. Choose the one you'll actually use, reject the ones you won't, and leave yourself a note about why — so when you come back to the project next week, the decision is already made.
           </div>
+
+          {stats && stats.keepers > 0 && (
+            <div style={{ border: "1px solid var(--accent)", borderRadius: 8, padding: "22px 26px", marginBottom: 28, background: "var(--surface)" }}>
+              <div className="tk-label" style={{ marginBottom: 14 }}>What a keeper costs you</div>
+              <div style={{ display: "flex", gap: 28, flexWrap: "wrap", marginBottom: 16 }}>
+                <div>
+                  <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 26, fontWeight: 700, color: "var(--text)", lineHeight: 1 }}>{stats.perKeeper}</div>
+                  <div className="tk-count" style={{ marginTop: 6 }}>Attempts per keeper</div>
+                </div>
+                <div>
+                  <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 26, fontWeight: 700, color: "var(--accent)", lineHeight: 1 }}>{stats.creditsPerKeeper}</div>
+                  <div className="tk-count" style={{ marginTop: 6 }}>Credits per keeper</div>
+                </div>
+                <div>
+                  <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 26, fontWeight: 700, color: "var(--text)", lineHeight: 1 }}>{stats.keepers}</div>
+                  <div className="tk-count" style={{ marginTop: 6 }}>Shots locked</div>
+                </div>
+              </div>
+
+              {stats.byModel.length > 0 && (
+                <div style={{ borderTop: "1px solid var(--border)", paddingTop: 12 }}>
+                  <div className="tk-count" style={{ marginBottom: 8 }}>By model, three attempts or more</div>
+                  {stats.byModel.map(([m, v]) => (
+                    <div key={m} className="tk-body" style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", lineHeight: 1.9 }}>
+                      <span style={{ color: "var(--text)" }}>{m}</span> — {v.keepers} keeper{v.keepers === 1 ? "" : "s"} from {v.attempts} attempt{v.attempts === 1 ? "" : "s"}
+                      {v.keepers > 0 ? `, ${Math.round(v.credits / v.keepers)} credits each` : `, ${v.credits} credits spent with none kept`}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {stats.topReason && (
+                <div className="tk-body" style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--muted)", marginTop: 12, opacity: 0.85 }}>
+                  Most common reason for rejecting a take: {(REASONS.find(([k]) => k === stats.topReason.key) ?? [, stats.topReason.key])[1]} ({stats.topReason.count}).
+                </div>
+              )}
+            </div>
+          )}
 
           {loading ? (
             <div className="empty-state"><div className="empty-text">Loading your takes…</div></div>
@@ -219,6 +304,24 @@ export default function TakesPage({ user, onSignInClick, setPage, notify, active
                             <button className="tk-btn" onClick={() => setStatus(g, "rejected")}>{isRej ? "Unreject" : "Reject"}</button>
                             <button className={"tk-btn" + (compare.includes(g.id) ? " on" : "")} onClick={() => toggleCompare(g.id)}>Compare</button>
                           </div>
+                          {isRej && (
+                            <div style={{ marginTop: 10, paddingTop: 9, borderTop: "1px solid var(--border)" }}>
+                              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 8, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--muted)", marginBottom: 7 }}>
+                                Why?
+                              </div>
+                              <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+                                {REASONS.map(([v, l, hint]) => (
+                                  <button
+                                    key={v}
+                                    className={"tk-btn" + (g.reject_reason === v ? " on" : "")}
+                                    style={{ fontSize: 8, padding: "4px 8px" }}
+                                    title={hint}
+                                    onClick={() => setReason(g, v)}
+                                  >{l}</button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                           <textarea
                             className="tk-note"
                             rows={2}
