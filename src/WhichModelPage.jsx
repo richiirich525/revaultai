@@ -1,3 +1,4 @@
+import { supabase } from "./lib/supabase.js";
 import { useState } from "react";
 
 /*
@@ -53,11 +54,15 @@ export default function WhichModelPage({ setPage, user, onSignInClick, setGenPre
     if (shot.trim().length < 10) { setError("Describe your shot in a few more words."); return; }
     setLoading(true); setError(null); setResult(null);
     try {
-      const res = await fetch("/api/which-model", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ shot }),
-      });
+      const headers = { "Content-Type": "application/json" };
+      if (user) {
+        try {
+          const { data: sess } = await supabase.auth.getSession();
+          const t = sess?.session?.access_token;
+          if (t) headers["Authorization"] = "Bearer " + t;
+        } catch { /* anonymous is fine */ }
+      }
+      const res = await fetch("/api/which-model", { method: "POST", headers, body: JSON.stringify({ shot }) });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) setError(data.error || "Something went wrong. Try again.");
       else setResult(data);
@@ -126,6 +131,25 @@ export default function WhichModelPage({ setPage, user, onSignInClick, setGenPre
           {result.read && (
             <div className="wm-body" style={{ textAlign: "center", maxWidth: 560, margin: "0 auto 32px", fontSize: 12, color: "var(--text)" }}>
               {result.read}
+            </div>
+          )}
+
+          {result.yourRecord?.length > 0 && (
+            <div className="wm-diff" style={{ borderColor: "rgba(123,63,228,0.4)" }}>
+              <div className="wm-diff-label" style={{ marginBottom: 12 }}>Your record</div>
+              {result.yourRecord.map((r) => (
+                <div key={r.model} className="wm-flag">
+                  <span style={{ color: r.keepers > 0 ? "#4ADE80" : "var(--muted)" }}>{r.keepers > 0 ? "\u2713" : "\u00b7"}</span>
+                  <span>
+                    <span style={{ color: "var(--text)" }}>{r.label}</span> — {r.keepers} keeper{r.keepers === 1 ? "" : "s"} from {r.attempts} attempt{r.attempts === 1 ? "" : "s"}
+                    {r.creditsPerKeeper ? `, ${r.creditsPerKeeper} credits each` : ""}
+                    {r.topReason ? `. Usually rejected for ${r.topReason}.` : ""}
+                  </span>
+                </div>
+              ))}
+              <div className="wm-body" style={{ fontSize: 10, marginTop: 10, opacity: 0.8 }}>
+                From your own approvals, not a global leaderboard. Small samples say less — treat anything under ten attempts as a hint.
+              </div>
             </div>
           )}
 

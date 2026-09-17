@@ -147,6 +147,60 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: `Keep your shot description under ${MAX_SHOT_LENGTH} characters.` });
     }
 
+    // The creator's own approval history. Their record beats any general
+    // claim about a model, so it's shown alongside the recommendation.
+    const REASON_LABELS = {
+      identity: "identity drift", anatomy: "hands or anatomy", motion: "motion",
+      camera: "camera", adherence: "prompt adherence", continuity: "continuity",
+      performance: "performance", artifact: "artifacts",
+    };
+    let yourRecord = [];
+    const authHeader = req.headers.authorization || "";
+    if (authHeader.startsWith("Bearer ")) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser(authHeader.slice(7));
+        if (user) {
+          const [{ data: gens }, { data: shots }] = await Promise.all([
+            supabase.from("generations").select("model, credits_spent, reject_reason, status").eq("user_id", user.id).limit(500),
+            supabase.from("shots").select("selected_generation_id").eq("user_id", user.id),
+          ]);
+          const picked = new Set((shots ?? []).map((s) => s.selected_generation_id).filter(Boolean));
+          const { data: pickedRows } = picked.size
+            ? await supabase.from("generations").select("id, model").in("id", [...picked])
+            : { data: [] };
+          const keepersByModel = {};
+          for (const r of pickedRows ?? []) keepersByModel[r.model] = (keepersByModel[r.model] || 0) + 1;
+
+          const tally = {};
+          for (const g of gens ?? []) {
+            if (g.status !== "complete" && g.status !== "failed") continue;
+            const m = g.model;
+            if (!CATALOG.some((c) => c.key === m)) continue;
+            tally[m] = tally[m] || { attempts: 0, credits: 0, reasons: {} };
+            tally[m].attempts++;
+            tally[m].credits += Number(g.credits_spent) || 0;
+            if (g.reject_reason) tally[m].reasons[g.reject_reason] = (tally[m].reasons[g.reject_reason] || 0) + 1;
+          }
+
+          yourRecord = Object.entries(tally)
+            .filter(([, v]) => v.attempts >= 3)
+            .map(([m, v]) => {
+              const keepers = keepersByModel[m] || 0;
+              const top = Object.entries(v.reasons).sort((a, b) => b[1] - a[1])[0];
+              return {
+                model: m,
+                label: CATALOG.find((c) => c.key === m)?.label ?? m,
+                attempts: v.attempts,
+                keepers,
+                creditsPerKeeper: keepers > 0 ? Math.round(v.credits / keepers) : null,
+                topReason: top ? REASON_LABELS[top[0]] ?? top[0] : null,
+              };
+            })
+            .sort((a, b) => b.attempts - a.attempts);
+        }
+      } catch { /* the recommendation works fine without it */ }
+    }
+
     // --- Rate limit by IP ---
     const forwarded = req.headers["x-forwarded-for"] || "";
     const ip = String(forwarded).split(",")[0].trim() || "unknown";
@@ -184,7 +238,7 @@ export default async function handler(req, res) {
         messages: [
           {
             role: "user",
-            content: `Available models:\n${catalogText}\n\nThe shot the filmmaker wants:\n${shot.trim()}`,
+            content: `Available models:\n${catalogText}\n${yourRecord.length ? `\nTHIS FILMMAKER'S OWN RECORD on the platform — weigh it, but do not overrule a clear capability mismatch on a small sample:\n${yourRecord.map((r) => `- ${r.label}: ${r.keepers} approved from ${r.attempts} attempts${r.topReason ? `, usually rejected for ${r.topReason}` : ""}`).join("\n")}\n` : ""}\nThe shot the filmmaker wants:\n${shot.trim()}`,
           },
         ],
       }),
@@ -258,6 +312,7 @@ export default async function handler(req, res) {
     await supabase.from("prompt_builds").insert({ ip_hash: ipHash, target_model: "router" });
 
     return res.status(200).json({
+      yourRecord,
       difficulty,
       read: String(out.read || "").slice(0, 400),
       caution: String(out.caution || "").slice(0, 400),
