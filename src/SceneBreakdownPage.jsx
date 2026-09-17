@@ -1,6 +1,7 @@
 import { compileEntry } from "./lib/assetState.js";
 import { useEffect, useState } from "react";
 import { supabase } from "./lib/supabase.js";
+import { specFromBreakdownShot } from "./lib/filmSpec.js";
 
 /*
   SceneBreakdownPage — RevaultAI
@@ -159,7 +160,36 @@ export default function SceneBreakdownPage({ setPage, user, onSignInClick, setGe
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) setError(data.error || "Something went wrong. Try again.");
-      else { setResult(data); loadHistory(); }
+      else {
+        setResult(data);
+        loadHistory();
+        // Specs are written quietly — nothing in the UI depends on them yet.
+        if (user?.id && Array.isArray(data.built?.shots)) {
+          const ctx = {
+            beat,
+            logline: data.built.logline,
+            characters: data.built.characters ?? [],
+            locations: data.built.locations ?? [],
+            props: data.built.props ?? [],
+            vaultIds: lockedIds,
+            style: data.applied?.style ?? "",
+            aspectRatio: data.aspectRatio,
+            modelKey: data.modelKey,
+          };
+          const rows = data.built.shots.map((s, i) => ({
+            user_id: user.id,
+            project_id: activeProject?.id ?? null,
+            title: s.slug || `Shot ${i + 1}`,
+            sequence: i + 1,
+            version: 1,
+            origin: "scene-breakdown",
+            spec: specFromBreakdownShot(s, ctx),
+          }));
+          supabase.from("film_specs").insert(rows).then(({ error }) => {
+            if (error) console.warn("[RevaultAI] Could not save film specs:", error.message);
+          });
+        }
+      }
     } catch {
       setError("Couldn't reach the scene breakdown. Check your connection and try again.");
     }
