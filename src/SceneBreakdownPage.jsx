@@ -1,3 +1,4 @@
+import { compileEntry } from "./lib/assetState.js";
 import { useEffect, useState } from "react";
 import { supabase } from "./lib/supabase.js";
 
@@ -89,6 +90,18 @@ export default function SceneBreakdownPage({ setPage, user, onSignInClick, setGe
   const [history, setHistory] = useState([]);
   const [vault, setVault] = useState([]);
   const [lockedIds, setLockedIds] = useState([]);
+  const [beat, setBeat] = useState(1);
+  const [muts, setMuts] = useState({});
+
+  useEffect(() => {
+    (async () => {
+      if (!user?.id) { setMuts({}); return; }
+      const { data } = await supabase.from("asset_mutations").select("*").order("beat", { ascending: true });
+      const by = {};
+      for (const m of data ?? []) (by[m.entry_id] = by[m.entry_id] || []).push(m);
+      setMuts(by);
+    })();
+  }, [user?.id]);
 
   async function loadVault() {
     if (!user?.id) { setVault([]); return; }
@@ -137,7 +150,10 @@ export default function SceneBreakdownPage({ setPage, user, onSignInClick, setGe
           style,
           strength,
           aspectRatio: aspect,
-          locked: vault.filter((v) => lockedIds.includes(v.id)),
+          locked: vault.filter((v) => lockedIds.includes(v.id)).map((v) => {
+            const { text } = compileEntry(v, muts[v.id], beat);
+            return { kind: v.kind, name: v.name, description: text };
+          }),
           projectId: activeProject?.id ?? null,
         }),
       });
@@ -250,6 +266,35 @@ export default function SceneBreakdownPage({ setPage, user, onSignInClick, setGe
                         </div>
                       );
                     })}
+                    <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--border)" }}>
+                      <span className="sb-body" style={{ fontSize: 10 }}>Story beat</span>
+                      <input
+                        type="number"
+                        min={1}
+                        value={beat}
+                        onChange={(e) => setBeat(Math.max(1, Number(e.target.value) || 1))}
+                        style={{ width: 64, background: "var(--bg)", border: "1px solid var(--border)", borderRadius: 4, padding: "6px 8px", fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text)" }}
+                      />
+                      <span className="sb-body" style={{ fontSize: 10, opacity: 0.8 }}>Anything that happened by this point is folded in.</span>
+                    </div>
+
+                    {lockedIds.some((id) => (muts[id] ?? []).some((m) => m.beat <= beat)) && (
+                      <div style={{ marginTop: 10, padding: "10px 12px", background: "var(--surface)", border: "1px solid rgba(123,63,228,0.3)", borderRadius: 4 }}>
+                        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--accent)", marginBottom: 7 }}>
+                          State applied at beat {beat}
+                        </div>
+                        {vault.filter((v) => lockedIds.includes(v.id)).map((v) => {
+                          const { applied } = compileEntry(v, muts[v.id], beat);
+                          if (!applied.length) return null;
+                          return (
+                            <div key={v.id} className="sb-body" style={{ fontSize: 10, lineHeight: 1.75 }}>
+                              <span style={{ color: "var(--text)" }}>{v.name}:</span> {applied.map((a) => a.modifier).join(". ")}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
                     <div className="sb-body" style={{ fontSize: 10, marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--border)", opacity: 0.8 }}>
                       {lockedIds.length > 0
                         ? `${lockedIds.length} locked — this exact wording appears in every shot they're in.`

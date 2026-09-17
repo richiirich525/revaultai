@@ -72,6 +72,43 @@ export default function VaultPage({ user, onSignInClick, setPage, notify, active
   const [uploading, setUploading] = useState(false);
   const [previews, setPreviews] = useState({});   // entryId -> [signed urls]
   const [localPreviews, setLocalPreviews] = useState([]);  // object URLs for the form, index-matched to form.images
+  const [muts, setMuts] = useState({});            // entryId -> [mutation]
+  const [mutOpen, setMutOpen] = useState(null);    // entryId whose timeline is open
+  const [mutForm, setMutForm] = useState({ beat: 1, event: "", modifier: "" });
+
+  async function loadMutations() {
+    if (!user?.id) { setMuts({}); return; }
+    const { data } = await supabase
+      .from("asset_mutations")
+      .select("*")
+      .order("beat", { ascending: true });
+    const by = {};
+    for (const m of data ?? []) (by[m.entry_id] = by[m.entry_id] || []).push(m);
+    setMuts(by);
+  }
+
+  async function addMutation(entry) {
+    if (!mutForm.event.trim() || !mutForm.modifier.trim()) {
+      notify?.("Describe what happens and how it looks afterwards.");
+      return;
+    }
+    const { error: e } = await supabase.from("asset_mutations").insert({
+      user_id: user.id,
+      entry_id: entry.id,
+      project_id: activeProject?.id ?? null,
+      beat: Math.max(1, Number(mutForm.beat) || 1),
+      event: mutForm.event.trim().slice(0, 300),
+      modifier: mutForm.modifier.trim().slice(0, 400),
+    });
+    if (e) { notify?.("Could not save: " + e.message); return; }
+    setMutForm({ beat: Number(mutForm.beat) + 1, event: "", modifier: "" });
+    loadMutations();
+  }
+
+  async function removeMutation(m) {
+    await supabase.from("asset_mutations").delete().eq("id", m.id);
+    loadMutations();
+  }
 
   async function pickImage(file) {
     if (!file) return;
@@ -145,6 +182,7 @@ export default function VaultPage({ user, onSignInClick, setPage, notify, active
     setEntries(data ?? []);
     setLoading(false);
     for (const e of data ?? []) loadPreviews(e);
+    loadMutations();
   }
   useEffect(() => { load(); }, [user?.id]);
 
@@ -411,8 +449,64 @@ export default function VaultPage({ user, onSignInClick, setPage, notify, active
                     <div className="vt-body" style={{ opacity: 0.75 }}>{e.notes}</div>
                   </div>
                 )}
+                {mutOpen === e.id && (
+                  <div style={{ marginTop: 16, paddingTop: 14, borderTop: "1px solid var(--border)" }}>
+                    <div className="vt-label">State over time</div>
+                    <div className="vt-body" style={{ fontSize: 10, marginBottom: 12, opacity: 0.85 }}>
+                      What happens to {e.name} during the story. From the beat you set onward, the visual change is added to the locked description automatically.
+                    </div>
+
+                    {(muts[e.id] ?? []).map((m) => (
+                      <div key={m.id} style={{ display: "flex", gap: 12, alignItems: "flex-start", padding: "8px 0", borderBottom: "1px solid var(--border)" }}>
+                        <span style={{ fontFamily: "'Syne', sans-serif", fontSize: 15, fontWeight: 700, color: "var(--accent)", minWidth: 26 }}>{m.beat}</span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div className="vt-body" style={{ color: "var(--text)" }}>{m.event}</div>
+                          <div className="vt-body" style={{ fontSize: 10, opacity: 0.8, marginTop: 3 }}>→ {m.modifier}</div>
+                        </div>
+                        <button className="btn-ghost" style={{ fontSize: 9, padding: "4px 9px", color: "#C25B5B" }} onClick={() => removeMutation(m)}>Remove</button>
+                      </div>
+                    ))}
+
+                    <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 14, alignItems: "flex-start" }}>
+                      <input
+                        className="vt-input"
+                        type="number"
+                        min={1}
+                        value={mutForm.beat}
+                        onChange={(ev) => setMutForm((f) => ({ ...f, beat: ev.target.value }))}
+                        style={{ width: 70, marginBottom: 0 }}
+                        title="Story beat"
+                      />
+                      <input
+                        className="vt-input"
+                        value={mutForm.event}
+                        maxLength={300}
+                        onChange={(ev) => setMutForm((f) => ({ ...f, event: ev.target.value }))}
+                        placeholder="What happens — cracks the screen falling down the stairs"
+                        style={{ flex: 1, minWidth: 200, marginBottom: 0 }}
+                      />
+                    </div>
+                    <input
+                      className="vt-input"
+                      value={mutForm.modifier}
+                      maxLength={400}
+                      onChange={(ev) => setMutForm((f) => ({ ...f, modifier: ev.target.value }))}
+                      placeholder="How it looks afterwards — the screen heavily shattered, catching the light in spiderweb fractures"
+                      style={{ marginTop: 10, marginBottom: 10 }}
+                    />
+                    <button className="btn-ghost" style={{ fontSize: 11 }} onClick={() => addMutation(e)}>Add to the timeline</button>
+                  </div>
+                )}
+
                 <div className="vt-actions">
                   <button className="btn-ghost" style={{ fontSize: 11 }} onClick={() => edit(e)}>Edit</button>
+                  <button
+                    className="btn-ghost"
+                    style={{ fontSize: 11, color: mutOpen === e.id ? "var(--accent)" : undefined }}
+                    onClick={() => { setMutOpen(mutOpen === e.id ? null : e.id); setMutForm({ beat: ((muts[e.id] ?? []).at(-1)?.beat ?? 0) + 1, event: "", modifier: "" }); }}
+                  >
+                    State{(muts[e.id]?.length ?? 0) > 0 ? ` (${muts[e.id].length})` : ""}
+                  </button>
                   {activeProject && (
                     <button
                       className="btn-ghost"
