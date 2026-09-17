@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./lib/supabase.js";
 import StageBlueprint from "./StageBlueprint.jsx";
-import { readStage, describeStage, axisFor, sideOfAxis } from "./lib/stageGeometry.js";
+import { readStage, describeStage, axisFor, sideOfAxis, eyelinesFor } from "./lib/stageGeometry.js";
 
 /*
   BlockingPage — RevaultAI
@@ -132,7 +132,11 @@ export default function BlockingPage({ setPage, user, onSignInClick, setGenPrefi
         body: JSON.stringify({
           scene, dialogue, register, model,
           locked: vault.filter((v) => lockedIds.includes(v.id)),
-          layout: { ...layout, read: describeStage(readStage(layout.camera, layout.actors)) },
+          layout: {
+            ...layout,
+            read: describeStage(readStage(layout.camera, layout.actors)),
+            eyelines: eyelinesFor(layout.camera, layout.actors).map((e) => e.text),
+          },
         }),
       });
       const data = await res.json().catch(() => ({}));

@@ -169,3 +169,70 @@ export function describeStage(read) {
   }
   return bits.join(". ") + ".";
 }
+/*
+  Eyelines. A gaze reads correctly on screen when the direction a character
+  looks matches where the other person actually is relative to camera. Get it
+  wrong and two people in conversation appear to be looking past each other —
+  the error an audience feels without being able to name.
+*/
+export function eyelinesFor(camera, actors) {
+  const visible = (actors ?? []).filter((a) => inFrame(camera, a));
+  const out = [];
+
+  for (const a of visible) {
+    // Who are they turned toward? Nearest actor within a generous cone.
+    let target = null;
+    let best = 999;
+    for (const b of actors) {
+      if (b === a) continue;
+      const off = Math.abs(angleDelta(a.facing ?? 0, bearing(a, b)));
+      if (off < 55 && off < best) { best = off; target = b; }
+    }
+    if (!target) continue;
+
+    // Where does the target sit relative to the looker, from camera's view?
+    const aOff = screenOffset(camera, a);
+    const tOff = screenOffset(camera, target);
+    const across = tOff - aOff;
+    const targetVisible = inFrame(camera, target);
+
+    let direction;
+    if (Math.abs(across) < 4) direction = "straight down the lens axis";
+    else if (across < 0) direction = "toward frame left";
+    else direction = "toward frame right";
+
+    // How far off the lens axis the look sits — near the lens reads as intimate,
+    // far off reads as detached.
+    const fromLens = Math.abs(angleDelta(bearing(a, camera), bearing(a, target)));
+    const quality =
+      fromLens < 15 ? "a near-lens eyeline, intimate" :
+      fromLens < 45 ? "a tight eyeline just off the lens" :
+      fromLens < 90 ? "a wide eyeline across the frame" :
+      "looking well off axis, away from camera";
+
+    out.push({
+      who: a.name,
+      at: target.name,
+      direction,
+      quality,
+      targetOffScreen: !targetVisible,
+      text: `${a.name} looks ${direction} at ${target.name}${targetVisible ? "" : ", who is off frame"} — ${quality}.`,
+    });
+  }
+  return out;
+}
+
+// Two people who should be looking at each other but aren't — the error that
+// makes a conversation feel wrong without an audience knowing why.
+export function eyelineProblems(camera, actors) {
+  const lines = eyelinesFor(camera, actors);
+  const problems = [];
+  for (const l of lines) {
+    const mutual = lines.find((o) => o.who === l.at && o.at === l.who);
+    if (!mutual) continue;
+    if (l.direction === mutual.direction && l.direction !== "straight down the lens axis") {
+      problems.push(`${l.who} and ${l.at} are both looking ${l.direction}. In a two-shot they should look toward each other — one frame left, one frame right.`);
+    }
+  }
+  return [...new Set(problems)];
+}

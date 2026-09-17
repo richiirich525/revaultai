@@ -165,6 +165,7 @@ THE STAGING IS ALREADY SET. The creator has placed the camera and actors on the 
 camera at (${Math.round(given.camera?.x ?? 50)}, ${Math.round(given.camera?.y ?? 75)}) rotated ${Math.round(given.camera?.rotation ?? 0)}°
 ${given.actors.map((a) => `${a.name} at (${Math.round(a.x)}, ${Math.round(a.y)}) facing ${Math.round(a.facing ?? 0)}°`).join("\n")}
 ${given.read ? `\nWhat that gives: ${given.read}` : ""}
+${Array.isArray(given.eyelines) && given.eyelines.length ? `\nEyelines computed from the staging — state these directions explicitly in the prompt so the gaze reads correctly on screen:\n${given.eyelines.map((e) => "- " + e).join("\n")}` : ""}
 
 Write the blocking, performance and prompt to MATCH this staging exactly. Return this same layout unchanged in the "layout" field. Do not move anyone.
 ` : ""}

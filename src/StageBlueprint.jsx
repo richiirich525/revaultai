@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { STAGE, readStage, describeStage, axisFor, sideOfAxis, bearing } from "./lib/stageGeometry.js";
+import { STAGE, readStage, describeStage, axisFor, sideOfAxis, bearing, eyelinesFor, eyelineProblems } from "./lib/stageGeometry.js";
 
 /*
   StageBlueprint — RevaultAI
@@ -26,6 +26,8 @@ export default function StageBlueprint({ camera, actors, onChange, baselineSide 
   const [drag, setDrag] = useState(null);   // { kind: "camera"|"actor"|"rotate", id }
 
   const read = readStage(camera, actors);
+  const eyelines = eyelinesFor(camera, actors);
+  const eyeProblems = eyelineProblems(camera, actors);
   const axis = axisFor(actors);
   const crossed =
     axis && baselineSide != null && read.axis && read.axis.cameraSide !== 0 && read.axis.cameraSide !== baselineSide;
@@ -179,6 +181,16 @@ export default function StageBlueprint({ camera, actors, onChange, baselineSide 
       </svg>
 
       <div className="bp-read">{describeStage(read)}</div>
+
+      {eyelines.length > 0 && (
+        <div className="bp-read" style={{ borderTop: "none", paddingTop: 0, marginTop: 8, fontSize: 10, color: "var(--muted)" }}>
+          {eyelines.map((e, i) => <div key={i}>{e.text}</div>)}
+        </div>
+      )}
+
+      {eyeProblems.map((p, i) => (
+        <div className="bp-warn" key={"ep" + i}>⚠ {p}</div>
+      ))}
 
       {crossed && (
         <div className="bp-warn">
