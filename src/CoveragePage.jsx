@@ -9,7 +9,7 @@ import { supabase } from "./lib/supabase.js";
 */
 
 const MODELS = [
-  ["veo", "Veo"], ["sora", "Sora"], ["kling", "Kling"], ["runway", "Runway"],
+  ["veo", "Veo"], ["kling", "Kling"], ["runway", "Runway"],
   ["wan", "Wan"], ["hailuo", "Hailuo"], ["seedance", "Seedance"],
 ];
 

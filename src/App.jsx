@@ -1635,7 +1635,7 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
       notify("Could not prepare the download: " + err.message);
     }
   }
-  const PB_MODELS = [["veo","Veo"],["sora","Sora"],["kling","Kling"],["runway","Runway"],["wan","Wan"],["hailuo","Hailuo"],["seedance","Seedance"]];
+  const PB_MODELS = [["veo","Veo"],["kling","Kling"],["runway","Runway"],["wan","Wan"],["hailuo","Hailuo"],["seedance","Seedance"]];
   const PB_STYLES = [["none","No preset"],["anamorphic-70s","70s Anamorphic"],["neo-noir","Neo-Noir"],["imax-70","IMAX 70mm"],["doc-16mm","Doc 16mm"],["technicolor","Technicolor"],["realtime-engine","Real-Time Engine"]];
   const PB_STRENGTHS = [["subtle","Subtle"],["balanced","Balanced"],["heavy","Heavy"]];
 
@@ -3490,7 +3490,6 @@ function PromptBuilderPage({ setPage, user, onSignInClick, activeProject, setGen
 
   const models = [
     ["veo", "Veo"],
-    ["sora", "Sora"],
     ["kling", "Kling"],
     ["runway", "Runway"],
     ["wan", "Wan"],

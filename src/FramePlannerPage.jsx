@@ -10,7 +10,7 @@ import { supabase } from "./lib/supabase.js";
 */
 
 const MODELS = [
-  ["veo", "Veo"], ["sora", "Sora"], ["kling", "Kling"], ["runway", "Runway"],
+  ["veo", "Veo"], ["kling", "Kling"], ["runway", "Runway"],
   ["wan", "Wan"], ["hailuo", "Hailuo"], ["seedance", "Seedance"],
 ];
 const RATIOS = [["16:9", "16:9 Landscape"], ["9:16", "9:16 Vertical"], ["1:1", "1:1 Square"]];

@@ -14,7 +14,6 @@ const IP_SALT = "revaultai-frame-planner-v1";
 
 const TARGET_MODELS = {
   veo: { label: "Veo", notes: "Native audio. Durations 4-8s. Strong on faces and close work." },
-  sora: { label: "Sora", notes: "Native audio, strong narrative framing." },
   kling: { label: "Kling", notes: "Motion specialist. Durations 5-10s. Infers aspect ratio from a start image." },
   runway: { label: "Runway", notes: "Stylised and editorial looks, strong reference workflows." },
   wan: { label: "Wan", notes: "One clear subject, one clear action. Durations 5-15s." },

@@ -15,7 +15,6 @@ const IP_SALT = "revaultai-coverage-v1";
 
 const TARGET_MODELS = {
   veo: { label: "Veo", notes: "Native audio and lip-synced dialogue. Durations 4-8s. Strong on faces and close work." },
-  sora: { label: "Sora", notes: "Native audio. Favours strong narrative framing and physical continuity." },
   kling: { label: "Kling", notes: "Motion specialist. Durations 5-10s. No audio." },
   runway: { label: "Runway", notes: "Stylised and editorial looks." },
   wan: { label: "Wan", notes: "One clear subject, one clear action. Durations 5-15s. No audio." },

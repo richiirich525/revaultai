@@ -15,7 +15,6 @@ const IP_SALT = "revaultai-scene-breakdown-v1";
 
 const TARGET_MODELS = {
   veo: { label: "Veo", notes: "Handles native audio. Responds well to detailed cinematography and explicit dialogue or sound design cues. Shots run 4-8 seconds." },
-  sora: { label: "Sora", notes: "Handles native audio. Favours strong narrative framing and clear physical continuity across the shot." },
   kling: { label: "Kling", notes: "Strong on human motion and physical realism. Keep camera moves simple and describe motion precisely. Shots run 5-10 seconds." },
   runway: { label: "Runway", notes: "Strong stylised and editorial looks. Responds well to explicit film-stock and grading references." },
   wan: { label: "Wan", notes: "Best with one clear subject and one clear action. Avoid crowded scenes or multiple simultaneous events. Shots run 5-15 seconds." },

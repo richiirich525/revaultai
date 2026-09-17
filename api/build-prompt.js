@@ -18,10 +18,6 @@ const TARGET_MODELS = {
     label: "Veo",
     notes: "Handles native audio. Responds well to detailed cinematography and explicit dialogue or sound design cues.",
   },
-  sora: {
-    label: "Sora",
-    notes: "Handles native audio. Favours strong narrative framing and clear physical continuity across the shot.",
-  },
   kling: {
     label: "Kling",
     notes: "Strong on human motion and physical realism. Keep camera moves simple and describe motion precisely.",
