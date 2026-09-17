@@ -21,6 +21,7 @@ const MODELS = {
   },
   'seedance-2.0': {
     falId: 'bytedance/seedance-2.0/fast/text-to-video',
+    aspectRatios: ['16:9', '9:16', '1:1'],
     imageFalId: 'bytedance/seedance-2.0/fast/image-to-video',
     creditsPerSecond: 6,
     durationParam: { 5: '5', 10: '10', 15: '15' },
@@ -28,6 +29,7 @@ const MODELS = {
   },
   'seedance-2.0-480': {
     falId: 'bytedance/seedance-2.0/fast/text-to-video',
+    aspectRatios: ['16:9', '9:16', '1:1'],
     imageFalId: 'bytedance/seedance-2.0/fast/image-to-video',
     creditsPerSecond: 3,
     durationParam: { 5: '5', 10: '10', 15: '15' },
@@ -35,6 +37,7 @@ const MODELS = {
   },
   'seedance-2.5': {
     falId: 'bytedance/seedance-2.5/text-to-video',
+    aspectRatios: ['16:9', '9:16', '1:1'],
     imageFalId: 'bytedance/seedance-2.5/image-to-video',
     creditsPerSecond: 12,
     durationParam: { 5: '5', 10: '10', 15: '15', 30: '30' },
@@ -42,6 +45,7 @@ const MODELS = {
   },
   'seedance-2.5-480': {
     falId: 'bytedance/seedance-2.5/text-to-video',
+    aspectRatios: ['16:9', '9:16', '1:1'],
     imageFalId: 'bytedance/seedance-2.5/image-to-video',
     creditsPerSecond: 6,
     durationParam: { 5: '5', 10: '10', 15: '15', 30: '30' },
