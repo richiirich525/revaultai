@@ -22,6 +22,7 @@ import BlockingPage from "./BlockingPage.jsx";
 import AutopsyPage from "./AutopsyPage.jsx";
 import TakesPage from "./TakesPage.jsx";
 import SpecsPage from "./SpecsPage.jsx";
+import FilmReceipt from "./FilmReceipt.jsx";
 import ProjectsPage from "./ProjectsPage.jsx";
 import ToolsPage from "./ToolsPage.jsx";
 import { updateCommentsEnabled } from "./lib/comments.js";
@@ -2600,6 +2601,7 @@ const purchaseLoading = creation.is_premium && !purchasesLoaded; const priceLabe
 </button></div>
           )}</>}
         </div>
+        <FilmReceipt creationId={creation.id} projectId={creation.project_id ?? null} isOwner={canPin} notify={notify} />
         <Comments creation={creation} user={user} isOwner={canDelete} setPage={setPage} setCreatorUser={setCreatorUser} notify={notify} onSignInClick={onSignInClick} />
       </div>
     </div>
