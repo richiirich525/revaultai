@@ -2694,8 +2694,15 @@ if (!item?._fromDb) { notify("Cannot modify seed creations."); return; }
   );
 }
 
-function SubmitPage({ setCreations, notify, setPage, user, profile, prefill }) {
+function SubmitPage({ setCreations, notify, setPage, user, profile, prefill, activeProject }) {
   const [form, setForm] = useState({ title: "", tools: "", category: "Abstract", prompt: "", isPremium: false, licenseUrl: "", youtubeUrl: "" });
+  const [projects, setProjects] = useState([]);
+  const [projectId, setProjectId] = useState(activeProject?.id ?? "");
+  useEffect(() => {
+    if (!user?.id) { setProjects([]); return; }
+    supabase.from("projects").select("id, name").order("created_at", { ascending: false })
+      .then(({ data }) => setProjects(data ?? []));
+  }, [user?.id]);
   const [videoFile, setVideoFile] = useState(null); const [uploadState, setUploadState] = useState("idle"); const [uploadPct, setUploadPct] = useState(0); const [uploadResult, setUploadResult] = useState(null); const [uploadError, setUploadError] = useState(null); const [dragover, setDragover] = useState(false); const [submitting, setSubmitting] = useState(false);
   function updateField(key, value) { setForm((prev) => ({ ...prev, [key]: value })); }
   function formatBytes(b) { if (b < 1024 * 1024) return (b / 1024).toFixed(1) + " KB"; return (b / (1024 * 1024)).toFixed(1) + " MB"; }
@@ -2821,7 +2828,7 @@ const linkRaw = form.youtubeUrl.trim();
       } catch { /* non-critical, proceed with placeholder */ }
     }
 
-    const newCreation = { id: "u" + Date.now(), title: form.title.trim(), creator: { username: profile?.username ?? user?.email?.split("@")[0] ?? "you", display_name: profile?.display_name ?? user?.email?.split("@")[0] ?? "You", avatar_url: profile?.avatar_url ?? "" }, hero_image: resolvedUpload?.thumbnail_image || fallbackThumb, thumbnail_image: resolvedUpload?.thumbnail_image || fallbackThumb, video_url: resolvedUpload?.video_url || "", preview_video: resolvedUpload?.preview_video || "", tools_used: toolList.length > 0 ? toolList : ["Unknown"], category: form.category, is_premium: form.isPremium, premium_status: form.isPremium ? (autoApprove ? "Approved" : "Pending") : null, prompt_preview: form.isPremium ? form.prompt.trim().slice(0, 120) + "..." : null, prompt_full: form.prompt.trim(), spotlight: false, mux_asset_id: resolvedUpload?.mux_asset_id || null, mux_playback_id: resolvedUpload?.mux_playback_id || null, license_url: license.url, user_id: user?.id ?? null };
+    const newCreation = { id: "u" + Date.now(), title: form.title.trim(), creator: { username: profile?.username ?? user?.email?.split("@")[0] ?? "you", display_name: profile?.display_name ?? user?.email?.split("@")[0] ?? "You", avatar_url: profile?.avatar_url ?? "" }, hero_image: resolvedUpload?.thumbnail_image || fallbackThumb, thumbnail_image: resolvedUpload?.thumbnail_image || fallbackThumb, video_url: resolvedUpload?.video_url || "", preview_video: resolvedUpload?.preview_video || "", tools_used: toolList.length > 0 ? toolList : ["Unknown"], category: form.category, is_premium: form.isPremium, premium_status: form.isPremium ? (autoApprove ? "Approved" : "Pending") : null, prompt_preview: form.isPremium ? form.prompt.trim().slice(0, 120) + "..." : null, prompt_full: form.prompt.trim(), spotlight: false, mux_asset_id: resolvedUpload?.mux_asset_id || null, mux_playback_id: resolvedUpload?.mux_playback_id || null, license_url: license.url, user_id: user?.id ?? null, project_id: projectId || null };
     if (ytId) {
       newCreation.youtube_id = ytId;
       newCreation.hero_image = `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg`;
@@ -2925,6 +2932,18 @@ const { data: saved, error } = await insertCreation(newCreation, user, profile);
             <input className="form-input" type="text" inputMode="url" placeholder="https://yoursite.com/licensing  or  you@email.com" value={form.licenseUrl} onChange={(e) => updateField("licenseUrl", e.target.value)} maxLength={500} />
             <div className="form-hint">Optional. Where people can ask to license this piece: a licensing page or your email. Shown as a button on this creation's page. Web links must start with https://.</div>
           </div>
+          {projects.length > 0 && (
+            <div className="form-group">
+              <label className="form-label">Project (optional)</label>
+              <select className="form-input" value={projectId} onChange={(e) => setProjectId(e.target.value)}>
+                <option value="">No project</option>
+                {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--muted)", lineHeight: 1.7, marginTop: 6 }}>
+                Filing the film under a project scopes its production receipt to that work, rather than everything you've generated.
+              </div>
+            </div>
+          )}
           <button className="btn-primary" onClick={handleSubmit} disabled={submitting || uploadState === "uploading" || uploadState === "processing"} style={{ opacity: (submitting || uploadState === "uploading") ? 0.6 : 1 }}>{submitting ? "Submitting..." : "Submit Creation"}</button>
         </div>
       </section>
@@ -4188,7 +4207,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       case "detail":  return <DetailPage id={detailId} dbLoaded={dbLoaded} creations={creations} setCreations={setCreations} user={user} profile={profile} setProfile={setProfile} purchasedIds={purchasedIds} purchasesLoaded={purchasesLoaded} setPage={setPage} setCreatorUser={setCreatorUser}onSignInClick={() => setAuthOpen(true)} notify={notify} />;
       case "settings": if (!user) return <div className="page"><div className="empty-state"><div className="empty-text">Sign in to access profile settings.</div></div></div>; return <SettingsPage user={user} profile={profile} setProfile={setProfile} notify={notify} />;
       case "admin": if (!isAdmin(user)) return <div className="page"><div className="empty-state"><div className="empty-text">Not authorized.</div></div></div>; return <AdminPage creations={creations} setCreations={setCreations} notify={notify} />;
-      case "submit":  return <SubmitPage setCreations={setCreations} notify={notify} setPage={setPage} user={user} profile={profile} prefill={genSubmission} />;
+            case "submit": return <SubmitPage activeProject={activeProject} setCreations={setCreations} notify={notify} setPage={setPage} user={user} profile={profile} prefill={genSubmission} />;
       case "set-password": return <SetPasswordPage notify={notify} setPage={setPage} />;
       case "email-confirmed": return <EmailConfirmedPage setPage={setPage} />;
       case "terms":     return <LegalPage setPage={setPage} page="terms" />;

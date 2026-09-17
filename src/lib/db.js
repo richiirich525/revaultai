@@ -68,6 +68,7 @@ export function creationToRow(creation, user, profile) {
     youtube_id:       creation.youtube_id ?? null,
     vimeo_id:         creation.vimeo_id ?? null,
     vimeo_hash:       creation.vimeo_hash ?? null,
+    project_id:       creation.project_id ?? null,
   };
   
   return row;
