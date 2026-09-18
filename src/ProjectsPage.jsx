@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./lib/supabase.js";
 import ProductionBrain from "./ProductionBrain.jsx";
+import ScriptSupervisor from "./ScriptSupervisor.jsx";
 
 /*
   ProjectsPage — RevaultAI
@@ -148,6 +149,9 @@ export default function ProjectsPage({ user, onSignInClick, setPage, notify, act
 
           {activeProject && (
             <ProductionBrain project={activeProject} user={user} setPage={setPage} setApPrefill={setApPrefill} />
+          )}
+          {activeProject && (
+            <ScriptSupervisor project={activeProject} user={user} setPage={setPage} notify={notify} />
           )}
 
           <div style={{ border: "1px solid var(--border)", borderRadius: 8, padding: 26, background: "var(--surface)", marginBottom: 36 }}>
