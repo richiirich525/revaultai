@@ -4,6 +4,177 @@
 
 export const POSTS = [
   {
+    slug: "how-to-break-script-into-shots-ai-video",
+    title: "How to Break a Script Into Shots for AI Video",
+    seoTitle: "How to Break a Script Into Shots for AI Video (2026 Guide)",
+    description:
+      "How to break a script into shots for AI video: find the dramatic beats, choose coverage, plan camera movement and continuity, and match duration to your model.",
+    date: "2026-09-17",
+    author: "Richard Garland",
+    category: "Guides",
+    readingTime: "15 min",
+    faq: [
+      ["How many shots should a scene have?", "There's no fixed number — it depends on how many dramatic beats the scene contains and how much coverage those beats need to cut together. A short two-person confrontation often lands somewhere between five and twelve shots once you include an establishing shot, singles, reactions and any inserts. A simple one-beat scene might need three. Let the beats set the count, not a target number."],
+      ["Should every line of dialogue get its own shot?", "No. A shot list isn't a transcript. If two characters trade several lines without anything changing emotionally or physically, a single held shot can cover all of them. Give a line its own shot when something turns on it — a reveal, a reaction, a decision — not simply because a new line started."],
+      ["How long should AI video shots be?", "It depends on the model and on how much is happening in the shot. A simple, mostly static shot can often hold for longer than a shot with a lot of action or camera movement, and different models support different maximum durations. Check your target model's limits before writing the shot, and keep the action simple enough to fit comfortably inside whatever duration you choose."],
+      ["What is the difference between a shot list and a storyboard?", "A shot list is the written breakdown — shot number, size, action, camera movement and purpose for every shot in a scene. A storyboard is a visual version of that same plan, usually simple drawings or reference frames showing composition. Many productions use both: the shot list to plan and generate, the storyboard to check composition and continuity before committing."],
+      ["Can AI create a shot list from a script?", "Yes, within limits. A tool like RevaultAI's Scene Breakdown can turn a scene or logline into a numbered shot list with shot size, camera movement, a lighting note and a generation prompt for each shot. It's a strong starting point, not a finished decision — you'll still want to read it back against the scene and adjust anything that doesn't serve the story."],
+    ],
+    content: `
+<p>It's tempting to type the whole scene into one prompt and hit generate — she walks in, sees the note on the counter, reads it, and her face falls, all in one eight-second clip. Sometimes it half-works. More often, the model has to guess at a dozen decisions you never actually made: where the camera is standing, how long she looks at the note before it registers, whether we're close enough to see her face when it does. Hand a whole scene to a single prompt and you've quietly handed away the director's job along with it — the model is now blocking the scene, choosing the coverage and pacing the reveal, none of which it has any real basis for doing well.</p>
+
+<p>A script isn't a video prompt. It's closer to a floor plan for a scene that hasn't been shot yet, and turning it into something a model can actually generate well means doing the same job a director does on a physical set: breaking the scene into individual shots, each with its own size, angle, movement and reason for existing. That decomposition is what gives you control — over pacing, over what the audience sees and when, and over how cleanly the pieces cut together afterward. This guide walks through how to do it, starting with the story and ending with the prompt, not the other way around.</p>
+
+<h2>What Does It Mean to Break a Scene Into Shots?</h2>
+
+<p>Three words get used loosely in AI filmmaking conversations, and it's worth pinning them down before going further.</p>
+
+<p>A <strong>scene</strong> is a self-contained unit of story — usually one continuous stretch of time in one location, built around a single dramatic question. "Maya confronts her brother about the missing money" is a scene.</p>
+
+<p>A <strong>dramatic beat</strong> is a turn inside that scene: a moment where something changes. Information gets revealed. An emotion shifts. A decision gets made or avoided. Most scenes are built from several beats stacked in sequence, not one flat stretch of action — the confrontation scene above probably has an entrance beat, a discovery beat, and a confrontation beat, at minimum.</p>
+
+<p>A <strong>shot</strong> is the smallest unit you actually generate: one continuous piece of footage from one camera position, covering one beat, or sometimes part of one. A five-beat scene might need eight or ten shots once you account for the coverage that lets you actually cut it together — the reaction shot, the insert, the over-the-shoulder that wasn't a separate "beat" in the story but is very much a separate shot in the edit.</p>
+
+<p>Generating a scene as a single shot skips two levels of decision-making at once. Break the scene into beats first. Then break each beat into the shots it needs.</p>
+
+<h2>Read the Scene Before Thinking About the AI Model</h2>
+
+<p>Before opening a generation tool, read the scene the way an actor or director would — for what it's actually about, not for what it will cost to render. What does each character want in this moment? What changes between the first line and the last? Where's the turn? A shot list built to serve that intent holds together even if you switch models halfway through production. A shot list built around "what's cheap and fast to generate" often serves neither the story nor, in the end, the budget — shots that don't serve the scene tend to get cut anyway, and by then you've already paid for generations you'll never use.</p>
+
+<p>Model choice is a production decision, not a creative one. It affects <em>how</em> you achieve a shot, not whether the shot belongs in the scene. Decide what the story needs first. Decide which model renders each of those shots best second — that's a separate question, worth its own pass once the shot list exists (more on matching shots to models below).</p>
+
+<h2>Identify the Dramatic Beats</h2>
+
+<p>Once you know what the scene is about, break it into the moments where something changes. A useful general set to check any scene against:</p>
+
+<ul>
+<li><strong>Entrance</strong> — a character enters the space, or the scene establishes who's already there.</li>
+<li><strong>Discovery</strong> — someone notices, finds or realizes something.</li>
+<li><strong>Reaction</strong> — the emotional response to that discovery.</li>
+<li><strong>Confrontation</strong> — the conflict the scene exists to stage.</li>
+<li><strong>Decision</strong> — a choice gets made, spoken or implied.</li>
+<li><strong>Exit</strong> — the scene resolves, or someone leaves.</li>
+</ul>
+
+<p>Not every scene uses all six, and not every beat needs its own shot — a decision can land entirely in a held expression without a line of dialogue. What matters is naming the beats before naming the shots. If you can't say which beat a shot is serving, that's usually a sign the shot doesn't need to exist, or that it's quietly trying to cover two beats at once and would work better split in two.</p>
+
+<h2>Decide What the Audience Needs to See</h2>
+
+<p>Not every line of dialogue and not every physical action needs a new shot. A shot list isn't a transcript of the scene — it's a plan for what the camera needs to show, and when.</p>
+
+<p>If two characters trade four lines while standing still in a kitchen and nothing changes between the first line and the last, that can be one static two-shot. If the third line is the one where the accusation actually lands, that line probably earns its own close-up. The test isn't "did something happen" — something is always happening. The test is whether the audience needs a new piece of visual information to understand or feel that moment. Cutting on every line is as much a failure of direction as never cutting at all; both bury the moments that actually matter under a flat rhythm.</p>
+
+<h2>Choose Your Establishing Shot</h2>
+
+<p>An establishing shot orients the audience in space before the scene gets closer. It earns its place when the scene opens a new location, shifts scale, or needs the audience to understand geography before action starts — a character crossing a room only reads clearly if we've already seen the room.</p>
+
+<p>It's unnecessary when the scene continues directly from the location the previous scene just established, when the scene is small and character-driven enough that geography isn't the point, or when withholding space is a deliberate choice — a handheld, in-the-room opening that drops the audience in without orientation, because disorientation is the intended feeling. An establishing shot used out of habit rather than need is usually the first shot worth cutting from a list.</p>
+
+<h2>Build the Necessary Coverage</h2>
+
+<p>Coverage is the set of shots that let an edit actually get made — the options a scene needs beyond whatever the "main" shot is, so a cut can move between them without missing anything the audience needed to see. The standard set, adapted for a single beat or a whole scene:</p>
+
+<ul>
+<li><strong>Master</strong> — a wide shot holding the full scene or beat, the safety net an editor can always cut back to.</li>
+<li><strong>Medium</strong> — waist-up or similar, the default working distance for most dialogue and action.</li>
+<li><strong>Close-up</strong> — isolates a face or detail for emotional weight.</li>
+<li><strong>Over-the-shoulder</strong> — frames one character from behind another, establishing the relationship between them in the frame.</li>
+<li><strong>Reaction</strong> — holds on a character responding to something, often more important than the thing they're reacting to.</li>
+<li><strong>Insert</strong> — a tight shot of an object or detail: a hand, a note, a door lock.</li>
+</ul>
+
+<p>Not every scene needs all six for every beat, but a scene with none of them beyond a single master shot gives an editor nothing to cut to if a generation doesn't quite work, or if the pacing needs adjusting later. Planning coverage before generating is cheaper than discovering the gap after the fact — RevaultAI's <a href="/coverage">Coverage Planner</a> takes a scene and works out what an editor will actually need to cut it, including what's easy to forget until it's too late.</p>
+
+<h2>Give Every Shot a Purpose</h2>
+
+<p>Before a shot goes on the list, ask one question: <strong>what new information or emotion does this shot deliver?</strong> If the honest answer is "nothing the previous shot didn't already give the audience," that shot is decoration, not direction — and decoration is exactly where a limited generation budget gets wasted.</p>
+
+<p>A wide shot that repeats the same information as the medium shot before it isn't coverage, it's redundancy. A close-up inserted because "close-ups look cinematic" without a reason tied to the beat is filler. Every shot on a working list should be able to answer the purpose question in one sentence — the reveal, the reaction, the detail, the geography — and if it can't, it either needs a clearer job or it needs to come off the list.</p>
+
+<h2>Plan Camera Movement Carefully</h2>
+
+<p>Camera movement should exist because the scene needs it, not because the model is capable of generating it. A push-in works because it mirrors a character's rising attention on something. A pan works because it's revealing something the audience hasn't seen yet. A locked, static camera is a completely valid choice — often the stronger one — when the point of the shot is stillness, tension, or an uninterrupted read on a performance.</p>
+
+<p>Before adding movement to a shot, ask what it's doing that a static frame wouldn't. "The camera slowly pushes in as she notices" has a reason. "The camera moves" does not. If a shot's camera direction can't be tied to something happening in the story at that moment, it's usually safer — and easier for the model to hold together — locked off. Working through a beat's camera options deliberately, rather than defaulting to movement, is exactly what RevaultAI's <a href="/shot-director">Shot Director</a> is built for: describe the beat and get several distinct directorial approaches to it, including when the right answer is no movement at all.</p>
+
+<h2>Think About Continuity Between Shots</h2>
+
+<p>Once a scene exists as multiple shots instead of one, continuity becomes something you have to actively manage rather than something a single generation handled for you by default. The things worth tracking, shot to shot:</p>
+
+<ul>
+<li><strong>Character appearance</strong> — the same face, build and identity from one shot to the next.</li>
+<li><strong>Wardrobe</strong> — what they're wearing doesn't drift or reset between shots of the same continuous scene.</li>
+<li><strong>Props</strong> — an object held, set down or picked up needs to stay where the story left it.</li>
+<li><strong>Location</strong> — the room, lighting fixtures and layout stay consistent across angles.</li>
+<li><strong>Lighting</strong> — the direction, quality and color of light shouldn't reset between shots unless the scene has actually moved.</li>
+<li><strong>Screen direction</strong> — characters and movement stay on the same side of the frame consistent with where they were looking or heading in the previous shot, so cuts don't flip geography the audience already learned.</li>
+</ul>
+
+<p>This is the same discipline covered in more depth in <a href="/blog/ai-video-character-consistency">how to keep characters consistent in AI video</a> — reusing stable descriptions, wardrobe notes and reference frames rather than reinventing the character in every shot's prompt. Once a shot list exists, it's worth reviewing it specifically for continuity before generating anything: RevaultAI's <a href="/continuity-check">Continuity Checker</a> reads a set of shot prompts the way a script supervisor would, flagging characters described two different ways, wardrobe that quietly changes, or lighting that isn't motivated by anything in the scene.</p>
+
+<h2>Match Shot Duration to the Model</h2>
+
+<p>Different AI video models support different maximum durations and handle different amounts of motion and complexity within them. A shot written for a model that comfortably holds ten or fifteen seconds of simple action won't necessarily translate to a model capped closer to five or eight seconds — and cramming that same shot's action into a shorter duration usually means the model compresses or drops part of it rather than slowing down gracefully.</p>
+
+<p>Write the shot's duration with its target model's real limits in mind, not as an afterthought once the prompt is done. A shot that needs to run long is usually a shot that should stay visually simple; a shot with more happening in it needs a duration that actually fits the action, which sometimes means splitting it rather than stretching one model past what it does well. RevaultAI's <a href="/which-model">Which Model</a> tool takes a shot description and scores it against the available models — including how long the shot should realistically run and which model is most likely to deliver that duration cleanly. The duration-versus-complexity trade-off itself is covered in more detail in <a href="/blog/why-ai-video-generations-fail">why AI video generations fail</a>, particularly the sections on shots that ask for too much in too little time.</p>
+
+<h2>Example: Turning One Scene Into a Shot List</h2>
+
+<p>Here's a short scene, written the way it might appear in a script:</p>
+
+<div class="example">Maya lets herself into the apartment, keys still in hand, and stops when she sees the desk drawer pulled open. Papers she hid before she left are scattered across the floor. She kneels and finds the safe-deposit box sitting open and empty. Behind her, the front door she was sure she'd locked creaks further open. She turns — her brother Daniel is standing in the doorway, soaked from the rain, saying nothing.</div>
+
+<p>That's one scene, four beats — entrance, discovery, reaction, and the start of a confrontation. Broken into shots that give an editor something to actually cut:</p>
+
+<div class="example"><strong>Shot 1</strong><br>Size: Wide (master)<br>Action: Maya opens the front door and steps into the dim apartment, keys still in hand.<br>Camera: Locked off, doorway to living room in frame.<br>Purpose: Establishes the location before anything in it is disturbed.</div>
+
+<div class="example"><strong>Shot 2</strong><br>Size: Medium<br>Action: Maya stops mid-step, her focus shifting toward something off in the room.<br>Camera: Static, holds on her.<br>Purpose: Registers that something's wrong before the audience sees what it is.</div>
+
+<div class="example"><strong>Shot 3</strong><br>Size: Insert / close-up<br>Action: The desk drawer, pulled open, papers spilling onto the floor.<br>Camera: Static, slight downward angle.<br>Purpose: Delivers the specific discovery without needing Maya in frame.</div>
+
+<div class="example"><strong>Shot 4</strong><br>Size: Medium close-up<br>Action: Maya kneels beside the scattered papers, hands moving through them.<br>Camera: Slow push-in as she kneels.<br>Purpose: Ties the push-in to her rising urgency rather than moving for its own sake.</div>
+
+<div class="example"><strong>Shot 5</strong><br>Size: Insert / close-up<br>Action: The safe-deposit box, open and empty, in her hands.<br>Camera: Static, shallow depth of field.<br>Purpose: The confirmation beat — the audience learns what's missing the same moment she does.</div>
+
+<div class="example"><strong>Shot 6</strong><br>Size: Close-up<br>Action: Maya's face as the empty box registers.<br>Camera: Static, locked on her expression.<br>Purpose: The reaction shot — this is where the emotional weight of the discovery actually lands.</div>
+
+<div class="example"><strong>Shot 7</strong><br>Size: Medium<br>Action: Maya goes still, the front door visible past her shoulder creaking further open behind her.<br>Camera: Static, held on Maya with the door in soft focus behind her.<br>Purpose: Builds tension through her reaction before revealing its cause.</div>
+
+<div class="example"><strong>Shot 8</strong><br>Size: Wide (reveal)<br>Action: Maya turns; Daniel stands in the doorway, soaked, silent.<br>Camera: Camera pans with her turn to reveal him.<br>Purpose: The confrontation beat — the movement itself controls when the audience learns he's there.</div>
+
+<p>Eight shots, four beats, and not one of them is trying to do more than one job. Compare that to a single prompt asking a model to generate the entrance, the discovery, the kneeling search, the reaction and the reveal all in one continuous take — the same scene, but with the director's decisions left for the model to guess at.</p>
+
+<h2>Use AI to Build the Shot List</h2>
+
+<p>Working through beats, coverage, purpose and continuity by hand is the right way to learn how to do it — but once the habit is there, RevaultAI's <a href="/scene-breakdown">Scene Breakdown</a> tool can do the mechanical part of it for you. Paste in a scene or even just a logline, and it returns a numbered shot list: shot size, camera movement, a lighting note, a suggested duration sized to your target model, and a full director-grade generation prompt for every shot.</p>
+
+<p>The part worth knowing before you rely on it: character and location descriptions are written once and then repeated verbatim across every shot in which they appear, rather than rephrased shot to shot — that repetition is the tool's main continuity mechanism, not a guarantee that the model rendering each shot will hold identity perfectly. From there, any shot can be copied out or handed directly to <a href="/generate">Generate</a> with the model and aspect ratio already set. It's a strong first pass at the shot list, not a replacement for reading the scene the way this guide describes — it still helps to check the output against what the beat actually needs.</p>
+
+<div class="cta-inline">
+<strong>Break Your Scene Into Shots</strong>
+<p>Turn a scene or logline into a structured, director-ready shot list before you start generating. Free. No account required. No credits required.</p>
+<a class="cta-btn" href="/scene-breakdown">Break Down a Scene</a>
+</div>
+
+<h2>Frequently Asked Questions</h2>
+
+<h3>How many shots should a scene have?</h3>
+<p>There's no fixed number — it depends on how many dramatic beats the scene contains and how much coverage those beats need to cut together. A short two-person confrontation often lands somewhere between five and twelve shots once you include an establishing shot, singles, reactions and any inserts. A simple one-beat scene might need three.</p>
+
+<h3>Should every line of dialogue get its own shot?</h3>
+<p>No. A shot list isn't a transcript. If two characters trade several lines without anything changing emotionally or physically, a single held shot can cover all of them. Give a line its own shot when something turns on it — a reveal, a reaction, a decision — not simply because a new line started.</p>
+
+<h3>How long should AI video shots be?</h3>
+<p>It depends on the model and on how much is happening in the shot. A simple, mostly static shot can often hold for longer than a shot with a lot of action or camera movement, and different models support different maximum durations. Check your target model's limits before writing the shot, and keep the action simple enough to fit comfortably inside whatever duration you choose.</p>
+
+<h3>What is the difference between a shot list and a storyboard?</h3>
+<p>A shot list is the written breakdown — shot number, size, action, camera movement and purpose for every shot in a scene. A storyboard is a visual version of that same plan, usually simple drawings or reference frames showing composition. Many productions use both: the shot list to plan and generate, the storyboard to check composition and continuity before committing.</p>
+
+<h3>Can AI create a shot list from a script?</h3>
+<p>Yes, within limits. A tool like RevaultAI's Scene Breakdown can turn a scene or logline into a numbered shot list with shot size, camera movement, a lighting note and a generation prompt for each shot. It's a strong starting point, not a finished decision — you'll still want to read it back against the scene and adjust anything that doesn't serve the story.</p>
+`,
+  },
+  {
     slug: "why-ai-video-generations-fail",
     title: "Why AI Video Generations Fail (and How to Fix Them)",
     seoTitle: "Why AI Video Generation Fails (and How to Fix It)",
