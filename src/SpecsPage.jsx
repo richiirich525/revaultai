@@ -254,7 +254,7 @@ export default function SpecsPage({ user, onSignInClick, setPage, notify, setGen
                             className="btn-ghost"
                             style={{ fontSize: 11 }}
                             onClick={() => {
-                              setGenPrefill?.({ prompt: compiled.prompt, generateModelKey: target, aspectRatio: draft?.timing?.aspectRatio || "16:9" });
+                              setGenPrefill?.({ prompt: compiled.prompt, generateModelKey: target, aspectRatio: draft?.timing?.aspectRatio || "16:9", filmSpecId: row.id, filmSpecVersion: row.version });
                               setPage("generate");
                             }}
                           >Generate this \u2192</button>

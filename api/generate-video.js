@@ -79,7 +79,7 @@ export default async function handler(req, res) {
     }
 
     // 2. Validate input
-    const { prompt, model, duration, imageUrl, aspectRatio, projectId } = req.body;
+    const { prompt, model, duration, imageUrl, aspectRatio, projectId, filmSpecId, filmSpecVersion } = req.body;
     const pid = typeof projectId === "string" ? projectId : null;
 
     // Normalise a prompt so trivial edits still count as the same shot.
@@ -134,6 +134,8 @@ export default async function handler(req, res) {
         credits_spent: cost,
         duration_seconds: seconds,
         project_id: pid,
+        film_spec_id: typeof filmSpecId === "string" ? filmSpecId : null,
+        film_spec_version: Number(filmSpecVersion) || null,
       })
       .select()
       .single();

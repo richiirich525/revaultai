@@ -1379,10 +1379,12 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
     const mapped = genPrefill.generateModelKey || MAP[genPrefill.modelKey];
     if (mapped) setModel(mapped);
     if (genPrefill.aspectRatio) setAspect(genPrefill.aspectRatio);
+    specRef.current = genPrefill.filmSpecId ? { id: genPrefill.filmSpecId, version: genPrefill.filmSpecVersion ?? 1 } : null;
     setGenPrefill?.(null);
     notify(genPrefill.prompt ? "Shot loaded — check the model and duration, then Generate." : "Model selected — write your prompt and Generate.");
   }, [genPrefill]);
 
+  const specRef = useRef(null);
   const [pbOpen, setPbOpen] = useState(false);
   const [pbIdea, setPbIdea] = useState("");
   const [pbModel, setPbModel] = useState("veo");
@@ -1751,7 +1753,7 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
       const res = await fetch("/api/generate-video", {
         method: "POST",
         headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: prompt.trim(), model, duration, aspectRatio: aspect, imageUrl: imageUrl || undefined, projectId: activeProject?.id ?? null }),
+        body: JSON.stringify({ prompt: prompt.trim(), model, duration, aspectRatio: aspect, imageUrl: imageUrl || undefined, projectId: activeProject?.id ?? null, filmSpecId: specRef.current?.id ?? null, filmSpecVersion: specRef.current?.version ?? null }),
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) {
