@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./lib/supabase.js";
+import ProductionBrain from "./ProductionBrain.jsx";
 
 /*
   ProjectsPage — RevaultAI
@@ -32,7 +33,7 @@ const styles = `
   @media (max-width: 760px) { .pj-wrap { padding: 0 24px; } }
 `;
 
-export default function ProjectsPage({ user, onSignInClick, setPage, notify, activeProject, setActiveProject }) {
+export default function ProjectsPage({ user, onSignInClick, setPage, notify, activeProject, setActiveProject, setApPrefill }) {
   const [projects, setProjects] = useState([]);
   const [counts, setCounts] = useState({});
   const [contents, setContents] = useState({});   // projectId -> { vault, breakdowns, shots }
@@ -144,6 +145,10 @@ export default function ProjectsPage({ user, onSignInClick, setPage, notify, act
           <div className="pj-body" style={{ maxWidth: 620, marginBottom: 32 }}>
             A project is context, not a container. Set one active and the things you make get filed under it — vault entries, scene breakdowns, shots and takes. Every tool still works with no project selected, and deleting a project never deletes work.
           </div>
+
+          {activeProject && (
+            <ProductionBrain project={activeProject} user={user} setPage={setPage} setApPrefill={setApPrefill} />
+          )}
 
           <div style={{ border: "1px solid var(--border)", borderRadius: 8, padding: 26, background: "var(--surface)", marginBottom: 36 }}>
             <div className="pj-label">New project</div>
