@@ -322,6 +322,11 @@ export default function TakesPage({ user, onSignInClick, setPage, notify, active
                               </div>
                             </div>
                           )}
+                          {isSel && g.status === "complete" && (
+                            <div style={{ marginTop: 10 }}>
+                              <StateReview generation={g} videoUrl={urls[g.id]} notify={notify} />
+                            </div>
+                          )}
                           <textarea
                             className="tk-note"
                             rows={2}
