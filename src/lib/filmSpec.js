@@ -63,7 +63,7 @@ export function specFromBreakdownShot(shot, ctx = {}) {
       locations: (ctx.locations ?? []).map((l) => l.name),
       vaultIds: ctx.vaultIds ?? [],
     },
-    action: { primary: shot.slug || "" },
+    action: { primary: shot.slug || "", startState: shot.start_state || "", endState: shot.end_state || "" },
     camera: { shotSize: shot.shot_size || "", movement: shot.camera_move || "" },
     lighting: { keyDirection: shot.lighting || "" },
     style: { look: ctx.style || "" },

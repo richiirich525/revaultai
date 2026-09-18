@@ -84,6 +84,8 @@ Return ONLY a JSON object. No markdown fences, no preamble, no commentary. Use e
       "camera_move": "e.g. Locked / Slow push-in / Tracking beside subject / Crane up / Handheld follow / Pan left to right",
       "lighting": "one clause naming key direction, quality and contrast",
       "duration_seconds": 5,
+      "start_state": "20-40 words describing the state of things as the shot BEGINS: where each character is in frame, what they hold, what they wear that matters, the condition of the space, doors, lights, weather",
+      "end_state": "20-40 words describing the state as the shot ENDS, in the same terms. What has changed, and what has deliberately stayed the same",
       "prompt": "one flowing paragraph of 60-110 words, ready to paste into the target model"
     }
   ]
@@ -91,6 +93,9 @@ Return ONLY a JSON object. No markdown fences, no preamble, no commentary. Use e
 
 CONTINUITY — the most important rule:
 Every character and location description you write in the "characters" and "locations" arrays must be repeated VERBATIM inside the "prompt" of every shot in which that character or location appears. Do not paraphrase, shorten, or vary the wording between shots. Identical wording across shots is what keeps the character recognisable from shot to shot. This repetition is intentional and required.
+
+STATE CONTINUITY:
+Each shot's "start_state" must match the previous shot's "end_state" unless something in between changes it. This is what lets a sequence hold together: if shot 3 ends with the door open and the glass on the counter, shot 4 begins that way. State what is true, concretely — positions in frame, what is held and in which hand, doors, lights, weather, the condition of clothing. Do not describe mood or intent here, only observable facts.
 
 Other rules:
 - Break the scene into the number of shots it actually needs. Never more than ${MAX_SHOTS}.
