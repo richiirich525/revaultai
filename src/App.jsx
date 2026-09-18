@@ -23,6 +23,7 @@ import AutopsyPage from "./AutopsyPage.jsx";
 import TakesPage from "./TakesPage.jsx";
 import SpecsPage from "./SpecsPage.jsx";
 import FilmReceipt from "./FilmReceipt.jsx";
+import TakeDebugger from "./TakeDebugger.jsx";
 import ProjectsPage from "./ProjectsPage.jsx";
 import ToolsPage from "./ToolsPage.jsx";
 import { updateCommentsEnabled } from "./lib/comments.js";
@@ -1991,6 +1992,7 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
                           <button className="gen-button" onClick={() => { setApPrefill?.({ prompt: g.prompt, modelKey: g.model }); setPage("autopsy"); }}>
                             Why didn't this work?
                           </button>
+                          <TakeDebugger generation={g} videoUrl={videoUrls[g.id]} notify={notify} setGenPrefill={setGenPrefill} setPage={setPage} />
                           <button className="gen-button" onClick={() => openChain(g)}>
                             {chainFor === g.id ? "Close frame picker" : "Use a frame \u2192"}
                           </button>
