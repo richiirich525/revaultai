@@ -31,6 +31,7 @@ import {
   fetchCreations,
   fetchCreationsByUser,
   insertCreation,
+  fetchCreationById,
   fetchPurchasedIds,
   createCheckoutSession,
   updateCreationStatus,
@@ -2444,7 +2445,18 @@ function ProfilePage({ username, creations: allCreations, setPage, setDetailId, 
 }
 
 function DetailPage({ id, creations, setCreations, user, profile, setProfile, purchasedIds, purchasesLoaded, setPage, setCreatorUser, dbLoaded, onSignInClick, notify }) {
-  const creation = creations.find((c) => c.id === id); const [checkingOut, setCheckingOut] = useState(false);
+  // A film opened from a link can't rely on the full catalogue having loaded
+  // first — if it isn't in the list, fetch it directly.
+  const listed = creations.find((c) => c.id === id);
+  const [fetchedCreation, setFetchedCreation] = useState(null);
+  useEffect(() => {
+    if (listed || !id) return;
+    let cancelled = false;
+    fetchCreationById(id).then(({ data }) => { if (!cancelled && data) setFetchedCreation(data); });
+    return () => { cancelled = true; };
+  }, [id, listed]);
+  const creation = listed ?? fetchedCreation;
+  const [checkingOut, setCheckingOut] = useState(false);
   const [toolMap, setToolMap] = useState({});
   const [deleting, setDeleting] = useState(false);
   const [pinning, setPinning] = useState(false);

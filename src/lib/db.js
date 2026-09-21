@@ -88,6 +88,16 @@ export async function fetchCreations() {
   return { data: data.map(rowToCreation), error: null };
 }
 
+export async function fetchCreationById(id) {
+  const { data, error } = await supabase
+    .from("creations")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error || !data) return { data: null, error };
+  return { data: rowToCreation(data), error: null };
+}
+
 export async function fetchCreationsByUser(userId) {
   if (!userId) return { data: [], error: null };
 
