@@ -35,13 +35,16 @@ const styles = `
   @media (max-width: 760px) { .rs { padding: 0 20px; } }
 `;
 
-export default function RehearsalStudio({ initial }) {
+export default function RehearsalStudio({ initial, onChange }) {
   const [r, setR] = useState(() => initial ?? newRehearsal());
   const [t, setT] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [beatText, setBeatText] = useState("");
   const raf = useRef(null);
   const last = useRef(0);
+
+  // Report every change upward so the page can save it.
+  useEffect(() => { onChange?.(r); }, [r]);
 
   // Playback. Time advances in real seconds, and stops at the end.
   useEffect(() => {
