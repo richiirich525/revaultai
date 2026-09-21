@@ -24,6 +24,7 @@ import TakesPage from "./TakesPage.jsx";
 import SpecsPage from "./SpecsPage.jsx";
 import FilmReceipt from "./FilmReceipt.jsx";
 import TakeDebugger from "./TakeDebugger.jsx";
+import RehearsalPage from "./RehearsalPage.jsx";
 import ProjectsPage from "./ProjectsPage.jsx";
 import ToolsPage from "./ToolsPage.jsx";
 import { updateCommentsEnabled } from "./lib/comments.js";
@@ -504,6 +505,7 @@ function Nav({ page, setPage, user, profile, onSignInClick, onSignOut, activePro
               <button style={itemStyle(page === "coverage")} onClick={() => go("coverage")}>Coverage Planner</button>
               <button style={itemStyle(page === "frame-planner")} onClick={() => go("frame-planner")}>Frame Planner</button>
               <button style={itemStyle(page === "blocking")} onClick={() => go("blocking")}>Performance &amp; Blocking</button>
+              <button style={itemStyle(page === "rehearsal")} onClick={() => go("rehearsal")}>Rehearsal Studio</button>
               <button style={itemStyle(page === "autopsy")} onClick={() => go("autopsy")}>Generation Autopsy</button>
               <button style={itemStyle(page === "continuity-check")} onClick={() => go("continuity-check")}>Continuity Check</button>
               <button style={itemStyle(page === "which-model")} onClick={() => go("which-model")}>Which Model?</button>
@@ -4063,7 +4065,7 @@ const [page, setPageState]        = useState("home");
   // ---- URL routing ----
   const detailIdRef = useRef(null);
   const creatorUserRef = useRef(null);
-  const KNOWN_PAGES = ["home","explore","creators","feed","generate","settings","admin","submit","set-password","email-confirmed","terms","faq","contact","guidelines","premium-prompts","about","become-creator","privacy","refunds","dmca","ai-disclaimer","purchase-success","founding-creators","blog","ai-video-generator","prompt-builder","prompts","search","scene-breakdown","which-model","vault","continuity-check","shot-director","coverage","frame-planner","blocking","autopsy","takes","projects","tools","specs"];
+  const KNOWN_PAGES = ["home","explore","creators","feed","generate","settings","admin","submit","set-password","email-confirmed","terms","faq","contact","guidelines","premium-prompts","about","become-creator","privacy","refunds","dmca","ai-disclaimer","purchase-success","founding-creators","blog","ai-video-generator","prompt-builder","prompts","search","scene-breakdown","which-model","vault","continuity-check","shot-director","coverage","frame-planner","blocking","autopsy","takes","projects","tools","specs","rehearsal"];
 
   function setDetailId(id) { detailIdRef.current = id; setDetailIdState(id); }
   const blogSlugRef = useRef(null);
@@ -4264,6 +4266,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       case "blog-post": return <BlogPostPage slug={blogSlug} setPage={setPage} openPost={openPost} />;
       case "tools": return <ToolsPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} />;
       case "projects": return <ProjectsPage setApPrefill={setApPrefill} user={user} onSignInClick={() => setAuthOpen(true)} setPage={setPage} notify={notify} activeProject={activeProject} setActiveProject={setActiveProject} />;
+      case "rehearsal": return <RehearsalPage />;
       case "specs": return <SpecsPage user={user} onSignInClick={() => setAuthOpen(true)} setPage={setPage} notify={notify} setGenPrefill={setGenPrefill} activeProject={activeProject} />;
       case "takes": return <TakesPage activeProject={activeProject} user={user} onSignInClick={() => setAuthOpen(true)} setPage={setPage} notify={notify} />;
       case "autopsy": return <AutopsyPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} setGenPrefill={setGenPrefill} apPrefill={apPrefill} setApPrefill={setApPrefill} />;
