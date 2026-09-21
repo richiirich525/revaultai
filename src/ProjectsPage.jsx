@@ -153,6 +153,11 @@ export default function ProjectsPage({ user, onSignInClick, setPage, notify, act
           {activeProject && (
             <ScriptSupervisor project={activeProject} user={user} setPage={setPage} notify={notify} />
           )}
+          {activeProject && (
+            <div style={{ marginBottom: 24 }}>
+              <button className="btn-primary" onClick={() => setPage("finish")}>Finish a scene from these takes →</button>
+            </div>
+          )}
 
           <div style={{ border: "1px solid var(--border)", borderRadius: 8, padding: 26, background: "var(--surface)", marginBottom: 36 }}>
             <div className="pj-label">New project</div>

@@ -24,7 +24,7 @@ import TakesPage from "./TakesPage.jsx";
 import SpecsPage from "./SpecsPage.jsx";
 import FilmReceipt from "./FilmReceipt.jsx";
 import TakeDebugger from "./TakeDebugger.jsx";
-import RehearsalPage from "./RehearsalPage.jsx";
+"projects","tools","specs","rehearsal","finish";
 import ProjectsPage from "./ProjectsPage.jsx";
 import ToolsPage from "./ToolsPage.jsx";
 import { updateCommentsEnabled } from "./lib/comments.js";
@@ -4266,6 +4266,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       case "blog-post": return <BlogPostPage slug={blogSlug} setPage={setPage} openPost={openPost} />;
       case "tools": return <ToolsPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} />;
       case "projects": return <ProjectsPage setApPrefill={setApPrefill} user={user} onSignInClick={() => setAuthOpen(true)} setPage={setPage} notify={notify} activeProject={activeProject} setActiveProject={setActiveProject} />;
+      case "finish": return <FinishPage user={user} activeProject={activeProject} setPage={setPage} notify={notify} onSignInClick={() => setAuthOpen(true)} />;
       case "rehearsal": return <RehearsalPage user={user} activeProject={activeProject} notify={notify} onSignInClick={() => setAuthOpen(true)} />;
       case "specs": return <SpecsPage user={user} onSignInClick={() => setAuthOpen(true)} setPage={setPage} notify={notify} setGenPrefill={setGenPrefill} activeProject={activeProject} />;
       case "takes": return <TakesPage activeProject={activeProject} user={user} onSignInClick={() => setAuthOpen(true)} setPage={setPage} notify={notify} />;
