@@ -427,7 +427,7 @@ function AuthModal({ onClose, notify }) {
 
 function isAdmin(user) { return !!user?.email && ["richardgarland999@gmail.com"].includes(user.email.toLowerCase()); }
 
-function Nav({ page, setPage, user, profile, onSignInClick, onSignOut, activeProject }) {
+function Nav({ page, setPage, user, profile, onSignInClick, onSignOut, activeProject, setCreatorUser }) {
   const avatarSrc = profile?.avatar_url ?? null;
   const [createOpen, setCreateOpen] = useState(false);
   const [acctOpen, setAcctOpen] = useState(false);
@@ -549,7 +549,10 @@ function Nav({ page, setPage, user, profile, onSignInClick, onSignOut, activePro
                   {user.email}
                 </div>
                 <button style={itemStyle(page === "submit")} onClick={() => go("submit")}>Submit a Film</button>
-                <button style={itemStyle(page === "settings")} onClick={() => go("settings")}>Profile Settings</button>
+                {profile?.username && (
+                  <button style={itemStyle(page === "profile")} onClick={() => { setCreatorUser?.(profile.username); go("profile"); }}>My Profile</button>
+                )}
+                <button style={itemStyle(page === "settings")} onClick={() => go("settings")}>Settings</button>
                 {isAdmin(user) && <button style={itemStyle(page === "admin")} onClick={() => go("admin")}>Admin</button>}
                 <button style={itemStyle(false)} onClick={() => { setAcctOpen(false); onSignOut(); }}>Sign Out</button>
               </div>
@@ -734,7 +737,7 @@ function BuyCreditsSection({ user, profile, notify }) {
   );
 }
 
-function SettingsPage({ user, profile, setProfile, notify }) {
+function SettingsPage({ user, profile, setProfile, notify, setPage, setCreatorUser }) {
  const [form, setForm] = useState({
     display_name: profile?.display_name ?? "",
     username:     profile?.username     ?? "",
@@ -866,6 +869,11 @@ function SettingsPage({ user, profile, setProfile, notify }) {
           <BuyCreditsSection user={user} profile={profile} notify={notify} />
           <div className="settings-section-title">Creator Profile</div>
           <div className="settings-section-sub">Your public identity on RevaultAI.</div>
+          {profile?.username && (
+            <button className="btn-ghost" style={{ marginBottom: 28, padding: "9px 20px", fontSize: 11 }} onClick={() => { setCreatorUser(profile.username); setPage("profile"); }}>
+              View my public profile →
+            </button>
+          )}
 
           {/* Avatar */}
           <div className="settings-avatar-row">
@@ -2276,8 +2284,9 @@ function ProfilePage({ username, creations: allCreations, setPage, setDetailId, 
   if (loading) return <div className="page"><div className="empty-state"><div className="empty-text">Loading profile...</div></div></div>;
   if (!profileData) return <div className="page"><div className="empty-state"><div className="empty-text">Creator not found.</div></div></div>;
 
+  const isOwnProfile = !!user && user.id === profileData.id;
   const filtered = profileCreations.filter((c) => {
-    if (c.premium_status === "Pending") return false;
+    if ((c.premium_status === "Pending" || c.premium_status === "Rejected") && !isOwnProfile) return false;
     if (filter === "Premium") return c.is_premium;
     if (filter === "Open") return !c.is_premium;
     return true;
@@ -2351,6 +2360,9 @@ function ProfilePage({ username, creations: allCreations, setPage, setDetailId, 
             </div>
           )}
           <div className="profile-actions">
+            {user && user.id === profileData.id && (
+              <button className="btn-ghost" onClick={() => setPage("settings")}>Edit Profile</button>
+            )}
             {user && user.id !== profileData.id && (
               <button
                 className={"btn-follow " + (isFollowing ? "followed" : "unfollowed")}
@@ -2411,6 +2423,11 @@ function ProfilePage({ username, creations: allCreations, setPage, setDetailId, 
         </section>
       )}
       <section className="section">
+                {isOwnProfile && profileCreations.some((c) => c.premium_status === "Pending") && (
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", lineHeight: 1.7, marginBottom: 20, padding: "12px 16px", background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: 4 }}>
+            Films marked Under Review are only visible to you until they're approved — usually within a day.
+          </div>
+        )}
         <div className="filter-bar">
           {["All", "Premium", "Open"].map((f) => (
             <button key={f} className={"filter-btn" + (filter === f ? " active" : "")} onClick={() => setFilter(f)}>{f}</button>
@@ -4209,7 +4226,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       case "generate": return <GeneratePage activeProject={activeProject} setApPrefill={setApPrefill} user={user} profile={profile} notify={notify} setPage={setPage} setGenSubmission={setGenSubmission} setProfile={setProfile} genPrefill={genPrefill} setGenPrefill={setGenPrefill} />;
       case "profile": return <ProfilePage username={creatorUser} creations={creations} setPage={setPage} setDetailId={setDetailId} user={user} />;
       case "detail":  return <DetailPage id={detailId} dbLoaded={dbLoaded} creations={creations} setCreations={setCreations} user={user} profile={profile} setProfile={setProfile} purchasedIds={purchasedIds} purchasesLoaded={purchasesLoaded} setPage={setPage} setCreatorUser={setCreatorUser}onSignInClick={() => setAuthOpen(true)} notify={notify} />;
-      case "settings": if (!user) return <div className="page"><div className="empty-state"><div className="empty-text">Sign in to access profile settings.</div></div></div>; return <SettingsPage user={user} profile={profile} setProfile={setProfile} notify={notify} />;
+      case "settings": if (!user) return <div className="page"><div className="empty-state"><div className="empty-text">Sign in to access profile settings.</div></div></div>; return <SettingsPage user={user} profile={profile} setProfile={setProfile} notify={notify} setPage={setPage} setCreatorUser={setCreatorUser} />;
       case "admin": if (!isAdmin(user)) return <div className="page"><div className="empty-state"><div className="empty-text">Not authorized.</div></div></div>; return <AdminPage creations={creations} setCreations={setCreations} notify={notify} />;
             case "submit": return <SubmitPage activeProject={activeProject} setCreations={setCreations} notify={notify} setPage={setPage} user={user} profile={profile} prefill={genSubmission} />;
       case "set-password": return <SetPasswordPage notify={notify} setPage={setPage} />;
@@ -4253,5 +4270,5 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
     }
   }
 
-  return (<><style>{CSS}</style><Nav activeProject={activeProject} page={page} setPage={setPage} user={user} profile={profile} onSignInClick={() => setAuthOpen(true)} onSignOut={handleSignOut} />{renderPage()}{authOpen && <AuthModal onClose={() => setAuthOpen(false)} notify={notify} />}{notifMsg && <Notification key={notifMsg} msg={notifMsg} onClose={() => setNotifMsg(null)} />}</>);
+  return (<><style>{CSS}</style><Nav setCreatorUser={setCreatorUser} activeProject={activeProject} page={page} setPage={setPage} user={user} profile={profile} onSignInClick={() => setAuthOpen(true)} onSignOut={handleSignOut} />{renderPage()}{authOpen && <AuthModal onClose={() => setAuthOpen(false)} notify={notify} />}{notifMsg && <Notification key={notifMsg} msg={notifMsg} onClose={() => setNotifMsg(null)} />}</>);
 }
