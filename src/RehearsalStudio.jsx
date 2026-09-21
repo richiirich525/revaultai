@@ -1,7 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, lazy, Suspense } from "react";
 import StageBlueprint from "./StageBlueprint.jsx";
 import { readStage, describeStage } from "./lib/stageGeometry.js";
 import { stateAt, setKey, removeKey, keyTimes, newRehearsal, addCamera } from "./lib/rehearsal.js";
+
+// three.js is heavy, so the camera view loads only with the studio —
+// it stays out of the bundle every other page downloads.
+const CameraView = lazy(() => import("./CameraView.jsx"));
 
 /*
   RehearsalStudio — RevaultAI (tier 1: the plan over time)
@@ -32,6 +36,8 @@ const styles = `
   .rs-cam-n { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--text); }
   .rs-cam-s { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 3px; }
   .rs-input { background: var(--bg); border: 1px solid var(--border); border-radius: 3px; padding: 6px 9px; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text); }
+  .rs-views { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+  @media (max-width: 900px) { .rs-views { grid-template-columns: 1fr; } }
   @media (max-width: 760px) { .rs { padding: 0 20px; } }
 `;
 
@@ -65,6 +71,8 @@ export default function RehearsalStudio({ initial, onChange }) {
   }, [playing, r.duration]);
 
   const now = stateAt(r, t);
+  const nowRead = readStage(now.camera, now.actors);
+  const activeCam = r.cameras.find((c) => c.id === r.activeCamera);
 
   // A drag on the plan becomes keyframes — but only for whoever actually moved.
   function onStageChange(next) {
@@ -145,7 +153,26 @@ export default function RehearsalStudio({ initial, onChange }) {
         </div>
       </div>
 
-      <StageBlueprint camera={now.camera} actors={now.actors} onChange={onStageChange} />
+      <div className="rs-views">
+        <StageBlueprint camera={now.camera} actors={now.actors} onChange={onStageChange} />
+        <div>
+          <Suspense fallback={<div className="rs-body" style={{ padding: 20 }}>Loading the camera view…</div>}>
+            <CameraView
+              state={now}
+              lens={nowRead.lens}
+              subject={nowRead.subject}
+              aspect={r.aspect ?? "16:9"}
+              title={`${activeCam?.name ?? "Camera"}${nowRead.shotSize ? " · " + nowRead.shotSize : ""}`}
+            />
+          </Suspense>
+          <div className="rs-row" style={{ marginTop: 10 }}>
+            <span className="rs-body" style={{ fontSize: 10 }}>Frame</span>
+            {["16:9", "2.39:1", "9:16", "1:1"].map((a) => (
+              <button key={a} className={"rs-btn" + ((r.aspect ?? "16:9") === a ? " on" : "")} onClick={() => setR((p) => ({ ...p, aspect: a }))}>{a}</button>
+            ))}
+          </div>
+        </div>
+      </div>
 
       <div className="rs-panel" style={{ marginTop: 16 }}>
         <div className="rs-row" style={{ justifyContent: "space-between" }}>
