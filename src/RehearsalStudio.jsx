@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, lazy, Suspense } from "react";
 import StageBlueprint from "./StageBlueprint.jsx";
 import { readStage, describeStage } from "./lib/stageGeometry.js";
 import { stateAt, setKey, removeKey, keyTimes, newRehearsal, addCamera } from "./lib/rehearsal.js";
+import { motionState, defaultBody, BODIES } from "./lib/performers.js";
 
 // three.js is heavy, so the camera view loads only with the studio —
 // it stays out of the bundle every other page downloads.
@@ -158,7 +159,7 @@ export default function RehearsalStudio({ initial, onChange }) {
         <div>
           <Suspense fallback={<div className="rs-body" style={{ padding: 20 }}>Loading the camera view…</div>}>
             <CameraView
-              state={now}
+              state={motionState(r, t)}
               lens={nowRead.lens}
               subject={nowRead.subject}
               aspect={r.aspect ?? "16:9"}
@@ -215,6 +216,11 @@ export default function RehearsalStudio({ initial, onChange }) {
             {["stand", "sit", "crouch"].map((p) => (
               <button key={p} className={"rs-btn" + (a.pose === p ? " on" : "")} onClick={() => setPose(i, p)}>{p}</button>
             ))}
+            <span className="rs-body" style={{ fontSize: 10, marginLeft: 10 }}>as</span>
+            {BODIES.map((b) => {
+              const cur = r.actors[i]?.body ?? defaultBody(i);
+              return <button key={b} className={"rs-btn" + (cur === b ? " on" : "")} onClick={() => setR((p) => ({ ...p, actors: p.actors.map((x, j) => (j === i ? { ...x, body: b } : x)) }))}>{b}</button>;
+            })}
           </div>
         ))}
       </div>
