@@ -21,6 +21,7 @@ import FramePlannerPage from "./FramePlannerPage.jsx";
 import BlockingPage from "./BlockingPage.jsx";
 import AutopsyPage from "./AutopsyPage.jsx";
 import TakesPage from "./TakesPage.jsx";
+import FinishPage from "./FinishPage.jsx";
 import SpecsPage from "./SpecsPage.jsx";
 import FilmReceipt from "./FilmReceipt.jsx";
 import TakeDebugger from "./TakeDebugger.jsx";
