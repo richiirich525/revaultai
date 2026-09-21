@@ -2449,10 +2449,11 @@ function DetailPage({ id, creations, setCreations, user, profile, setProfile, pu
   // first — if it isn't in the list, fetch it directly.
   const listed = creations.find((c) => c.id === id);
   const [fetchedCreation, setFetchedCreation] = useState(null);
+  const [lookupDone, setLookupDone] = useState(!!listed);
   useEffect(() => {
     if (listed || !id) return;
     let cancelled = false;
-    fetchCreationById(id).then(({ data }) => { if (!cancelled && data) setFetchedCreation(data); });
+    fetchCreationById(id).then(({ data }) => { if (cancelled) return; if (data) setFetchedCreation(data); setLookupDone(true); });
     return () => { cancelled = true; };
   }, [id, listed]);
   const creation = listed ?? fetchedCreation;
@@ -2501,7 +2502,8 @@ function DetailPage({ id, creations, setCreations, user, profile, setProfile, pu
     })();
     return () => { cancelled = true; };
   }, [creation?.user_id]);
-  if (!creation) return <div className="page"><div className="empty-state"><div className="empty-text">{dbLoaded ? "Creation not found." : "Loading film..."}</div></div></div>;
+  const [cmBusy, setCmBusy] = useState(false);
+  if (!creation) return <div className="page"><div className="empty-state"><div className="empty-text">{dbLoaded && lookupDone ? "Creation not found." : "Loading film..."}</div></div></div>;
   const licenseCheck = creation.license_url ? normalizeContactUrl(creation.license_url) : null;
   const licenseUrl = licenseCheck && licenseCheck.ok ? licenseCheck.url : "";
   const isPending = creation.premium_status === "Pending"; const hasVideo = !!creation.video_url; const posterImg = creation.youtube_id ? youtubeThumb(creation.youtube_id) : (creation.thumbnail_image || creation.hero_image); const purchased = purchasedIds.has(creation.id); const unlocked = !creation.is_premium || purchased;
@@ -2524,7 +2526,6 @@ const purchaseLoading = creation.is_premium && !purchasesLoaded; const priceLabe
   }
 }
   const canDelete = !!user && (creation.user_id === user.id || isAdmin(user));
-  const [cmBusy, setCmBusy] = useState(false);
   const commentsOn = creation.comments_enabled !== false;
   async function handleToggleComments() {
     setCmBusy(true);
