@@ -4,6 +4,215 @@
 
 export const POSTS = [
   {
+    slug: "how-to-choose-ai-video-model-for-shot",
+    title: "How to Choose the Best AI Video Model for Your Shot",
+    seoTitle: "How to Choose the Best AI Video Model for a Shot (2026)",
+    description:
+      "Choose the best AI video model for a shot by matching dialogue, duration, motion, difficulty and cost — not a ranking. A shot-first checklist for AI filmmakers.",
+    date: "2026-09-20",
+    author: "Richard Garland",
+    category: "Guides",
+    readingTime: "12 min",
+    faq: [
+      ["What is the best AI video model?", "There isn't one best model — there's a best model for each shot. Among the models you can generate with on RevaultAI, Veo 3.1 is the pick for close-ups and spoken lines, Kling 3.0 for fast action and dense crowds, Seedance for camera control, physics and (Seedance 2.5) takes up to 30 seconds, and Wan 2.6 for cheap iteration on simple single-subject shots. Describe the shot you actually need to make and choose from there."],
+      ["Should I use the same AI model for every shot?", "Not necessarily. Shots in the same film often make very different demands — a dialogue close-up, a chase and a long unbroken camera move don't ask for the same things — so many filmmakers route each shot to the model that fits it and use a cheaper model to block the film first. The trade-off is that different models can render with a slightly different look, so test how your chosen models cut together before committing to a mixed-model scene."],
+      ["Which model is best for dialogue?", "Dialogue needs a model with native audio. On RevaultAI that means Veo 3.1 and Seedance 2.0 or 2.5; Wan 2.6 and Kling 3.0 don't generate audio. Veo 3.1 is the strongest fit for a close-up with a spoken line but tops out at 8 seconds, so longer spoken exchanges are a job for Seedance, which supports up to 15 seconds on 2.0 and up to 30 on 2.5. Put the spoken line in quotes in your prompt."],
+      ["Which model is best for cinematic camera movement?", "For complex, deliberate camera moves, Seedance is the strongest fit — director-level camera language works on it, and Seedance 2.5 can hold a developing move for up to 30 seconds without a cut. Veo 3.1 responds well to detailed cinematography for shorter shots. If the subject is moving fast, Kling 3.0 works best with a simple camera, because a complex move competes with the subject motion."],
+      ["Does AI video generation cost depend on the model?", "Yes. On RevaultAI credits are charged per second of output, and the rate depends on the model: Wan 2.6 is 1 credit per second, Kling 3.0 is 2, Seedance 2.0 is 3 at draft and 6 at flagship, Veo 3.1 is 4, and Seedance 2.5 is 6 at draft and 12 at flagship. The cost of a take is the rate multiplied by its duration, so an 8-second Veo 3.1 take costs 32 credits and a 30-second Seedance 2.5 flagship take costs 360."],
+    ],
+    content: `
+<p>The best AI video model for a shot is rarely the model at the top of a ranking. A close-up of someone speaking, a courier sprinting through a crowded market and a thirty-second unbroken camera move each ask for something different, and today's AI video generation models are strong at different things. Pick by the shot, and most of the decision makes itself.</p>
+
+<p>This guide is a decision process, not an AI video model comparison. It covers the questions that decide which model fits a shot — dialogue, duration, motion, difficulty and cost — using the five models you can generate with on RevaultAI: Wan 2.6, Kling 3.0, Seedance 2.0, Seedance 2.5 and Veo 3.1. If you want the named-model comparison instead, start with <a href="/blog/kling-vs-runway-vs-veo-best-ai-video-model-filmmakers-2026">Kling 3.0 vs Runway Gen-4.5 vs Veo 3.1</a> (which also covers Runway, one of the models we don't generate with) or the <a href="/blog/which-ai-video-model-to-use-seedance-veo-kling-wan">Seedance, Veo, Kling and Wan overview</a>. This article picks up where those stop: you have a specific shot, and you need to know what to generate it with.</p>
+
+<h2>Stop Asking “Which Model Is Best?”</h2>
+
+<p>“Which AI video model should I use?” is the most common question in AI filmmaking, and it can't be answered as asked, because a model isn't a quality level. It's a set of trade-offs. The ranking you'll find at the top of a leaderboard averages across many kinds of shots; your shot is one kind.</p>
+
+<p>Look at how the models available on RevaultAI actually differ:</p>
+
+<ul>
+<li><strong>Veo 3.1</strong> generates native audio and lip-synced dialogue alongside the picture, and it's the right choice for close-ups, spoken lines and hero shots that need to look expensive. It also caps at 8 seconds and isn't the best pick for fast action or large crowds.</li>
+<li><strong>Kling 3.0</strong> is the motion specialist — fast action, chases, physical performance and dense crowds hold together where other models smear. It doesn't generate audio and caps at 10 seconds.</li>
+<li><strong>Seedance 2.0</strong> brings director-level camera control, real-world physics and native audio, at either draft (480p) or flagship (720p) resolution.</li>
+<li><strong>Seedance 2.5</strong> adds the longest single takes available — up to 30 seconds of continuous footage — and is by far the most expensive per second at flagship.</li>
+<li><strong>Wan 2.6</strong> is the fastest and cheapest, and works best with one clear subject doing one clear action. It's where you block a film, not where you finish a crowd scene.</li>
+</ul>
+
+<p>Every one of those is the right answer for some shot and the wrong answer for another. The “Veo vs Kling vs Seedance” argument is really an argument about which shot each person happened to be making that week. So change the question. Not “which model is best?” but “what does this shot need, and which model gives me that at a cost I can afford to iterate on?”</p>
+
+<h2>Start With the Shot Requirements</h2>
+
+<p>Before you look at a single model, write down what the shot demands. Nine requirements do most of the work when you choose an AI video model:</p>
+
+<ul>
+<li><strong>Dialogue and audio.</strong> Does anyone speak, or does the shot need synchronized sound? Only Veo 3.1 and the Seedance models generate native audio on RevaultAI. Wan 2.6 and Kling 3.0 don't, which rules them out for spoken lines before anything else is considered.</li>
+<li><strong>Character count.</strong> One subject is the easy case, and Wan 2.6 handles it cheaply. Several characters in the same frame raise the difficulty for every model, and Wan in particular is weakest with multiple simultaneous events.</li>
+<li><strong>Camera movement.</strong> A locked-off shot has almost no constraint. A complex, deliberate move — a crane, an orbit, a developing push — favors Seedance, where director-level camera language works. On Kling 3.0 keep the camera simple, because a complicated move competes with the subject motion.</li>
+<li><strong>Duration.</strong> Every model has a ceiling, and the ceilings are very different. This often decides the shot on its own — see the next sections.</li>
+<li><strong>Physical interaction.</strong> Fights, collisions, fabric, liquids and props being handled. Kling 3.0 holds physical performance together, and Seedance is built around real-world physics.</li>
+<li><strong>Reference image.</strong> If you already have the frame the shot should start from, Generate accepts an optional starting frame, which removes a lot of guesswork about composition, wardrobe and set. One detail: with Kling 3.0 the aspect ratio is taken from the starting image rather than chosen separately.</li>
+<li><strong>Aspect ratio.</strong> Veo 3.1 supports 16:9 and 9:16 only. Wan 2.6 and Kling 3.0 add 1:1, and the Seedance models add 21:9.</li>
+<li><strong>Motion complexity.</strong> Fast, dense, many-bodies motion points to Kling 3.0. Quiet, close, held moments — a face, a small gesture — point to Veo 3.1 or, when budget matters more, Wan 2.6.</li>
+<li><strong>Realism and stylization.</strong> Veo 3.1 is described as the best all-round image quality, and Seedance is strongest where real-world physics has to look right. Nothing in the model data singles out any model as the stylized one, so treat a stylized look as something to test on a cheap tier rather than assume.</li>
+</ul>
+
+<p>Five minutes on this list before you generate usually saves more credits than any prompt trick. If you're working from a script rather than a single idea, break the scene into a shot list first — <a href="/blog/how-to-break-script-into-shots-ai-video">how to break a script into shots</a> covers that — and run each shot through the list on its own.</p>
+
+<h2>Difficulty Matters</h2>
+
+<p>Two shots can both be “a person, eight seconds, cinematic” and be completely different levels of work for a model. The requirements above tell you what a shot needs; difficulty tells you how likely it is to go wrong, and therefore how many takes you should expect to spend. Some things reliably raise it:</p>
+
+<ul>
+<li><strong>Hands.</strong> Hands have many small joints in constant relative motion, which is the combination current models handle least reliably. A hand in the background is one thing; a hand that's the subject of the frame is another.</li>
+<li><strong>Small objects.</strong> A hand handling a pen, a key or a card asks the model to resolve two shapes making convincing contact. Small props also have to stay the same object from the first frame to the last.</li>
+<li><strong>Crowds.</strong> Background figures need consistent, plausible behavior for the whole take. A crowd multiplies the number of things that can drift.</li>
+<li><strong>Multiple characters.</strong> More than one character raises difficulty, especially when they touch, cross paths or block each other. Each one is another identity the model has to hold.</li>
+<li><strong>Reflective surfaces.</strong> Mirrors, glass, water and polished metal have to stay coherent with everything they reflect, which the model has to invent frame by frame.</li>
+<li><strong>Dialogue.</strong> Speech adds lip sync on top of everything else in the frame, so a talking shot is harder than the same shot in silence.</li>
+<li><strong>Long takes.</strong> The longer a shot runs relative to the model's limit, the more frames can drift. Ten seconds is a moderate ask on a model that goes to fifteen and a demanding one on a model that stops at ten.</li>
+</ul>
+
+<p>These stack. A single character with a locked camera in a quiet room is easy. The same character holding a glass of wine, in front of a mirror, delivering a line, is three difficulty factors in one frame. Notice how many your shot has before you generate, and you can respond in advance: pick a stronger model, budget for more takes, or change the shot (more on that below). Difficulty is also relative to the model — a 15-second take is at the ceiling for Seedance 2.0 and only halfway for Seedance 2.5.</p>
+
+<p>If a shot has already failed and you're not sure why, paste the prompt into <a href="/autopsy">Generation Autopsy</a> for a diagnosis, and see <a href="/blog/why-ai-video-generations-fail">why AI video generations fail</a> for the common causes.</p>
+
+<h2>Duration Can Eliminate Models Immediately</h2>
+
+<p>Duration is the fastest filter, because it's a hard limit rather than a preference. These are the durations each model supports in RevaultAI's generator today:</p>
+
+<ul>
+<li><strong>Wan 2.6</strong> — 5, 10 or 15 seconds</li>
+<li><strong>Kling 3.0</strong> — 5 or 10 seconds</li>
+<li><strong>Seedance 2.0</strong> (draft and flagship) — 5, 10 or 15 seconds</li>
+<li><strong>Seedance 2.5</strong> (draft and flagship) — 5, 10, 15 or 30 seconds</li>
+<li><strong>Veo 3.1</strong> — 4, 6 or 8 seconds</li>
+</ul>
+
+<p>They're fixed options, not a slider, and a few things follow from that:</p>
+
+<ul>
+<li>A shot that has to run longer than 8 seconds eliminates Veo 3.1.</li>
+<li>Longer than 10 seconds eliminates Kling 3.0 as well.</li>
+<li>Longer than 15 seconds leaves exactly one option: Seedance 2.5, at draft or flagship. Nothing else generates a 30-second take here.</li>
+<li>4 and 6 seconds exist only on Veo 3.1. Every other model starts at 5.</li>
+</ul>
+
+<p>Duration also cuts the other way. Choose the shortest supported duration that serves the shot, not the longest the model allows — you pay per second, and a shorter take is a shorter time for something to go wrong.</p>
+
+<p>Aspect ratio is a second hard filter. A 21:9 frame leaves only the Seedance models, and a 1:1 frame rules out Veo 3.1. A shot that must be vertical or square is worth checking against the model's ratios before you write the prompt, not after.</p>
+
+<p>The models that survive both filters are your shortlist. Whether a shot has to stay unbroken matters here: a long take that can't cut has very few options, while a shot you're free to cut can be split into shorter pieces that open up more of them.</p>
+
+<h2>Consider Cost Per Shot</h2>
+
+<p>On RevaultAI, credits are charged per second of output and priced by model, so the cost of any take is the per-second rate multiplied by its duration. The current rates:</p>
+
+<ul>
+<li><strong>Wan 2.6</strong> — 1 credit per second (a 5-second take is 5 credits)</li>
+<li><strong>Kling 3.0</strong> — 2 credits per second (10 seconds is 20)</li>
+<li><strong>Seedance 2.0 Draft (480p)</strong> — 3 credits per second (5 seconds is 15)</li>
+<li><strong>Veo 3.1</strong> — 4 credits per second (8 seconds is 32)</li>
+<li><strong>Seedance 2.0 Flagship (720p)</strong> — 6 credits per second (5 seconds is 30)</li>
+<li><strong>Seedance 2.5 Draft (480p)</strong> — 6 credits per second (10 seconds is 60)</li>
+<li><strong>Seedance 2.5 Flagship (720p)</strong> — 12 credits per second (10 seconds is 120)</li>
+</ul>
+
+<p>The cheapest model and the best value are often different models. The cheapest option is the lowest cost per take; the best value is the lowest cost per <em>usable</em> take. Say a fast chase through a crowd takes six attempts on a model that struggles with crowds, and two on one built for them. Those numbers are illustrative, not measured, but the arithmetic is the point: six takes at 5 credits is 30 credits, and two takes at 10 is 20. The cheap model was more expensive.</p>
+
+<p>The same logic runs the other way. If a shot is simple — one subject, one clear action, a static camera — paying flagship rates is waste, and Wan 2.6 at 1 credit per second is a good place to spend most of your takes. A useful habit is to keep track of credits per keeper, not credits per take.</p>
+
+<p>The draft tiers exist for exactly this. Both Seedance versions have a 480p draft at half the per-second rate of the 720p flagship. Draft output is for testing a shot, not for final delivery: prove that a 30-second take holds together at 180 credits, and only then commit 360 to the flagship version. A generation that fails outright is refunded, but one that completes and simply isn't what you wanted still costs what it costs — which is the strongest argument for testing before you spend.</p>
+
+<h2>One Film Can Use Multiple Models</h2>
+
+<p>Nothing says a film has to be made on one model. Shots in the same scene make different demands, and AI filmmaking models are strong in different places, so a common workflow is to route each shot to the model that fits it. A single short scene might go like this:</p>
+
+<ul>
+<li><strong>Block it cheap.</strong> Rough out framing, timing and action on Wan 2.6, at 5 credits for a 5-second take, until you know what each shot actually is.</li>
+<li><strong>The chase.</strong> Generate the crowded, fast-moving shot on Kling 3.0, which holds fast action and crowds together (10 seconds is 20 credits).</li>
+<li><strong>The spoken line.</strong> Generate the close-up on Veo 3.1, which produces the dialogue with the picture (8 seconds is 32 credits).</li>
+<li><strong>The unbroken reveal.</strong> Prove the long, developing camera move on Seedance 2.5 Draft first, then re-run it at flagship if it holds.</li>
+<li><strong>Everything simple.</strong> Inserts, cutaways and quiet establishing shots stay on the cheapest model that does the job.</li>
+</ul>
+
+<p>Routing shots this way means you pay flagship rates only where the shot needs them. The honest trade-off is that different models can render with a slightly different look, so cutting between them takes care. Test a mixed sequence before you commit to it, and lean on cuts — a change of angle, an insert — to carry the switch rather than swapping models mid-action.</p>
+
+<p>A shot list makes this workable: <a href="/scene-breakdown">Scene Breakdown</a> turns a scene into numbered shots with camera, lighting and duration, and each one can then be assigned a model on its own merits.</p>
+
+<h2>When to Simplify the Shot Instead</h2>
+
+<p>Sometimes no model is a good answer, and the right move is to change the shot rather than search harder for a model. Four fixes come up repeatedly:</p>
+
+<ul>
+<li><strong>Shorten the take.</strong> If a shot only works as a long take because you assumed it had to be one, shorten it. Fewer seconds means fewer frames to drift, and it often puts more models back in play.</li>
+<li><strong>Split the action.</strong> One shot holding a character crossing a room, picking something up <em>and</em> speaking is really three shots. Split it, and each piece gets easier and can go to whichever model suits it.</li>
+<li><strong>Use a reference frame.</strong> Generating from a starting frame instead of a description removes guesswork about composition and wardrobe. <a href="/frame-planner">Frame Planner</a> helps you decide where a shot starts and where it lands, with an image prompt for each frame, and the opening frame can go straight into image-to-video from Generate.</li>
+<li><strong>Simplify the blocking.</strong> Cut the second character, put the hand out of frame, move the camera less, or stop the subject before they touch the prop. A shot that suggests the action often reads as well as one that shows all of it.</li>
+</ul>
+
+<p>These are also the fixes to try before spending more credits on a shot that keeps failing. If the same thing breaks on every take, the shot is usually the problem, not the model.</p>
+
+<h2>A Practical Model-Selection Checklist</h2>
+
+<p>Run any shot through this before you generate. It takes about a minute.</p>
+
+<ul>
+<li><strong>Audio:</strong> Does anyone speak, or does it need synchronized sound? If yes, shortlist Veo 3.1 or Seedance only.</li>
+<li><strong>Length:</strong> How long must the take be, and can it cut? Over 8 seconds removes Veo, over 10 removes Kling, over 15 leaves only Seedance 2.5.</li>
+<li><strong>Frame:</strong> Which aspect ratio does it need? 21:9 means Seedance; 1:1 rules out Veo.</li>
+<li><strong>Subjects:</strong> How many characters, and does anyone touch or cross paths? Are there crowds?</li>
+<li><strong>Motion:</strong> Is the action fast or physical (Kling 3.0, Seedance) or quiet and close (Veo 3.1, Wan 2.6)?</li>
+<li><strong>Camera:</strong> Is the move complex and deliberate (Seedance) or simple (anything, and best for Kling)?</li>
+<li><strong>Start:</strong> Do you have a reference frame you can start from?</li>
+<li><strong>Difficulty:</strong> Count the hard factors — hands, small objects, crowds, multiple characters, reflective surfaces, dialogue, long takes. Two or more means budget extra takes or simplify.</li>
+<li><strong>Cost:</strong> Multiply the per-second rate by the duration. Would a draft tier prove it first?</li>
+<li><strong>Fallback:</strong> If nothing fits, can you shorten it, split it, use a reference frame or simplify the blocking?</li>
+</ul>
+
+<h2>Use RevaultAI Which Model?</h2>
+
+<p>You can run that checklist by hand, or let <a href="/which-model">Which Model</a> do the first pass. You describe the shot in plain language — a sentence or two, up to 800 characters — and it returns:</p>
+
+<ul>
+<li><strong>Two or three ranked recommendations.</strong> Rank one is the best fit, not the most expensive model. If a cheap model genuinely does the job, it ranks first.</li>
+<li><strong>The reason for each pick</strong>, written about your shot specifically rather than the model in general, plus <strong>one honest trade-off</strong> — what you give up by choosing it.</li>
+<li><strong>A suggested duration</strong> — always one the model actually supports, and the shortest one that serves the shot.</li>
+<li><strong>The real credit cost</strong> for that model and duration, calculated from the same rates the generator charges rather than estimated.</li>
+<li><strong>A difficulty score out of 10</strong>, with a label, the <strong>factors</strong> most likely to break the shot, what's straightforward about it, and, when it helps, a <strong>practical suggestion</strong> — splitting the shot, shortening the take, using a reference frame or simplifying the action.</li>
+</ul>
+
+<p>Only models you can generate with on RevaultAI are ever recommended: Wan 2.6, Kling 3.0, Seedance 2.0 and 2.5 (draft and flagship tiers) and Veo 3.1. If a shot is hard for every one of them, it says so instead of forcing a pick. The reasoning is written by an AI advisor working from the app's model catalog, while durations and credit costs come from that catalog directly, so it can't quote a price or a length the generator doesn't offer. Treat it as an informed starting point, not a verdict.</p>
+
+<p>If you're signed in, it also shows your own record: for models you've generated with at least a few times, how many takes you approved, roughly what each keeper cost in credits, and what you most often rejected them for. That comes from your own approvals, not a global leaderboard, and small samples say less — treat anything under ten attempts as a hint.</p>
+
+<p>When you're ready, each recommendation has a button that takes you to <a href="/generate">Generate</a> with that model already selected. Signed-out visitors are asked to sign in first, since generating uses credits. The handoff sets the model, not the prompt or the duration, so write your prompt and set the suggested duration there. If you don't have a prompt yet, <a href="/scene-breakdown">Scene Breakdown</a> will write one for each shot.</p>
+
+<div class="cta-inline">
+<strong>Find the Right Model for Your Shot</strong>
+<p>Describe the shot and get ranked model recommendations with a suggested duration, the real credit cost, trade-offs and a difficulty score. Free. No account required.</p>
+<a class="cta-btn" href="/which-model">Which Model Should I Use?</a>
+</div>
+
+<h2>Frequently Asked Questions</h2>
+
+<h3>What is the best AI video model?</h3>
+<p>There isn't one best model — there's a best model for each shot. Among the models you can generate with on RevaultAI, Veo 3.1 is the pick for close-ups and spoken lines, Kling 3.0 for fast action and dense crowds, Seedance for camera control, physics and (Seedance 2.5) takes up to 30 seconds, and Wan 2.6 for cheap iteration on simple single-subject shots. Describe the shot you actually need to make and choose from there.</p>
+
+<h3>Should I use the same AI model for every shot?</h3>
+<p>Not necessarily. Shots in the same film often make very different demands — a dialogue close-up, a chase and a long unbroken camera move don't ask for the same things — so many filmmakers route each shot to the model that fits it and use a cheaper model to block the film first. The trade-off is that different models can render with a slightly different look, so test how your chosen models cut together before committing to a mixed-model scene.</p>
+
+<h3>Which model is best for dialogue?</h3>
+<p>Dialogue needs a model with native audio. On RevaultAI that means Veo 3.1 and Seedance 2.0 or 2.5; Wan 2.6 and Kling 3.0 don't generate audio. Veo 3.1 is the strongest fit for a close-up with a spoken line but tops out at 8 seconds, so longer spoken exchanges are a job for Seedance, which supports up to 15 seconds on 2.0 and up to 30 on 2.5. Put the spoken line in quotes in your prompt.</p>
+
+<h3>Which model is best for cinematic camera movement?</h3>
+<p>For complex, deliberate camera moves, Seedance is the strongest fit — director-level camera language works on it, and Seedance 2.5 can hold a developing move for up to 30 seconds without a cut. Veo 3.1 responds well to detailed cinematography for shorter shots. If the subject is moving fast, Kling 3.0 works best with a simple camera, because a complex move competes with the subject motion. For more on the moves themselves, see <a href="/blog/ai-video-camera-shots-movements">AI video camera shots and movements</a>.</p>
+
+<h3>Does AI video generation cost depend on the model?</h3>
+<p>Yes. On RevaultAI credits are charged per second of output, and the rate depends on the model: Wan 2.6 is 1 credit per second, Kling 3.0 is 2, Seedance 2.0 is 3 at draft and 6 at flagship, Veo 3.1 is 4, and Seedance 2.5 is 6 at draft and 12 at flagship. The cost of a take is the rate multiplied by its duration, so an 8-second Veo 3.1 take costs 32 credits and a 30-second Seedance 2.5 flagship take costs 360.</p>
+`,
+  },
+  {
     slug: "how-to-break-script-into-shots-ai-video",
     title: "How to Break a Script Into Shots for AI Video",
     seoTitle: "How to Break a Script Into Shots for AI Video (2026 Guide)",
