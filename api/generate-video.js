@@ -60,15 +60,16 @@ const MODELS = {
   },
 };
 
-// Models that can take Vault reference photos, and how. Wan and Kling are
-// absent on purpose: Wan's references must be videos, and Kling's elements
-// system comes later.
+// Models that can take Vault reference photos, and how. Wan is absent on
+// purpose: its references must be videos, not photos. Kling uses its O3
+// reference model, which takes each Vault entry as an "element".
 const REF_MODELS = {
   'seedance-2.0': { falId: 'bytedance/seedance-2.0/fast/reference-to-video', named: true },
   'seedance-2.0-480': { falId: 'bytedance/seedance-2.0/fast/reference-to-video', named: true },
   'seedance-2.5': { falId: 'bytedance/seedance-2.5/reference-to-video', named: true },
   'seedance-2.5-480': { falId: 'bytedance/seedance-2.5/reference-to-video', named: true },
   'veo-3.1': { falId: 'fal-ai/veo3.1/fast/reference-to-video', named: false, seconds: 8 },
+  'kling-3.0': { falId: 'fal-ai/kling-video/o3/standard/reference-to-video', named: true, mode: 'elements', extra: { generate_audio: true } },
 };
 
 export default async function handler(req, res) {
@@ -149,7 +150,7 @@ export default async function handler(req, res) {
           });
           const j = await r.json().catch(() => ({}));
           const url = r.ok && Array.isArray(j.urls) ? j.urls[0] : null;
-          if (url) refs.push({ id: row.id, name: row.name, kind: row.kind, url });
+          if (url) refs.push({ id: row.id, name: row.name, kind: row.kind, url, urls: j.urls.slice(0, 3) });
         } catch { /* skip this one */ }
       }
       if (!refs.length) {
@@ -158,7 +159,7 @@ export default async function handler(req, res) {
     }
     // Seedance reads references by name; Veo just takes the images.
     const refPrompt = refs.length && refModel.named
-      ? `${prompt.trim()}\n\n${refs.map((r, i) => `@Image${i + 1} is ${r.name}${r.kind === "location" ? ", the location" : r.kind === "prop" ? ", a prop" : ""}.`).join(" ")}`
+      ? `${prompt.trim()}\n\n${refs.map((r, i) => `@${refModel.mode === "elements" ? "Element" : "Image"}${i + 1} is ${r.name}${r.kind === "location" ? ", the location" : r.kind === "prop" ? ", a prop" : ""}.`).join(" ")}`
       : prompt.trim();
 
     // 3. Deduct credits atomically — fails cleanly if balance is short
@@ -237,7 +238,9 @@ export default async function handler(req, res) {
           duration: selected.durationParam[seconds],
           ...(imageUrl && selected.aspectIgnoredWithImage ? {} : { aspect_ratio: ratio }),
           ...(imageUrl ? { image_url: imageUrl } : {}),
-          ...(refs.length ? { image_urls: refs.map((r) => r.url) } : {}),
+          ...(refs.length && refModel.mode !== "elements" ? { image_urls: refs.map((r) => r.url) } : {}),
+          ...(refs.length && refModel.mode === "elements" ? { elements: refs.map((r) => ({ frontal_image_url: r.urls[0], reference_image_urls: r.urls.length > 1 ? r.urls.slice(1) : [r.urls[0]] })) } : {}),
+          ...(refs.length && refModel.extra ? refModel.extra : {}),
           ...(selected.extraInput || {}),
         },
         webhookUrl: 'https://www.revaultai.com/api/generation-webhook',

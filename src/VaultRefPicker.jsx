@@ -15,7 +15,7 @@ const SUPPORT = {
   "seedance-2.5": "yes",
   "seedance-2.5-480": "yes",
   "veo-3.1": "veo",
-  "kling-3.0": "not-yet",
+  "kling-3.0": "kling",
   "wan-2.6": "no",
 };
 const MAX_REFS = 3;
@@ -26,7 +26,7 @@ export function refSupport(model) { return SUPPORT[model] ?? "no"; }
 // model can't use photos. The selection itself survives a model switch.
 export function refsToSend(model, imageUrl, ids) {
   const s = refSupport(model);
-  if (imageUrl || (s !== "yes" && s !== "veo")) return [];
+  if (imageUrl || !["yes", "veo", "kling"].includes(s)) return [];
   return (ids ?? []).slice(0, MAX_REFS);
 }
 
@@ -43,7 +43,7 @@ export default function VaultRefPicker({ model, prompt, imageUrl, duration, setD
   const [thumbs, setThumbs] = useState({});
   const touched = useRef(false);
   const support = refSupport(model);
-  const usable = (support === "yes" || support === "veo") && !imageUrl;
+  const usable = ["yes", "veo", "kling"].includes(support) && !imageUrl;
 
   useEffect(() => {
     (async () => {
@@ -101,7 +101,7 @@ export default function VaultRefPicker({ model, prompt, imageUrl, duration, setD
   if (entries.length === 0) {
     return (
       <div style={{ border: "1px dashed var(--border)", borderRadius: 6, padding: "12px 14px", margin: "12px 0", ...mono, fontSize: 10, color: "var(--muted)", lineHeight: 1.7 }}>
-        Lock how your characters look: add reference photos to entries in the Vault, and they'll be sent with Seedance and Veo generations.
+        Lock how your characters look: add reference photos to entries in the Vault, and they'll be sent with Seedance, Veo and Kling generations.
         {onOpenVault && <span style={{ color: "var(--accent)", cursor: "pointer", marginLeft: 6 }} onClick={onOpenVault}>Open the Vault →</span>}
       </div>
     );
@@ -111,9 +111,9 @@ export default function VaultRefPicker({ model, prompt, imageUrl, duration, setD
   const note = imageUrl
     ? "You're starting from a frame, so reference photos are skipped for this generation."
     : support === "no"
-      ? "Wan can't use reference photos. Switch to Seedance or Veo to lock appearance."
-      : support === "not-yet"
-        ? "Kling can't use reference photos yet. Switch to Seedance or Veo to lock appearance."
+      ? "Wan can't use reference photos. Switch to Seedance, Veo or Kling to lock appearance."
+      : support === "kling"
+        ? "Kling takes every photo on each entry, through its reference model built for consistent characters."
         : support === "veo"
           ? "Veo uses reference photos at 16:9 or 9:16, in 8-second clips."
           : `Up to ${MAX_REFS}. Chosen from the names in your prompt — tap to change.`;
