@@ -22,6 +22,7 @@ import BlockingPage from "./BlockingPage.jsx";
 import AutopsyPage from "./AutopsyPage.jsx";
 import TakesPage from "./TakesPage.jsx";
 import FinishPage from "./FinishPage.jsx";
+import CreateMenuItems from "./CreateMenuItems.jsx";
 import SpecsPage from "./SpecsPage.jsx";
 import FilmReceipt from "./FilmReceipt.jsx";
 import TakeDebugger from "./TakeDebugger.jsx";
@@ -496,21 +497,7 @@ function Nav({ page, setPage, user, profile, onSignInClick, onSignOut, activePro
               {user && <button style={itemStyle(page === "generate")} onClick={() => go("generate")}>Generate</button>}
               <button style={itemStyle(page === "tools")} onClick={() => go("tools")}>All Tools</button>
               <div style={{ height: 1, background: "var(--border)", margin: "6px 10px" }} />
-              <button style={itemStyle(page === "prompt-builder")} onClick={() => go("prompt-builder")}>Prompt Builder</button>
-              <button style={itemStyle(page === "scene-breakdown")} onClick={() => go("scene-breakdown")}>Scene Breakdown</button>
-              {user && <button style={itemStyle(page === "vault")} onClick={() => go("vault")}>The Vault</button>}
-              {user && <button style={itemStyle(page === "projects")} onClick={() => go("projects")}>Projects</button>}
-              {user && <button style={itemStyle(page === "takes")} onClick={() => go("takes")}>Takes</button>}
-              {user && <button style={itemStyle(page === "specs")} onClick={() => go("specs")}>Shot Specs</button>}
-              <button style={itemStyle(page === "shot-director")} onClick={() => go("shot-director")}>Shot Director</button>
-              <button style={itemStyle(page === "coverage")} onClick={() => go("coverage")}>Coverage Planner</button>
-              <button style={itemStyle(page === "frame-planner")} onClick={() => go("frame-planner")}>Frame Planner</button>
-              <button style={itemStyle(page === "blocking")} onClick={() => go("blocking")}>Performance &amp; Blocking</button>
-              <button style={itemStyle(page === "rehearsal")} onClick={() => go("rehearsal")}>Rehearsal Studio</button>
-              <button style={itemStyle(page === "autopsy")} onClick={() => go("autopsy")}>Generation Autopsy</button>
-              <button style={itemStyle(page === "continuity-check")} onClick={() => go("continuity-check")}>Continuity Check</button>
-              <button style={itemStyle(page === "which-model")} onClick={() => go("which-model")}>Which Model?</button>
-              <button style={itemStyle(page === "prompts")} onClick={() => go("prompts")}>Prompt Library</button>
+              <CreateMenuItems page={page} go={go} itemStyle={itemStyle} user={user} hide={["Generate"]} />
           </div>
           )}
         </div>

@@ -3,8 +3,8 @@ import { JOBS } from "./lib/toolCatalog.js";
 /*
   CreateMenuItems — RevaultAI
   The Create menu, grouped into the same five jobs as the /tools page and
-  read from the same list. Tools that need an account only appear once
-  you're signed in.
+  read from the same list. Tools needing an account or credits appear once
+  you're signed in. `hide` skips tools already shown elsewhere in the menu.
 */
 
 const css = `
@@ -16,12 +16,12 @@ const css = `
   }
 `;
 
-export default function CreateMenuItems({ page, go, itemStyle, user }) {
+export default function CreateMenuItems({ page, go, itemStyle, user, hide = [] }) {
   return (
     <div className="cm-jobs">
       <style>{css}</style>
       {JOBS.map((j) => {
-        const tools = j.tools.filter((t) => t.access !== "account" || user);
+        const tools = j.tools.filter((t) => !hide.includes(t.name) && (t.access === "free" || user));
         if (!tools.length) return null;
         return (
           <div className="cm-job" key={j.id}>
