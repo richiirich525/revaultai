@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./lib/supabase.js";
+{cut?.shots?.length > 0 && <CutPreview shots={cut.shots} urls={urls} />}
 import FinishCut from "./FinishCut.jsx";
+import CutPreview from "./CutPreview.jsx";
 
 /*
   FinishPage — RevaultAI (pass 1: choose and analyse)
