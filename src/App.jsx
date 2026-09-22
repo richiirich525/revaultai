@@ -23,6 +23,7 @@ import AutopsyPage from "./AutopsyPage.jsx";
 import TakesPage from "./TakesPage.jsx";
 import FinishPage from "./FinishPage.jsx";
 import CreateMenuItems from "./CreateMenuItems.jsx";
+import VaultRefPicker, { refsToSend } from "./VaultRefPicker.jsx";
 import SpecsPage from "./SpecsPage.jsx";
 import FilmReceipt from "./FilmReceipt.jsx";
 import TakeDebugger from "./TakeDebugger.jsx";
@@ -1370,6 +1371,7 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
   const [model, setModel] = useState("wan-2.6");
   const [duration, setDuration] = useState(5);
   const [aspect, setAspect] = useState("16:9");
+  const [vaultRefIds, setVaultRefIds] = useState([]);
   // A shot handed over from the Scene Breakdown page.
   useEffect(() => {
     if (!genPrefill) return;
@@ -1752,7 +1754,7 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
       const res = await fetch("/api/generate-video", {
         method: "POST",
         headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: prompt.trim(), model, duration, aspectRatio: aspect, imageUrl: imageUrl || undefined, projectId: activeProject?.id ?? null, filmSpecId: specRef.current?.id ?? null, filmSpecVersion: specRef.current?.version ?? null }),
+        body: JSON.stringify({ prompt: prompt.trim(), model, duration, aspectRatio: aspect, imageUrl: imageUrl || undefined, projectId: activeProject?.id ?? null, filmSpecId: specRef.current?.id ?? null, filmSpecVersion: specRef.current?.version ?? null, vaultRefIds: refsToSend(model, imageUrl, vaultRefIds) }),
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -1932,6 +1934,16 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
                 {submitting ? "Starting..." : "Generate"}
               </button>
             </div>
+            <VaultRefPicker
+              model={model}
+              prompt={prompt}
+              imageUrl={imageUrl}
+              duration={duration}
+              setDuration={setDuration}
+              value={vaultRefIds}
+              onChange={setVaultRefIds}
+              onOpenVault={() => setPage("vault")}
+            />
             <div className="pf">
               <div className="pf-head">
                 <span className="pf-title">Ready to generate?</span>

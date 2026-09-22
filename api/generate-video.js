@@ -60,6 +60,17 @@ const MODELS = {
   },
 };
 
+// Models that can take Vault reference photos, and how. Wan and Kling are
+// absent on purpose: Wan's references must be videos, and Kling's elements
+// system comes later.
+const REF_MODELS = {
+  'seedance-2.0': { falId: 'bytedance/seedance-2.0/fast/reference-to-video', named: true },
+  'seedance-2.0-480': { falId: 'bytedance/seedance-2.0/fast/reference-to-video', named: true },
+  'seedance-2.5': { falId: 'bytedance/seedance-2.5/reference-to-video', named: true },
+  'seedance-2.5-480': { falId: 'bytedance/seedance-2.5/reference-to-video', named: true },
+  'veo-3.1': { falId: 'fal-ai/veo3.1/fast/reference-to-video', named: false, seconds: 8 },
+};
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -79,7 +90,7 @@ export default async function handler(req, res) {
     }
 
     // 2. Validate input
-    const { prompt, model, duration, imageUrl, aspectRatio, projectId, filmSpecId, filmSpecVersion } = req.body;
+    const { prompt, model, duration, imageUrl, aspectRatio, projectId, filmSpecId, filmSpecVersion, vaultRefIds } = req.body;
     const pid = typeof projectId === "string" ? projectId : null;
 
     // Normalise a prompt so trivial edits still count as the same shot.
@@ -112,6 +123,44 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Prompt is required (max 2000 characters)' });
     }
 
+    // 2b. Vault reference photos — resolved before any credits are spent, so a
+    //     failed lookup never charges anyone.
+    const refModel = REF_MODELS[model];
+    const wantedRefs = Array.isArray(vaultRefIds) ? vaultRefIds.filter((x) => typeof x === "string").slice(0, 3) : [];
+    const refs = [];
+    if (refModel && wantedRefs.length && !imageUrl) {
+      if (refModel.seconds && seconds !== refModel.seconds) {
+        return res.status(400).json({ error: `With reference photos, this model makes ${refModel.seconds}-second clips.` });
+      }
+      const { data: rows } = await supabase
+        .from("vault_entries")
+        .select("id, name, kind, images")
+        .eq("user_id", user.id)
+        .in("id", wantedRefs);
+      const ordered = (rows ?? []).sort((a, b) => wantedRefs.indexOf(a.id) - wantedRefs.indexOf(b.id));
+      const host = req.headers["x-forwarded-host"] || req.headers.host || "www.revaultai.com";
+      for (const row of ordered) {
+        if (!Array.isArray(row.images) || !row.images.length) continue;
+        try {
+          const r = await fetch(`https://${host}/api/get-video-url`, {
+            method: "POST",
+            headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+            body: JSON.stringify({ type: "vault", id: row.id }),
+          });
+          const j = await r.json().catch(() => ({}));
+          const url = r.ok && Array.isArray(j.urls) ? j.urls[0] : null;
+          if (url) refs.push({ id: row.id, name: row.name, kind: row.kind, url });
+        } catch { /* skip this one */ }
+      }
+      if (!refs.length) {
+        return res.status(400).json({ error: "Couldn't load your Vault photos. Try again, or generate without them." });
+      }
+    }
+    // Seedance reads references by name; Veo just takes the images.
+    const refPrompt = refs.length && refModel.named
+      ? `${prompt.trim()}\n\n${refs.map((r, i) => `@Image${i + 1} is ${r.name}${r.kind === "location" ? ", the location" : r.kind === "prop" ? ", a prop" : ""}.`).join(" ")}`
+      : prompt.trim();
+
     // 3. Deduct credits atomically — fails cleanly if balance is short
     const { data: paid, error: spendError } = await supabase.rpc('spend_credits', {
       p_user_id: user.id,
@@ -136,6 +185,7 @@ export default async function handler(req, res) {
         project_id: pid,
         film_spec_id: typeof filmSpecId === "string" ? filmSpecId : null,
         film_spec_version: Number(filmSpecVersion) || null,
+        vault_ref_ids: refs.length ? refs.map((r) => r.id) : null,
       })
       .select()
       .single();
@@ -179,13 +229,14 @@ export default async function handler(req, res) {
     // 5. Submit the job to fal, with our webhook for completion
     try {
       const { request_id } = await fal.queue.submit(
-        imageUrl ? selected.imageFalId : selected.falId,
+        refs.length ? refModel.falId : imageUrl ? selected.imageFalId : selected.falId,
         {
         input: {
-          prompt: prompt.trim(),
+          prompt: refPrompt,
           duration: selected.durationParam[seconds],
           ...(imageUrl && selected.aspectIgnoredWithImage ? {} : { aspect_ratio: ratio }),
           ...(imageUrl ? { image_url: imageUrl } : {}),
+          ...(refs.length ? { image_urls: refs.map((r) => r.url) } : {}),
           ...(selected.extraInput || {}),
         },
         webhookUrl: 'https://www.revaultai.com/api/generation-webhook',

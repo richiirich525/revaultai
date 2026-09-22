@@ -49,7 +49,9 @@ async function gatherRefs(generation) {
     if (!withPhotos.length) return [];
 
     let chosen = [];
-    if (generation.film_spec_id) {
+    // The photos this take was generated with, if any, are the ones to check.
+    if (generation.vault_ref_ids?.length) chosen = withPhotos.filter((e) => generation.vault_ref_ids.includes(e.id));
+    if (!chosen.length && generation.film_spec_id) {
       const { data: spec } = await supabase.from("film_specs").select("spec").eq("id", generation.film_spec_id).maybeSingle();
       const ids = spec?.spec?.subjects?.vaultIds ?? [];
       chosen = withPhotos.filter((e) => ids.includes(e.id));
