@@ -4,6 +4,116 @@
 
 export const POSTS = [
   {
+    slug: "edit-ai-video-clips-premiere-resolve",
+    title: "How to Turn AI Video Clips Into an Edit in Premiere Pro or DaVinci Resolve",
+    seoTitle: "How to Edit AI Video Clips in Premiere Pro or DaVinci Resolve (2026)",
+    description:
+      "How to edit AI video clips together: rename takes, match frame rates, build a rough cut, then import an EDL into Premiere Pro or DaVinci Resolve.",
+    date: "2026-09-21",
+    author: "Richard Garland",
+    category: "Guides",
+    readingTime: "9 min",
+    faq: [
+      ["Can I edit AI video clips in DaVinci Resolve for free?", "Yes. Resolve's free edition opens EDLs and cuts a timeline together at no cost — you only pay if you need Studio-only features like certain codecs or extra noise reduction. Import your clips into the Media Pool, then use File > Import > Timeline to bring in the EDL."],
+      ["What is a CMX 3600 EDL?", "A CMX 3600 EDL is a plain-text file that lists cut decisions — which clip, which in and out points, and where each piece lands on a timeline — without containing any video itself. It's an old broadcast format, but it's still the one nearly every editor, including Resolve and Premiere Pro, can read, which makes it a reliable way to move a cut between AI generation tools and a real editing app."],
+      ["Why are my shots offline after importing an EDL?", "An EDL names each clip by filename but doesn't carry the media itself, so if the editor can't find a file with a matching name in the location it expects, that shot shows up offline. In Premiere Pro, right-click the offline clip, choose Link Media, and point it at the folder holding your clips. In Resolve, importing the clips into the Media Pool before importing the EDL usually links them automatically, since Resolve matches by filename."],
+      ["Can I import an EDL into CapCut?", "No. CapCut and most mobile and consumer editors don't support EDL import, so an EDL built for Resolve or Premiere Pro won't open there. Work from a plain-text cut list instead — which clip, which in and out points, and which order — and rebuild the sequence by hand using that as a guide."],
+    ],
+    content: `
+<p>AI generation doesn't hand you a scene. It hands you a folder: twenty-three files with names like <code>gen_8841_v3.mp4</code>, running anywhere from four to fifteen seconds, some at 24fps and some at 30, half of them rejects you almost deleted. Somewhere in that folder is your scene — but nothing about the folder tells you where.</p>
+
+<p>Turning that pile into a cut you can watch is a real step, with its own tools and its own failure points, and it's the step most AI filmmaking guides skip. This one doesn't. It covers the manual workflow in full — good to know even if you never touch RevaultAI — and then the shortcut we built once we got tired of doing it by hand.</p>
+
+<h2>Why AI Video Clips Are Hard to Edit</h2>
+
+<p>A few things make a folder of AI generations a worse starting point than raw footage from a shoot, not just a smaller one.</p>
+
+<p><strong>The filenames carry no information.</strong> A camera or phone at least names files in the order it shot them. A generation tool usually names files by job ID, so <code>gen_8841_v3.mp4</code> tells you nothing about which shot it belongs to or where it falls in the scene. You're reconstructing shot order from memory, not reading it off the file list.</p>
+
+<p><strong>Lengths are arbitrary and rarely match what the scene needs.</strong> You asked for eight seconds; the model gave you eight seconds of an action that resolves in three. The rest is dead air, a held frame, or the shot quietly falling apart. Every clip needs to be trimmed before it's usable, not just placed.</p>
+
+<p><strong>Frame rates aren't guaranteed to match.</strong> Different models, or the same model on different runs, can hand back clips at different frame rates — 24fps next to 30fps next to something in between. Nothing in the filename or thumbnail tells you this. It only shows up once you're cutting and something lands a few frames off from where you placed it.</p>
+
+<p><strong>The best moment is often hidden inside a take you rejected.</strong> This is the one that costs people the most footage. A take fails because a hand drifts at the six-second mark — but the first two seconds, before it drifts, are clean. Most people watch a failed take, see the failure, and throw the whole eight seconds away. The usable fragment goes with it. See <a href="/blog/why-ai-video-generations-fail">why AI video generations fail</a> for more on how and where that drift tends to start — it's rarely the whole clip, and knowing where it starts is exactly what tells you where to cut.</p>
+
+<h2>The Manual Workflow, Done Properly</h2>
+
+<p>None of this requires special software. It's the same discipline an editor applies to any footage — it just matters more here, because AI clips give you fewer cues for free.</p>
+
+<h3>1. Collect every take, including rejects, and rename them in shot order</h3>
+
+<p>Pull every generation for the scene into one folder — keepers and rejects both, for the reason above. Then rename them to reflect shot order and take number: <code>01_wide_take1.mp4</code>, <code>01_wide_take2.mp4</code>, <code>02_closeup_take1.mp4</code>, and so on. This is tedious and worth doing anyway. A consistent naming scheme is the difference between an edit you can navigate and a folder you have to re-watch from scratch every time you lose your place.</p>
+
+<h3>2. Check each clip's frame rate before you build a timeline</h3>
+
+<p>Before you touch an edit, check what frame rate each clip actually is. Most editors show this in a media browser or clip properties panel. Count how many clips share each rate, and set your project or sequence to whichever rate most of your clips are already at — don't default to 24 or 30 out of habit if your footage doesn't match.</p>
+
+<p>The reason this matters: a timeline runs at one rate, and every clip on it gets mapped onto that rate's frames. A clip generated at a different rate than the timeline has to be stretched or resampled to fit, and that resampling is what makes a cut land a few frames early or late — a flinch that lands just after the punch instead of on it, a door that closes a beat after the sound of it closing. It's rarely dramatic, but it's exactly the kind of thing that makes a cut feel slightly wrong without an obvious cause. Setting the timeline to match your majority frame rate first, and flagging the odd clips out, avoids chasing that problem after the fact.</p>
+
+<h3>3. Watch each clip for usable stretches and mark in and out points</h3>
+
+<p>Watch every clip start to finish, including rejects, and mark where it's actually usable — not just where it starts and ends. The best moment in a clip is often in the middle, a second or two before whatever caused you to reject it: before a face starts to drift, before a hand loses its shape, before the camera move overshoots. Marking a tight in and out point around that stretch, rather than using the clip's full length, is usually what turns a failed take into a usable shot.</p>
+
+<h3>4. Assemble a rough cut in order, then note what's missing</h3>
+
+<p>Lay your marked selects onto the timeline in story order. Don't worry about transitions or polish — the goal here is a rough cut, a sequence of the right shots in the right order at roughly the right length, so you can see the scene as a whole for the first time. Once it's assembled, the gaps are obvious: a reaction shot you never generated, an insert that would smooth a jump cut, a line of dialogue with no coverage. Write those down. That list is your next generation batch, not a vague sense that "something's missing."</p>
+
+<h2>What an EDL Actually Is</h2>
+
+<p>Once you've got a cut worth keeping — whether you built it by hand or with something else — you'll usually want it in a real editor rather than stuck wherever you assembled it. That's what an EDL is for.</p>
+
+<p>An <strong>EDL</strong> (Edit Decision List) is a plain-text file that records cut decisions: which clip, which in and out points within that clip, and where the resulting piece lands on a timeline. It doesn't contain any video — it's a list of instructions, not footage. That means the clips it refers to have to sit in a folder the editor can find, with filenames that match what the EDL expects; the EDL and the media are two halves of the same delivery.</p>
+
+<p>The format almost every editor reads is <strong>CMX 3600</strong>, a decades-old broadcast standard that's outlived several generations of editing software because it's simple and nearly universal. If you want your cut to open in someone else's editor — or your own, on a different machine — a CMX 3600 EDL alongside your clips is the most portable way to hand it over.</p>
+
+<h2>Opening an EDL in Resolve, Premiere Pro, and Elsewhere</h2>
+
+<p>Exact menu names shift a little between versions, but the shape of the process is stable.</p>
+
+<p><strong>DaVinci Resolve:</strong> Import your clips into the Media Pool first, before you touch the EDL — Resolve links each shot in the EDL to a clip by matching filenames, so the clips need to already exist in your project. Then go to File > Import > Timeline and choose the EDL. If everything's named consistently, the timeline builds itself with every shot already placed and trimmed.</p>
+
+<p><strong>Premiere Pro:</strong> File > Import and select the EDL file. Premiere will ask you to confirm a sequence frame rate as it builds the timeline — set it to match your clips' actual rate, not a default. If any shots come in offline (a red slate instead of the clip), right-click the offline clip and choose Link Media, then point it at the folder holding your footage.</p>
+
+<p><strong>CapCut and most mobile editors:</strong> these don't import EDLs at all. If you're cutting on a phone or in a consumer app without EDL support, work from a written cut list instead — clip name, in and out points, and order — and rebuild the sequence by hand using that as your guide.</p>
+
+<h2>The Shortcut: RevaultAI Finish</h2>
+
+<p>We built <a href="/tools">Finish</a> because we were doing the workflow above by hand, on our own films, and got tired of it. It doesn't replace an editor — it does the part before the editor, the part this article has walked through manually.</p>
+
+<p>Finish works on clips generated on RevaultAI within a project — keepers and rejects alike. It doesn't take uploaded footage yet, so it's a fit for a scene you generated here, not a folder from somewhere else.</p>
+
+<p>Point it at a project and it reads every clip, roughly once a second, for usable stretches, for defects with their timings, and for the single best moment in each take — including the rejects, which is where a lot of the value in a failed generation usually sits. From that reading it assembles an ordered rough cut with in and out points already marked, a reason for each shot it chose, and a list of the shots still missing from the scene, each with a ready-to-use generation prompt. You can watch the assembled cut in the browser before you export anything.</p>
+
+<p>When it's ready, "Download the edit" gives you one zip: the clips under clean, ordered names, a CMX 3600 EDL, a plain-text cut sheet for CapCut and other editors that don't read EDLs, and import instructions. It reads each clip's real frame rate from the file itself and names any clips whose rates differ from the rest, rather than silently letting them land a few frames off the way an unchecked mismatch would. It's free while it's new.</p>
+
+<div class="cta-inline">
+<strong>Try Finish on a Project</strong>
+<p>Turn a project's takes — keepers and rejects — into a rough cut and an edit that opens already trimmed in Resolve or Premiere Pro. Free while it's new. Sign-in required.</p>
+<a class="cta-btn" href="/tools">See Finish on the Tools Page</a>
+</div>
+
+<h2>Honest Limits</h2>
+
+<p>Whether you build the cut by hand or with Finish, be clear-eyed about what you end up with. It's a rough cut — an ordered, trimmed sequence you refine from here, not a finished film. It's cuts only: no transitions, no color, no sound mix. And an EDL holds a single frame rate; if your scene mixes rates, check the affected shots after import, or conform your clips to one rate before you rely on the timeline's timing.</p>
+
+<p>Keeping characters, wardrobe and props consistent from shot to shot matters as much once you're editing as it did while you were generating — a cut can't paper over a continuity break the way a single shot sometimes can. If drift is showing up across your takes, <a href="/blog/ai-video-character-consistency">how to keep characters consistent in AI video</a> covers the causes and the fixes in more depth.</p>
+
+<h2>Frequently Asked Questions</h2>
+
+<h3>Can I edit AI video clips in DaVinci Resolve for free?</h3>
+<p>Yes. Resolve's free edition opens EDLs and cuts a timeline together at no cost — you only pay if you need Studio-only features like certain codecs or extra noise reduction. Import your clips into the Media Pool, then use File > Import > Timeline to bring in the EDL.</p>
+
+<h3>What is a CMX 3600 EDL?</h3>
+<p>A CMX 3600 EDL is a plain-text file that lists cut decisions — which clip, which in and out points, and where each piece lands on a timeline — without containing any video itself. It's an old broadcast format, but it's still the one nearly every editor, including Resolve and Premiere Pro, can read, which makes it a reliable way to move a cut between AI generation tools and a real editing app.</p>
+
+<h3>Why are my shots offline after importing an EDL?</h3>
+<p>An EDL names each clip by filename but doesn't carry the media itself, so if the editor can't find a file with a matching name in the location it expects, that shot shows up offline. In Premiere Pro, right-click the offline clip, choose Link Media, and point it at the folder holding your clips. In Resolve, importing the clips into the Media Pool before importing the EDL usually links them automatically, since Resolve matches by filename.</p>
+
+<h3>Can I import an EDL into CapCut?</h3>
+<p>No. CapCut and most mobile and consumer editors don't support EDL import, so an EDL built for Resolve or Premiere Pro won't open there. Work from a plain-text cut list instead — which clip, which in and out points, and which order — and rebuild the sequence by hand using that as a guide.</p>
+`,
+  },
+  {
     slug: "how-to-choose-ai-video-model-for-shot",
     title: "How to Choose the Best AI Video Model for Your Shot",
     seoTitle: "How to Choose the Best AI Video Model for a Shot (2026)",
