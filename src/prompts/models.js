@@ -7,13 +7,15 @@ export const MODELS = [
     slug: "seedance-2-5",
     name: "Seedance 2.5",
     maker: "ByteDance",
-    title: "Seedance 2.5 Prompts — 30-Second Cinematic Takes",
+    title: "Seedance 2.5 Prompts: 30-Second Cinematic Long Takes",
     description:
-      "Free copy-and-paste Seedance 2.5 prompts built for 30-second continuous takes and real physics. Director-grade cinematography, ready to run.",
-    h1: "Seedance 2.5 Prompts: Director-Grade Single Takes, Built for 30 Seconds",
+      "Copy-ready Seedance 2.5 prompts for 30-second continuous takes, real physics and 21:9 ultrawide framing. Director-grade, free to use.",
+    h1: "Seedance 2.5 Prompts for 30-Second Long Takes, Real Physics and Ultrawide Cinema",
     strength: "30-second continuous takes and physical simulation",
     intro:
-      "Seedance 2.5 is built for duration and continuity: single-take shots up to 30 seconds with stable spatial logic and convincing physical simulation. These prompts are written to exploit that — long developing camera moves, unbroken blocking, and material behavior that holds together across the full take. Copy any prompt, paste it into your generator, and adjust the specifics to your story.",
+      "Seedance 2.5 holds a single unbroken take for up to 30 seconds, and it handles water, fire, cloth and debris more convincingly than most models. These prompts are written for that: timed beats inside one continuous shot, physical detail the model can render, and compositions built for a 2.39:1 ultrawide frame. Set the frame to 21:9 in the frame selector where a prompt calls for it — the ratio is a setting, and the prompt describes the composition inside it.",
+    banner:
+      "**New in RevaultAI: everything around the prompt.** Block the scene first in the free **Rehearsal Studio** — performers and cameras on a timeline, seen through the lens you'll shoot on. Attach your characters' **Vault photos** and Seedance receives their faces, not just a description. Test every shot on the **Draft tier for half the credits**, promote the take that works, then **export an EDL** that opens already cut in Premiere Pro or DaVinci Resolve.",
     prompts: [
       {
         title: "The Cartographer's Ascent",
@@ -83,6 +85,36 @@ export const MODELS = [
         text: `A continuous 30-second single take following Sister Adaeze Okonjo down the east corridor of St. Brendan's ward at 4am — a narrow corridor of pale green tiled walls, a scuffed grey linoleum floor and evenly spaced overhead fluorescent panels, one panel flickering near the far doors. Adaeze Okonjo is a woman in her forties, dark brown skin, high cheekbones, hair braided close to the scalp and gathered at the nape, slim build, wearing pale blue scrubs, a navy cardigan with the left cuff pushed up over a plain steel watch and white leather clogs. Camera trails at hip height on a 24mm lens, gliding smoothly without a single cut as she pushes a gurney. The overhead panels pass in a repeating rhythm, sweeping cold top light across her face and the sheets; the flickering panel intermittently breaks that rhythm. The gurney carries real momentum through a right turn, the sheet rippling with correct fabric physics from displaced air. Cold desaturated palette, natural motion blur, fluorescent ballast hum and squeaking casters.`,
         note: `Every mutable detail a supervisor would catch is pinned in the string itself: which cuff is pushed up, which panel flickers, which direction the corridor turns. Wardrobe is enumerated garment by garment rather than summarised as "scrubs", so a later shot that changes the cardigan or drops the watch reads as a flagged discrepancy instead of ambiguity.`,
       },
+      {
+        title: "The Rain Market Oner",
+        genre: "Cinematic Realism",
+        spec: "21:9 · 30 seconds",
+        text: `A single unbroken 30-second Steadicam take through a crowded night market in heavy rain, composed for a 2.39:1 anamorphic frame on a 40mm lens with shallow depth of field. From 0 to 8 seconds the camera follows a young courier in a yellow rain jacket from behind as she threads between food stalls, steam rising off woks and catching magenta neon. From 8 to 18 seconds she ducks under a dripping tarp and the camera arcs around her left shoulder into a medium profile as rainwater sheets off the tarp edge and splashes across wet asphalt. From 18 to 30 seconds she steps back into the downpour and the camera rises on a slow crane into a high wide shot, revealing the whole market glowing under the storm. Realistic water physics: droplets beading on vinyl, fabric darkening as it soaks, puddles rippling with every footstep. Deep blue night lit by warm tungsten stall practicals, soft anamorphic flares from the neon, no cuts.`,
+      },
+      {
+        title: "Desert Convoy at Golden Hour",
+        genre: "Action",
+        spec: "21:9 · 20 seconds",
+        text: `Ultrawide 2.39:1 composition, one continuous 20-second shot. A convoy of three dust-caked off-road trucks races across a flat salt pan at golden hour, filmed from a camera car running parallel at 60 feet on a 75mm anamorphic lens. The trucks fill the right two-thirds of the frame while the horizon line sits low, leaving a vast amber sky above. Thick plumes of fine dust roll off the rear tyres and drift left across frame, backlit by the low sun so every particle glows. At 12 seconds the lead truck hits a shallow ridge, bounces, and lands with its suspension compressing and rebounding realistically, throwing a burst of grit toward the lens. Heat shimmer warps the far mountains. Warm backlight, crushed shadows, horizontal anamorphic flares, gentle camera vibration from the rough ground.`,
+      },
+      {
+        title: "Flambé in a Dark Kitchen",
+        genre: "Cinematic Realism",
+        spec: "16:9 · 12 seconds",
+        text: `A 12-second continuous shot in a dim restaurant kitchen after service, lit only by the blue ring of a gas burner and a single hanging tungsten bulb. Medium close-up on a 50mm lens, locked off at chest height, then a slow push-in. A chef in a stained white jacket tilts a copper pan and the brandy ignites: a column of orange flame roars upward, licks the underside of the extractor hood, and collapses back into flickering tongues across the pan. The fire casts moving light across his face and the steel counters, and smoke curls up through the bulb's glow. Physically accurate flame behaviour, heat haze distorting the background, sparks lifting and dying in the air. Chiaroscuro contrast, deep blacks, warm highlights on skin, no cuts.`,
+      },
+      {
+        title: "The Stairwell Chase",
+        genre: "Action",
+        spec: "16:9 · 30 seconds",
+        text: `One continuous 30-second handheld take, 24mm lens at eye level, following a man in a grey hoodie as he runs from pursuers through a concrete apartment block. From 0 to 10 seconds he bursts through a fire door and sprints down a flickering fluorescent corridor, the camera close behind his shoulder, breath fogging in the cold air. From 10 to 20 seconds he vaults a stairwell railing and drops half a flight; the camera follows down the stairs, bouncing with each step, as his trainers skid on wet concrete and he catches the rail to steady himself. From 20 to 30 seconds he shoulders open a door onto a rooftop at dawn and the camera pushes past him into a wide shot of the grey city skyline. Realistic momentum and weight in every landing, grain and motion blur, cold green fluorescents turning to soft dawn light, no cuts.`,
+      },
+      {
+        title: "Wine Glass Falls, Slow Push",
+        genre: "Cinematic Realism",
+        spec: "21:9 · 10 seconds",
+        text: `A 10-second continuous shot in 2.39:1, framed low across a long dinner table after a party. Macro-leaning 100mm lens, very shallow depth of field, slow dolly push along the tablecloth. A tall wine glass half-full of red wine is nudged off the table edge by a sleeping cat's paw. The glass tips, the wine arcs out in a heavy ribbon, and the glass hits the stone floor and shatters, shards scattering outward while the wine spreads in a dark, glossy pool that catches the candlelight. Accurate liquid physics and glass fracture, shards skittering and settling, candle flames flickering in the draught. Warm amber candlelight against deep shadow, soft bokeh from fairy lights in the background, no cuts.`,
+      },
     ],
   },
 
@@ -90,13 +122,15 @@ export const MODELS = [
     slug: "veo-3-1",
     name: "Veo 3.1",
     maker: "Google DeepMind",
-    title: "Veo 3.1 Prompts — Dialogue, Lip Sync & Close-Ups",
+    title: "Veo 3.1 Prompts: Dialogue, Faces & Native Audio",
     description:
-      "Free Veo 3.1 prompts written for native audio, lip-synced dialogue, and high-fidelity facial texture. Copy, paste, and shoot. No account required.",
-    h1: "Veo 3.1 Prompts: Lip-Synced Dialogue and Skin-Level Detail",
+      "Copy-ready Veo 3.1 prompts for close-up faces, spoken dialogue and native sound, in 16:9 or vertical 9:16. Director-grade and free to use.",
+    h1: "Veo 3.1 Prompts for Close-Up Faces, Spoken Dialogue and Native Sound",
     strength: "native audio, lip-synced dialogue, and facial texture",
     intro:
-      "Veo 3.1's advantage is the face and the voice: native audio generation, believable lip sync, and enough textural fidelity to hold a close-up. These prompts are written for performance — spoken lines, micro-expression, and lighting that rewards skin detail rather than hiding it. Dialogue is written inline so the model has something specific to synchronize to.",
+      "Veo 3.1 is at its best close in: skin texture, eyes, the small movements that sell a performance — and it generates dialogue and sound in the same pass. These prompts are built for that. Each fits Veo's 8-second maximum, keeps to its two frames, landscape 16:9 or vertical 9:16, and puts spoken lines in quotation marks with the sound written out, because Veo follows written audio direction closely.",
+    banner:
+      "**New in RevaultAI: everything around the prompt.** Block the scene first in the free **Rehearsal Studio** — performers and cameras on a timeline, seen through the lens you'll shoot on. Attach your characters' **Vault photos** and Veo generates from their faces through its reference mode. Test a shot's framing at **half the credits on Seedance's Draft tier** before committing to Veo, then **export an EDL** that opens already cut in Premiere Pro or DaVinci Resolve.",
     prompts: [
       {
         title: "The Confession Booth",
@@ -165,7 +199,37 @@ export const MODELS = [
         genre: "Continuity",
         text: `A tight close-up of Rosalind Achebe in a soundproofed radio booth, lit only by the amber glow of the console below her camera-left, 100mm lens, extremely shallow depth of field with only her eyes in critical focus. Rosalind Achebe is a woman in her late twenties, dark brown skin, close-cropped natural hair, a small silver stud in the right nostril, wearing black wire-framed headphones, a heather-grey sweatshirt with the collar cut away and no jewellery at the neck. Skin texture, the fine hairs at her temple and the condensation of her breath on the microphone windscreen are rendered at high fidelity. She leans in and speaks with practised warmth, fully lip-synchronised: "If you're still awake out there — this one is for you." Her expression shifts from performance to something genuine across the final three words. Low-key amber against deep blue shadow, soft top fill, natural film grain, the ambient hush of an isolated booth.`,
         note: `The negative detail — "no jewellery at the neck" — is as load-bearing as the positive ones, because a later shot that adds a necklace is the kind of drift an audit can only flag if absence was stated. Light is anchored to a practical source with a named direction, so the amber key remains verifiable across the sequence rather than being re-invented per shot.`,
-      }, 
+      },
+      {
+        title: "The Confession",
+        genre: "Drama",
+        spec: "16:9 · 8 seconds",
+        text: `Extreme close-up on a woman in her sixties sitting in a dark church pew, 85mm lens, shallow depth of field, eyes and mouth sharp while the pew behind falls to soft black. A single shaft of cool daylight from a high window catches the fine lines around her eyes, the sheen of a held-back tear and the texture of her skin. The camera holds still, then drifts imperceptibly closer. She looks down at her folded hands and says quietly, voice unsteady: "I never told him. Not once in forty years." Sound: the hush of a large stone room, a faint creak of old wood as she shifts, distant traffic muffled through thick walls. Chiaroscuro lighting, low-key, naturalistic performance with a small tremor in the chin.`,
+      },
+      {
+        title: "Vertical Street Interview",
+        genre: "Drama",
+        spec: "9:16 · 8 seconds",
+        text: `Vertical 9:16 handheld medium close-up on a street at dusk, 35mm lens at eye level, the subject framed in the upper third. A young man with a shaved head and a silver hoop earring stands by a bus shelter, city lights blurring into warm bokeh behind him. He glances past the camera, grins, then looks straight into the lens and says, relaxed and a little amused: "Honestly? I moved here for a girl. Stayed for the food." The camera breathes slightly with the operator. Sound: passing traffic, a bus pulling away with a hiss of brakes, fragments of conversation from people walking by. Soft sodium streetlight on one side of his face, cool blue ambient fill, crisp skin detail and natural stubble texture.`,
+      },
+      {
+        title: "Diner Two-Hander",
+        genre: "Drama",
+        spec: "16:9 · 8 seconds",
+        text: `Over-the-shoulder shot across a booth table in an empty all-night diner, 50mm lens, the foreground shoulder of a man in a denim jacket soft on frame left. In focus on frame right, a woman in her thirties with tired eyes and a loose ponytail wraps both hands around a coffee mug. She holds his gaze and says flatly: "You don't get to come back and pretend nothing happened." A beat, then she looks away toward the window. Sound: the hum of a refrigerator case, a coffee machine gurgling behind the counter, rain ticking against the glass. Green-tinged fluorescent overhead light mixed with red neon from the window sign, fine skin detail, naturalistic restrained performance.`,
+      },
+      {
+        title: "Hands by the Window",
+        genre: "Cinematic Realism",
+        spec: "16:9 · 6 seconds",
+        text: `Macro close-up, 100mm lens, of an old watchmaker's hands working at a wooden bench beside a tall window. Hard morning sunlight rakes across from frame left in a chiaroscuro wedge, revealing every crease, liver spot and raised vein on the backs of his hands. Steel tweezers lift a tiny brass gear and set it into an open pocket watch. The camera makes a slow lateral slide from left to right, holding focus on the fingertips. Dust motes turn in the light. Sound: a room full of clocks ticking slightly out of time with each other, the soft click of the gear seating, a sparrow outside the glass. No dialogue. Warm highlights, deep brown shadows, extremely fine texture detail.`,
+      },
+      {
+        title: "Rooftop Voicemail",
+        genre: "Drama",
+        spec: "9:16 · 8 seconds",
+        text: `Vertical 9:16, a young woman in a wool coat stands on a windy rooftop at blue hour, city lights coming on below, framed from the waist up on a 50mm lens with the skyline soft behind her. She holds a phone to her ear, listening, her expression shifting from guarded to quietly stunned as her eyes fill. A man's voice plays small and tinny through the phone speaker: "It's me. I'm at the station. If you still want to talk, I'll wait." She lowers the phone slowly without speaking. Sound: wind buffeting the microphone, a distant siren, the faint rumble of a train far below. Cool blue ambient light with warm window light catching her cheek, strands of hair moving in the wind, fine skin detail.`,
+      },
     ],
   },
 
@@ -173,13 +237,15 @@ export const MODELS = [
     slug: "kling-3",
     name: "Kling 3.0",
     maker: "Kuaishou",
-    title: "Kling 3.0 Prompts — Action, Motion & Crowd Shots",
+    title: "Kling 3.0 Prompts: Action, Crowds & Consistent Characters",
     description:
-      "Free Kling 3.0 prompts engineered for kinetic action, physical performance, and dense crowds. Director-grade and copy-ready. No account required.",
-    h1: "Kling 3.0 Prompts: Kinetic Action, Real Bodies, Dense Crowds",
+      "Copy-ready Kling 3.0 prompts for kinetic action, dense crowds and characters locked from reference photos. Director-grade, free to use.",
+    h1: "Kling 3.0 Prompts for Kinetic Action, Dense Crowds and Consistent Characters",
     strength: "fast kinetic action, physical performance, and dense crowds",
     intro:
-      "Kling 3.0 is strongest where things move: fast camera work, full-body physical performance, and crowds that behave like crowds. These prompts are built around velocity and mass — chases, fights, and scenes with real human density — with camera language written to keep up rather than sit still.",
+      "Kling 3.0 is built for bodies in motion: sprints, falls, fights and crowds that move like real crowds. It also carries characters through its elements system, where each character is supplied as a front photo plus extra angles. The prompts below name their characters. Save a character in the RevaultAI Vault under that name with two or three photos from different angles, and when you generate on Kling the platform sends them as elements automatically — no reference codes to type. Each prompt is written for Kling's 5- or 10-second lengths.",
+    banner:
+      "**New in RevaultAI: everything around the prompt.** Block the scene first in the free **Rehearsal Studio** — performers and cameras on a timeline, seen through the lens you'll shoot on. Save your characters in the **Vault** with photos from several angles, and Kling receives every angle as an element. Test a shot's framing at **half the credits on Seedance's Draft tier** before committing, then **export an EDL** that opens already cut in Premiere Pro or DaVinci Resolve.",
     prompts: [
       {
         title: "Night Market Pursuit",
@@ -248,7 +314,37 @@ export const MODELS = [
         genre: "Continuity",
         text: `A low-angle tracking shot at knee height on a 28mm lens, retreating ahead of a mass of protestors surging down a wide avenue at midday. At the front rank is Nadia Belkacem, a woman in her thirties, light brown skin, dark hair tied back with a red bandana knotted at the nape, wearing a faded army-green jacket with a torn left sleeve over a white shirt and carrying a folded cardboard placard in her right hand. Hundreds of individuals fill the depth of the frame with distinct gaits, gestures and collisions; one figure stumbles and is pulled upright by another. Tear gas canisters trail smoke that billows and shears across the crowd with convincing fluid dynamics. Overturned barricades scrape and shift under the press of bodies. Overcast flat daylight, no direct sun, desaturated palette, hard handheld shake, overwhelming ambient shouting and footfall.`,
         note: `The placard is pinned to a specific hand and the sleeve tear to a specific side, which are exactly the details that migrate across shots when a description says only "carrying a sign" or "torn jacket". Declaring the light as overcast with no direct sun sets a soft, directionless key that a later shot cannot contradict with hard shadows without the audit catching it.`,
-      },  
+      },
+      {
+        title: "Rooftop Gap Jump",
+        genre: "Action",
+        spec: "16:9 · 10 seconds",
+        text: `Kinetic tracking shot across wet city rooftops at night, 24mm lens, the camera racing alongside Mara, a lean young woman in a black windbreaker and climbing shoes. She sprints toward the roof edge, plants one foot on the low parapet and launches across a two-metre gap between buildings. The camera tracks her mid-air in profile against the lit skyline, then she lands in a forward roll across gravel, comes up running without breaking stride and disappears behind an air-conditioning unit. Real weight and momentum in the take-off and landing, jacket snapping in the wind, gravel scattering. Cold blue moonlight, warm orange city glow from below, rain-slick surfaces reflecting neon, slight motion blur.`,
+      },
+      {
+        title: "Stadium Surge",
+        genre: "Action",
+        spec: "16:9 · 10 seconds",
+        text: `A crane shot descending over a packed football stadium at night as a last-minute goal goes in. Wide 21mm lens starting high above the stands, then craning down toward the lower tier. Tens of thousands of fans in red and white erupt at once: arms thrown up, scarves swinging, people climbing on seats, a wave of bodies pushing forward against the barrier. Flares burn crimson in the crowd, their smoke drifting up through the floodlight beams. The crowd moves as a real crowd does, with pockets of individual reaction inside the mass, not in unison. Harsh white stadium floodlights, red flare glow, smoke catching the light, dense, detailed and chaotic.`,
+      },
+      {
+        title: "Market Fight",
+        genre: "Action",
+        spec: "16:9 · 10 seconds",
+        text: `A close-quarters fight in a crowded daytime street market, handheld 35mm lens, whip pans following the action. Dev, a stocky man in a grey work shirt, shoves Iko, a wiry teenager in a red track jacket, backwards into a fruit stall; oranges spill and roll across the ground. Iko ducks a swinging punch, slips under Dev's arm and shoves him into a stack of plastic crates that topple. Shoppers scatter and shout, a vendor waves his arms, and the camera weaves between bodies to keep both fighters in frame. Grounded, weighty choreography, no superhuman moves. Harsh overhead sun, deep shadows under awnings, saturated fruit colours, dust in the air.`,
+      },
+      {
+        title: "Against the Rush Hour",
+        genre: "Action",
+        spec: "16:9 · 5 seconds",
+        text: `Telephoto 135mm shot straight down a crowded subway platform at rush hour, compressing the crowd into a dense wall of commuters walking toward camera. In the centre, Mara walks the opposite way, away from the lens, head down, shoulders brushing past people who turn and step around her. The crowd moves naturally, each person at their own pace, some checking phones, one man dodging with a coffee held high. A train pulls in on frame right, its doors opening in a rush of air that lifts hair and coats. Cold fluorescent lighting, slight green cast, compressed depth, shallow focus with Mara sharp and the crowd around her softening.`,
+      },
+      {
+        title: "Alley Pursuit",
+        genre: "Action",
+        spec: "16:9 · 10 seconds",
+        text: `Low tracking shot inches above wet cobblestones, 18mm lens, chasing a motorcycle through a narrow night alley. Dev rides a battered café racer, leaning hard into a right-angle turn; the rear tyre kicks spray and the bike skids before gripping again. The camera races behind at wheel height as he threads between overflowing bins and a parked delivery van, sparks flicking up as a footpeg scrapes the ground. At the end of the alley he bursts out into a bright avenue and the camera pulls up and away. Realistic bike physics and weight shift, spray and sparks catching the light. Sodium orange streetlights, a red rear lamp streaking, puddles reflecting neon signs, strong motion blur at the frame edges.`,
+      },
     ],
   },
 ];

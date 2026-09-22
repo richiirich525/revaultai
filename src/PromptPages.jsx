@@ -37,6 +37,9 @@ const styles = `
   .pd-count { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.08em; margin-bottom: 20px; }
   .pd-note { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); line-height: 1.85; border-left: 2px solid var(--accent); padding: 2px 0 2px 14px; margin: 0 0 14px 0; opacity: 0.9; }
   .pd-note b { color: var(--accent); font-weight: 400; letter-spacing: 0.12em; text-transform: uppercase; font-size: 9px; display: block; margin-bottom: 5px; }
+  .pd-banner { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); line-height: 1.85; border-left: 2px solid var(--accent); padding: 4px 0 4px 16px; margin: 0 0 40px; max-width: 680px; }
+  .pd-banner strong { color: var(--accent); font-weight: 500; }
+  .pd-spec { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.06em; color: var(--muted); margin: -10px 0 14px; }
   .pd-model-tag { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); border: 1px solid rgba(123,63,228,0.35); border-radius: 3px; padding: 4px 10px; display: inline-block; margin-bottom: 12px; cursor: pointer; }
   .pd-model-tag:hover { background: var(--accent-dim); }
   .pd-genre-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
@@ -44,6 +47,11 @@ const styles = `
   .pd-also-label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
   @media (max-width: 860px) { .pd-grid { grid-template-columns: 1fr; } .pd-prompt { font-size: 11px; padding: 14px 15px; } }
 `;
+
+// Renders **bold** markdown as <strong> — the only markdown a banner uses.
+function renderBold(text) {
+  return text.split(/\*\*(.+?)\*\*/g).map((part, i) => (i % 2 === 1 ? <strong key={i}>{part}</strong> : part));
+}
 
 function CtaBanner({ setPage }) {
   return (
@@ -139,6 +147,7 @@ export function PromptModelPage({ slug, setPage, openPromptModel, openPromptGenr
       </div>
       <section className="section">
         <div className="pd-intro">{model.intro}</div>
+        {model.banner && <div className="pd-banner">{renderBold(model.banner)}</div>}
         <CtaBanner setPage={setPage} />
         <div className="pd-filters">
           <button className={"pd-chip" + (genre === "All" ? " active" : "")} onClick={() => setGenre("All")}>All ({model.prompts.length})</button>
@@ -153,6 +162,7 @@ export function PromptModelPage({ slug, setPage, openPromptModel, openPromptGenr
           <div className="pd-card" key={p.title}>
             <div className="pd-card-num">Prompt {i + 1} <span className="pd-genre">\u00b7 {p.genre}</span></div>
             <div className="pd-card-title">{p.title}</div>
+            {p.spec && <div className="pd-spec">Set frame and length: {p.spec}</div>}
             <div className="pd-prompt">{p.text}</div>
             {p.note && <div className="pd-note"><b>Continuity note</b>{p.note}</div>}
             <button className={"pd-copy" + (copied === p.title ? " done" : "")} onClick={() => copy(p.title, p.text)}>

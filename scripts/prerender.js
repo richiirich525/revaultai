@@ -31,6 +31,11 @@ function esc(s) {
     .replace(/"/g, "&quot;");
 }
 
+// Escapes, then turns **bold** into <strong> — the only markdown a banner uses.
+function escBold(s) {
+  return esc(s).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
 // Replace a meta tag if present, otherwise insert it before </head>.
 function setMeta(html, attr, key, value) {
   const re = new RegExp(`<meta\\s+${attr}=["']${key}["'][^>]*>`, "i");
@@ -257,15 +262,16 @@ for (const m of MODELS) {
     },
   ]);
 
+  const banner = m.banner ? `<p>${escBold(m.banner)}</p>` : "";
   const body = m.prompts
-    .map((p, i) => `<section><h2>${i + 1}. ${esc(p.title)}</h2><p>${esc(p.text)}</p>${p.note ? `<p><strong>Continuity note:</strong> ${esc(p.note)}</p>` : ""}</section>`)
+    .map((p, i) => `<section><h2>${i + 1}. ${esc(p.title)}</h2>${p.spec ? `<p><em>Set frame and length: ${esc(p.spec)}</em></p>` : ""}<p>${esc(p.text)}</p>${p.note ? `<p><strong>Continuity note:</strong> ${esc(p.note)}</p>` : ""}</section>`)
     .join("");
   const also = MODELS.filter((x) => x.slug !== m.slug)
     .map((x) => `<li><a href="/prompts/${esc(x.slug)}">${esc(x.name)} prompts</a></li>`)
     .join("");
   html = injectBody(
     html,
-    `<h1>${esc(m.h1)}</h1><p>${esc(m.intro)}</p>${body}<h2>Also see</h2><ul>${also}</ul><p><a href="/prompt-builder">Build your own prompt free</a> — no account needed.</p>`
+    `<h1>${esc(m.h1)}</h1><p>${esc(m.intro)}</p>${banner}${body}<h2>Also see</h2><ul>${also}</ul><p><a href="/prompt-builder">Build your own prompt free</a> — no account needed.</p>`
   );
   writeRoute("/prompts/" + m.slug, html);
   count++;
