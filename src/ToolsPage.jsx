@@ -1,222 +1,135 @@
-import { useState } from "react";
+import { JOBS, EXAMPLE, ACCESS_LABEL, toolCount } from "./lib/toolCatalog.js";
 
 /*
   ToolsPage — RevaultAI
-  One indexable page listing every tool, grouped by where it sits in a
-  production. Adding a tool here is one object in TOOLS.
+  The toolkit arranged by the five jobs of making a film, with what you give
+  each tool and what you get back — then one scene taken all the way through.
+  Reads everything from toolCatalog, the same list the Create menu uses.
 */
 
-const TOOLS = [
-  // --- Plan ---
-  {
-    group: "Plan",
-    name: "Scene Breakdown",
-    page: "scene-breakdown",
-    free: true,
-    blurb: "Paste a scene or logline and get a numbered shot list — size, camera move, lighting, duration and a full prompt per shot. Character and location descriptions are locked and repeated word-for-word across every shot, which is what keeps them recognisable from cut to cut.",
-  },
-  {
-    group: "Plan",
-    name: "Shot Director",
-    page: "shot-director",
-    free: true,
-    blurb: "One dramatic beat, three genuinely different ways to shoot it. Each approach comes with a shot size, lens, camera move, lighting, blocking, duration, a full prompt, and the craft reasoning for why it works.",
-  },
-  {
-    group: "Plan",
-    name: "Coverage Planner",
-    page: "coverage",
-    free: true,
-    blurb: "The setups an editor actually needs to cut your scene — master, singles, over-the-shoulders, reactions, inserts — ranked by how essential each is. The most useful part is what's missing, and the editorial problem it creates.",
-  },
-  {
-    group: "Plan",
-    name: "Performance & Blocking",
-    page: "blocking",
-    free: true,
-    blurb: "Where people stand and move relative to camera, what their bodies do, and how each line lands. Your dialogue comes back exactly as you wrote it with delivery notes attached — nothing gets rewritten.",
-  },
-  {
-    group: "Plan",
-    name: "Frame Planner",
-    page: "frame-planner",
-    free: true,
-    blurb: "Decide where a shot starts and where it lands. Two frame descriptions, an image prompt for each, the motion between them, and a note on what must stay identical for the shot to read as continuous.",
-  },
-
-  // --- Write ---
-  {
-    group: "Write",
-    name: "Prompt Builder",
-    page: "prompt-builder",
-    free: true,
-    blurb: "Turn a rough idea into a structured prompt written in real cinematography language. Six cinematic style presets, a strength control, and the craft language it applies is shown to you rather than hidden. Attach a reference still and it writes the shot from what it sees.",
-  },
-  {
-    group: "Write",
-    name: "Prompt Library",
-    page: "prompts",
-    free: true,
-    blurb: "Thirty-nine director-grade prompts across three model pages and eight genres, each one copy-ready. The continuity set carries notes explaining what makes each prompt survive a continuity audit.",
-  },
-  {
-    group: "Write",
-    name: "Which Model?",
-    page: "which-model",
-    free: true,
-    blurb: "Describe a shot and get ranked model recommendations with a real duration, a real credit cost, and an honest trade-off for each — plus a difficulty score naming what's likely to break before you spend anything.",
-  },
-
-  // --- Review ---
-  {
-    group: "Review",
-    name: "Continuity Check",
-    page: "continuity-check",
-    free: true,
-    blurb: "A script supervisor's read on a set of shot prompts: characters described two ways, wardrobe that drifts, unmotivated lighting, and reverse angles that cross the 180-degree line. It flags and quotes the exact wording — it never rewrites.",
-  },
-  {
-    group: "Review",
-    name: "Generation Autopsy",
-    page: "autopsy",
-    free: true,
-    blurb: "Paste the prompt behind a disappointing generation and find out what in the wording broke it, ranked by confidence, with the offending phrase quoted — and a revised prompt built to hold.",
-  },
-
-  // --- Make ---
-  {
-    group: "Make",
-    name: "Generate",
-    page: "generate",
-    free: false,
-    blurb: "Seedance 2.5, Veo 3.1, Kling 3.0 and Wan 2.6 behind one credit balance. Text to video or animate from a still, at 16:9, 9:16 or 1:1. No subscription, no API keys — pay per second of output.",
-  },
-  {
-    group: "Make",
-    name: "Finish",
-    page: "generate",
-    free: false,
-    blurb: "Upscale to 1080p or 4K, extend a clip past the length cap, and re-sync dialogue with lip sync — all running on a clip you already made.",
-  },
-
-  // --- Produce ---
-  {
-    group: "Produce",
-    name: "The Vault",
-    page: "vault",
-    free: false,
-    signedIn: true,
-    blurb: "Your production bible. Save characters, locations, props and looks once — with reference images — and they drop into every tool locked, reproduced word-for-word rather than rewritten each time.",
-  },
-  {
-    group: "Produce",
-    name: "Takes",
-    page: "takes",
-    free: false,
-    signedIn: true,
-    blurb: "Every generation of a shot, grouped automatically. Select the one you'll use, star, reject, annotate, and compare two side by side — so a project picked up next week is already decided.",
-  },
-  {
-    group: "Produce",
-    name: "Projects",
-    page: "projects",
-    free: false,
-    signedIn: true,
-    blurb: "Keep a film's characters, scenes, shots and takes together. Set a project active and new work files itself under it. Nothing requires a project, and deleting one never deletes work.",
-  },
-];
-
-const GROUPS = [
-  ["Plan", "Before you generate anything"],
-  ["Write", "Getting the prompt right"],
-  ["Review", "Catching problems early"],
-  ["Make", "Generating and finishing"],
-  ["Produce", "Keeping a film together"],
-];
-
 const styles = `
-  .tl-wrap { max-width: 900px; margin: 0 auto; padding: 0 48px; }
+  .tl-wrap { max-width: 920px; margin: 0 auto; padding: 0 48px; }
   .tl-body { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); line-height: 1.85; }
-  .tl-group { margin-top: 52px; }
-  .tl-group-name { font-family: 'Cormorant Garamond', serif; font-size: 30px; font-weight: 300; color: var(--text); line-height: 1.2; }
-  .tl-group-sub { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 20px; margin-top: 6px; }
-  .tl-card { border: 1px solid var(--border); border-radius: 8px; padding: 24px 26px; margin-bottom: 14px; background: var(--surface); cursor: pointer; transition: border-color 0.25s; }
-  .tl-card:hover { border-color: var(--accent); }
-  .tl-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
-  .tl-name { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700; color: var(--text); }
-  .tl-tag { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; border-radius: 3px; padding: 3px 9px; }
-  .tl-free { color: var(--accent); border: 1px solid rgba(123,63,228,0.35); }
-  .tl-acct { color: var(--muted); border: 1px solid var(--border); }
-  @media (max-width: 760px) { .tl-wrap { padding: 0 24px; } }
+  .tl-jobs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 30px 0 10px; }
+  .tl-jobchip { border: 1px solid var(--border); border-radius: 8px; padding: 14px 14px 12px; background: var(--surface); cursor: pointer; text-align: left; transition: border-color 0.2s; }
+  .tl-jobchip:hover { border-color: var(--accent); }
+  .tl-jobchip-n { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.16em; color: var(--accent); }
+  .tl-jobchip-name { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--text); margin: 6px 0 4px; line-height: 1.3; }
+  .tl-jobchip-when { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); line-height: 1.6; }
+  .tl-job { margin-top: 56px; scroll-margin-top: 110px; }
+  .tl-job-n { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.18em; color: var(--accent); text-transform: uppercase; }
+  .tl-job-name { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 300; color: var(--text); line-height: 1.2; margin-top: 4px; }
+  .tl-job-when { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin: 6px 0 20px; }
+  .tl-tool { display: grid; grid-template-columns: 220px 1fr; gap: 20px; border: 1px solid var(--border); border-radius: 8px; padding: 20px 22px; margin-bottom: 10px; background: var(--surface); cursor: pointer; transition: border-color 0.2s; }
+  .tl-tool:hover { border-color: var(--accent); }
+  .tl-name { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+  .tl-tag { display: inline-block; font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: 0.14em; text-transform: uppercase; border-radius: 3px; padding: 3px 8px; }
+  .tl-tag.free { color: var(--accent); border: 1px solid rgba(123,63,228,0.4); }
+  .tl-tag.account, .tl-tag.credits { color: var(--muted); border: 1px solid var(--border); }
+  .tl-where { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); margin-top: 8px; letter-spacing: 0.06em; }
+  .tl-io { font-family: 'DM Mono', monospace; font-size: 11px; line-height: 1.75; }
+  .tl-io b { font-weight: 400; color: var(--accent); display: inline-block; min-width: 62px; }
+  .tl-io span { color: var(--text); }
+  .tl-blurb { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); line-height: 1.8; margin-top: 8px; }
+  .tl-ex { border: 1px solid var(--accent); border-radius: 10px; padding: 30px 32px; margin-top: 64px; background: var(--surface); scroll-margin-top: 110px; }
+  .tl-step { display: grid; grid-template-columns: 34px 1fr; gap: 14px; padding: 16px 0; border-bottom: 1px solid var(--border); }
+  .tl-step:last-child { border-bottom: none; }
+  .tl-step-n { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; color: var(--accent); line-height: 1; }
+  .tl-step-tool { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: var(--text); cursor: pointer; margin-bottom: 6px; display: inline-block; }
+  .tl-step-tool:hover { color: var(--accent); }
+  @media (max-width: 860px) {
+    .tl-wrap { padding: 0 22px; }
+    .tl-jobs { grid-template-columns: 1fr 1fr; }
+    .tl-tool { grid-template-columns: 1fr; gap: 10px; }
+    .tl-ex { padding: 22px 20px; }
+  }
 `;
 
 export default function ToolsPage({ setPage, user, onSignInClick }) {
-  const [filter, setFilter] = useState("all");
-  const freeCount = TOOLS.filter((t) => t.free).length;
+  const all = JOBS.flatMap((j) => j.tools);
+  const freeCount = all.filter((t) => t.access === "free").length;
 
-  function open(t) {
-    if (t.signedIn && !user) { onSignInClick?.(); return; }
-    setPage(t.page);
+  function open(page, access) {
+    if (access === "account" && !user) { onSignInClick?.(); return; }
+    setPage(page);
   }
-
-  const shown = filter === "free" ? TOOLS.filter((t) => t.free) : TOOLS;
+  const accessOf = (page) => all.find((t) => t.page === page)?.access;
+  const jump = (id) => document.getElementById("job-" + id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 
   return (
     <div className="page">
       <style>{styles}</style>
       <div className="page-hdr">
         <div className="page-hdr-eyebrow">The Toolkit</div>
-        <div className="page-hdr-title">Tools</div>
-        <div className="page-hdr-sub">Everything for planning, writing, checking and making an AI film — {freeCount} of them free with no account.</div>
+        <div className="page-hdr-title">What are you trying to do?</div>
+        <div className="page-hdr-sub">
+          {toolCount()} tools, arranged by the five jobs of making a film — {freeCount} of them free with no account.
+        </div>
       </div>
 
       <section className="section">
         <div className="tl-wrap">
-          <div className="tl-body" style={{ maxWidth: 620 }}>
-            Most AI video platforms give you a prompt box and wish you luck. These are the parts either side of that — working out which shots a scene needs, how to shoot each one, which model suits it, what it will cost, and what's drifting before you spend anything on it.
+          <div className="tl-body" style={{ maxWidth: 640 }}>
+            Most AI video platforms give you a prompt box and wish you luck. These are the parts either side of it. Pick the job you're doing — each tool below says what you give it and what you get back.
           </div>
 
-          <div style={{ display: "flex", gap: 8, marginTop: 24, flexWrap: "wrap" }}>
-            <button
-              className="btn-ghost"
-              style={{ fontSize: 11, borderColor: filter === "all" ? "var(--accent)" : undefined, color: filter === "all" ? "var(--accent)" : undefined }}
-              onClick={() => setFilter("all")}
-            >All {TOOLS.length}</button>
-            <button
-              className="btn-ghost"
-              style={{ fontSize: 11, borderColor: filter === "free" ? "var(--accent)" : undefined, color: filter === "free" ? "var(--accent)" : undefined }}
-              onClick={() => setFilter("free")}
-            >Free, no account ({freeCount})</button>
+          <div className="tl-jobs">
+            {JOBS.map((j, i) => (
+              <button key={j.id} className="tl-jobchip" onClick={() => jump(j.id)}>
+                <div className="tl-jobchip-n">0{i + 1}</div>
+                <div className="tl-jobchip-name">{j.name}</div>
+                <div className="tl-jobchip-when">{j.when}</div>
+              </button>
+            ))}
+          </div>
+          <div className="tl-body" style={{ fontSize: 10 }}>
+            New here? <span style={{ color: "var(--accent)", cursor: "pointer" }} onClick={() => document.getElementById("job-example")?.scrollIntoView({ behavior: "smooth", block: "start" })}>See one scene taken all the way through ↓</span>
           </div>
 
-          {GROUPS.map(([g, sub]) => {
-            const items = shown.filter((t) => t.group === g);
-            if (items.length === 0) return null;
-            return (
-              <div className="tl-group" key={g}>
-                <div className="tl-group-name">{g}</div>
-                <div className="tl-group-sub">{sub}</div>
-                {items.map((t) => (
-                  <div className="tl-card" key={t.name} onClick={() => open(t)}>
-                    <div className="tl-head">
-                      <span className="tl-name">{t.name}</span>
-                      {t.free
-                        ? <span className="tl-tag tl-free">Free · no account</span>
-                        : t.signedIn
-                          ? <span className="tl-tag tl-acct">Free with an account</span>
-                          : <span className="tl-tag tl-acct">Uses credits</span>}
-                    </div>
-                    <div className="tl-body">{t.blurb}</div>
+          {JOBS.map((j, i) => (
+            <div className="tl-job" id={"job-" + j.id} key={j.id}>
+              <div className="tl-job-n">Job 0{i + 1}</div>
+              <div className="tl-job-name">{j.name}</div>
+              <div className="tl-job-when">{j.when}</div>
+              {j.tools.map((t) => (
+                <div className="tl-tool" key={t.name} onClick={() => open(t.page, t.access)}>
+                  <div>
+                    <div className="tl-name">{t.name}</div>
+                    <span className={"tl-tag " + t.access}>{ACCESS_LABEL[t.access]}</span>
+                    {t.where && <div className="tl-where">{t.where}</div>}
                   </div>
-                ))}
+                  <div>
+                    <div className="tl-io"><b>You give</b> <span>{t.give}</span></div>
+                    <div className="tl-io"><b>You get</b> <span>{t.get}</span></div>
+                    <div className="tl-blurb">{t.blurb}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))}
+
+          <div className="tl-ex" id="job-example">
+            <div className="tl-job-n">Worked example</div>
+            <div className="tl-job-name">{EXAMPLE.title}</div>
+            <div className="tl-body" style={{ margin: "10px 0 18px", color: "var(--text)" }}>
+              The scene: {EXAMPLE.scene}
+            </div>
+            {EXAMPLE.steps.map((s, i) => (
+              <div className="tl-step" key={i}>
+                <div className="tl-step-n">{i + 1}</div>
+                <div>
+                  <span className="tl-step-tool" onClick={() => open(s.page, accessOf(s.page))}>{s.tool} →</span>
+                  <div className="tl-io"><b>You give</b> <span>{s.give}</span></div>
+                  <div className="tl-io"><b>You get</b> <span>{s.get}</span></div>
+                </div>
               </div>
-            );
-          })}
+            ))}
+          </div>
 
           <div style={{ textAlign: "center", borderTop: "1px solid var(--border)", paddingTop: 48, marginTop: 56 }}>
             <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 34, fontWeight: 300, color: "var(--text)", marginBottom: 16, lineHeight: 1.2 }}>Bring your story.</div>
             <div className="tl-body" style={{ maxWidth: 460, margin: "0 auto 28px" }}>
-              Start anywhere — break down a scene, or just describe a shot and see what comes back. Nothing here asks for an account until you generate.
+              Start with the first job — break down a scene — or jump to whichever one you're stuck on. Nothing asks for an account until you generate or save.
             </div>
             <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
               <button className="btn-primary" onClick={() => setPage("scene-breakdown")}>Break down a scene</button>

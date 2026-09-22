@@ -21,7 +21,7 @@ export default function CreateMenuItems({ page, go, itemStyle, user, hide = [] }
     <div className="cm-jobs">
       <style>{css}</style>
       {JOBS.map((j) => {
-        const tools = j.tools.filter((t) => !hide.includes(t.name) && (t.access === "free" || user));
+        const tools = j.tools.filter((t) => t.inMenu !== false && !hide.includes(t.name) && (t.access === "free" || user));
         if (!tools.length) return null;
         return (
           <div className="cm-job" key={j.id}>
