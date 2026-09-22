@@ -193,7 +193,16 @@ export default async function handler(req, res) {
       })
       .select()
       .single();
-    if (insertError) throw insertError;
+    if (insertError) {
+      // Saving failed after credits were taken — give them back before failing.
+      await supabase.rpc('add_credits', {
+        p_user_id: user.id,
+        p_amount: cost,
+        p_reason: 'refund',
+        p_session_id: null,
+      });
+      throw insertError;
+    }
 
     // 4b. Group this generation into a shot. A near-identical prompt from the
     //     last 24 hours joins that shot; anything else starts a new one.
