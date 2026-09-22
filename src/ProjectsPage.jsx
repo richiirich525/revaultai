@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "./lib/supabase.js";
 import ProductionBrain from "./ProductionBrain.jsx";
 import ScriptSupervisor from "./ScriptSupervisor.jsx";
+import CoverageBoard from "./CoverageBoard.jsx";
 
 /*
   ProjectsPage — RevaultAI
@@ -34,7 +35,7 @@ const styles = `
   @media (max-width: 760px) { .pj-wrap { padding: 0 24px; } }
 `;
 
-export default function ProjectsPage({ user, onSignInClick, setPage, notify, activeProject, setActiveProject, setApPrefill }) {
+export default function ProjectsPage({ user, onSignInClick, setPage, notify, activeProject, setActiveProject, setApPrefill, setGenPrefill }) {
   const [projects, setProjects] = useState([]);
   const [counts, setCounts] = useState({});
   const [contents, setContents] = useState({});   // projectId -> { vault, breakdowns, shots }
@@ -152,6 +153,9 @@ export default function ProjectsPage({ user, onSignInClick, setPage, notify, act
           )}
           {activeProject && (
             <ScriptSupervisor project={activeProject} user={user} setPage={setPage} notify={notify} />
+          )}
+          {activeProject && (
+            <CoverageBoard project={activeProject} user={user} setPage={setPage} setGenPrefill={setGenPrefill} notify={notify} />
           )}
           {activeProject && (
             <div style={{ marginBottom: 24 }}>

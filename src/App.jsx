@@ -1381,11 +1381,13 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
     if (mapped) setModel(mapped);
     if (genPrefill.aspectRatio) setAspect(genPrefill.aspectRatio);
     specRef.current = genPrefill.filmSpecId ? { id: genPrefill.filmSpecId, version: genPrefill.filmSpecVersion ?? 1 } : null;
+    slotRef.current = genPrefill.coverageSlotId ?? null;
     setGenPrefill?.(null);
     notify(genPrefill.prompt ? "Shot loaded — check the model and duration, then Generate." : "Model selected — write your prompt and Generate.");
   }, [genPrefill]);
 
   const specRef = useRef(null);
+  const slotRef = useRef(null);
   const [pbOpen, setPbOpen] = useState(false);
   const [pbIdea, setPbIdea] = useState("");
   const [pbModel, setPbModel] = useState("veo");
@@ -1754,7 +1756,7 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
       const res = await fetch("/api/generate-video", {
         method: "POST",
         headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: prompt.trim(), model, duration, aspectRatio: aspect, imageUrl: imageUrl || undefined, projectId: activeProject?.id ?? null, filmSpecId: specRef.current?.id ?? null, filmSpecVersion: specRef.current?.version ?? null, vaultRefIds: refsToSend(model, imageUrl, vaultRefIds) }),
+        body: JSON.stringify({ prompt: prompt.trim(), model, duration, aspectRatio: aspect, imageUrl: imageUrl || undefined, projectId: activeProject?.id ?? null, filmSpecId: specRef.current?.id ?? null, filmSpecVersion: specRef.current?.version ?? null, vaultRefIds: refsToSend(model, imageUrl, vaultRefIds), coverageSlotId: slotRef.current }),
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -4265,7 +4267,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       case "blog": return <BlogPage setPage={setPage} openPost={openPost} />;
       case "blog-post": return <BlogPostPage slug={blogSlug} setPage={setPage} openPost={openPost} />;
       case "tools": return <ToolsPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} />;
-      case "projects": return <ProjectsPage setApPrefill={setApPrefill} user={user} onSignInClick={() => setAuthOpen(true)} setPage={setPage} notify={notify} activeProject={activeProject} setActiveProject={setActiveProject} />;
+      case "projects": return <ProjectsPage setGenPrefill={setGenPrefill} setApPrefill={setApPrefill} user={user} onSignInClick={() => setAuthOpen(true)} setPage={setPage} notify={notify} activeProject={activeProject} setActiveProject={setActiveProject} />;
       case "finish": return <FinishPage user={user} activeProject={activeProject} setPage={setPage} notify={notify} onSignInClick={() => setAuthOpen(true)} />;
       case "rehearsal": return <RehearsalPage user={user} activeProject={activeProject} notify={notify} onSignInClick={() => setAuthOpen(true)} />;
       case "specs": return <SpecsPage user={user} onSignInClick={() => setAuthOpen(true)} setPage={setPage} notify={notify} setGenPrefill={setGenPrefill} activeProject={activeProject} />;
@@ -4273,7 +4275,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       case "autopsy": return <AutopsyPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} setGenPrefill={setGenPrefill} apPrefill={apPrefill} setApPrefill={setApPrefill} />;
       case "blocking": return <BlockingPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} setGenPrefill={setGenPrefill} />;
       case "frame-planner": return <FramePlannerPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} setGenPrefill={setGenPrefill} notify={notify} />;
-      case "coverage": return <CoveragePage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} setGenPrefill={setGenPrefill} setCcPrefill={setCcPrefill} />;
+      case "coverage": return <CoveragePage activeProject={activeProject} notify={notify} setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} setGenPrefill={setGenPrefill} setCcPrefill={setCcPrefill} />;
       case "shot-director": return <ShotDirectorPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} setGenPrefill={setGenPrefill} />;
       case "continuity-check": return <ContinuityCheckPage setPage={setPage} user={user} ccPrefill={ccPrefill} setCcPrefill={setCcPrefill} />;
       case "vault": return <VaultPage activeProject={activeProject} user={user} onSignInClick={() => setAuthOpen(true)} setPage={setPage} notify={notify} />;
