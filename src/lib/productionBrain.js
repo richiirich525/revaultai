@@ -17,7 +17,7 @@ const REASON_LABELS = {
 // Findings are ordered by how much they're costing the creator right now.
 const PRIORITY = { blocked: 0, waste: 1, decision: 2, gap: 3, ready: 4 };
 
-export function buildFindings({ shots = [], gens = [], specs = [], observed = [], breakdowns = [] }) {
+export function buildFindings({ shots = [], gens = [], specs = [], observed = [], breakdowns = [], slots = [] }) {
   const out = [];
   const done = gens.filter((g) => g.status === "complete" || g.status === "failed");
   const bySelected = new Set(shots.map((s) => s.selected_generation_id).filter(Boolean));
@@ -112,6 +112,29 @@ export function buildFindings({ shots = [], gens = [], specs = [], observed = []
       action: "scene-breakdown",
       actionLabel: "Open Scene Breakdown",
       weight: 3,
+    });
+  }
+
+  // --- Essential coverage with no keeper yet ---
+  const keeperIds = new Set(shots.map((s) => s.selected_generation_id).filter(Boolean));
+  const coveredSlots = new Set(gens.filter((g) => g.coverage_slot_id && keeperIds.has(g.id)).map((g) => g.coverage_slot_id));
+  const triedSlots = new Set(gens.filter((g) => g.coverage_slot_id).map((g) => g.coverage_slot_id));
+  const openSlots = slots.filter((s) => s.priority === "essential" && !s.manual_status && !coveredSlots.has(s.id));
+  if (openSlots.length > 0) {
+    const untried = openSlots.filter((s) => !triedSlots.has(s.id));
+    const next = untried[0] ?? openSlots[0];
+    const triedCount = openSlots.length - untried.length;
+    const one = openSlots.length === 1;
+    out.push({
+      kind: "gap",
+      title: `${openSlots.length} essential setup${one ? "" : "s"} still ${one ? "has" : "have"} no keeper`,
+      detail: `Still missing: ${openSlots.slice(0, 3).map((s) => s.slug).join(", ")}${openSlots.length > 3 ? `, and ${openSlots.length - 3} more` : ""}.`
+        + (triedCount ? (one ? " It's been tried, but nothing's been chosen." : ` ${triedCount} of them ${triedCount === 1 ? "has" : "have"} been tried without a keeper.`) : "")
+        + ` The scene can't be cut without ${one ? "it" : "them"}.`,
+      action: "fill-slot",
+      actionLabel: `Fill "${next.slug}"`,
+      subjectId: next.id,
+      weight: 20 + openSlots.length * 4,
     });
   }
 

@@ -149,7 +149,7 @@ export default function ProjectsPage({ user, onSignInClick, setPage, notify, act
           </div>
 
           {activeProject && (
-            <ProductionBrain project={activeProject} user={user} setPage={setPage} setApPrefill={setApPrefill} />
+            <ProductionBrain project={activeProject} user={user} setPage={setPage} setApPrefill={setApPrefill} setGenPrefill={setGenPrefill} />
           )}
           {activeProject && (
             <ScriptSupervisor project={activeProject} user={user} setPage={setPage} notify={notify} />

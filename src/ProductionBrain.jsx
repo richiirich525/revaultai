@@ -31,22 +31,23 @@ const styles = `
   .pb2-action:hover { color: var(--accent); border-color: var(--accent); }
 `;
 
-export default function ProductionBrain({ project, user, setPage, setApPrefill }) {
+export default function ProductionBrain({ project, user, setPage, setApPrefill, setGenPrefill }) {
   const [data, setData] = useState(null);
 
   useEffect(() => {
     if (!user?.id || !project?.id) { setData(null); return; }
     (async () => {
-      const [shots, gens, specs, observed, breakdowns] = await Promise.all([
+      const [shots, gens, specs, observed, breakdowns, slots] = await Promise.all([
         supabase.from("shots").select("id, name, selected_generation_id").eq("project_id", project.id),
-        supabase.from("generations").select("id, shot_id, status, credits_spent, reject_reason, film_spec_id, model").eq("project_id", project.id),
+        supabase.from("generations").select("id, shot_id, status, credits_spent, reject_reason, film_spec_id, model, coverage_slot_id").eq("project_id", project.id),
         supabase.from("film_specs").select("id, title, breakdown_id").eq("project_id", project.id),
         supabase.from("observed_states").select("resolution, differences").eq("project_id", project.id),
         supabase.from("scene_breakdowns").select("id, title, shot_count").eq("project_id", project.id),
+        supabase.from("coverage_slots").select("id, slug, priority, manual_status, prompt, model_key").eq("project_id", project.id),
       ]);
       setData({
         shots: shots.data ?? [], gens: gens.data ?? [], specs: specs.data ?? [],
-        observed: observed.data ?? [], breakdowns: breakdowns.data ?? [],
+        observed: observed.data ?? [], breakdowns: breakdowns.data ?? [], slots: slots.data ?? [],
       });
     })();
   }, [user?.id, project?.id]);
@@ -56,7 +57,7 @@ export default function ProductionBrain({ project, user, setPage, setApPrefill }
   const findings = buildFindings(data);
   const s = buildSummary(data);
 
-  if (s.shots === 0 && s.attempts === 0 && data.specs.length === 0) {
+  if (s.shots === 0 && s.attempts === 0 && data.specs.length === 0 && (data.slots ?? []).length === 0) {
     return (
       <div className="pb2">
         <style>{styles}</style>
@@ -73,6 +74,12 @@ export default function ProductionBrain({ project, user, setPage, setApPrefill }
     if (f.action === "autopsy" && f.subjectId) {
       const g = data.gens.find((x) => x.id === f.subjectId);
       if (g) { setApPrefill?.({ prompt: g.prompt ?? "", modelKey: g.model }); setPage("autopsy"); return; }
+    }
+    if (f.action === "fill-slot") {
+      const slot = data.slots?.find((x) => x.id === f.subjectId);
+      if (slot?.prompt) setGenPrefill?.({ prompt: slot.prompt, modelKey: slot.model_key ?? undefined, aspectRatio: "16:9", coverageSlotId: slot.id });
+      setPage(slot?.prompt ? "generate" : "coverage");
+      return;
     }
     setPage(f.action);
   }
