@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./lib/supabase.js";
-{cut?.shots?.length > 0 && <CutPreview shots={cut.shots} urls={urls} />}
-<FinishExport cut={cut} urls={urls} gens={gens} title={activeProject?.name} scene={scene} />
 import FinishCut from "./FinishCut.jsx";
 import CutPreview from "./CutPreview.jsx";
 import FinishExport from "./FinishExport.jsx";
@@ -315,6 +313,8 @@ export default function FinishPage({ user, activeProject, setPage, notify, onSig
               )}
             </div>
           </div>
+          {cut?.shots?.length > 0 && <CutPreview shots={cut.shots} urls={urls} />}
+          {cut && <FinishExport cut={cut} urls={urls} gens={gens} title={activeProject?.name} scene={scene} />}
           {cut && <FinishCut cut={cut} gens={gens} urls={urls} notify={notify} />}
         </div>
       </section>
