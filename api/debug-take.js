@@ -34,7 +34,9 @@ Rules:
 - Set confidence honestly. Low when a difference could be lighting, compression or motion blur rather than a real change.
 - Include 1-3 "ok" findings confirming what DID land. A report that only complains is less useful.
 - Do not flag normal motion blur, compression artifacts, or a subject legitimately moving through frame.
-- The repair prompt must be the same shot. Do not simplify the creative intent to make it easier.`;
+- The repair prompt must be the same shot. Do not simplify the creative intent to make it easier.
+
+REFERENCE PHOTOS: If reference photos from the filmmaker's Vault are provided, they are canon for how those characters, props and places must look. Compare the frames against them — face, hair, build, skin tone, wardrobe, a prop's shape, colour and markings, a location's defining features. Report each mismatch as a finding that names the reference and quotes what differs ("Maya's hair is shoulder-length in the reference; cropped short from 2.4s"). Where a reference is matched well, say so in an "ok" finding. Judge identity and design, not lighting or angle — a different angle on the same face is a match.`;
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
@@ -44,7 +46,7 @@ export default async function handler(req, res) {
     const { data: { user } } = await supabase.auth.getUser(token);
     if (!user) return res.status(401).json({ error: "Not signed in" });
 
-    const { generationId, frames } = req.body || {};
+    const { generationId, frames, refs, force } = req.body || {};
     if (!generationId) return res.status(400).json({ error: "Missing generation" });
     if (!Array.isArray(frames) || frames.length < 2) {
       return res.status(400).json({ error: "Need at least two frames to compare." });
@@ -58,7 +60,7 @@ export default async function handler(req, res) {
     if (!gen || gen.user_id !== user.id) return res.status(403).json({ error: "Not your generation" });
 
     // Cached - frame analysis is expensive, so never repeat it silently.
-    if (gen.debug_report) return res.status(200).json({ ...gen.debug_report, cached: true });
+    if (gen.debug_report && !force) return res.status(200).json({ ...gen.debug_report, cached: true });
 
     // The intent: a structured spec if there is one, the prompt if not.
     let intent = `PROMPT USED:\n${gen.prompt || "(none recorded)"}`;
@@ -76,14 +78,29 @@ ${gen.prompt || "(none recorded)"}`;
     const clean = frames.slice(0, MAX_FRAMES).filter((f) => typeof f?.data === "string" && f.data.length < MAX_FRAME_BYTES);
     if (clean.length < 2) return res.status(400).json({ error: "Frames were too large to analyse. Try a shorter clip." });
 
+    // The filmmaker's Vault photos — canon for how people and things must look.
+    const cleanRefs = (Array.isArray(refs) ? refs : [])
+      .filter((r) => typeof r?.data === "string" && r.data.length < 500_000 && r?.name)
+      .slice(0, 3)
+      .map((r) => ({
+        name: String(r.name).slice(0, 80),
+        kind: String(r.kind || "").slice(0, 20),
+        description: String(r.description || "").slice(0, 600),
+        data: r.data,
+      }));
+
     const content = [];
+    cleanRefs.forEach((r) => {
+      content.push({ type: "text", text: `REFERENCE PHOTO — ${r.name}${r.kind ? ` (${r.kind})` : ""}${r.description ? `. Locked description: ${r.description}` : ""}` });
+      content.push({ type: "image", source: { type: "base64", media_type: "image/jpeg", data: r.data } });
+    });
     clean.forEach((f, i) => {
       content.push({ type: "text", text: `Frame ${i + 1} - sampled at ${Number(f.t).toFixed(1)}s` });
       content.push({ type: "image", source: { type: "base64", media_type: "image/jpeg", data: f.data } });
     });
     content.push({
       type: "text",
-      text: `${intent}\n\nDuration: ${gen.duration_seconds ?? "unknown"}s. Model: ${gen.model ?? "unknown"}.\nThe ${clean.length} frames above are evenly sampled across the clip.`,
+      text: `${intent}\n\nDuration: ${gen.duration_seconds ?? "unknown"}s. Model: ${gen.model ?? "unknown"}.\nThe ${clean.length} frames above are evenly sampled across the clip.${cleanRefs.length ? ` The first ${cleanRefs.length} image${cleanRefs.length === 1 ? " is a reference photo" : "s are reference photos"}, not frames from the clip.` : ""}`,
     });
 
     const apiRes = await fetch("https://api.anthropic.com/v1/messages", {
@@ -114,6 +131,7 @@ ${gen.prompt || "(none recorded)"}`;
       verdict: String(out?.verdict || "").slice(0, 400),
       frameCount: clean.length,
       hadSpec: !!gen.film_spec_id,
+      refs: cleanRefs.map((r) => r.name),
       findings: (Array.isArray(out?.findings) ? out.findings : [])
         .map((f) => ({
           severity: ["error", "warning", "ok"].includes(f?.severity) ? f.severity : "warning",

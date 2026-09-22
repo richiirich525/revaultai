@@ -14,6 +14,84 @@ const SEV = {
   ok:      { color: "#4ADE80", mark: "\u2713", label: "Landed" },
 };
 
+
+const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+// Load a photo and shrink it — the model needs the face and the outfit, not pixels.
+function loadImageData(url, max = 512) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        const scale = Math.min(1, max / Math.max(img.naturalWidth || 1, img.naturalHeight || 1));
+        const c = document.createElement("canvas");
+        c.width = Math.round((img.naturalWidth || max) * scale);
+        c.height = Math.round((img.naturalHeight || max) * scale);
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        resolve(c.toDataURL("image/jpeg", 0.8).split(",")[1]);
+      } catch { resolve(null); }
+    };
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+}
+
+// Which Vault entries does this take involve? The shot's spec says exactly;
+// without one, any character, prop or place named in the prompt. Up to three,
+// one photo each. Best effort — the check still runs without them.
+async function gatherRefs(generation) {
+  try {
+    const { data: entries } = await supabase
+      .from("vault_entries")
+      .select("id, name, kind, description, wardrobe, distinguishing, images, project_id");
+    const withPhotos = (entries ?? []).filter((e) => e.kind !== "look" && Array.isArray(e.images) && e.images.length > 0);
+    if (!withPhotos.length) return [];
+
+    let chosen = [];
+    if (generation.film_spec_id) {
+      const { data: spec } = await supabase.from("film_specs").select("spec").eq("id", generation.film_spec_id).maybeSingle();
+      const ids = spec?.spec?.subjects?.vaultIds ?? [];
+      chosen = withPhotos.filter((e) => ids.includes(e.id));
+    }
+    if (!chosen.length) {
+      const prompt = (generation.prompt || "").toLowerCase();
+      chosen = withPhotos.filter((e) => {
+        const n = (e.name || "").trim().toLowerCase();
+        if (n.length < 2) return false;
+        if (generation.project_id && e.project_id && e.project_id !== generation.project_id) return false;
+        return new RegExp(`(^|[^a-z0-9])${escapeRe(n)}([^a-z0-9]|$)`).test(prompt);
+      });
+    }
+    chosen = chosen.slice(0, 3);
+    if (!chosen.length) return [];
+
+    const { data: sess } = await supabase.auth.getSession();
+    const out = [];
+    for (const e of chosen) {
+      const r = await fetch("/api/get-video-url", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + sess?.session?.access_token, "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "vault", id: e.id }),
+      });
+      const j = await r.json().catch(() => ({}));
+      const url = r.ok && Array.isArray(j.urls) ? j.urls[0] : null;
+      if (!url) continue;
+      const data = await loadImageData(url);
+      if (!data) continue;
+      out.push({
+        name: e.name,
+        kind: e.kind,
+        description: [e.description, e.wardrobe, e.distinguishing].filter(Boolean).join(" "),
+        data,
+      });
+    }
+    return out;
+  } catch {
+    return [];
+  }
+}
+
 const styles = `
   .dbg { border: 1px solid var(--accent); border-radius: 6px; padding: 18px 20px; margin-top: 12px; background: var(--bg3); }
   .dbg-label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
@@ -80,17 +158,19 @@ export default function TakeDebugger({ generation, videoUrl, notify, setGenPrefi
     });
   }
 
-  async function run() {
+  async function run(force = false) {
     if (!videoUrl) { notify?.("Still preparing playback — try again in a moment."); return; }
     setBusy(true); setStage("Loading the clip…");
     try {
       const frames = await sampleFrames(videoUrl, 8);
-      setStage("Reading the frames against your intent…");
+      setStage("Gathering your Vault photos…");
+      const refs = await gatherRefs(generation);
+      setStage(refs.length ? `Comparing against ${refs.length} Vault photo${refs.length === 1 ? "" : "s"}…` : "Reading the frames against your intent…");
       const { data: sess } = await supabase.auth.getSession();
       const r = await fetch("/api/debug-take", {
         method: "POST",
         headers: { Authorization: "Bearer " + sess?.session?.access_token, "Content-Type": "application/json" },
-        body: JSON.stringify({ generationId: generation.id, frames }),
+        body: JSON.stringify({ generationId: generation.id, frames, refs, force }),
       });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) notify?.(j.error || "Could not analyse the take.");
@@ -159,7 +239,12 @@ export default function TakeDebugger({ generation, videoUrl, notify, setGenPrefi
       )}
 
       <div className="dbg-note">
-        Read from {report.frameCount} stills sampled across the clip{report.hadSpec ? ", compared against this shot's spec" : ", compared against the prompt"}. Timings are approximate to the sampling gaps, and motion and audio aren't visible in stills.
+        Read from {report.frameCount} stills sampled across the clip{report.hadSpec ? ", compared against this shot's spec" : ", compared against the prompt"}{report.refs?.length ? `, and against your Vault photos of ${report.refs.join(", ")}` : ""}. Timings are approximate to the sampling gaps, and motion and audio aren't visible in stills.
+      </div>
+      <div style={{ marginTop: 10 }}>
+        <button className="gen-button" onClick={() => run(true)} disabled={busy}>
+          {busy ? stage || "Working…" : "Re-check"}
+        </button>
       </div>
     </div>
   );
