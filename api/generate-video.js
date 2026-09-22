@@ -91,7 +91,7 @@ export default async function handler(req, res) {
     }
 
     // 2. Validate input
-    const { prompt, model, duration, imageUrl, aspectRatio, projectId, filmSpecId, filmSpecVersion, vaultRefIds, coverageSlotId } = req.body;
+    const { prompt, model, duration, imageUrl, aspectRatio, projectId, filmSpecId, filmSpecVersion, vaultRefIds, coverageSlotId, promotedFrom } = req.body;
     const pid = typeof projectId === "string" ? projectId : null;
 
     // Normalise a prompt so trivial edits still count as the same shot.
@@ -188,6 +188,8 @@ export default async function handler(req, res) {
         film_spec_version: Number(filmSpecVersion) || null,
         vault_ref_ids: refs.length ? refs.map((r) => r.id) : null,
         coverage_slot_id: typeof coverageSlotId === "string" ? coverageSlotId : null,
+        aspect_ratio: ratio,
+        promoted_from: typeof promotedFrom === "string" ? promotedFrom : null,
       })
       .select()
       .single();

@@ -24,6 +24,7 @@ import TakesPage from "./TakesPage.jsx";
 import FinishPage from "./FinishPage.jsx";
 import CreateMenuItems from "./CreateMenuItems.jsx";
 import VaultRefPicker, { refsToSend } from "./VaultRefPicker.jsx";
+import PromoteDraft from "./PromoteDraft.jsx";
 import SpecsPage from "./SpecsPage.jsx";
 import FilmReceipt from "./FilmReceipt.jsx";
 import TakeDebugger from "./TakeDebugger.jsx";
@@ -1382,12 +1383,16 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
     if (genPrefill.aspectRatio) setAspect(genPrefill.aspectRatio);
     specRef.current = genPrefill.filmSpecId ? { id: genPrefill.filmSpecId, version: genPrefill.filmSpecVersion ?? 1 } : null;
     slotRef.current = genPrefill.coverageSlotId ?? null;
+    promoRef.current = genPrefill.promotedFrom ?? null;
+    if (genPrefill.generateModelKey) setModel(genPrefill.generateModelKey);
+    if (genPrefill.duration) setDuration(Number(genPrefill.duration));
     setGenPrefill?.(null);
     notify(genPrefill.prompt ? "Shot loaded — check the model and duration, then Generate." : "Model selected — write your prompt and Generate.");
   }, [genPrefill]);
 
   const specRef = useRef(null);
   const slotRef = useRef(null);
+  const promoRef = useRef(null);
   const [pbOpen, setPbOpen] = useState(false);
   const [pbIdea, setPbIdea] = useState("");
   const [pbModel, setPbModel] = useState("veo");
@@ -1756,7 +1761,7 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
       const res = await fetch("/api/generate-video", {
         method: "POST",
         headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: prompt.trim(), model, duration, aspectRatio: aspect, imageUrl: imageUrl || undefined, projectId: activeProject?.id ?? null, filmSpecId: specRef.current?.id ?? null, filmSpecVersion: specRef.current?.version ?? null, vaultRefIds: refsToSend(model, imageUrl, vaultRefIds), coverageSlotId: slotRef.current }),
+        body: JSON.stringify({ prompt: prompt.trim(), model, duration, aspectRatio: aspect, imageUrl: imageUrl || undefined, projectId: activeProject?.id ?? null, filmSpecId: specRef.current?.id ?? null, filmSpecVersion: specRef.current?.version ?? null, vaultRefIds: refsToSend(model, imageUrl, vaultRefIds), coverageSlotId: slotRef.current, promotedFrom: promoRef.current }),
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -2008,6 +2013,7 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
                             Why didn't this work?
                           </button>
                           <TakeDebugger generation={g} videoUrl={videoUrls[g.id]} notify={notify} setGenPrefill={setGenPrefill} setPage={setPage} />
+                          <PromoteDraft generation={g} setGenPrefill={setGenPrefill} setPage={setPage} />
                           <button className="gen-button" onClick={() => openChain(g)}>
                             {chainFor === g.id ? "Close frame picker" : "Use a frame \u2192"}
                           </button>
