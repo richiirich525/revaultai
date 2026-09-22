@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./lib/supabase.js";
+import FinishCut from "./FinishCut.jsx";
 
 /*
   FinishPage — RevaultAI (pass 1: choose and analyse)
@@ -103,6 +104,8 @@ export default function FinishPage({ user, activeProject, setPage, notify, onSig
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState("");
   const [loading, setLoading] = useState(true);
+  const [cut, setCut] = useState(null);
+  const [assembling, setAssembling] = useState(false);
 
   async function signUrl(g) {
     try {
@@ -135,6 +138,8 @@ export default function FinishPage({ user, activeProject, setPage, notify, onSig
       if (logline) setScene((cur) => cur || logline);
       setLoading(false);
       for (const one of list) signUrl(one);
+      const { data: c } = await supabase.from("finish_cuts").select("cut").eq("project_id", activeProject.id).order("created_at", { ascending: false }).limit(1);
+      setCut(c?.[0]?.cut ?? null);
     })();
   }, [user?.id, activeProject?.id]);
 
@@ -175,6 +180,26 @@ export default function FinishPage({ user, activeProject, setPage, notify, onSig
     }
     setRunning(false);
     setProgress("");
+  }
+
+  async function assemble() {
+    const ids = gens.filter((g) => picked.has(g.id) && g.finish_analysis).map((g) => g.id);
+    if (ids.length === 0) return;
+    setAssembling(true);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const r = await fetch("/api/finish-assemble", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + sess?.session?.access_token, "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId: activeProject.id, scene, length, clipIds: ids }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) notify?.(j.error || "Couldn't assemble the cut.");
+      else setCut(j.cut);
+    } catch {
+      notify?.("Couldn't assemble the cut.");
+    }
+    setAssembling(false);
   }
 
   const header = (
@@ -282,10 +307,11 @@ export default function FinishPage({ user, activeProject, setPage, notify, onSig
                 {running ? progress || "Working…" : pending === 0 ? (chosen.length ? "\u2713 All chosen clips analysed" : "Choose some clips") : `Analyse ${pending} clip${pending === 1 ? "" : "s"}`}
               </button>
               {analysed > 0 && !running && (
-                <span className="fn-body" style={{ fontSize: 10 }}>{analysed} ready. Assembling the cut comes next.</span>
+                <button className="fn-btn on" onClick={assemble} disabled={assembling}>{assembling ? "Assembling the cut…" : `${cut ? "Reassemble" : "Assemble"} a cut from ${analysed} clip${analysed === 1 ? "" : "s"}`}</button>
               )}
             </div>
           </div>
+          {cut && <FinishCut cut={cut} gens={gens} urls={urls} notify={notify} />}
         </div>
       </section>
     </div>
