@@ -21,6 +21,7 @@ import FramePlannerPage from "./FramePlannerPage.jsx";
 import BlockingPage from "./BlockingPage.jsx";
 import AutopsyPage from "./AutopsyPage.jsx";
 import TakesPage from "./TakesPage.jsx";
+import RehearsalPage from "./RehearsalPage.jsx";
 import FinishPage from "./FinishPage.jsx";
 import CreateMenuItems from "./CreateMenuItems.jsx";
 import VaultRefPicker, { refsToSend } from "./VaultRefPicker.jsx";

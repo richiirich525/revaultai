@@ -9,8 +9,8 @@ import { stateAt } from "./rehearsal.js";
 
 const UNITS_PER_METRE = 5;
 
-export const BODIES = ["mannequin", "female", "male"];
-export function defaultBody() { return "mannequin"; }
+export const BODIES = ["female", "male", "mannequin"];
+export function defaultBody(i) { return i % 2 === 0 ? "female" : "male"; }
 
 export const CLIPS = {
   idle: "Idle_Loop",

@@ -35,7 +35,21 @@ function prepareBody(scene) {
     const b = ball.getWorldPosition(new THREE.Vector3());
     yawFix = b.z - a.z > 0 ? Math.PI : 0;
   }
-  return { scene, scale: PERFORMER_HEIGHT / h, minY: box.min.y, yawFix };
+  // The body is the biggest mesh; hair and eyes are separate, smaller ones.
+  let bodyGeometry = null, most = 0;
+  scene.traverse((o) => {
+    const n = o.isMesh ? o.geometry?.attributes?.position?.count ?? 0 : 0;
+    if (n > most) { most = n; bodyGeometry = o.geometry; }
+  });
+  let neckY = 1e9;
+  if (bodyGeometry) {
+    bodyGeometry.computeBoundingBox();
+    const bb = bodyGeometry.boundingBox;
+    const ext = { x: bb.max.x - bb.min.x, y: bb.max.y - bb.min.y, z: bb.max.z - bb.min.z };
+    // Upright in its resting pose: suit up to the collar. Otherwise, suit it all.
+    if (ext.y >= 0.8 * ext.x && ext.y >= 2 * ext.z) neckY = bb.min.y + 0.845 * ext.y;
+  }
+  return { scene, scale: PERFORMER_HEIGHT / h, minY: box.min.y, yawFix, bodyGeometry, neckY };
 }
 
 function loadAssets() {
@@ -56,8 +70,8 @@ function loadAssets() {
     return {
       clips,
       bodies: {
-        female: prepareBody(female.scene),
-        male: prepareBody(male.scene),
+        female: { ...prepareBody(female.scene), suit: true },
+        male: { ...prepareBody(male.scene), suit: true },
         mannequin: prepareBody(lib.scene),
       },
     };
@@ -66,6 +80,27 @@ function loadAssets() {
     throw err;
   });
   return assetsPromise;
+}
+
+// A fitted stand-in suit: below the collar the body takes the performer's
+// colour, calmed toward charcoal so it reads as fabric, not paint. Face,
+// skin tone, hair and eyes stay exactly as modelled.
+function makeSuit(orig, color, neckY) {
+  const m = orig.clone();
+  const suit = { value: new THREE.Color(color).lerp(new THREE.Color(0x2b2b34), 0.45) };
+  const neck = { value: neckY };
+  m.onBeforeCompile = (shader) => {
+    shader.uniforms.uSuit = suit;
+    shader.uniforms.uNeckY = neck;
+    shader.vertexShader = shader.vertexShader
+      .replace("#include <common>", "#include <common>\nvarying float vBindY;")
+      .replace("#include <begin_vertex>", "#include <begin_vertex>\nvBindY = position.y;");
+    shader.fragmentShader = shader.fragmentShader
+      .replace("#include <common>", "#include <common>\nvarying float vBindY;\nuniform vec3 uSuit;\nuniform float uNeckY;")
+      .replace("#include <map_fragment>", "#include <map_fragment>\nif (vBindY < uNeckY) { diffuseColor.rgb = uSuit; }");
+  };
+  m.customProgramCacheKey = () => "revault-suit";
+  return m;
 }
 
 function makeRing(color) {
@@ -80,6 +115,14 @@ function makeRing(color) {
 
 function makePerformer(body, clips, color) {
   const inner = SkeletonUtils.clone(body.scene);
+  // Stand-in suit on the human bodies; the mannequin keeps its own look.
+  if (body.suit && body.bodyGeometry) {
+    inner.traverse((o) => {
+      if (o.isMesh && o.geometry === body.bodyGeometry && !Array.isArray(o.material)) {
+        o.material = makeSuit(o.material, color, body.neckY);
+      }
+    });
+  }
   inner.scale.setScalar(body.scale);
   inner.position.y = -body.minY * body.scale;
   const facingFix = new THREE.Group();
