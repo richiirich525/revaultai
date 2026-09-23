@@ -8,6 +8,12 @@ import { supabase } from "./lib/supabase.js";
   wardrobe, props, framing and light, not motion or audio — and it says so.
 */
 
+const REASON_LABELS = {
+  identity: "identity drift", anatomy: "hands or anatomy", motion: "motion",
+  camera: "camera", adherence: "prompt adherence", continuity: "continuity",
+  performance: "performance", artifact: "artifacts",
+};
+
 const SEV = {
   error:   { color: "#F87171", mark: "\u2715", label: "Missed" },
   warning: { color: "#E5B769", mark: "\u26A0", label: "Drifted" },
@@ -49,9 +55,7 @@ async function gatherRefs(generation) {
     if (!withPhotos.length) return [];
 
     let chosen = [];
-    // The photos this take was generated with, if any, are the ones to check.
-    if (generation.vault_ref_ids?.length) chosen = withPhotos.filter((e) => generation.vault_ref_ids.includes(e.id));
-    if (!chosen.length && generation.film_spec_id) {
+    if (generation.film_spec_id) {
       const { data: spec } = await supabase.from("film_specs").select("spec").eq("id", generation.film_spec_id).maybeSingle();
       const ids = spec?.spec?.subjects?.vaultIds ?? [];
       chosen = withPhotos.filter((e) => ids.includes(e.id));
@@ -114,6 +118,7 @@ export default function TakeDebugger({ generation, videoUrl, notify, setGenPrefi
   const [busy, setBusy] = useState(false);
   const [stage, setStage] = useState("");
   const [report, setReport] = useState(generation.debug_report ?? null);
+  const [tagged, setTagged] = useState(generation.reject_reason ?? null);
   const videoRef = useRef(null);
 
   // Pull evenly spaced stills out of the clip. Downscaled hard — the model
@@ -183,6 +188,17 @@ export default function TakeDebugger({ generation, videoUrl, notify, setGenPrefi
     setBusy(false); setStage("");
   }
 
+  // The creator still decides — this only saves the click-hunting.
+  async function tagReason(reason) {
+    const { error } = await supabase
+      .from("generations")
+      .update({ take_status: "rejected", reject_reason: reason })
+      .eq("id", generation.id);
+    if (error) { notify?.("Couldn't save: " + error.message); return; }
+    setTagged(reason);
+    notify?.(`Tagged as ${REASON_LABELS[reason] ?? reason}. It counts toward your cost per keeper.`);
+  }
+
   if (!report) {
     return (
       <button className="gen-button" onClick={run} disabled={busy}>
@@ -240,6 +256,24 @@ export default function TakeDebugger({ generation, videoUrl, notify, setGenPrefi
         </>
       )}
 
+      {report.suggestedReason && (
+        <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--border)" }}>
+          {tagged ? (
+            <div className="dbg-body" style={{ fontSize: 10 }}>
+              Tagged as <span style={{ color: "var(--accent)" }}>{REASON_LABELS[tagged] ?? tagged}</span> — counted in your cost per keeper and your model record.
+            </div>
+          ) : (
+            <>
+              <div className="dbg-body" style={{ fontSize: 10, marginBottom: 8 }}>
+                If you're rejecting this take, the reason looks like <span style={{ color: "var(--text)" }}>{REASON_LABELS[report.suggestedReason] ?? report.suggestedReason}</span>. Tagging it feeds your cost per keeper, and tells Which Model? which models earn your approvals.
+              </div>
+              <button className="gen-button" onClick={() => tagReason(report.suggestedReason)}>
+                Reject as {REASON_LABELS[report.suggestedReason] ?? report.suggestedReason}
+              </button>
+            </>
+          )}
+        </div>
+      )}
       <div className="dbg-note">
         Read from {report.frameCount} stills sampled across the clip{report.hadSpec ? ", compared against this shot's spec" : ", compared against the prompt"}{report.refs?.length ? `, and against your Vault photos of ${report.refs.join(", ")}` : ""}. Timings are approximate to the sampling gaps, and motion and audio aren't visible in stills.
       </div>

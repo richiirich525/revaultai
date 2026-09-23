@@ -24,7 +24,8 @@ Return ONLY a JSON object:
       "repair": "one concrete sentence on what to change in the prompt, or empty string"
     }
   ],
-  "repairPrompt": "the original prompt minimally revised to address the errors above - same shot, same intent, only the wording needed to fix what went wrong. Empty string if nothing needs fixing."
+  "repairPrompt": "the original prompt minimally revised to address the errors above - same shot, same intent, only the wording needed to fix what went wrong. Empty string if nothing needs fixing.",
+  "suggestedReason": "if this take should be rejected, the ONE label that best explains why, from exactly this list: identity, anatomy, motion, camera, adherence, continuity, performance, artifact. Use null when the take is usable."
 }
 
 Rules:
@@ -35,6 +36,7 @@ Rules:
 - Include 1-3 "ok" findings confirming what DID land. A report that only complains is less useful.
 - Do not flag normal motion blur, compression artifacts, or a subject legitimately moving through frame.
 - The repair prompt must be the same shot. Do not simplify the creative intent to make it easier.
+- Only suggest a reason when there is at least one "error" finding, and pick the single one that best explains the worst failure. identity = wrong or changing face; anatomy = hands, limbs, bodies; motion = mushy, too slow, wrong physics; camera = the move or framing wasn't followed; adherence = part of the prompt ignored; continuity = wardrobe, props or lighting broke; performance = expression or delivery wrong; artifact = warping, flicker, garbled text.
 
 REFERENCE PHOTOS: If reference photos from the filmmaker's Vault are provided, they are canon for how those characters, props and places must look. Compare the frames against them — face, hair, build, skin tone, wardrobe, a prop's shape, colour and markings, a location's defining features. Report each mismatch as a finding that names the reference and quotes what differs ("Maya's hair is shoulder-length in the reference; cropped short from 2.4s"). Where a reference is matched well, say so in an "ok" finding. Judge identity and design, not lighting or angle — a different angle on the same face is a match.`;
 
@@ -147,6 +149,7 @@ ${gen.prompt || "(none recorded)"}`;
         .sort((a, b) => ORDER[a.severity] - ORDER[b.severity])
         .slice(0, 12),
       repairPrompt: String(out?.repairPrompt || "").slice(0, 2000),
+      suggestedReason: ["identity", "anatomy", "motion", "camera", "adherence", "continuity", "performance", "artifact"].includes(out?.suggestedReason) ? out.suggestedReason : null,
       ranAt: new Date().toISOString(),
     };
 
