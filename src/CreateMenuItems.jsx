@@ -11,7 +11,10 @@ const css = `
   .cm-jobs { display: grid; grid-template-columns: 1fr; gap: 2px 20px; }
   .cm-job { padding: 4px 0 8px; }
   .cm-job-name { font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); padding: 8px 14px 4px; opacity: 0.9; }
-  @media (min-width: 1000px) {
+  @media (min-width: 900px) and (max-width: 1259px) {
+    .cm-jobs { grid-template-columns: repeat(2, minmax(150px, 1fr)); width: min(440px, 80vw); }
+  }
+  @media (min-width: 1260px) {
     .cm-jobs { grid-template-columns: repeat(5, minmax(150px, 1fr)); width: min(900px, 86vw); }
   }
 `;

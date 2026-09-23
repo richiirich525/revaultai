@@ -457,6 +457,7 @@ function Nav({ page, setPage, user, profile, onSignInClick, onSignOut, activePro
 
   const menuStyle = {
     position: "absolute", top: "calc(100% + 10px)", left: 0, minWidth: 210,
+    maxWidth: "calc(100vw - 32px)",
     // Opaque fallback first — an undefined CSS variable renders transparent.
     background: "#12131A", backgroundColor: "var(--surface, #12131A)",
     border: "1px solid var(--border)", borderRadius: 6,
