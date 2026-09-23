@@ -456,7 +456,7 @@ function Nav({ page, setPage, user, profile, onSignInClick, onSignOut, activePro
   const createActive = CREATE_PAGES.includes(page);
 
   const menuStyle = {
-    position: "absolute", top: "calc(100% + 10px)", left: 0, minWidth: 210,
+    position: "fixed", top: 78, right: 16, left: "auto", minWidth: 210,
     maxWidth: "calc(100vw - 32px)",
     // Opaque fallback first — an undefined CSS variable renders transparent.
     background: "#12131A", backgroundColor: "var(--surface, #12131A)",
