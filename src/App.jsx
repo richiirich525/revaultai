@@ -4276,7 +4276,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       case "tools": return <ToolsPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} />;
       case "projects": return <ProjectsPage setGenPrefill={setGenPrefill} setApPrefill={setApPrefill} user={user} onSignInClick={() => setAuthOpen(true)} setPage={setPage} notify={notify} activeProject={activeProject} setActiveProject={setActiveProject} />;
       case "finish": return <FinishPage user={user} activeProject={activeProject} setPage={setPage} notify={notify} onSignInClick={() => setAuthOpen(true)} />;
-      case "rehearsal": return <RehearsalPage user={user} activeProject={activeProject} notify={notify} onSignInClick={() => setAuthOpen(true)} />;
+      case "rehearsal": return <RehearsalPage setGenPrefill={setGenPrefill} setPage={setPage} user={user} activeProject={activeProject} notify={notify} onSignInClick={() => setAuthOpen(true)} />;
       case "specs": return <SpecsPage user={user} onSignInClick={() => setAuthOpen(true)} setPage={setPage} notify={notify} setGenPrefill={setGenPrefill} activeProject={activeProject} />;
       case "takes": return <TakesPage activeProject={activeProject} user={user} onSignInClick={() => setAuthOpen(true)} setPage={setPage} notify={notify} />;
       case "autopsy": return <AutopsyPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} setGenPrefill={setGenPrefill} apPrefill={apPrefill} setApPrefill={setApPrefill} />;

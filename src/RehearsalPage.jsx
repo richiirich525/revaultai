@@ -13,7 +13,7 @@ const bar = {
 };
 const mono = { fontFamily: "'DM Mono', monospace" };
 
-export default function RehearsalPage({ user, activeProject, notify, onSignInClick }) {
+export default function RehearsalPage({ user, activeProject, notify, onSignInClick, setGenPrefill, setPage }) {
   const [list, setList] = useState([]);
   const [current, setCurrent] = useState({ id: null, data: null, key: "new" });
   const [dirty, setDirty] = useState(false);
@@ -159,7 +159,7 @@ export default function RehearsalPage({ user, activeProject, notify, onSignInCli
           </div>
         )}
 
-        <RehearsalStudio key={current.key} initial={current.data} onChange={onStudioChange} />
+        <RehearsalStudio key={current.key} initial={current.data} onChange={onStudioChange} setGenPrefill={setGenPrefill} setPage={setPage} notify={notify} />
       </section>
     </div>
   );
