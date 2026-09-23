@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./lib/supabase.js";
 import StateReview from "./StateReview.jsx";
+import EndFrame from "./EndFrame.jsx";
 
 /*
   TakesPage — RevaultAI
@@ -49,7 +50,7 @@ const REASONS = [
   ["artifact", "Artifact", "Warping, flicker, garbled text"],
 ];
 
-export default function TakesPage({ user, onSignInClick, setPage, notify, activeProject }) {
+export default function TakesPage({ user, onSignInClick, setPage, notify, activeProject, setGenPrefill }) {
   const [shots, setShots] = useState([]);
   const [gens, setGens] = useState([]);
   const [urls, setUrls] = useState({});
@@ -326,6 +327,8 @@ export default function TakesPage({ user, onSignInClick, setPage, notify, active
                           {isSel && g.status === "complete" && (
                             <div style={{ marginTop: 10 }}>
                               <StateReview generation={g} videoUrl={urls[g.id]} notify={notify} />
+                              <EndFrame generation={g} videoUrl={urls[g.id]} notify={notify} setGenPrefill={setGenPrefill} setPage={setPage} />
+                              <EndFrame generation={g} videoUrl={urls[g.id]} notify={notify} setGenPrefill={setGenPrefill} setPage={setPage} />
                             </div>
                           )}
                           <textarea

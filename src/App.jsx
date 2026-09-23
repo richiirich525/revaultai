@@ -4278,7 +4278,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       case "finish": return <FinishPage user={user} activeProject={activeProject} setPage={setPage} notify={notify} onSignInClick={() => setAuthOpen(true)} />;
       case "rehearsal": return <RehearsalPage setGenPrefill={setGenPrefill} setPage={setPage} user={user} activeProject={activeProject} notify={notify} onSignInClick={() => setAuthOpen(true)} />;
       case "specs": return <SpecsPage user={user} onSignInClick={() => setAuthOpen(true)} setPage={setPage} notify={notify} setGenPrefill={setGenPrefill} activeProject={activeProject} />;
-      case "takes": return <TakesPage activeProject={activeProject} user={user} onSignInClick={() => setAuthOpen(true)} setPage={setPage} notify={notify} />;
+      case "takes": return <TakesPage setGenPrefill={setGenPrefill} activeProject={activeProject} user={user} onSignInClick={() => setAuthOpen(true)} setPage={setPage} notify={notify} />;
       case "autopsy": return <AutopsyPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} setGenPrefill={setGenPrefill} apPrefill={apPrefill} setApPrefill={setApPrefill} />;
       case "blocking": return <BlockingPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} setGenPrefill={setGenPrefill} />;
       case "frame-planner": return <FramePlannerPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} setGenPrefill={setGenPrefill} notify={notify} />;
