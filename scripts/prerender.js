@@ -22,6 +22,7 @@ const SITE = "https://www.revaultai.com";
 const { PAGES, NOINDEX } = await import(path.join(ROOT, "src/lib/seo.js"));
 const { POSTS } = await import(path.join(ROOT, "src/blog/posts.js"));
 const { MODELS, GENRE_PAGES, promptsByGenre } = await import(path.join(ROOT, "src/prompts/models.js"));
+const { HOME_BACKLOT, ABOUT_BACKLOT } = await import(path.join(ROOT, "src/lib/backlotCopy.js"));
 
 const template = fs.readFileSync(path.join(DIST, "index.html"), "utf8");
 
@@ -76,6 +77,25 @@ function writeRoute(routePath, html) {
   fs.writeFileSync(path.join(outDir, "index.html"), html, "utf8");
 }
 
+// The backlot copy, as rendered by BacklotSection (home) and AboutPage.
+function stationsHtml(stations) {
+  return stations.map((s) => `<p><strong>${esc(s.lead)}</strong> ${esc(s.body)}</p>`).join("");
+}
+
+function homeBacklotHtml() {
+  const b = HOME_BACKLOT;
+  return `<section><h2>${esc(b.heading)}</h2>${b.intro.map((p) => `<p>${esc(p)}</p>`).join("")}${stationsHtml(b.stations)}` +
+    `<h3>${esc(b.cta.heading)}</h3><p>${esc(b.cta.line)}</p>` +
+    `<p><a href="/${esc(b.cta.primary.page)}">${esc(b.cta.primary.label)}</a> · <a href="/${esc(b.cta.secondary.page)}">${esc(b.cta.secondary.label)}</a></p></section>`;
+}
+
+function aboutHtml() {
+  const a = ABOUT_BACKLOT;
+  return `<h1>${esc(a.heading)}</h1>${a.intro.map((p) => `<p>${esc(p)}</p>`).join("")}${stationsHtml(a.stations)}` +
+    a.sections.map((s) => `<h2>${esc(s.title)}</h2>${s.paragraphs.map((p) => `<p>${escBold(p)}</p>`).join("")}`).join("") +
+    `<p><strong>${esc(a.closing)}</strong></p>`;
+}
+
 let count = 0;
 
 // ---- Static pages -------------------------------------------------------
@@ -94,7 +114,12 @@ for (const [slug, meta] of Object.entries(PAGES)) {
   html = setMeta(html, "name", "twitter:url", url);
   html = setCanonical(html, url);
   html = setRobots(html, !NOINDEX.has(slug));
-  html = injectBody(html, `<h1>${esc(meta.title)}</h1><p>${esc(meta.description)}</p><p><a href="/">RevaultAI</a> — a curated gallery for AI-generated film.</p>`);
+  const tagline = `<p><a href="/">RevaultAI</a> — a curated gallery for AI-generated film.</p>`;
+  const body =
+    slug === "about" ? aboutHtml() + tagline :
+    slug === "home" ? `<h1>${esc(meta.title)}</h1><p>${esc(meta.description)}</p>${homeBacklotHtml()}${tagline}` :
+    `<h1>${esc(meta.title)}</h1><p>${esc(meta.description)}</p>${tagline}`;
+  html = injectBody(html, body);
   writeRoute(routePath, html);
   count++;
 }

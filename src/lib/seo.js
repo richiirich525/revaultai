@@ -40,9 +40,9 @@ export const PAGES = {
     description: "Share your AI-native film, animation, or prompt collection with the RevaultAI archive.",
   },
   about: {
-    title: "About RevaultAI — Curation Over Content",
+    title: "About RevaultAI — A Studio Lot, Rebuilt in Software",
     description:
-      "The AI era does not need more content. It needs curation. Why RevaultAI exists, how we review every submission, and what we are building.",
+      "RevaultAI is a studio lot rebuilt in software: a soundstage, prop house, camera cage, script supervisor, cutting room and theatre for AI film.",
   },
   faq: {
     title: "FAQ — How RevaultAI Works",
