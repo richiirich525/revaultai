@@ -202,6 +202,9 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
               aspect={r.aspect ?? "16:9"}
               setId={genId ? null : r.setId ?? null}
               genSet={genSet}
+              setScale={r.setScale}
+              setGround={r.setGround}
+              onSetError={(m) => notify?.("Couldn't show that set — " + m)}
               title={`${activeCam?.name ?? "Camera"}${nowRead.shotSize ? " · " + nowRead.shotSize : ""}`}
             />
           </Suspense>
@@ -219,6 +222,30 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
             selectedId={genId}
             onPick={(id, name) => setR((p) => ({ ...p, setId: "gen:" + id, setName: name }))}
           />
+          {genSet && (
+            <div className="rs-row" style={{ marginTop: 10, alignItems: "center" }}>
+              <span className="rs-body" style={{ fontSize: 10 }}>Set size</span>
+              <input
+                type="range" min={-1} max={1.3} step={0.01}
+                value={Math.log10(r.setScale || genSet.assets?.scale || 1)}
+                onChange={(e) => setR((p) => ({ ...p, setScale: Math.round(Math.pow(10, Number(e.target.value)) * 1000) / 1000 }))}
+                style={{ width: 150, accentColor: "var(--accent)" }}
+              />
+              <span className="rs-body" style={{ fontSize: 10 }}>{(r.setScale || genSet.assets?.scale || 1).toFixed(2)}×</span>
+              <span className="rs-body" style={{ fontSize: 10, marginLeft: 8 }}>Floor</span>
+              <input
+                type="range" min={-4} max={4} step={0.05}
+                value={r.setGround ?? genSet.assets?.groundOffset ?? 0}
+                onChange={(e) => setR((p) => ({ ...p, setGround: Number(e.target.value) }))}
+                style={{ width: 110, accentColor: "var(--accent)" }}
+              />
+              {!genSet.assets?.scale && (
+                <span className="rs-body" style={{ fontSize: 10, color: "#E5B769" }}>
+                  Draft sets come back without a size, so set it by eye against your performers.
+                </span>
+              )}
+            </div>
+          )}
           <div className="rs-row" style={{ marginTop: 10 }}>
             <span className="rs-body" style={{ fontSize: 10 }}>Frame</span>
             {["16:9", "2.39:1", "9:16", "1:1"].map((a) => (

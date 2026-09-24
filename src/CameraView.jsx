@@ -255,7 +255,7 @@ function drivePerformer(m, a, t, realDt) {
   m.rotation.y = yawFromBearing(u.yaw);
 }
 
-export default function CameraView({ state, lens, subject, aspect = "16:9", title, setId, genSet }) {
+export default function CameraView({ state, lens, subject, aspect = "16:9", title, setId, genSet, setScale, setGround, onSetError }) {
   const box = useRef(null);
   const three = useRef(null);
   const lastFrame = useRef(0);
@@ -354,20 +354,33 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
     // A generated set: photoreal Gaussian splats from Marble. Its files are
     // large, so Spark loads only when one is actually used.
     const genId = genSet?.id ?? null;
+    const genScale = Number(setScale) || Number(genSet?.assets?.scale) || 1;
+    const genGround = Number(setGround ?? genSet?.assets?.groundOffset) || 0;
     if (T.genId !== genId) {
       if (T.genSet) { scene.remove(T.genSet); T.genSet.dispose?.(); T.genSet = null; }
       T.genId = genId;
       const a = genSet?.assets;
       if (a?.splat500k || a?.splat100k) {
         const url = (window.innerWidth < 1100 ? a.splat100k : a.splat500k) || a.splat500k || a.splat100k;
-        import("@sparkjsdev/spark").then(({ SplatMesh }) => {
-          const mesh = new SplatMesh({ url });
-          mesh.scale.setScalar(Number(a.scale) || 1);   // Marble's units into metres
-          mesh.rotation.x = Math.PI;                    // Marble is Y-down; three.js is Y-up
-          mesh.position.y = Number(a.groundOffset) || 0;
-          if (three.current && three.current.genId === genId) { three.current.genSet = mesh; scene.add(mesh); }
-        }).catch(() => {});
+        // Check the file is reachable before handing it to Spark, so a failure
+        // says something instead of showing an empty room.
+        fetch(url, { headers: { Range: "bytes=0-1" } })
+          .then((r) => {
+            if (!r.ok && r.status !== 206) throw new Error("the set file came back " + r.status);
+            return import("@sparkjsdev/spark");
+          })
+          .then(({ SplatMesh }) => {
+            const mesh = new SplatMesh({ url });
+            mesh.rotation.x = Math.PI;   // Marble is Y-down; three.js is Y-up
+            if (three.current && three.current.genId === genId) { three.current.genSet = mesh; scene.add(mesh); }
+          })
+          .catch((e) => onSetError?.(e.message || "the set wouldn't load"));
       }
+    }
+    // Applied every frame, so the size controls feel live.
+    if (T.genSet) {
+      T.genSet.scale.setScalar(genScale);
+      T.genSet.position.y = genGround;
     }
 
     // The empty void's floor and grid step aside for any set.
