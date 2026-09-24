@@ -255,11 +255,13 @@ function drivePerformer(m, a, t, realDt) {
   m.rotation.y = yawFromBearing(u.yaw);
 }
 
-export default function CameraView({ state, lens, subject, aspect = "16:9", title, setId, genSet, setScale, setGround, onSetError }) {
+export default function CameraView({ state, lens, subject, aspect = "16:9", title, setId, genSet, setScale, setGround, onSetError, onSetFit }) {
   const box = useRef(null);
   const three = useRef(null);
   const lastFrame = useRef(0);
   const [failed, setFailed] = useState(false);
+  const [outsideSet, setOutsideSet] = useState(false);
+  const outsideRef = useRef(false);
   const [assets, setAssets] = useState(null);
   const [loadNote, setLoadNote] = useState("Loading performers…");
 
@@ -354,14 +356,55 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
     // A generated set: photoreal Gaussian splats from Marble. Its files are
     // large, so Spark loads only when one is actually used.
     const genId = genSet?.id ?? null;
-    const genScale = Number(setScale) || Number(genSet?.assets?.scale) || 1;
-    const genGround = Number(setGround ?? genSet?.assets?.groundOffset) || 0;
     if (T.genId !== genId) {
       if (T.genSet) { scene.remove(T.genSet); T.genSet.dispose?.(); T.genSet = null; }
       T.genId = genId;
+      T.genFit = null;
       const a = genSet?.assets;
       if (a?.splat500k || a?.splat100k) {
         const url = (window.innerWidth < 1100 ? a.splat100k : a.splat500k) || a.splat500k || a.splat100k;
+        // Everything sits in one group, so scale, turn and position apply to
+        // the splats and the collider together.
+        const group = new THREE.Group();
+        group.rotation.x = Math.PI;                     // Marble is Y-down; three.js is Y-up
+        group.scale.setScalar(Number(a.scale) || 1);    // metric scale, when the world has one
+        scene.add(group);
+        T.genGroup = group;
+
+        // The collider mesh tells us where the floor is, how big the world
+        // really is, and how far it was reconstructed — which is how far the
+        // camera can go before the edges fray.
+        if (a.collider) {
+          const gl = new GLTFLoader();
+          gl.setMeshoptDecoder(MeshoptDecoder);
+          gl.loadAsync(a.collider).then((g) => {
+            if (!three.current || three.current.genId !== genId) return;
+            const collider = g.scene;
+            collider.traverse((o) => {
+              if (o.isMesh) { o.material = new THREE.MeshStandardMaterial({ color: 0x14151c, roughness: 1 }); o.frustumCulled = false; }
+            });
+            group.add(collider);
+            group.updateMatrixWorld(true);
+            let box = new THREE.Box3().setFromObject(collider);
+            const h = box.max.y - box.min.y;
+            if (!Number(a.scale) && h > 0.01) {
+              // No metric data — drafts often have none. Assume a room about
+              // 2.6 m to the ceiling and size it from there.
+              group.scale.multiplyScalar(2.6 / h);
+              group.updateMatrixWorld(true);
+              box = new THREE.Box3().setFromObject(collider);
+            }
+            const centre = box.getCenter(new THREE.Vector3());
+            group.position.x -= centre.x;
+            group.position.z -= centre.z;
+            group.position.y -= box.min.y;              // stand the floor at zero
+            group.updateMatrixWorld(true);
+            const size = box.getSize(new THREE.Vector3());
+            T.genBase = { scale: group.scale.x, y: group.position.y };
+            T.genFit = { width: size.x, depth: size.z, height: size.y, radius: Math.max(size.x, size.z) / 2 };
+            onSetFit?.(T.genFit);
+          }).catch(() => {});
+        }
         // Check the file is reachable before handing it to Spark, so a failure
         // says something instead of showing an empty room.
         fetch(url, { headers: { Range: "bytes=0-1" } })
@@ -378,16 +421,23 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
             }
             const mesh = new SplatMesh({ url });
             mesh.rotation.x = Math.PI;   // Marble is Y-down; three.js is Y-up
-            if (three.current && three.current.genId === genId) { three.current.genSet = mesh; scene.add(mesh); }
+            if (three.current && three.current.genId === genId) { three.current.genSet = mesh; group.add(mesh); }
           })
           .catch((e) => onSetError?.(e.message || "the set wouldn't load"));
       }
     }
-    // Applied every frame, so the size controls feel live.
-    if (T.genSet) {
-      T.genSet.scale.setScalar(genScale);
-      T.genSet.position.y = genGround;
+    // Fine-tuning on top of the automatic fit: 1 means leave it alone.
+    if (T.genGroup && T.genBase) {
+      T.genGroup.scale.setScalar(T.genBase.scale * (Number(setScale) || 1));
+      T.genGroup.position.y = T.genBase.y + (Number(setGround) || 0);
     }
+    // Warn when the camera has left the area the world was built from — that
+    // frame would be useless as an opening frame.
+    if (T.genFit) {
+      const c = toWorld(state.camera.x, state.camera.y);
+      const away = Math.hypot(c.x, c.z) > T.genFit.radius * 1.05;
+      if (away !== outsideRef.current) { outsideRef.current = away; setOutsideSet(away); }
+    } else if (outsideRef.current) { outsideRef.current = false; setOutsideSet(false); }
 
     // The empty void's floor and grid step aside for any set.
     T.floor.visible = !(setId || genId);
@@ -460,6 +510,11 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
         <div style={{ position: "absolute", top: 8, left: 10, fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.75)", pointerEvents: "none", textShadow: "0 1px 3px rgba(0,0,0,0.8)" }}>
           {title}
         </div>
+        {outsideSet && (
+          <div style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: "0.1em", color: "#0e0f14", background: "#E5B769", padding: "3px 10px", borderRadius: 3 }}>
+            Camera is outside the set — move it in
+          </div>
+        )}
         {loadNote && !failed && (
           <div style={{ position: "absolute", top: 8, right: 10, fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: "0.08em", color: "rgba(255,255,255,0.55)", pointerEvents: "none" }}>
             {loadNote}

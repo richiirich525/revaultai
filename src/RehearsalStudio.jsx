@@ -52,6 +52,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
   const [playing, setPlaying] = useState(false);
   const [beatText, setBeatText] = useState("");
   const [genSet, setGenSet] = useState(null);
+  const [genFit, setGenFit] = useState(null);
   const raf = useRef(null);
   const last = useRef(0);
 
@@ -192,7 +193,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
       </div>
 
       <div className="rs-views">
-        <StageBlueprint camera={now.camera} actors={now.actors} onChange={onStageChange} set={getSet(r.setId)} />
+        <StageBlueprint camera={now.camera} actors={now.actors} onChange={onStageChange} set={getSet(r.setId)} extent={genFit} />
         <div>
           <Suspense fallback={<div className="rs-body" style={{ padding: 20 }}>Loading the camera view…</div>}>
             <CameraView
@@ -205,6 +206,19 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
               setScale={r.setScale}
               setGround={r.setGround}
               onSetError={(m) => notify?.("Couldn't show that set — " + m)}
+              onSetFit={(fit) => {
+                setGenFit(fit);
+                // Start the camera inside the room rather than behind it.
+                setR((p) => {
+                  const cam = p.cameras.find((c) => c.id === p.activeCamera);
+                  const first = cam?.keys?.[0];
+                  if (!first) return p;
+                  const inside = 50 + Math.min(fit.depth / 2 - 0.6, fit.radius * 0.8) * 5;
+                  if (Math.abs(first.y - 50) <= (fit.radius * 0.9) * 5) return p;
+                  return { ...p, cameras: p.cameras.map((c) => c.id !== p.activeCamera ? c
+                    : { ...c, keys: c.keys.map((k, i) => (i === 0 ? { ...k, x: 50, y: inside, rotation: 180 } : k)) }) };
+                });
+              }}
               title={`${activeCam?.name ?? "Camera"}${nowRead.shotSize ? " · " + nowRead.shotSize : ""}`}
             />
           </Suspense>
@@ -227,23 +241,23 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
               <span className="rs-body" style={{ fontSize: 10 }}>Set size</span>
               <input
                 type="range" min={-1} max={1.3} step={0.01}
-                value={Math.log10(r.setScale || genSet.assets?.scale || 1)}
+                value={Math.log10(r.setScale || 1)}
                 onChange={(e) => setR((p) => ({ ...p, setScale: Math.round(Math.pow(10, Number(e.target.value)) * 1000) / 1000 }))}
                 style={{ width: 150, accentColor: "var(--accent)" }}
               />
-              <span className="rs-body" style={{ fontSize: 10 }}>{(r.setScale || genSet.assets?.scale || 1).toFixed(2)}×</span>
+              <span className="rs-body" style={{ fontSize: 10 }}>{(r.setScale || 1).toFixed(2)}×</span>
               <span className="rs-body" style={{ fontSize: 10, marginLeft: 8 }}>Floor</span>
               <input
                 type="range" min={-4} max={4} step={0.05}
-                value={r.setGround ?? genSet.assets?.groundOffset ?? 0}
+                value={r.setGround ?? 0}
                 onChange={(e) => setR((p) => ({ ...p, setGround: Number(e.target.value) }))}
                 style={{ width: 110, accentColor: "var(--accent)" }}
               />
-              {!genSet.assets?.scale && (
-                <span className="rs-body" style={{ fontSize: 10, color: "#E5B769" }}>
-                  Draft sets come back without a size, so set it by eye against your performers.
-                </span>
-              )}
+              <span className="rs-body" style={{ fontSize: 10, opacity: 0.8 }}>
+                {genFit
+                  ? `Fitted automatically: ${genFit.width.toFixed(1)} × ${genFit.depth.toFixed(1)} m${genSet.assets?.scale ? "" : " (estimated — this draft has no size of its own)"}`
+                  : "Fitting the set…"}
+              </span>
             </div>
           )}
           <div className="rs-row" style={{ marginTop: 10 }}>

@@ -22,7 +22,7 @@ const styles = `
 
 const COLORS = ["#7B3FE4", "#E5B769", "#4ADE80", "#5BA8C2"];
 
-export default function StageBlueprint({ camera, actors, onChange, baselineSide, set }) {
+export default function StageBlueprint({ camera, actors, onChange, baselineSide, set, extent }) {
   const svgRef = useRef(null);
   const [drag, setDrag] = useState(null);   // { kind: "camera"|"actor"|"rotate", id }
 
@@ -117,6 +117,13 @@ export default function StageBlueprint({ camera, actors, onChange, baselineSide,
           </pattern>
         </defs>
         <rect width={STAGE} height={STAGE} fill="url(#bpgrid)" />
+
+        {/* A generated set's reconstructed area — beyond this the edges fray */}
+        {extent && (
+          <rect x={50 - (extent.width * 5) / 2} y={50 - (extent.depth * 5) / 2}
+            width={extent.width * 5} height={extent.depth * 5}
+            fill="#1b1c24" stroke="#5a5b68" strokeWidth="0.5" strokeDasharray="2 2" opacity="0.9" />
+        )}
 
         {/* The set, seen from above: floor, walls and furniture to block against */}
         {set && (() => {
