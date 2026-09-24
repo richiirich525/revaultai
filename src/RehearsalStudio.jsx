@@ -5,6 +5,7 @@ import { stateAt, setKey, removeKey, keyTimes, newRehearsal, addCamera } from ".
 import { motionState, defaultBody, BODIES } from "./lib/performers.js";
 import { buildShootPrompt, buildShootSpec } from "./lib/shootPrompt.js";
 import { SETS, getSet } from "./lib/setCatalog.js";
+import GeneratedSets from "./GeneratedSets.jsx";
 
 // three.js is heavy, so the camera view loads only with the studio —
 // it stays out of the bundle every other page downloads.
@@ -44,7 +45,7 @@ const styles = `
   @media (max-width: 760px) { .rs { padding: 0 20px; } }
 `;
 
-export default function RehearsalStudio({ initial, onChange, setGenPrefill, setPage, notify, onShoot }) {
+export default function RehearsalStudio({ initial, onChange, setGenPrefill, setPage, notify, onShoot, user, activeProject }) {
   const [r, setR] = useState(() => initial ?? newRehearsal());
   const [t, setT] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -188,6 +189,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
               <button key={s.id} className={"rs-btn" + (r.setId === s.id ? " on" : "")} title={s.note} onClick={() => setR((p) => ({ ...p, setId: s.id }))}>{s.name}</button>
             ))}
           </div>
+          <GeneratedSets user={user} activeProject={activeProject} notify={notify} selectedId={null} onPick={() => notify?.("Generated sets appear in the camera view in the next update.")} />
           <div className="rs-row" style={{ marginTop: 10 }}>
             <span className="rs-body" style={{ fontSize: 10 }}>Frame</span>
             {["16:9", "2.39:1", "9:16", "1:1"].map((a) => (

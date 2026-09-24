@@ -191,7 +191,7 @@ export default function RehearsalPage({ user, activeProject, notify, onSignInCli
           </div>
         )}
 
-        <RehearsalStudio key={current.key} initial={current.data} onChange={onStudioChange} setGenPrefill={setGenPrefill} setPage={setPage} notify={notify} onShoot={onShoot} />
+        <RehearsalStudio key={current.key} initial={current.data} onChange={onStudioChange} setGenPrefill={setGenPrefill} setPage={setPage} notify={notify} onShoot={onShoot} user={user} activeProject={activeProject} />
       </section>
     </div>
   );
