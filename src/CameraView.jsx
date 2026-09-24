@@ -369,7 +369,13 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
             if (!r.ok && r.status !== 206) throw new Error("the set file came back " + r.status);
             return import("@sparkjsdev/spark");
           })
-          .then(({ SplatMesh }) => {
+          .then(({ SplatMesh, SparkRenderer }) => {
+            // Splats aren't drawn by three.js — Spark draws them, and it only
+            // does so once its renderer is part of the scene.
+            if (!T.spark) {
+              T.spark = new SparkRenderer({ renderer });
+              scene.add(T.spark);
+            }
             const mesh = new SplatMesh({ url });
             mesh.rotation.x = Math.PI;   // Marble is Y-down; three.js is Y-up
             if (three.current && three.current.genId === genId) { three.current.genSet = mesh; scene.add(mesh); }
