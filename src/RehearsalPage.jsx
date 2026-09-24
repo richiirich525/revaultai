@@ -51,6 +51,38 @@ export default function RehearsalPage({ user, activeProject, notify, onSignInCli
     setDirty(s !== baseline.current);
   }
 
+  // The angle becomes a Shot Spec, not just a prompt: it carries the blocking,
+  // start and end states, eyelines and beats into the Debugger, Live Set
+  // Memory and the cross-model compiler.
+  async function onShoot(out) {
+    let specId = null;
+    let version = 1;
+    if (user?.id && out.spec) {
+      const { data, error } = await supabase
+        .from("film_specs")
+        .insert({
+          user_id: user.id,
+          project_id: activeProject?.id ?? null,
+          title: out.spec.identity?.title || "Rehearsal shot",
+          version: 1,
+          origin: "rehearsal",
+          spec: out.spec,
+        })
+        .select("id, version")
+        .single();
+      if (!error && data) { specId = data.id; version = data.version ?? 1; }
+    }
+    setGenPrefill?.({
+      prompt: out.prompt,
+      aspectRatio: out.aspect,
+      ...(specId ? { filmSpecId: specId, filmSpecVersion: version } : {}),
+    });
+    notify?.(specId
+      ? `${out.camera} saved as a shot spec. Your rehearsal runs ${out.seconds}s — set the length to match.`
+      : `Prompt built from ${out.camera}. Your rehearsal runs ${out.seconds}s — set the length to match.`);
+    setPage?.("generate");
+  }
+
   function leaveOk() {
     return !dirty || window.confirm("You have unsaved changes to this rehearsal. Leave them?");
   }
@@ -159,7 +191,7 @@ export default function RehearsalPage({ user, activeProject, notify, onSignInCli
           </div>
         )}
 
-        <RehearsalStudio key={current.key} initial={current.data} onChange={onStudioChange} setGenPrefill={setGenPrefill} setPage={setPage} notify={notify} />
+        <RehearsalStudio key={current.key} initial={current.data} onChange={onStudioChange} setGenPrefill={setGenPrefill} setPage={setPage} notify={notify} onShoot={onShoot} />
       </section>
     </div>
   );

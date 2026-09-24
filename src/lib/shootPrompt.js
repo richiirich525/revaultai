@@ -11,8 +11,13 @@
 */
 import { stateAt } from "./rehearsal.js";
 import { readStage, describeStage, eyelinesFor } from "./stageGeometry.js";
+import { blankSpec, mergeSpec } from "./filmSpec.js";
 
 const UNITS_PER_METRE = 5;
+
+// The studio calls it 2.39:1; the generator calls the same frame 21:9.
+const ASPECT_OUT = { "2.39:1": "21:9" };
+const mapAspect = (a) => ASPECT_OUT[a] ?? a ?? "16:9";
 const m = (a, b) => Math.hypot(a.x - b.x, a.y - b.y) / UNITS_PER_METRE;
 const bearingTo = (from, to) => (Math.atan2(to.x - from.x, -(to.y - from.y)) * 180) / Math.PI;
 const delta = (a, b) => ((((b - a) % 360) + 540) % 360) - 180;
@@ -103,9 +108,74 @@ export function buildShootPrompt(r, cameraId) {
     ok: !!read0.subject,
     prompt: lines.join(" ").replace(/\s+/g, " ").trim(),
     seconds: duration,
-    aspect: rehearsal.aspect ?? "16:9",
+    aspect: mapAspect(rehearsal.aspect),
     camera: (rehearsal.cameras ?? []).find((c) => c.id === rehearsal.activeCamera)?.name ?? "Camera",
     subject: read0.subject ?? null,
     names: s0.actors.map((a) => a.name).filter(Boolean),
   };
+}
+
+
+// What the stage actually looks like at one instant, in plain words — the
+// kind of sentence continuity checking can compare a later take against.
+function stateSentence(camera, actors) {
+  const parts = (actors ?? []).map((a) => {
+    const pose = a.pose === "sit" ? "seated" : a.pose === "crouch" ? "crouched" : "standing";
+    return `${a.name} ${side(camera, a)}, ${pose}`;
+  });
+  return parts.join("; ") + ".";
+}
+
+// The same angle as a Shot Spec: structure rather than one model's prompt, so
+// it can be compiled for any model, compared against the take afterwards, and
+// inherited by the shot that follows.
+export function buildShootSpec(r, cameraId) {
+  const rehearsal = cameraId && cameraId !== r.activeCamera ? { ...r, activeCamera: cameraId } : r;
+  const built = buildShootPrompt(rehearsal, cameraId);
+  const duration = rehearsal.duration || 8;
+  const s0 = stateAt(rehearsal, 0);
+  const sMid = stateAt(rehearsal, duration / 2);
+  const s1 = stateAt(rehearsal, duration);
+  const read0 = readStage(s0.camera, s0.actors);
+  const read1 = readStage(s1.camera, s1.actors);
+
+  const moves = s0.actors
+    .map((a, i) => movementOf(a, s1.actors[i] ?? a, s0.camera, s1.camera, a.name))
+    .filter(Boolean)
+    .join(". ");
+
+  const beats = [...(rehearsal.beats ?? [])].sort((a, b) => a.t - b.t);
+
+  return mergeSpec(blankSpec(), {
+    identity: {
+      title: `${rehearsal.title || "Rehearsal"} — ${built.camera}`,
+      purpose: beats.length ? beats.map((b) => b.label.trim()).join("; ") : "",
+    },
+    subjects: { characters: s0.actors.map((a) => a.name).filter(Boolean) },
+    action: {
+      primary: moves || describeStage(read0),
+      startState: stateSentence(s0.camera, s0.actors),
+      endState: stateSentence(s1.camera, s1.actors),
+    },
+    camera: {
+      shotSize: read1.shotSize && read1.shotSize !== read0.shotSize ? `${read0.shotSize} to ${read1.shotSize}` : read0.shotSize || "",
+      lens: read0.lens || "",
+      movement: cameraMove(s0.camera, s1.camera,
+        s0.actors.find((a) => a.name === read0.subject) ?? null,
+        s1.actors.find((a) => a.name === read0.subject) ?? null),
+      // Kept so the blocking can be reopened on the plan later.
+      layout: {
+        camera: { x: s0.camera.x, y: s0.camera.y, rotation: s0.camera.rotation },
+        actors: s0.actors.map((a) => ({ name: a.name, x: a.x, y: a.y, facing: a.facing, pose: a.pose })),
+      },
+    },
+    composition: {
+      screenDirection: read0.subject ? `${read0.subject} ${side(s0.camera, s0.actors.find((a) => a.name === read0.subject) ?? s0.camera)}` : "",
+      positions: s0.actors.map((a) => ({ name: a.name, side: side(s0.camera, a) })),
+      eyelines: eyelinesFor(sMid.camera, sMid.actors).map((e) => e.text),
+    },
+    timing: { durationSeconds: duration, aspectRatio: mapAspect(rehearsal.aspect) },
+    performance: { notes: beats.map((b) => `${b.t.toFixed(1)}s: ${b.label.trim()}`).join(". ") },
+    model: { compiledPrompt: built.prompt },
+  });
 }
