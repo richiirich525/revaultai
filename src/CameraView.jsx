@@ -261,6 +261,7 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
   const lastFrame = useRef(0);
   const [failed, setFailed] = useState(false);
   const [outsideSet, setOutsideSet] = useState(false);
+  const [wildWall, setWildWall] = useState(false);
   const outsideRef = useRef(false);
   const [assets, setAssets] = useState(null);
   const [loadNote, setLoadNote] = useState("Loading performers…");
@@ -363,7 +364,10 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
       T.genBase = null;
       const a = genSet?.assets;
       if (a?.splat500k || a?.splat100k) {
-        const url = (window.innerWidth < 1100 ? a.splat100k : a.splat500k) || a.splat500k || a.splat100k;
+        // Phones get the light tier, tablets the middle, computers the sharpest.
+        const w = window.innerWidth;
+        const url = (w < 760 ? a.splat100k : w < 1100 ? a.splat500k : a.splatFull || a.splat500k)
+          || a.splat500k || a.splat100k;
         const outer = new THREE.Group();   // height only
         const world = new THREE.Group();   // Marble's frame: turned and scaled
         world.rotation.x = Math.PI;        // Marble is Y-down; three.js is Y-up
@@ -427,9 +431,21 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
     if (T.genFit) {
       const c = toWorld(state.camera.x, state.camera.y);
       const f = T.genFit, pad = 0.4;
-      const away = c.x < f.minX - pad || c.x > f.maxX + pad || c.z < f.minZ - pad || c.z > f.maxZ + pad;
-      if (away !== outsideRef.current) { outsideRef.current = away; setOutsideSet(away); }
-    } else if (outsideRef.current) { outsideRef.current = false; setOutsideSet(false); }
+      const outX = Math.max(f.minX - c.x, c.x - f.maxX, 0);
+      const outZ = Math.max(f.minZ - c.z, c.z - f.maxZ, 0);
+      const out = Math.hypot(outX, outZ);
+      // A wild wall: standing back from the room, the wall between camera and
+      // room is cut away, the way a set wall is pulled for a wide shot.
+      camera.near = out > pad ? Math.max(0.05, out + 0.25) : 0.05;
+      camera.updateProjectionMatrix();
+      // Only complain when far enough out to be seeing past the reconstruction.
+      const tooFar = out > 3.5;
+      if (tooFar !== outsideRef.current) { outsideRef.current = tooFar; setOutsideSet(tooFar); }
+      if (T.wild !== (out > pad)) { T.wild = out > pad; setWildWall(out > pad); }
+    } else if (outsideRef.current || T.wild) {
+      outsideRef.current = false; setOutsideSet(false); T.wild = false; setWildWall(false);
+      camera.near = 0.05; camera.updateProjectionMatrix();
+    }
 
     // The empty void's floor and grid step aside for any set.
     T.floor.visible = !(setId || genId);
@@ -502,9 +518,11 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
         <div style={{ position: "absolute", top: 8, left: 10, fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.75)", pointerEvents: "none", textShadow: "0 1px 3px rgba(0,0,0,0.8)" }}>
           {title}
         </div>
-        {outsideSet && (
-          <div style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: "0.1em", color: "#0e0f14", background: "#E5B769", padding: "3px 10px", borderRadius: 3 }}>
-            Camera is outside the set — move it in
+        {(outsideSet || wildWall) && (
+          <div style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: "0.1em", borderRadius: 3, padding: "3px 10px",
+            color: outsideSet ? "#0e0f14" : "rgba(255,255,255,0.75)",
+            background: outsideSet ? "#E5B769" : "rgba(0,0,0,0.45)" }}>
+            {outsideSet ? "Too far back — you're seeing past the set" : "Shooting through the wild wall"}
           </div>
         )}
         {loadNote && !failed && (

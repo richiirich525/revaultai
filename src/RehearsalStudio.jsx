@@ -243,7 +243,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
             <div className="rs-row" style={{ marginTop: 10, alignItems: "center" }}>
               <span className="rs-body" style={{ fontSize: 10 }}>Set size</span>
               <input
-                type="range" min={-1} max={1.3} step={0.01}
+                type="range" min={-0.08} max={0.08} step={0.002}
                 value={Math.log10(r.setScale || 1)}
                 onChange={(e) => setR((p) => ({ ...p, setScale: Math.round(Math.pow(10, Number(e.target.value)) * 1000) / 1000 }))}
                 style={{ width: 150, accentColor: "var(--accent)" }}

@@ -127,6 +127,14 @@ export default function GeneratedSets({ user, activeProject, notify, selectedId,
             </button>
           );
         })}
+        {sets.filter((s) => s.id === selectedId).map((s) => (
+          <button key={"r" + s.id} className="rs-btn" onClick={async () => {
+            const next = window.prompt("Rename this set", s.name);
+            if (!next?.trim()) return;
+            const { error } = await supabase.from("sets").update({ name: uniqueName(next.trim()) }).eq("id", s.id);
+            if (error) notify?.("Couldn't rename: " + error.message); else load();
+          }}>Rename</button>
+        ))}
         {sets.filter((s) => s.status === "failed").map((s) => (
           <span key={"f" + s.id} style={{ display: "inline-flex", gap: 6 }}>
             <button className="rs-btn" onClick={() => retry(s)}>Retry {s.name}</button>

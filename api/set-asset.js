@@ -14,6 +14,7 @@ const MARBLE = "https://api.worldlabs.ai/marble/v1";
 const SECRET = () => process.env.SET_ASSET_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
 const KINDS = {
+  full: { pick: (a) => a?.splats?.spz_urls?.full_res, type: "application/octet-stream" },
   "500k": { pick: (a) => a?.splats?.spz_urls?.["500k"], type: "application/octet-stream" },
   "100k": { pick: (a) => a?.splats?.spz_urls?.["100k"], type: "application/octet-stream" },
   collider: { pick: (a) => a?.mesh?.collider_mesh_url, type: "model/gltf-binary" },

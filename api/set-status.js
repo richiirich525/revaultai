@@ -18,6 +18,7 @@ async function worldAssets(worldId) {
 // The browser is given links on our own domain rather than World Labs', so
 // there are no cross-origin rules to satisfy and the key stays server-side.
 const forClient = (assets, setId) => assets && ({
+  splatFull: assets.splats?.spz_urls?.full_res ? signAsset(setId, "full") : null,
   splat500k: assets.splats?.spz_urls?.["500k"] ? signAsset(setId, "500k") : null,
   splat100k: assets.splats?.spz_urls?.["100k"] ? signAsset(setId, "100k") : null,
   collider: assets.mesh?.collider_mesh_url ? signAsset(setId, "collider") : null,
