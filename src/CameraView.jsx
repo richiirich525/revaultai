@@ -255,7 +255,7 @@ function drivePerformer(m, a, t, realDt) {
   m.rotation.y = yawFromBearing(u.yaw);
 }
 
-export default function CameraView({ state, lens, subject, aspect = "16:9", title, setId }) {
+export default function CameraView({ state, lens, subject, aspect = "16:9", title, setId, genSet }) {
   const box = useRef(null);
   const three = useRef(null);
   const lastFrame = useRef(0);
@@ -348,10 +348,31 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
           if (three.current && three.current.setId === chosen.id) { three.current.set = g; scene.add(g); }
         });
       }
-      T.floor.visible = !chosen;   // the empty void's floor and grid step aside
-      T.grid.visible = !chosen;
       T.setId = setId ?? null;
     }
+
+    // A generated set: photoreal Gaussian splats from Marble. Its files are
+    // large, so Spark loads only when one is actually used.
+    const genId = genSet?.id ?? null;
+    if (T.genId !== genId) {
+      if (T.genSet) { scene.remove(T.genSet); T.genSet.dispose?.(); T.genSet = null; }
+      T.genId = genId;
+      const a = genSet?.assets;
+      if (a?.splat500k || a?.splat100k) {
+        const url = (window.innerWidth < 1100 ? a.splat100k : a.splat500k) || a.splat500k || a.splat100k;
+        import("@sparkjsdev/spark").then(({ SplatMesh }) => {
+          const mesh = new SplatMesh({ url });
+          mesh.scale.setScalar(Number(a.scale) || 1);   // Marble's units into metres
+          mesh.rotation.x = Math.PI;                    // Marble is Y-down; three.js is Y-up
+          mesh.position.y = Number(a.groundOffset) || 0;
+          if (three.current && three.current.genId === genId) { three.current.genSet = mesh; scene.add(mesh); }
+        }).catch(() => {});
+      }
+    }
+
+    // The empty void's floor and grid step aside for any set.
+    T.floor.visible = !(setId || genId);
+    T.grid.visible = !(setId || genId);
 
     const nowMs = performance.now();
     const realDt = lastFrame.current ? Math.min(1, (nowMs - lastFrame.current) / 1000) : 1;

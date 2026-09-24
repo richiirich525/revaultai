@@ -84,6 +84,7 @@ export function buildShootPrompt(r, cameraId) {
   // The room first: where this happens, and where everyone stands in it.
   const set = getSet(rehearsal.setId);
   if (set) lines.push(setSentence(set, s0.actors));
+  else if (rehearsal.setName) lines.push(`Shot inside ${rehearsal.setName}.`);
 
   // Framing, as the geometry engine reads it.
   lines.push(describeStage(read0));

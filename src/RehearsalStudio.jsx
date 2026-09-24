@@ -6,6 +6,7 @@ import { motionState, defaultBody, BODIES } from "./lib/performers.js";
 import { buildShootPrompt, buildShootSpec } from "./lib/shootPrompt.js";
 import { SETS, getSet } from "./lib/setCatalog.js";
 import GeneratedSets from "./GeneratedSets.jsx";
+import { supabase } from "./lib/supabase.js";
 
 // three.js is heavy, so the camera view loads only with the studio —
 // it stays out of the bundle every other page downloads.
@@ -50,6 +51,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
   const [t, setT] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [beatText, setBeatText] = useState("");
+  const [genSet, setGenSet] = useState(null);
   const raf = useRef(null);
   const last = useRef(0);
 
@@ -73,6 +75,26 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
     raf.current = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf.current);
   }, [playing, r.duration]);
+
+  // A generated set is stored on the rehearsal as "gen:<id>"; its asset links
+  // are fetched fresh, because Marble hands them out per request.
+  const genId = typeof r.setId === "string" && r.setId.startsWith("gen:") ? r.setId.slice(4) : null;
+  useEffect(() => {
+    if (!genId) { setGenSet(null); return; }
+    if (genSet?.id === genId) return;
+    let alive = true;
+    (async () => {
+      const { data: sess } = await supabase.auth.getSession();
+      const res = await fetch("/api/set-status", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + sess?.session?.access_token, "Content-Type": "application/json" },
+        body: JSON.stringify({ setId: genId }),
+      }).catch(() => null);
+      const j = await res?.json().catch(() => ({}));
+      if (alive && j?.status === "ready") setGenSet({ id: genId, name: j.name, assets: j.assets });
+    })();
+    return () => { alive = false; };
+  }, [genId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const now = stateAt(r, t);
   const nowRead = readStage(now.camera, now.actors);
@@ -178,18 +200,25 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
               lens={nowRead.lens}
               subject={nowRead.subject}
               aspect={r.aspect ?? "16:9"}
-              setId={r.setId ?? null}
+              setId={genId ? null : r.setId ?? null}
+              genSet={genSet}
               title={`${activeCam?.name ?? "Camera"}${nowRead.shotSize ? " · " + nowRead.shotSize : ""}`}
             />
           </Suspense>
           <div className="rs-row" style={{ marginTop: 10 }}>
             <span className="rs-body" style={{ fontSize: 10 }}>Set</span>
-            <button className={"rs-btn" + (!r.setId ? " on" : "")} onClick={() => setR((p) => ({ ...p, setId: null }))}>Empty stage</button>
+            <button className={"rs-btn" + (!r.setId ? " on" : "")} onClick={() => setR((p) => ({ ...p, setId: null, setName: null }))}>Empty stage</button>
             {SETS.map((s) => (
-              <button key={s.id} className={"rs-btn" + (r.setId === s.id ? " on" : "")} title={s.note} onClick={() => setR((p) => ({ ...p, setId: s.id }))}>{s.name}</button>
+              <button key={s.id} className={"rs-btn" + (r.setId === s.id ? " on" : "")} title={s.note} onClick={() => setR((p) => ({ ...p, setId: s.id, setName: null }))}>{s.name}</button>
             ))}
           </div>
-          <GeneratedSets user={user} activeProject={activeProject} notify={notify} selectedId={null} onPick={() => notify?.("Generated sets appear in the camera view in the next update.")} />
+          <GeneratedSets
+            user={user}
+            activeProject={activeProject}
+            notify={notify}
+            selectedId={genId}
+            onPick={(id, name) => setR((p) => ({ ...p, setId: "gen:" + id, setName: name }))}
+          />
           <div className="rs-row" style={{ marginTop: 10 }}>
             <span className="rs-body" style={{ fontSize: 10 }}>Frame</span>
             {["16:9", "2.39:1", "9:16", "1:1"].map((a) => (

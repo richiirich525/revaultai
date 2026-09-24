@@ -98,7 +98,7 @@ export default function GeneratedSets({ user, activeProject, notify, selectedId,
               className={"rs-btn" + (selectedId === s.id ? " on" : "")}
               title={s.status === "failed" ? s.error || "That set failed" : s.caption || s.name}
               disabled={s.status !== "ready"}
-              onClick={() => onPick?.(s.id)}
+              onClick={() => onPick?.(s.id, s.name)}
               style={s.status !== "ready" ? { opacity: 0.55 } : undefined}
             >
               {s.name}{waiting ? " · building…" : s.status === "failed" ? " · failed" : ""}
