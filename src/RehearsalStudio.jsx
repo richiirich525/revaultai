@@ -4,6 +4,7 @@ import { readStage, describeStage } from "./lib/stageGeometry.js";
 import { stateAt, setKey, removeKey, keyTimes, newRehearsal, addCamera } from "./lib/rehearsal.js";
 import { motionState, defaultBody, BODIES } from "./lib/performers.js";
 import { buildShootPrompt, buildShootSpec } from "./lib/shootPrompt.js";
+import { SETS } from "./lib/setCatalog.js";
 
 // three.js is heavy, so the camera view loads only with the studio —
 // it stays out of the bundle every other page downloads.
@@ -176,9 +177,17 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
               lens={nowRead.lens}
               subject={nowRead.subject}
               aspect={r.aspect ?? "16:9"}
+              setId={r.setId ?? null}
               title={`${activeCam?.name ?? "Camera"}${nowRead.shotSize ? " · " + nowRead.shotSize : ""}`}
             />
           </Suspense>
+          <div className="rs-row" style={{ marginTop: 10 }}>
+            <span className="rs-body" style={{ fontSize: 10 }}>Set</span>
+            <button className={"rs-btn" + (!r.setId ? " on" : "")} onClick={() => setR((p) => ({ ...p, setId: null }))}>Empty stage</button>
+            {SETS.map((s) => (
+              <button key={s.id} className={"rs-btn" + (r.setId === s.id ? " on" : "")} title={s.note} onClick={() => setR((p) => ({ ...p, setId: s.id }))}>{s.name}</button>
+            ))}
+          </div>
           <div className="rs-row" style={{ marginTop: 10 }}>
             <span className="rs-body" style={{ fontSize: 10 }}>Frame</span>
             {["16:9", "2.39:1", "9:16", "1:1"].map((a) => (

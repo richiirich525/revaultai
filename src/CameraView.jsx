@@ -8,6 +8,7 @@ import {
   POSE_LEG_SCALE, poseDrop, EYE_HEIGHT, HEAD_HEIGHT, LEG_HEIGHT, ASPECTS,
 } from "./lib/stage3d.js";
 import { chooseClip, clipTimeFor, MOVING } from "./lib/performers.js";
+import { getSet } from "./lib/setCatalog.js";
 
 /*
   CameraView — RevaultAI (Rehearsal Studio, tiers 2 and 3)
@@ -103,6 +104,35 @@ function makeSuit(orig, color, neckY) {
   return m;
 }
 
+// Grey-box furniture at true scale, the way a set is blocked out for previz.
+// A real set leaves the fourth wall out so the camera can get back; so do these.
+function buildSet(set) {
+  const g = new THREE.Group();
+  const surface = (color, roughness = 0.95) => new THREE.MeshStandardMaterial({ color, roughness });
+
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(set.floor.w, set.floor.d), surface("#23242c"));
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.y = 0.004;
+  g.add(floor);
+
+  for (const w of set.walls) {
+    const len = Math.hypot(w.x2 - w.x1, w.z2 - w.z1);
+    const wall = new THREE.Mesh(new THREE.BoxGeometry(len, w.h, 0.12), surface("#31323c"));
+    wall.position.set((w.x1 + w.x2) / 2, w.h / 2, (w.z1 + w.z2) / 2);
+    wall.rotation.y = -Math.atan2(w.z2 - w.z1, w.x2 - w.x1);
+    g.add(wall);
+  }
+
+  for (const p of set.props) {
+    const mesh = p.shape === "cyl"
+      ? new THREE.Mesh(new THREE.CylinderGeometry(p.r, p.r, p.h, 16), surface(p.color))
+      : new THREE.Mesh(new THREE.BoxGeometry(p.w, p.h, p.d), surface(p.color, p.kind === "window" ? 0.25 : 0.95));
+    mesh.position.set(p.x, p.y != null ? p.y : p.h / 2, p.z);
+    g.add(mesh);
+  }
+  return g;
+}
+
 function makeRing(color) {
   const ring = new THREE.Mesh(
     new THREE.RingGeometry(0.34, 0.4, 40),
@@ -192,7 +222,7 @@ function drivePerformer(m, a, t, realDt) {
   m.rotation.y = yawFromBearing(u.yaw);
 }
 
-export default function CameraView({ state, lens, subject, aspect = "16:9", title }) {
+export default function CameraView({ state, lens, subject, aspect = "16:9", title, setId }) {
   const box = useRef(null);
   const three = useRef(null);
   const lastFrame = useRef(0);
@@ -245,7 +275,7 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
     scene.add(grid);
 
     const camera = new THREE.PerspectiveCamera(35, 16 / 9, 0.05, 60);
-    three.current = { renderer, scene, camera, actors: new Map() };
+    three.current = { renderer, scene, camera, actors: new Map(), floor, grid, set: null, setId: null };
 
     const resize = () => {
       const w = el.clientWidth, h = el.clientHeight;
@@ -273,6 +303,17 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
     const T = three.current;
     if (!T || !state) return;
     const { scene, camera, renderer, actors } = T;
+
+    // Swap the room when the creator picks a different set.
+    if (T.setId !== (setId ?? null)) {
+      if (T.set) { scene.remove(T.set); T.set.traverse((o) => { o.geometry?.dispose?.(); o.material?.dispose?.(); }); T.set = null; }
+      const chosen = setId ? getSet(setId) : null;
+      if (chosen) { T.set = buildSet(chosen); scene.add(T.set); }
+      T.floor.visible = !chosen;   // the empty void's floor and grid step aside
+      T.grid.visible = !chosen;
+      T.setId = setId ?? null;
+    }
+
     const nowMs = performance.now();
     const realDt = lastFrame.current ? Math.min(1, (nowMs - lastFrame.current) / 1000) : 1;
     lastFrame.current = nowMs;

@@ -12,6 +12,8 @@
 import { stateAt } from "./rehearsal.js";
 import { readStage, describeStage, eyelinesFor } from "./stageGeometry.js";
 import { blankSpec, mergeSpec } from "./filmSpec.js";
+import { getSet } from "./setCatalog.js";
+import { setSentence } from "./setGeometry.js";
 
 const UNITS_PER_METRE = 5;
 
@@ -79,6 +81,10 @@ export function buildShootPrompt(r, cameraId) {
 
   const lines = [];
 
+  // The room first: where this happens, and where everyone stands in it.
+  const set = getSet(rehearsal.setId);
+  if (set) lines.push(setSentence(set, s0.actors));
+
   // Framing, as the geometry engine reads it.
   lines.push(describeStage(read0));
   if (read1.shotSize && read1.shotSize !== read0.shotSize) {
@@ -138,6 +144,7 @@ export function buildShootSpec(r, cameraId) {
   const s1 = stateAt(rehearsal, duration);
   const read0 = readStage(s0.camera, s0.actors);
   const read1 = readStage(s1.camera, s1.actors);
+  const set = getSet(rehearsal.setId);
 
   const moves = s0.actors
     .map((a, i) => movementOf(a, s1.actors[i] ?? a, s0.camera, s1.camera, a.name))
@@ -151,7 +158,10 @@ export function buildShootSpec(r, cameraId) {
       title: `${rehearsal.title || "Rehearsal"} — ${built.camera}`,
       purpose: beats.length ? beats.map((b) => b.label.trim()).join("; ") : "",
     },
-    subjects: { characters: s0.actors.map((a) => a.name).filter(Boolean) },
+    subjects: {
+      characters: s0.actors.map((a) => a.name).filter(Boolean),
+      locations: set ? [set.name] : [],
+    },
     action: {
       primary: moves || describeStage(read0),
       startState: stateSentence(s0.camera, s0.actors),
