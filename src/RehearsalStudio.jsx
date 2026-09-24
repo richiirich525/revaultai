@@ -4,7 +4,7 @@ import { readStage, describeStage } from "./lib/stageGeometry.js";
 import { stateAt, setKey, removeKey, keyTimes, newRehearsal, addCamera } from "./lib/rehearsal.js";
 import { motionState, defaultBody, BODIES } from "./lib/performers.js";
 import { buildShootPrompt, buildShootSpec } from "./lib/shootPrompt.js";
-import { SETS } from "./lib/setCatalog.js";
+import { SETS, getSet } from "./lib/setCatalog.js";
 
 // three.js is heavy, so the camera view loads only with the studio —
 // it stays out of the bundle every other page downloads.
@@ -169,7 +169,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
       </div>
 
       <div className="rs-views">
-        <StageBlueprint camera={now.camera} actors={now.actors} onChange={onStageChange} />
+        <StageBlueprint camera={now.camera} actors={now.actors} onChange={onStageChange} set={getSet(r.setId)} />
         <div>
           <Suspense fallback={<div className="rs-body" style={{ padding: 20 }}>Loading the camera view…</div>}>
             <CameraView

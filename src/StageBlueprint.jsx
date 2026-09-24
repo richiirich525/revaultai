@@ -1,3 +1,4 @@
+import { planShapes } from "./lib/setGeometry.js";
 import { useEffect, useRef, useState } from "react";
 import { STAGE, readStage, describeStage, axisFor, sideOfAxis, bearing, eyelinesFor, eyelineProblems } from "./lib/stageGeometry.js";
 
@@ -21,7 +22,7 @@ const styles = `
 
 const COLORS = ["#7B3FE4", "#E5B769", "#4ADE80", "#5BA8C2"];
 
-export default function StageBlueprint({ camera, actors, onChange, baselineSide }) {
+export default function StageBlueprint({ camera, actors, onChange, baselineSide, set }) {
   const svgRef = useRef(null);
   const [drag, setDrag] = useState(null);   // { kind: "camera"|"actor"|"rotate", id }
 
@@ -116,6 +117,27 @@ export default function StageBlueprint({ camera, actors, onChange, baselineSide 
           </pattern>
         </defs>
         <rect width={STAGE} height={STAGE} fill="url(#bpgrid)" />
+
+        {/* The set, seen from above: floor, walls and furniture to block against */}
+        {set && (() => {
+          const plan = planShapes(set);
+          return (
+            <g>
+              <rect x={plan.floor.x} y={plan.floor.y} width={plan.floor.w} height={plan.floor.h} fill="#1b1c24" opacity="0.85" />
+              {plan.props.map((p) => (
+                <rect key={p.id} x={p.x} y={p.y} width={p.w} height={p.h} rx="0.6" fill={p.tall ? "#44455260" : "#3c3d48"} stroke="#55566410" />
+              ))}
+              {plan.walls.map((w) => (
+                <rect key={w.id} x={w.x} y={w.y} width={w.w} height={w.h} fill={w.opening ? "#9fc4d8" : "#5a5b68"} opacity={w.opening ? 0.55 : 0.9} />
+              ))}
+              {plan.props.filter((p) => p.w > 5 && p.label).map((p) => (
+                <text key={"t" + p.id} x={p.x + p.w / 2} y={p.y + p.h / 2 + 1} fill="rgba(255,255,255,0.45)" fontSize="2.2" fontFamily="monospace" textAnchor="middle">
+                  {p.label.replace(/^the /, "")}
+                </text>
+              ))}
+            </g>
+          );
+        })()}
 
         {/* The 180-degree line, and a wash over the far side */}
         {al && (

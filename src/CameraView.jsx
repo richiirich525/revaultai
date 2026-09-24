@@ -8,7 +8,7 @@ import {
   POSE_LEG_SCALE, poseDrop, EYE_HEIGHT, HEAD_HEIGHT, LEG_HEIGHT, ASPECTS,
 } from "./lib/stage3d.js";
 import { chooseClip, clipTimeFor, MOVING } from "./lib/performers.js";
-import { getSet } from "./lib/setCatalog.js";
+import { getSet, SCALE, MODEL_PATH, filesFor } from "./lib/setCatalog.js";
 
 /*
   CameraView — RevaultAI (Rehearsal Studio, tiers 2 and 3)
@@ -104,9 +104,42 @@ function makeSuit(orig, color, neckY) {
   return m;
 }
 
-// Grey-box furniture at true scale, the way a set is blocked out for previz.
-// A real set leaves the fourth wall out so the camera can get back; so do these.
-function buildSet(set) {
+// Kenney's kit is modelled at half size, so every piece is doubled. Loaded
+// pieces are cached and shared between rooms — each is a few dozen kilobytes.
+const pieceCache = new Map();
+async function loadPiece(loader, name) {
+  if (!pieceCache.has(name)) {
+    pieceCache.set(name, loader.loadAsync(MODEL_PATH + name + ".glb").then((g) => g.scene).catch(() => null));
+  }
+  return pieceCache.get(name);
+}
+
+async function buildSetFromModels(set, loader) {
+  const group = new THREE.Group();
+  await Promise.all(filesFor(set).map((n) => loadPiece(loader, n)));
+  const place = async (p) => {
+    const src = await loadPiece(loader, p.piece);
+    if (!src) return;
+    const o = src.clone(true);
+    o.scale.setScalar(SCALE);
+    o.position.set(p.x, p.y ?? 0, p.z);
+    o.rotation.y = (-(p.rot ?? 0) * Math.PI) / 180;
+    o.traverse((m) => { if (m.isMesh) m.frustumCulled = false; });
+    group.add(o);
+  };
+  const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(set.floor.w, set.floor.d),
+    new THREE.MeshStandardMaterial({ color: "#2a2b33", roughness: 0.95 })
+  );
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.y = 0.004;
+  group.add(floor);
+  for (const w of set.walls ?? []) await place(w);
+  for (const p of set.props ?? []) await place(p);
+  return group;
+}
+
+function unusedGreyBoxSet(set) {
   const g = new THREE.Group();
   const surface = (color, roughness = 0.95) => new THREE.MeshStandardMaterial({ color, roughness });
 
@@ -308,7 +341,13 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
     if (T.setId !== (setId ?? null)) {
       if (T.set) { scene.remove(T.set); T.set.traverse((o) => { o.geometry?.dispose?.(); o.material?.dispose?.(); }); T.set = null; }
       const chosen = setId ? getSet(setId) : null;
-      if (chosen) { T.set = buildSet(chosen); scene.add(T.set); }
+      if (chosen) {
+        const loader = new GLTFLoader();
+        loader.setMeshoptDecoder(MeshoptDecoder);
+        buildSetFromModels(chosen, loader).then((g) => {
+          if (three.current && three.current.setId === chosen.id) { three.current.set = g; scene.add(g); }
+        });
+      }
       T.floor.visible = !chosen;   // the empty void's floor and grid step aside
       T.grid.visible = !chosen;
       T.setId = setId ?? null;
