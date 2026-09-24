@@ -32,7 +32,7 @@ export default function GeneratedSets({ user, activeProject, notify, selectedId,
     if (!user?.id) { setSets([]); return; }
     const { data } = await supabase
       .from("sets")
-      .select("id, name, status, caption, tier, error, created_at")
+      .select("id, name, status, caption, tier, prompt, error, created_at")
       .order("created_at", { ascending: false })
       .limit(24);
     setSets(data ?? []);
@@ -59,6 +59,28 @@ export default function GeneratedSets({ user, activeProject, notify, selectedId,
     return () => clearTimeout(timer.current);
   }, [sets]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  async function remove(id) {
+    const { error } = await supabase.from("sets").delete().eq("id", id);
+    if (error) { notify?.("Couldn't remove that: " + error.message); return; }
+    load();
+  }
+
+  function retry(s) {
+    setName(s.name.replace(/\s\d+$/, ""));
+    setPrompt(s.prompt || "");
+    setTier(s.tier || "full");
+    setOpen(true);
+  }
+
+  // Two sets called the same thing are impossible to tell apart in a picker.
+  function uniqueName(wanted) {
+    const taken = new Set(sets.map((s) => s.name));
+    if (!taken.has(wanted)) return wanted;
+    let n = 2;
+    while (taken.has(`${wanted} ${n}`)) n++;
+    return `${wanted} ${n}`;
+  }
+
   async function generate() {
     const text = prompt.trim();
     if (text.length < 10) { notify?.("Describe the set in a sentence or two."); return; }
@@ -68,7 +90,7 @@ export default function GeneratedSets({ user, activeProject, notify, selectedId,
       const r = await fetch("/api/generate-set", {
         method: "POST",
         headers: { Authorization: "Bearer " + sess?.session?.access_token, "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim() || text.slice(0, 60), prompt: text, tier, projectId: activeProject?.id ?? null }),
+        body: JSON.stringify({ name: uniqueName(name.trim() || text.slice(0, 60)), prompt: text, tier, projectId: activeProject?.id ?? null }),
       });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) notify?.(j.error || "Couldn't start that set.");
@@ -103,6 +125,17 @@ export default function GeneratedSets({ user, activeProject, notify, selectedId,
             >
               {s.name}{waiting ? " · building…" : s.status === "failed" ? " · failed" : ""}
             </button>
+          );
+        })}
+        {sets.filter((s) => s.status === "failed").map((s) => (
+          <span key={"f" + s.id} style={{ display: "inline-flex", gap: 6 }}>
+            <button className="rs-btn" onClick={() => retry(s)}>Retry {s.name}</button>
+            <button className="rs-btn" onClick={() => remove(s.id)}>Remove</button>
+          </span>
+        ))}
+        {[].map((s) => {
+          return (
+            <span key={s} />
           );
         })}
         <button className="rs-btn" onClick={() => setOpen((o) => !o)}>{open ? "Cancel" : "+ Generate a set"}</button>

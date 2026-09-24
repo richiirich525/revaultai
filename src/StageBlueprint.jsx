@@ -120,8 +120,8 @@ export default function StageBlueprint({ camera, actors, onChange, baselineSide,
 
         {/* A generated set's reconstructed area — beyond this the edges fray */}
         {extent && (
-          <rect x={50 - (extent.width * 5) / 2} y={50 - (extent.depth * 5) / 2}
-            width={extent.width * 5} height={extent.depth * 5}
+          <rect x={50 + extent.minX * 5} y={50 + extent.minZ * 5}
+            width={(extent.maxX - extent.minX) * 5} height={(extent.maxZ - extent.minZ) * 5}
             fill="#1b1c24" stroke="#5a5b68" strokeWidth="0.5" strokeDasharray="2 2" opacity="0.9" />
         )}
 

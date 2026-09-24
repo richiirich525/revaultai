@@ -213,10 +213,13 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
                   const cam = p.cameras.find((c) => c.id === p.activeCamera);
                   const first = cam?.keys?.[0];
                   if (!first) return p;
-                  const inside = 50 + Math.min(fit.depth / 2 - 0.6, fit.radius * 0.8) * 5;
-                  if (Math.abs(first.y - 50) <= (fit.radius * 0.9) * 5) return p;
+                  // Stand the camera just inside the back of the room, looking in.
+                  const y = 50 + Math.max(1.2, Math.min(fit.maxZ - 0.6, 3.2)) * 5;
+                  const x = 50 + Math.max(fit.minX + 0.4, Math.min(fit.maxX - 0.4, 0)) * 5;
+                  const inRoom = first.y < 50 + (fit.maxZ + 0.4) * 5 && first.y > 50 + (fit.minZ - 0.4) * 5;
+                  if (inRoom) return p;
                   return { ...p, cameras: p.cameras.map((c) => c.id !== p.activeCamera ? c
-                    : { ...c, keys: c.keys.map((k, i) => (i === 0 ? { ...k, x: 50, y: inside, rotation: 180 } : k)) }) };
+                    : { ...c, keys: c.keys.map((k, i) => (i === 0 ? { ...k, x, y, rotation: 0 } : k)) }) };
                 });
               }}
               title={`${activeCam?.name ?? "Camera"}${nowRead.shotSize ? " · " + nowRead.shotSize : ""}`}
@@ -255,7 +258,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
               />
               <span className="rs-body" style={{ fontSize: 10, opacity: 0.8 }}>
                 {genFit
-                  ? `Fitted automatically: ${genFit.width.toFixed(1)} × ${genFit.depth.toFixed(1)} m${genSet.assets?.scale ? "" : " (estimated — this draft has no size of its own)"}`
+                  ? `${genFit.width.toFixed(1)} × ${genFit.depth.toFixed(1)} m — ${genFit.metric ? "sized from the world's own measurements" : "size estimated; this draft carries none"}`
                   : "Fitting the set…"}
               </span>
             </div>

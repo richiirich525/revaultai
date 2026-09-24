@@ -355,25 +355,25 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
 
     // A generated set: photoreal Gaussian splats from Marble. Its files are
     // large, so Spark loads only when one is actually used.
-    const genId = genSet?.id ?? null;
+        const genId = genSet?.id ?? null;
     if (T.genId !== genId) {
-      if (T.genSet) { scene.remove(T.genSet); T.genSet.dispose?.(); T.genSet = null; }
+      if (T.genOuter) { scene.remove(T.genOuter); T.genOuter = null; T.genWorld = null; T.genSet = null; }
       T.genId = genId;
       T.genFit = null;
+      T.genBase = null;
       const a = genSet?.assets;
       if (a?.splat500k || a?.splat100k) {
         const url = (window.innerWidth < 1100 ? a.splat100k : a.splat500k) || a.splat500k || a.splat100k;
-        // Everything sits in one group, so scale, turn and position apply to
-        // the splats and the collider together.
-        const group = new THREE.Group();
-        group.rotation.x = Math.PI;                     // Marble is Y-down; three.js is Y-up
-        group.scale.setScalar(Number(a.scale) || 1);    // metric scale, when the world has one
-        scene.add(group);
-        T.genGroup = group;
+        const outer = new THREE.Group();   // height only
+        const world = new THREE.Group();   // Marble's frame: turned and scaled
+        world.rotation.x = Math.PI;        // Marble is Y-down; three.js is Y-up
+        outer.add(world);
+        scene.add(outer);
+        T.genOuter = outer;
+        T.genWorld = world;
 
-        // The collider mesh tells us where the floor is, how big the world
-        // really is, and how far it was reconstructed — which is how far the
-        // camera can go before the edges fray.
+        // The collider gives the floor height, the true size and the extent of
+        // what was reconstructed. Measured at 1:1, then scaled.
         if (a.collider) {
           const gl = new GLTFLoader();
           gl.setMeshoptDecoder(MeshoptDecoder);
@@ -383,59 +383,51 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
             collider.traverse((o) => {
               if (o.isMesh) { o.material = new THREE.MeshStandardMaterial({ color: 0x14151c, roughness: 1 }); o.frustumCulled = false; }
             });
-            group.add(collider);
-            group.updateMatrixWorld(true);
-            let box = new THREE.Box3().setFromObject(collider);
+            world.scale.setScalar(1);
+            outer.position.set(0, 0, 0);
+            world.add(collider);
+            outer.updateMatrixWorld(true);
+            const box = new THREE.Box3().setFromObject(collider);
             const h = box.max.y - box.min.y;
-            if (!Number(a.scale) && h > 0.01) {
-              // No metric data — drafts often have none. Assume a room about
-              // 2.6 m to the ceiling and size it from there.
-              group.scale.multiplyScalar(2.6 / h);
-              group.updateMatrixWorld(true);
-              box = new THREE.Box3().setFromObject(collider);
-            }
-            const centre = box.getCenter(new THREE.Vector3());
-            group.position.x -= centre.x;
-            group.position.z -= centre.z;
-            group.position.y -= box.min.y;              // stand the floor at zero
-            group.updateMatrixWorld(true);
-            const size = box.getSize(new THREE.Vector3());
-            T.genBase = { scale: group.scale.x, y: group.position.y };
-            T.genFit = { width: size.x, depth: size.z, height: size.y, radius: Math.max(size.x, size.z) / 2 };
+            const metric = Number(a.scale) || (h > 0.01 ? 2.6 / h : 1);
+            T.genBase = { scale: metric, minY: box.min.y };
+            T.genFit = {
+              minX: box.min.x * metric, maxX: box.max.x * metric,
+              minZ: box.min.z * metric, maxZ: box.max.z * metric,
+              width: (box.max.x - box.min.x) * metric,
+              depth: (box.max.z - box.min.z) * metric,
+              metric: !!Number(a.scale),
+            };
             onSetFit?.(T.genFit);
           }).catch(() => {});
         }
-        // Check the file is reachable before handing it to Spark, so a failure
-        // says something instead of showing an empty room.
+
         fetch(url, { headers: { Range: "bytes=0-1" } })
           .then((r) => {
             if (!r.ok && r.status !== 206) throw new Error("the set file came back " + r.status);
             return import("@sparkjsdev/spark");
           })
           .then(({ SplatMesh, SparkRenderer }) => {
-            // Splats aren't drawn by three.js — Spark draws them, and it only
-            // does so once its renderer is part of the scene.
-            if (!T.spark) {
-              T.spark = new SparkRenderer({ renderer });
-              scene.add(T.spark);
-            }
+            if (!T.spark) { T.spark = new SparkRenderer({ renderer }); scene.add(T.spark); }
             const mesh = new SplatMesh({ url });
-            mesh.rotation.x = Math.PI;   // Marble is Y-down; three.js is Y-up
-            if (three.current && three.current.genId === genId) { three.current.genSet = mesh; group.add(mesh); }
+            if (three.current && three.current.genId === genId) { three.current.genSet = mesh; world.add(mesh); }
           })
           .catch((e) => onSetError?.(e.message || "the set wouldn't load"));
       }
     }
-    // Fine-tuning on top of the automatic fit: 1 means leave it alone.
-    if (T.genGroup && T.genBase) {
-      T.genGroup.scale.setScalar(T.genBase.scale * (Number(setScale) || 1));
-      T.genGroup.position.y = T.genBase.y + (Number(setGround) || 0);
+
+    // The world keeps its own origin — that's the point it was captured from,
+    // where the room surrounds you rather than sitting in front of you. Only
+    // the floor height is corrected, and the sliders fine-tune from there.
+    if (T.genOuter && T.genBase) {
+      const s = T.genBase.scale * (Number(setScale) || 1);
+      T.genWorld.scale.setScalar(s);
+      T.genOuter.position.set(0, -T.genBase.minY * s + (Number(setGround) || 0), 0);
     }
-    // Warn when the camera has left the area the world was built from — that
-    // frame would be useless as an opening frame.
     if (T.genFit) {
       const c = toWorld(state.camera.x, state.camera.y);
-      const away = Math.hypot(c.x, c.z) > T.genFit.radius * 1.05;
+      const f = T.genFit, pad = 0.4;
+      const away = c.x < f.minX - pad || c.x > f.maxX + pad || c.z < f.minZ - pad || c.z > f.maxZ + pad;
       if (away !== outsideRef.current) { outsideRef.current = away; setOutsideSet(away); }
     } else if (outsideRef.current) { outsideRef.current = false; setOutsideSet(false); }
 
