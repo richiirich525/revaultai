@@ -255,7 +255,7 @@ function drivePerformer(m, a, t, realDt) {
   m.rotation.y = yawFromBearing(u.yaw);
 }
 
-export default function CameraView({ state, lens, subject, aspect = "16:9", title, setId, genSet, setScale, setGround, onSetError, onSetFit }) {
+export default function CameraView({ state, lens, subject, aspect = "16:9", title, setId, genSet, setScale, setGround, onSetError, onSetFit, plateRef }) {
   const box = useRef(null);
   const three = useRef(null);
   const lastFrame = useRef(0);
@@ -503,6 +503,24 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
     camera.updateProjectionMatrix();
     renderer.render(scene, camera);
   });
+
+  // A plate of the set with nobody in it. Stand-ins are never sent to a model,
+  // so they're hidden for the capture and put straight back.
+  useEffect(() => {
+    if (!plateRef) return;
+    plateRef.current = () => {
+      const T = three.current;
+      if (!T) return null;
+      const hidden = [];
+      for (const m of T.actors.values()) if (m.visible) { m.visible = false; hidden.push(m); }
+      T.renderer.render(T.scene, T.camera);
+      const url = T.renderer.domElement.toDataURL("image/jpeg", 0.92);
+      for (const m of hidden) m.visible = true;
+      T.renderer.render(T.scene, T.camera);
+      return url;
+    };
+    return () => { if (plateRef) plateRef.current = null; };
+  }, [plateRef]);
 
   const ratio = ASPECTS[aspect] ?? ASPECTS["16:9"];
 

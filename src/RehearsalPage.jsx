@@ -54,6 +54,22 @@ export default function RehearsalPage({ user, activeProject, notify, onSignInCli
   // The angle becomes a Shot Spec, not just a prompt: it carries the blocking,
   // start and end states, eyelines and beats into the Debugger, Live Set
   // Memory and the cross-model compiler.
+  async function uploadPlate(dataUrl) {
+    try {
+      const blob = await (await fetch(dataUrl)).blob();
+      const { data: sess } = await supabase.auth.getSession();
+      const r = await fetch("/api/get-upload-url", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + sess?.session?.access_token, "Content-Type": "application/json" },
+        body: JSON.stringify({ fileType: "image/jpeg" }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.uploadUrl) return null;
+      const put = await fetch(j.uploadUrl, { method: "PUT", headers: { "Content-Type": "image/jpeg" }, body: blob });
+      return put.ok ? j.videoPublicUrl : null;
+    } catch { return null; }
+  }
+
   async function onShoot(out) {
     let specId = null;
     let version = 1;
@@ -72,13 +88,16 @@ export default function RehearsalPage({ user, activeProject, notify, onSignInCli
         .single();
       if (!error && data) { specId = data.id; version = data.version ?? 1; }
     }
+    const locationUrl = out.plate ? await uploadPlate(out.plate) : null;
     setGenPrefill?.({
       prompt: out.prompt,
       aspectRatio: out.aspect,
+      locationUrl,
+      locationName: out.setName ?? null,
       ...(specId ? { filmSpecId: specId, filmSpecVersion: version } : {}),
     });
     notify?.(specId
-      ? `${out.camera} saved as a shot spec. Your rehearsal runs ${out.seconds}s — set the length to match.`
+      ? `${out.camera} saved as a shot spec${locationUrl ? ", with the set attached as a location reference" : ""}. Your rehearsal runs ${out.seconds}s — set the length to match.`
       : `Prompt built from ${out.camera}. Your rehearsal runs ${out.seconds}s — set the length to match.`);
     setPage?.("generate");
   }

@@ -91,7 +91,7 @@ export default async function handler(req, res) {
     }
 
     // 2. Validate input
-    const { prompt, model, duration, imageUrl, aspectRatio, projectId, filmSpecId, filmSpecVersion, vaultRefIds, coverageSlotId, promotedFrom } = req.body;
+    const { prompt, model, duration, imageUrl, aspectRatio, projectId, filmSpecId, filmSpecVersion, vaultRefIds, coverageSlotId, promotedFrom, locationUrl, locationName } = req.body;
     const pid = typeof projectId === "string" ? projectId : null;
 
     // Normalise a prompt so trivial edits still count as the same shot.
@@ -157,6 +157,20 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: "Couldn't load your Vault photos. Try again, or generate without them." });
       }
     }
+    // A plate of the rehearsal set, so every angle of every shot is the same
+    // room rather than one rebuilt from words each time.
+    if (refModel && !imageUrl && typeof locationUrl === "string" && /^https:\/\//.test(locationUrl)) {
+      refs.push({
+        id: null,
+        name: String(locationName || "the location").slice(0, 60),
+        kind: "location",
+        url: locationUrl,
+        urls: [locationUrl],
+      });
+      // Veo takes a short list; keep the location and trim the rest.
+      while (refModel.seconds && refs.length > 3) refs.splice(refs.length - 2, 1);
+    }
+
     // Seedance reads references by name; Veo just takes the images.
     const refPrompt = refs.length && refModel.named
       ? `${prompt.trim()}\n\n${refs.map((r, i) => `@${refModel.mode === "elements" ? "Element" : "Image"}${i + 1} is ${r.name}${r.kind === "location" ? ", the location" : r.kind === "prop" ? ", a prop" : ""}.`).join(" ")}`
@@ -186,7 +200,7 @@ export default async function handler(req, res) {
         project_id: pid,
         film_spec_id: typeof filmSpecId === "string" ? filmSpecId : null,
         film_spec_version: Number(filmSpecVersion) || null,
-        vault_ref_ids: refs.length ? refs.map((r) => r.id) : null,
+        vault_ref_ids: refs.some((r) => r.id) ? refs.filter((r) => r.id).map((r) => r.id) : null,
         coverage_slot_id: typeof coverageSlotId === "string" ? coverageSlotId : null,
         aspect_ratio: ratio,
         promoted_from: typeof promotedFrom === "string" ? promotedFrom : null,

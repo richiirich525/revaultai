@@ -53,6 +53,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
   const [beatText, setBeatText] = useState("");
   const [genSet, setGenSet] = useState(null);
   const [genFit, setGenFit] = useState(null);
+  const plateRef = useRef(null);
   const raf = useRef(null);
   const last = useRef(0);
 
@@ -132,7 +133,12 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
   function shoot(cameraId) {
     const out = buildShootPrompt(r, cameraId);
     if (!out.ok) { notify?.("Point that camera at someone first."); return; }
-    if (onShoot) { onShoot({ ...out, spec: buildShootSpec(r, cameraId) }); return; }
+    if (onShoot) {
+      // With a set loaded, the model is shown the room itself, not just told about it.
+      const plate = (r.setId && cameraId === r.activeCamera) ? plateRef.current?.() : null;
+      onShoot({ ...out, spec: buildShootSpec(r, cameraId), plate, setName: r.setName || getSet(r.setId)?.name || null });
+      return;
+    }
     setGenPrefill?.({ prompt: out.prompt, aspectRatio: out.aspect });
     notify?.(`Prompt built from ${out.camera}. Your rehearsal runs ${out.seconds}s — set the length to match.`);
     setPage?.("generate");
@@ -203,6 +209,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
               aspect={r.aspect ?? "16:9"}
               setId={genId ? null : r.setId ?? null}
               genSet={genSet}
+              plateRef={plateRef}
               setScale={r.setScale}
               setGround={r.setGround}
               onSetError={(m) => notify?.("Couldn't show that set — " + m)}
