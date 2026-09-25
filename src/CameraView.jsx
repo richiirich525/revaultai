@@ -341,7 +341,11 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
     const { scene, camera, renderer, actors } = T;
 
     // Swap the room when the creator picks a different set.
-    const setKey = setData ? JSON.stringify(setData.floor) + (setData.props?.length ?? 0) + (setData.walls?.length ?? 0) + (setData.name ?? "") : setId ?? null;
+    // Rebuild only when the room really differs — not on every render, or it
+    // tears itself down before it can finish loading.
+    const setKey = setData
+      ? `${setData.id ?? setData.savedId ?? setData.baseId ?? "custom"}|${setData.name ?? ""}|${setData.floor?.w}x${setData.floor?.d}|${(setData.walls ?? []).length}|${(setData.props ?? []).map((p) => `${p.piece}${p.x},${p.z},${p.rot ?? 0},${p.y ?? 0}`).join(";")}`
+      : setId ?? null;
     if (T.setId !== setKey) {
       if (T.set) { scene.remove(T.set); T.set.traverse((o) => { o.geometry?.dispose?.(); o.material?.dispose?.(); }); T.set = null; }
       const chosen = setData ?? (setId ? getSet(setId) : null);
