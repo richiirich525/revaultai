@@ -353,7 +353,8 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
         const loader = new GLTFLoader();
         loader.setMeshoptDecoder(MeshoptDecoder);
         buildSetFromModels(chosen, loader).then((g) => {
-          if (three.current && three.current.setId === chosen.id) { three.current.set = g; scene.add(g); }
+          // Keep it only if the room hasn't changed while it was loading.
+          if (three.current && three.current.setId === setKey) { three.current.set = g; scene.add(g); }
         });
       }
       T.setId = setKey;
