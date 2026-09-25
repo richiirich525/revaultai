@@ -4,7 +4,7 @@ import { readStage, describeStage } from "./lib/stageGeometry.js";
 import { stateAt, setKey, removeKey, keyTimes, newRehearsal, addCamera } from "./lib/rehearsal.js";
 import { motionState, defaultBody, BODIES } from "./lib/performers.js";
 import { buildShootPrompt, buildShootSpec } from "./lib/shootPrompt.js";
-import { SETS, getSet } from "./lib/setCatalog.js";
+import { SETS, EXTERIORS, getSet } from "./lib/setCatalog.js";
 import SetEditor from "./SetEditor.jsx";
 import { startEditing, packSet, unpackSet, activeRoom } from "./lib/setEdit.js";
 // Generated sets (Marble) are switched off: worlds built from a text prompt
@@ -285,7 +285,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
                 {s.data?.name || "My set"}
               </button>
             ))}
-            {SETS.map((s) => (
+            {[...SETS, ...EXTERIORS].map((s) => (
               <button key={s.id} className={"rs-btn" + (r.setId === s.id ? " on" : "")} title={s.note} onClick={() => setR((p) => ({ ...p, setId: s.id, setName: null, setCustom: null }))}>{s.name}</button>
             ))}
           </div>

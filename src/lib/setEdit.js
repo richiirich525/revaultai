@@ -4,7 +4,7 @@
   resize the floor. Pure functions over room data — a set is a small object,
   not a file, so saving one costs nothing.
 */
-import { PIECES, getSet } from "./setCatalog.js";
+import { ALL_PIECES as PIECES, getSet } from "./setCatalog.js";
 
 // The kit, grouped so the piece browser is navigable rather than 69 names.
 const GROUPS = [
@@ -17,6 +17,10 @@ const GROUPS = [
   ["Storage", /^(bookcase|cabinet|cardboard|coatRack|trashcan)/i],
   ["Screens & sound", /^(television|computer|laptop|speaker|radio)/i],
   ["Dressing", /^(rug|plant|potted|lamp|pillow|books)/i],
+  ["Buildings", /^(building|low-detail|detail-awning|detail-overhang|crypt)/i],
+  ["Street", /^(road|path-|driveway|lightpost|fence-|iron-fence)/i],
+  ["Nature", /^(tree|pine|grass|flower|rock|log|stump|ground_|plant_)/i],
+  ["Graveyard", /^(grave|cross|pillar|lantern|stone-wall|debris|bench)/i],
 ];
 
 export function pieceGroups() {

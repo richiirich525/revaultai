@@ -8,7 +8,7 @@ import {
   POSE_LEG_SCALE, poseDrop, EYE_HEIGHT, HEAD_HEIGHT, LEG_HEIGHT, ASPECTS,
 } from "./lib/stage3d.js";
 import { chooseClip, clipTimeFor, MOVING } from "./lib/performers.js";
-import { getSet, SCALE, MODEL_PATH, filesFor } from "./lib/setCatalog.js";
+import { getSet, MODEL_PATH, filesFor, pieceInfo } from "./lib/setCatalog.js";
 
 /*
   CameraView — RevaultAI (Rehearsal Studio, tiers 2 and 3)
@@ -109,7 +109,8 @@ function makeSuit(orig, color, neckY) {
 const pieceCache = new Map();
 async function loadPiece(loader, name) {
   if (!pieceCache.has(name)) {
-    pieceCache.set(name, loader.loadAsync(MODEL_PATH + name + ".glb").then((g) => g.scene).catch(() => null));
+    const path = `/models/${pieceInfo(name).dir}/${name}.glb`;
+    pieceCache.set(name, loader.loadAsync(path).then((g) => g.scene).catch(() => null));
   }
   return pieceCache.get(name);
 }
@@ -121,15 +122,15 @@ async function buildSetFromModels(set, loader) {
     const src = await loadPiece(loader, p.piece);
     if (!src) return;
     const o = src.clone(true);
-    o.scale.setScalar(SCALE);
+    o.scale.setScalar(pieceInfo(p.piece).scale);
     o.position.set(p.x, p.y ?? 0, p.z);
     o.rotation.y = (-(p.rot ?? 0) * Math.PI) / 180;
     o.traverse((m) => { if (m.isMesh) m.frustumCulled = false; });
     group.add(o);
   };
   const floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(set.floor.w, set.floor.d),
-    new THREE.MeshStandardMaterial({ color: "#2a2b33", roughness: 0.95 })
+    new THREE.PlaneGeometry(set.floor.w * (set.outdoor ? 2.5 : 1), set.floor.d * (set.outdoor ? 2.5 : 1)),
+    new THREE.MeshStandardMaterial({ color: set.outdoor ? "#20241f" : "#2a2b33", roughness: 0.95 })
   );
   floor.rotation.x = -Math.PI / 2;
   floor.position.y = 0.004;
