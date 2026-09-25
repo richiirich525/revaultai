@@ -4,6 +4,117 @@
 
 export const POSTS = [
   {
+    slug: "same-location-across-ai-video-shots",
+    title: "How to Keep the Same Location Across AI Video Shots",
+    seoTitle: "How to Keep the Same Location Across AI Video Shots (2026)",
+    description:
+      "Keep the same location across AI video shots: why rooms drift between generations, why longer prompts and seeds don't fix it, and how a reference image does.",
+    date: "2026-09-25",
+    author: "Richard Garland",
+    category: "Guides",
+    readingTime: "8 min",
+    faq: [
+      ["Why does my AI video background change between shots?", "Because each shot rebuilds the room from your words. A prompt describes a location rather than specifying one, and \"a 1970s kitchen with yellowed cabinets\" fits countless rooms. The model picks one each time, and nothing carries its choice into the next shot."],
+      ["Can I use a photo of a real room?", "Yes, if you have the right to use it. A real room is one of the strongest location references there is. The catch is that you only get the angles you photographed, so photograph the space from each direction you plan to shoot."],
+      ["Does this work with character reference photos at the same time?", "On models that take references, yes. Seedance accepts several reference images, Kling takes elements and Veo takes references in its reference mode, so a location reference can travel alongside your characters' photos. Veo keeps the list short, and on RevaultAI its reference mode makes 8-second clips. Wan 2.6 can't take reference photos at all, for characters or locations."],
+      ["Will the room look exactly the same in every shot?", "No. A reference anchors a location; it doesn't clone it. Expect the room to be recognisably the same — the same layout, the same furniture, the same windows in the same places — not pixel-identical. Small details, surface textures and especially lighting can still shift from shot to shot."],
+    ],
+    content: `
+<p>Character consistency in AI video has become a mostly solved problem. Attach a few photos of a face and the major models will hold it well enough to cut between shots. Locations haven't had the same treatment. Every shot rebuilds the room from words, so the second angle comes back with a different window, a different counter and different light — and two shots that don't share a room can't be cut together as one scene.</p>
+
+<p>That's a large part of why so much AI video is single shots rather than scenes. This guide covers why locations drift, which fixes don't work, the one that does, and where the picture it needs comes from.</p>
+
+<h2>Why a Location Drifts Between Shots</h2>
+
+<p>A prompt describes a room. It doesn't specify one. "A 1970s kitchen with yellowed cabinets" is a clear description, and a million valid rooms satisfy it — cabinets on the left or the right, a window over the sink or none at all. The model picks one answer each time it generates, and nothing carries its last pick into the next shot. Changing the angle makes it worse: the reverse shows the half of the room the first shot never saw, so the model invents it from scratch.</p>
+
+<p>Characters had the same problem until reference photos arrived. A description of a face has a million valid answers too; a photo has one. A photo pins down what words only describe, and locations need the same fix. See <a href="/blog/ai-video-character-consistency">how to keep characters consistent in AI video</a> for the character side of this.</p>
+
+<h2>What Doesn't Work</h2>
+
+<p>Three fixes come up every time someone hits this problem. None of them is useless, and none of them holds.</p>
+
+<p><strong>Longer, more detailed prompts.</strong> More words, same problem. Adding "a green enamel kettle on the left burner, a calendar by the door" narrows the space of valid rooms, but it never closes it. Every detail you add leaves ten you didn't, and the model fills those differently each time. Long prompts have their own cost, too: the more a prompt asks for, the more of it gets quietly dropped, one of the causes covered in <a href="/blog/why-ai-video-generations-fail">why AI video generations fail</a>.</p>
+
+<p><strong>Seeds.</strong> Reusing a seed helps when the model, the prompt and the framing all stay the same. But a new angle is a new prompt and a new composition, and the seed's influence doesn't survive that change. Seeds get you a similar take of the same shot; they don't carry a room to another camera position.</p>
+
+<p><strong>Describing the room identically every time.</strong> Pasting the same location paragraph into every shot helps a little — at least the model is answering the same question. But it answers it fresh each time, and the answer still drifts. Worth doing as a baseline; not enough on its own.</p>
+
+<h2>What Works: Show the Model the Room</h2>
+
+<p>Give the model a picture of the room, not a description of it. That's the same move that fixed characters, and it works for the same reason: an image is one specific answer, so the model has far less to invent.</p>
+
+<p>This is a <strong>reference image</strong> used as a location anchor, and it isn't the same thing as image-to-video. In image-to-video, the image is the start frame: it dictates the first frame, composition and all, and the model animates forward from it. A reference informs the whole shot without dictating any single frame. The model reads it for what the room is — layout, furniture, windows, materials — and builds the shot you asked for inside that room. A start frame locks the composition; a reference leaves the framing to your prompt, so one picture of the room can serve a wide, a close-up and a reverse.</p>
+
+<p>Not every model takes references, and the ones that do take them differently:</p>
+
+<ul>
+<li><strong>Seedance</strong> accepts additional reference images alongside your character photos, and each one can be named in the prompt, so the model knows which image is a person and which is the location.</li>
+<li><strong>Kling</strong> takes references as elements. A location can be one element and each character another.</li>
+<li><strong>Veo</strong> takes references in its reference mode. It keeps the list short, so a location reference shares a small budget with your characters.</li>
+<li><strong>Wan</strong> can't take reference photos at all — not for characters, not for locations.</li>
+</ul>
+
+<h2>Where the Reference Picture Comes From</h2>
+
+<p>The technique is simple. The hard part is having a good picture of the room. There are three realistic sources.</p>
+
+<p><strong>A photo of a real place you have access to.</strong> The strongest reference there is: a real room, with geometry and light that make sense from every direction. You need access and the right to use it, though, and you only get the angles you photographed — a model asked for the reverse still invents whatever your photo doesn't show. Photograph the room from each direction you plan to shoot.</p>
+
+<p><strong>A still from an earlier generation you liked.</strong> Free, and usually the first thing people try: generate the establishing shot, pull a frame, and use it as the reference for everything after. It works, but it locks you to whatever the model happened to invent, including anything slightly wrong with it, and you still only have one side of the room.</p>
+
+<p><strong>A 3D previz render.</strong> This is what RevaultAI's set library does. You block the scene in a 3D room, and when you shoot an angle, a render of that room from that camera goes with the shot as a location reference. Move the camera to the reverse and the reverse is rendered, because the room exists on every side. It won't look like a photograph, and it doesn't need to: the model takes the layout from it and the look from your prompt.</p>
+
+<p>The performers' stand-ins are hidden for that render, so the model receives an empty room. That's deliberate: a model given a picture of grey figures copies the grey figures, and they'd turn up in your shot as mannequins. Your characters come from their own references; the set render carries only the room.</p>
+
+<h2>The RevaultAI Workflow</h2>
+
+<p>Concretely, a two-shot dialogue scene goes like this:</p>
+
+<ul>
+<li><strong>Pick a set</strong> in the Rehearsal Studio. There are sixteen: ten interiors, from a kitchen to a café to a waiting room, and six exteriors, including a street corner, an alley and a park.</li>
+<li><strong>Block the performers</strong> — one at the table, one at the counter — and place a camera on the first angle.</li>
+<li><strong>Press Shoot this angle.</strong> The framing, lens and blocking become the prompt, and the set is attached as a location reference.</li>
+<li><strong>Generate</strong> it on a model that takes references.</li>
+<li><strong>Move the camera to the reverse</strong>, press Shoot this angle again, and generate that.</li>
+</ul>
+
+<p>Both shots carry the same room, seen from opposite sides, so they cut together as one scene. The sets are free, and you can dress them: move the furniture and save the result as your own set, ready for every scene that takes place there.</p>
+
+<p>Two practical notes. The set goes as a reference, not a start frame, so it isn't combined with a starting image — use one or the other for a given shot. And on Veo, whose reference mode makes 8-second clips on RevaultAI, the room is kept and the rest of the reference list is trimmed to fit.</p>
+
+<div class="cta-inline">
+<strong>Shoot Two Angles in the Same Room</strong>
+<p>Block a scene in one of sixteen free sets in the Rehearsal Studio, then shoot each angle with the room attached as a location reference. Sign-in required.</p>
+<a class="cta-btn" href="/tools">See the Tools</a>
+</div>
+
+<h2>Honest Limits</h2>
+
+<p>A reference anchors a location. It doesn't clone it. Expect the room to be recognisably the same — the counter where the counter was, the window on the same wall — not pixel-identical. Surface detail, small props and textures can still vary.</p>
+
+<p>Lighting can still shift between shots. A reference shows the model where the window is; it doesn't guarantee the same light through it twice. Describe the light the same way in every prompt, and expect some matching in the grade.</p>
+
+<p>A wide and a close-up stress the reference differently. A wide shows most of the room, so any drift is easy to spot. A close-up shows a sliver of background, so there's less to get wrong — but also less to anchor to, and the background can wander further without looking obviously broken.</p>
+
+<p>And Wan 2.6 can't do any of this. It doesn't take reference photos, so a scene that needs a consistent location belongs on Seedance, Kling or Veo.</p>
+
+<h2>Frequently Asked Questions</h2>
+
+<h3>Why does my AI video background change between shots?</h3>
+<p>Because each shot rebuilds the room from your words. A prompt describes a location rather than specifying one, and "a 1970s kitchen with yellowed cabinets" fits countless rooms. The model picks one each time, and nothing carries its choice into the next shot.</p>
+
+<h3>Can I use a photo of a real room?</h3>
+<p>Yes, if you have the right to use it. A real room is one of the strongest location references there is. The catch is that you only get the angles you photographed, so photograph the space from each direction you plan to shoot.</p>
+
+<h3>Does this work with character reference photos at the same time?</h3>
+<p>On models that take references, yes. Seedance accepts several reference images, Kling takes elements and Veo takes references in its reference mode, so a location reference can travel alongside your characters' photos. Veo keeps the list short, and on RevaultAI its reference mode makes 8-second clips. Wan 2.6 can't take reference photos at all, for characters or locations.</p>
+
+<h3>Will the room look exactly the same in every shot?</h3>
+<p>No. A reference anchors a location; it doesn't clone it. Expect the room to be recognisably the same — the same layout, the same furniture, the same windows in the same places — not pixel-identical. Small details, surface textures and especially lighting can still shift from shot to shot.</p>
+`,
+  },
+  {
     slug: "edit-ai-video-clips-premiere-resolve",
     title: "How to Turn AI Video Clips Into an Edit in Premiere Pro or DaVinci Resolve",
     seoTitle: "How to Edit AI Video Clips in Premiere Pro or DaVinci Resolve (2026)",
