@@ -91,7 +91,7 @@ export default async function handler(req, res) {
     }
 
     // 2. Validate input
-    const { prompt, model, duration, imageUrl, aspectRatio, projectId, filmSpecId, filmSpecVersion, vaultRefIds, coverageSlotId, promotedFrom, locationUrl, locationName } = req.body;
+    const { prompt, model, duration, imageUrl, aspectRatio, projectId, filmSpecId, filmSpecVersion, vaultRefIds, coverageSlotId, promotedFrom, locationData, locationName } = req.body;
     const pid = typeof projectId === "string" ? projectId : null;
 
     // Normalise a prompt so trivial edits still count as the same shot.
@@ -159,14 +159,24 @@ export default async function handler(req, res) {
     }
     // A plate of the rehearsal set, so every angle of every shot is the same
     // room rather than one rebuilt from words each time.
-    if (refModel && !imageUrl && typeof locationUrl === "string" && /^https:\/\//.test(locationUrl)) {
-      refs.push({
-        id: null,
-        name: String(locationName || "the location").slice(0, 60),
-        kind: "location",
-        url: locationUrl,
-        urls: [locationUrl],
-      });
+    // The set plate goes to fal's own storage: a private R2 link is one fal
+    // can't fetch, which is what a 422 from the model actually means.
+    if (refModel && !imageUrl && typeof locationData === "string" && locationData.startsWith("data:image/") && locationData.length < 4_000_000) {
+      try {
+        const bytes = Buffer.from(locationData.split(",")[1] ?? "", "base64");
+        const plateUrl = await fal.storage.upload(new Blob([bytes], { type: "image/jpeg" }));
+        if (plateUrl) {
+          refs.push({
+            id: null,
+            name: String(locationName || "the location").slice(0, 60),
+            kind: "location",
+            url: plateUrl,
+            urls: [plateUrl],
+          });
+        }
+      } catch (e) {
+        console.warn("location plate upload failed:", e.message);
+      }
       // Veo takes a short list; keep the location and trim the rest.
       while (refModel.seconds && refs.length > 3) refs.splice(refs.length - 2, 1);
     }

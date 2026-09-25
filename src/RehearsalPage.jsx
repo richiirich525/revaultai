@@ -88,16 +88,15 @@ export default function RehearsalPage({ user, activeProject, notify, onSignInCli
         .single();
       if (!error && data) { specId = data.id; version = data.version ?? 1; }
     }
-    const locationUrl = out.plate ? await uploadPlate(out.plate) : null;
     setGenPrefill?.({
       prompt: out.prompt,
       aspectRatio: out.aspect,
-      locationUrl,
+      locationData: out.plate ?? null,
       locationName: out.setName ?? null,
       ...(specId ? { filmSpecId: specId, filmSpecVersion: version } : {}),
     });
     notify?.(specId
-      ? `${out.camera} saved as a shot spec${locationUrl ? ", with the set attached as a location reference" : ""}. Your rehearsal runs ${out.seconds}s — set the length to match.`
+      ? `${out.camera} saved as a shot spec${out.plate ? ", with the set attached as a location reference" : ""}. Your rehearsal runs ${out.seconds}s — set the length to match.`
       : `Prompt built from ${out.camera}. Your rehearsal runs ${out.seconds}s — set the length to match.`);
     setPage?.("generate");
   }

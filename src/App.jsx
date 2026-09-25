@@ -1389,7 +1389,7 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
     specRef.current = genPrefill.filmSpecId ? { id: genPrefill.filmSpecId, version: genPrefill.filmSpecVersion ?? 1 } : null;
     slotRef.current = genPrefill.coverageSlotId ?? null;
     promoRef.current = genPrefill.promotedFrom ?? null;
-    locRef.current = genPrefill.locationUrl ? { url: genPrefill.locationUrl, name: genPrefill.locationName ?? null } : null;
+    locRef.current = genPrefill.locationData ? { data: genPrefill.locationData, name: genPrefill.locationName ?? null } : null;
     if (genPrefill.generateModelKey) setModel(genPrefill.generateModelKey);
     if (genPrefill.duration) setDuration(Number(genPrefill.duration));
     setGenPrefill?.(null);
@@ -1768,7 +1768,7 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
       const res = await fetch("/api/generate-video", {
         method: "POST",
         headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: prompt.trim(), model, duration, aspectRatio: aspect, imageUrl: imageUrl || undefined, projectId: activeProject?.id ?? null, filmSpecId: specRef.current?.id ?? null, filmSpecVersion: specRef.current?.version ?? null, vaultRefIds: refsToSend(model, imageUrl, vaultRefIds), coverageSlotId: slotRef.current, promotedFrom: promoRef.current, locationUrl: locRef.current?.url ?? null, locationName: locRef.current?.name ?? null }),
+        body: JSON.stringify({ prompt: prompt.trim(), model, duration, aspectRatio: aspect, imageUrl: imageUrl || undefined, projectId: activeProject?.id ?? null, filmSpecId: specRef.current?.id ?? null, filmSpecVersion: specRef.current?.version ?? null, vaultRefIds: refsToSend(model, imageUrl, vaultRefIds), coverageSlotId: slotRef.current, promotedFrom: promoRef.current, locationData: locRef.current?.data ?? null, locationName: locRef.current?.name ?? null }),
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) {
