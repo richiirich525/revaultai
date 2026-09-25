@@ -5,7 +5,10 @@ import { stateAt, setKey, removeKey, keyTimes, newRehearsal, addCamera } from ".
 import { motionState, defaultBody, BODIES } from "./lib/performers.js";
 import { buildShootPrompt, buildShootSpec } from "./lib/shootPrompt.js";
 import { SETS, getSet } from "./lib/setCatalog.js";
-import GeneratedSets from "./GeneratedSets.jsx";
+// Generated sets (Marble) are switched off: worlds built from a text prompt
+// didn't look good enough to shoot. The code and endpoints remain, ready if
+// photo input — where the set is a real room — is ever worth trying.
+// import GeneratedSets from "./GeneratedSets.jsx";
 import { supabase } from "./lib/supabase.js";
 
 // three.js is heavy, so the camera view loads only with the studio —
@@ -239,13 +242,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
               <button key={s.id} className={"rs-btn" + (r.setId === s.id ? " on" : "")} title={s.note} onClick={() => setR((p) => ({ ...p, setId: s.id, setName: null }))}>{s.name}</button>
             ))}
           </div>
-          <GeneratedSets
-            user={user}
-            activeProject={activeProject}
-            notify={notify}
-            selectedId={genId}
-            onPick={(id, name) => setR((p) => ({ ...p, setId: "gen:" + id, setName: name }))}
-          />
+          {/* Generated sets (Marble) were switched off — see the note by the import */}
           {genSet && (
             <div className="rs-row" style={{ marginTop: 10, alignItems: "center" }}>
               <span className="rs-body" style={{ fontSize: 10 }}>Set size</span>
