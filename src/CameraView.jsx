@@ -255,7 +255,7 @@ function drivePerformer(m, a, t, realDt) {
   m.rotation.y = yawFromBearing(u.yaw);
 }
 
-export default function CameraView({ state, lens, subject, aspect = "16:9", title, setId, genSet, setScale, setGround, onSetError, onSetFit, plateRef }) {
+export default function CameraView({ state, lens, subject, aspect = "16:9", title, setId, genSet, setScale, setGround, onSetError, onSetFit, plateRef, setData }) {
   const box = useRef(null);
   const three = useRef(null);
   const lastFrame = useRef(0);
@@ -341,9 +341,10 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
     const { scene, camera, renderer, actors } = T;
 
     // Swap the room when the creator picks a different set.
-    if (T.setId !== (setId ?? null)) {
+    const setKey = setData ? JSON.stringify(setData.floor) + (setData.props?.length ?? 0) + (setData.walls?.length ?? 0) + (setData.name ?? "") : setId ?? null;
+    if (T.setId !== setKey) {
       if (T.set) { scene.remove(T.set); T.set.traverse((o) => { o.geometry?.dispose?.(); o.material?.dispose?.(); }); T.set = null; }
-      const chosen = setId ? getSet(setId) : null;
+      const chosen = setData ?? (setId ? getSet(setId) : null);
       if (chosen) {
         const loader = new GLTFLoader();
         loader.setMeshoptDecoder(MeshoptDecoder);
@@ -351,7 +352,7 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
           if (three.current && three.current.setId === chosen.id) { three.current.set = g; scene.add(g); }
         });
       }
-      T.setId = setId ?? null;
+      T.setId = setKey;
     }
 
     // A generated set: photoreal Gaussian splats from Marble. Its files are

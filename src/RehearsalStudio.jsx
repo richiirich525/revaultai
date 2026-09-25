@@ -5,6 +5,8 @@ import { stateAt, setKey, removeKey, keyTimes, newRehearsal, addCamera } from ".
 import { motionState, defaultBody, BODIES } from "./lib/performers.js";
 import { buildShootPrompt, buildShootSpec } from "./lib/shootPrompt.js";
 import { SETS, getSet } from "./lib/setCatalog.js";
+import SetEditor from "./SetEditor.jsx";
+import { startEditing, packSet, unpackSet, activeRoom } from "./lib/setEdit.js";
 // Generated sets (Marble) are switched off: worlds built from a text prompt
 // didn't look good enough to shoot. The code and endpoints remain, ready if
 // photo input — where the set is a real room — is ever worth trying.
@@ -57,6 +59,31 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
   const [genSet, setGenSet] = useState(null);
   const [genFit, setGenFit] = useState(null);
   const plateRef = useRef(null);
+  const [mySets, setMySets] = useState([]);
+  const [selPiece, setSelPiece] = useState(null);
+  const [savingSet, setSavingSet] = useState(false);
+  const room = activeRoom(r);
+
+  useEffect(() => {
+    if (!user?.id) { setMySets([]); return; }
+    supabase.from("user_sets").select("id, data, updated_at").order("updated_at", { ascending: false }).limit(30)
+      .then(({ data }) => setMySets(data ?? []));
+  }, [user?.id]);
+
+  async function saveMySet() {
+    if (!user?.id) { notify?.("Sign in to keep your own sets."); return; }
+    setSavingSet(true);
+    const packed = packSet(r.setCustom);
+    const existing = r.setCustom?.savedId ?? null;
+    const res = existing
+      ? await supabase.from("user_sets").update({ data: packed, updated_at: new Date().toISOString() }).eq("id", existing).select("id, data").single()
+      : await supabase.from("user_sets").insert({ user_id: user.id, project_id: activeProject?.id ?? null, data: packed }).select("id, data").single();
+    setSavingSet(false);
+    if (res.error) { notify?.("Couldn't save: " + res.error.message); return; }
+    setR((p) => ({ ...p, setCustom: { ...p.setCustom, savedId: res.data.id } }));
+    setMySets((list) => [res.data, ...list.filter((s) => s.id !== res.data.id)]);
+    notify?.(`"${packed.name}" saved — it's in your sets now.`);
+  }
   const raf = useRef(null);
   const last = useRef(0);
 
@@ -202,7 +229,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
       </div>
 
       <div className="rs-views">
-        <StageBlueprint camera={now.camera} actors={now.actors} onChange={onStageChange} set={getSet(r.setId)} extent={genFit} />
+        <StageBlueprint camera={now.camera} actors={now.actors} onChange={onStageChange} set={room} extent={genFit} />
         <div>
           <Suspense fallback={<div className="rs-body" style={{ padding: 20 }}>Loading the camera view…</div>}>
             <CameraView
@@ -211,6 +238,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
               subject={nowRead.subject}
               aspect={r.aspect ?? "16:9"}
               setId={genId ? null : r.setId ?? null}
+              setData={room}
               genSet={genSet}
               plateRef={plateRef}
               setScale={r.setScale}
@@ -237,12 +265,36 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
           </Suspense>
           <div className="rs-row" style={{ marginTop: 10 }}>
             <span className="rs-body" style={{ fontSize: 10 }}>Set</span>
-            <button className={"rs-btn" + (!r.setId ? " on" : "")} onClick={() => setR((p) => ({ ...p, setId: null, setName: null }))}>Empty stage</button>
+            <button className={"rs-btn" + (!r.setId && !r.setCustom ? " on" : "")} onClick={() => setR((p) => ({ ...p, setId: null, setName: null, setCustom: null }))}>Empty stage</button>
+            {r.setId && !r.setCustom && (
+              <button className="rs-btn" onClick={() => setR((p) => ({ ...p, setCustom: startEditing(getSet(p.setId)) }))}>Dress this set →</button>
+            )}
+            {mySets.map((s) => (
+              <button key={s.id} className={"rs-btn" + (r.setCustom?.savedId === s.id ? " on" : "")}
+                onClick={() => { const u = unpackSet(s); setR((p) => ({ ...p, setCustom: u, setId: null, setName: u.name })); }}>
+                {s.data?.name || "My set"}
+              </button>
+            ))}
             {SETS.map((s) => (
-              <button key={s.id} className={"rs-btn" + (r.setId === s.id ? " on" : "")} title={s.note} onClick={() => setR((p) => ({ ...p, setId: s.id, setName: null }))}>{s.name}</button>
+              <button key={s.id} className={"rs-btn" + (r.setId === s.id ? " on" : "")} title={s.note} onClick={() => setR((p) => ({ ...p, setId: s.id, setName: null, setCustom: null }))}>{s.name}</button>
             ))}
           </div>
-          {/* Generated sets (Marble) were switched off — see the note by the import */}
+          {r.setCustom && (
+            <SetEditor
+              room={r.setCustom}
+              onChange={(next) => setR((p) => ({ ...p, setCustom: next, setName: next.name }))}
+              onSave={saveMySet}
+              saved={mySets}
+              onLoad={(s) => { const u = unpackSet(s); setR((p) => ({ ...p, setCustom: u, setId: null, setName: u.name })); }}
+              onDelete={async (id) => {
+                await supabase.from("user_sets").delete().eq("id", id);
+                setMySets((list) => list.filter((s) => s.id !== id));
+              }}
+              selected={selPiece}
+              onSelect={setSelPiece}
+              saving={savingSet}
+            />
+          )}
           {genSet && (
             <div className="rs-row" style={{ marginTop: 10, alignItems: "center" }}>
               <span className="rs-body" style={{ fontSize: 10 }}>Set size</span>

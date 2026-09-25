@@ -12,7 +12,7 @@
 import { stateAt } from "./rehearsal.js";
 import { readStage, describeStage, eyelinesFor } from "./stageGeometry.js";
 import { blankSpec, mergeSpec } from "./filmSpec.js";
-import { getSet } from "./setCatalog.js";
+import { activeRoom } from "./setEdit.js";
 import { setSentence } from "./setGeometry.js";
 
 const UNITS_PER_METRE = 5;
@@ -82,7 +82,7 @@ export function buildShootPrompt(r, cameraId) {
   const lines = [];
 
   // The room first: where this happens, and where everyone stands in it.
-  const set = getSet(rehearsal.setId);
+  const set = activeRoom(rehearsal);
   if (set) lines.push(setSentence(set, s0.actors));
   else if (rehearsal.setName) lines.push(`Shot inside ${rehearsal.setName}.`);
 
@@ -145,7 +145,7 @@ export function buildShootSpec(r, cameraId) {
   const s1 = stateAt(rehearsal, duration);
   const read0 = readStage(s0.camera, s0.actors);
   const read1 = readStage(s1.camera, s1.actors);
-  const set = getSet(rehearsal.setId);
+  const set = activeRoom(rehearsal);
 
   const moves = s0.actors
     .map((a, i) => movementOf(a, s1.actors[i] ?? a, s0.camera, s1.camera, a.name))
