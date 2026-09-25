@@ -22,7 +22,7 @@ const styles = `
 
 const COLORS = ["#7B3FE4", "#E5B769", "#4ADE80", "#5BA8C2"];
 
-export default function StageBlueprint({ camera, actors, onChange, baselineSide, set, extent }) {
+export default function StageBlueprint({ camera, actors, onChange, baselineSide, set, extent, onSetChange, selectedPiece, onSelectPiece }) {
   const svgRef = useRef(null);
   const [drag, setDrag] = useState(null);   // { kind: "camera"|"actor"|"rotate", id }
 
@@ -61,6 +61,14 @@ export default function StageBlueprint({ camera, actors, onChange, baselineSide,
       onChange({ camera: { ...camera, rotation: Math.round(bearing(camera, p)) }, actors });
     } else if (drag.kind === "actorMove") {
       onChange({ camera, actors: actors.map((a) => (a.id === drag.id ? { ...a, ...p } : a)) });
+    } else if (drag.kind === "pieceMove" && onSetChange) {
+      onSetChange(drag.id, { x: Math.round(((p.x - 50) / 5) * 100) / 100, z: Math.round(((p.y - 50) / 5) * 100) / 100 });
+    } else if (drag.kind === "pieceTurn" && onSetChange) {
+      const piece = [...(set?.props ?? []), ...(set?.walls ?? [])].find((q) => q.id === drag.id);
+      if (piece) {
+        const c = { x: 50 + piece.x * 5, y: 50 + piece.z * 5 };
+        onSetChange(drag.id, { rot: Math.round(bearing(c, p) / 5) * 5 });
+      }
     } else if (drag.kind === "actorFace") {
       onChange({
         camera,
@@ -131,9 +139,30 @@ export default function StageBlueprint({ camera, actors, onChange, baselineSide,
           return (
             <g>
               <rect x={plan.floor.x} y={plan.floor.y} width={plan.floor.w} height={plan.floor.h} fill="#1b1c24" opacity="0.85" />
-              {plan.props.map((p) => (
-                <rect key={p.id} x={p.x} y={p.y} width={p.w} height={p.h} rx="0.6" fill={p.tall ? "#44455260" : "#3c3d48"} stroke="#55566410" />
-              ))}
+              {plan.props.map((p) => {
+                const live = !!onSetChange;
+                const chosen = selectedPiece === p.id;
+                return (
+                  <g key={p.id}>
+                    <rect
+                      x={p.x} y={p.y} width={p.w} height={p.h} rx="0.6"
+                      fill={p.tall ? "#44455260" : "#3c3d48"}
+                      stroke={chosen ? "var(--accent)" : "#55566410"}
+                      strokeWidth={chosen ? 0.6 : 0.2}
+                      style={{ cursor: live ? "move" : "default", touchAction: "none" }}
+                      onPointerDown={live ? (e) => { onSelectPiece?.(p.id); onPointerDown("pieceMove", p.id, e); } : undefined}
+                    />
+                    {chosen && live && (
+                      <circle
+                        cx={p.x + p.w + 1.6} cy={p.y - 1.2} r="1.5"
+                        fill="var(--accent)" opacity="0.85"
+                        style={{ cursor: "grab", touchAction: "none" }}
+                        onPointerDown={(e) => onPointerDown("pieceTurn", p.id, e)}
+                      />
+                    )}
+                  </g>
+                );
+              })}
               {plan.walls.map((w) => (
                 <rect key={w.id} x={w.x} y={w.y} width={w.w} height={w.h} fill={w.opening ? "#9fc4d8" : "#5a5b68"} opacity={w.opening ? 0.55 : 0.9} />
               ))}

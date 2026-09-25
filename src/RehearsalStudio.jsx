@@ -229,7 +229,17 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
       </div>
 
       <div className="rs-views">
-        <StageBlueprint camera={now.camera} actors={now.actors} onChange={onStageChange} set={room} extent={genFit} />
+        <StageBlueprint camera={now.camera} actors={now.actors} onChange={onStageChange} set={room} extent={genFit}
+          selectedPiece={selPiece}
+          onSelectPiece={setSelPiece}
+          onSetChange={r.setCustom ? (id, change) => setR((p) => ({
+            ...p,
+            setCustom: {
+              ...p.setCustom,
+              walls: (p.setCustom.walls ?? []).map((w) => (w.id === id ? { ...w, ...change } : w)),
+              props: (p.setCustom.props ?? []).map((q) => (q.id === id ? { ...q, ...change } : q)),
+            },
+          })) : null} />
         <div>
           <Suspense fallback={<div className="rs-body" style={{ padding: 20 }}>Loading the camera view…</div>}>
             <CameraView
