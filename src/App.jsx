@@ -1213,6 +1213,9 @@ function HomePage({ creations, setPage, setDetailId, user, onSignInClick }) {
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("contact")}>Contact</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("guidelines")}>Guidelines</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("premium-prompts")}>Premium Films</span>
+    <a className="footer-copy" href="https://discord.gg/tQyAhhAK5" target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>Discord</a>
+    <a className="footer-copy" href="https://www.instagram.com/revaultai" target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>Instagram</a>
+    <a className="footer-copy" href="https://x.com/airevault" target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>X</a>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("about")}>About</span><span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("blog")}>Journal</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("ai-video-generator")}>AI Video Generator</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("become-creator")}>Become a Creator</span>
