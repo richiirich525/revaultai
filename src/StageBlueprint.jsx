@@ -22,7 +22,7 @@ const styles = `
 
 const COLORS = ["#7B3FE4", "#E5B769", "#4ADE80", "#5BA8C2"];
 
-export default function StageBlueprint({ camera, actors, onChange, baselineSide, set, extent, onSetChange, selectedPiece, onSelectPiece }) {
+export default function StageBlueprint({ camera, actors, onChange, baselineSide, set, extent, onSetChange, selectedPiece, onSelectPiece, extras, onExtrasChange }) {
   const svgRef = useRef(null);
   const [drag, setDrag] = useState(null);   // { kind: "camera"|"actor"|"rotate", id }
 
@@ -61,6 +61,8 @@ export default function StageBlueprint({ camera, actors, onChange, baselineSide,
       onChange({ camera: { ...camera, rotation: Math.round(bearing(camera, p)) }, actors });
     } else if (drag.kind === "actorMove") {
       onChange({ camera, actors: actors.map((a) => (a.id === drag.id ? { ...a, ...p } : a)) });
+    } else if (drag.kind === "extra" && onExtrasChange) {
+      onExtrasChange((extras ?? []).map((e) => (e.id === drag.id ? { ...e, ...p } : e)));
     } else if (drag.kind === "pieceMove" && onSetChange) {
       onSetChange(drag.id, { x: Math.round(((p.x - 50) / 5) * 100) / 100, z: Math.round(((p.y - 50) / 5) * 100) / 100 });
     } else if (drag.kind === "pieceTurn" && onSetChange) {
@@ -185,6 +187,24 @@ export default function StageBlueprint({ camera, actors, onChange, baselineSide,
 
         {/* Field of view */}
         <path d={fovPath()} fill="var(--accent)" opacity="0.12" />
+
+        {/* Background performers — people, but not the scene */}
+        {(extras ?? []).map((e) => (
+          <g key={e.id}>
+            <circle
+              cx={e.x} cy={e.y} r="1.6"
+              fill="rgba(255,255,255,0.13)" stroke="rgba(255,255,255,0.35)" strokeWidth="0.3"
+              style={{ cursor: onExtrasChange ? "move" : "default", touchAction: "none" }}
+              onPointerDown={onExtrasChange ? (ev) => onPointerDown("extra", e.id, ev) : undefined}
+            />
+            <line
+              x1={e.x} y1={e.y}
+              x2={e.x + Math.sin((e.facing * Math.PI) / 180) * 2.6}
+              y2={e.y - Math.cos((e.facing * Math.PI) / 180) * 2.6}
+              stroke="rgba(255,255,255,0.28)" strokeWidth="0.3"
+            />
+          </g>
+        ))}
 
         {/* Actors */}
         {actors.map((a, i) => {

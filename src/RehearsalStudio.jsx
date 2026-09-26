@@ -231,6 +231,8 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
 
       <div className="rs-views">
         <StageBlueprint camera={now.camera} actors={now.actors} onChange={onStageChange} set={room} extent={genFit}
+          extras={r.extras ?? []}
+          onExtrasChange={(next) => setR((p) => ({ ...p, extras: next }))}
           selectedPiece={selPiece}
           onSelectPiece={setSelPiece}
           onSetChange={r.setCustom ? (id, change) => setR((p) => ({
@@ -251,6 +253,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
               setId={genId ? null : r.setId ?? null}
               setData={room}
               light={r.light ?? defaultLight()}
+              extras={r.extras ?? []}
               height={r.cameras.find((c) => c.id === r.activeCamera)?.height ?? null}
               lensMmOverride={r.cameras.find((c) => c.id === r.activeCamera)?.lens ?? null}
               genSet={genSet}

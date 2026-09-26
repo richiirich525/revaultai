@@ -170,6 +170,21 @@ function unusedGreyBoxSet(set) {
   return g;
 }
 
+// Background performers: plain figures at human height. They're never sent to
+// a model — like the stand-ins, they're hidden for the plate — but they tell
+// the director whether a room reads as full or empty.
+function makeExtra() {
+  const g = new THREE.Group();
+  const grey = new THREE.MeshStandardMaterial({ color: 0x4a4b55, roughness: 0.9 });
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.21, 1.3, 10), grey);
+  body.position.y = 0.65;
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.115, 12, 10), grey);
+  head.position.y = 1.44;
+  g.add(body, head);
+  g.traverse((o) => { if (o.isMesh) o.frustumCulled = false; });
+  return g;
+}
+
 function makeRing(color) {
   const ring = new THREE.Mesh(
     new THREE.RingGeometry(0.34, 0.4, 40),
@@ -259,7 +274,7 @@ function drivePerformer(m, a, t, realDt) {
   m.rotation.y = yawFromBearing(u.yaw);
 }
 
-export default function CameraView({ state, lens, subject, aspect = "16:9", title, setId, genSet, setScale, setGround, onSetError, onSetFit, plateRef, setData, light, height, lensMmOverride }) {
+export default function CameraView({ state, lens, subject, aspect = "16:9", title, setId, genSet, setScale, setGround, onSetError, onSetFit, plateRef, setData, light, height, lensMmOverride, extras }) {
   const box = useRef(null);
   const three = useRef(null);
   const lastFrame = useRef(0);
@@ -492,6 +507,22 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
     T.floor.visible = !(setId || genId);
     T.grid.visible = !(setId || genId);
 
+    // Keep the background population in step with the plan.
+    if (!T.extras) T.extras = new Map();
+    {
+      const want = new Set((extras ?? []).map((e) => e.id));
+      for (const [id, mesh] of T.extras) {
+        if (!want.has(id)) { scene.remove(mesh); T.extras.delete(id); }
+      }
+      for (const e of extras ?? []) {
+        let mesh = T.extras.get(e.id);
+        if (!mesh) { mesh = makeExtra(); scene.add(mesh); T.extras.set(e.id, mesh); }
+        const w = toWorld(e.x, e.y);
+        mesh.position.set(w.x, 0, w.z);
+        mesh.rotation.y = (-(e.facing ?? 0) * Math.PI) / 180;
+      }
+    }
+
     const nowMs = performance.now();
     const realDt = lastFrame.current ? Math.min(1, (nowMs - lastFrame.current) / 1000) : 1;
     lastFrame.current = nowMs;
@@ -556,6 +587,7 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
       if (!T) return null;
       const hidden = [];
       for (const m of T.actors.values()) if (m.visible) { m.visible = false; hidden.push(m); }
+      for (const m of (T.extras?.values() ?? [])) if (m.visible) { m.visible = false; hidden.push(m); }
       T.renderer.render(T.scene, T.camera);
       const url = T.renderer.domElement.toDataURL("image/jpeg", 0.92);
       for (const m of hidden) m.visible = true;
