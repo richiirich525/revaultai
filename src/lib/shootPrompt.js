@@ -208,3 +208,29 @@ export function buildShootSpec(r, cameraId) {
     model: { compiledPrompt: built.prompt },
   });
 }
+// Every camera that's framing someone, as a shot list. Blocking once and
+// covering the scene from all of it is what a director actually does —
+// the alternative is setting up the same scene again for each angle.
+export function buildCoverage(r) {
+  const cameras = (r?.cameras ?? []).filter(Boolean);
+  return cameras
+    .map((c) => {
+      const out = buildShootPrompt(r, c.id);
+      if (!out.ok) return null;
+      const spec = buildShootSpec(r, c.id);
+      return {
+        cameraId: c.id,
+        camera: out.camera,
+        slug: `${out.camera} — ${spec.camera.shotSize || "shot"}`.slice(0, 120),
+        purpose: spec.identity.purpose || "",
+        shotSize: spec.camera.shotSize || "",
+        cameraNote: spec.camera.movement || "",
+        seconds: out.seconds,
+        aspect: out.aspect,
+        prompt: out.prompt,
+        subject: out.subject,
+        spec,
+      };
+    })
+    .filter(Boolean);
+}

@@ -3,7 +3,7 @@ import StageBlueprint from "./StageBlueprint.jsx";
 import { readStage, describeStage } from "./lib/stageGeometry.js";
 import { stateAt, setKey, removeKey, keyTimes, newRehearsal, addCamera } from "./lib/rehearsal.js";
 import { motionState, defaultBody, BODIES } from "./lib/performers.js";
-import { buildShootPrompt, buildShootSpec } from "./lib/shootPrompt.js";
+import { buildShootPrompt, buildShootSpec, buildCoverage } from "./lib/shootPrompt.js";
 import { SETS, EXTERIORS, getSet } from "./lib/setCatalog.js";
 import { LIGHT_PRESETS, defaultLight } from "./lib/lighting.js";
 import SetEditor from "./SetEditor.jsx";
@@ -52,7 +52,7 @@ const styles = `
   @media (max-width: 760px) { .rs { padding: 0 20px; } }
 `;
 
-export default function RehearsalStudio({ initial, onChange, setGenPrefill, setPage, notify, onShoot, user, activeProject }) {
+export default function RehearsalStudio({ initial, onChange, setGenPrefill, setPage, notify, onShoot, onCover, user, activeProject }) {
   const [r, setR] = useState(() => initial ?? newRehearsal());
   const [t, setT] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -444,6 +444,12 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
               <div className="rs-cam-n">{c.name}</div>
               <div className="rs-cam-s">{c.read.shotSize ? `${c.read.shotSize} · ${c.read.lens}` : "Not framing anyone"}</div>
               {c.read.subject && <div className="rs-cam-s">on {c.read.subject}</div>}
+              {onCover && camReads.filter((x) => x.read.subject).length > 1 && c.id === camReads.find((x) => x.read.subject)?.id && (
+                <button className="rs-btn" style={{ marginTop: 8, borderColor: "var(--accent)", color: "var(--accent)" }}
+                  onClick={(e) => { e.stopPropagation(); onCover(buildCoverage(r), r.setId || r.setName ? plateRef.current?.() : null); }}>
+                  Cover the scene — all {camReads.filter((x) => x.read.subject).length} angles →
+                </button>
+              )}
               {c.read.subject && (setGenPrefill || onShoot) && (
                 <button className="rs-btn" style={{ marginTop: 8 }} onClick={(e) => { e.stopPropagation(); shoot(c.id); }}>
                   Shoot this angle →

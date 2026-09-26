@@ -70,6 +70,48 @@ export default function RehearsalPage({ user, activeProject, notify, onSignInCli
     } catch { return null; }
   }
 
+  // One press turns the blocking into a shot list: a slot per angle, so the
+  // board on /projects tracks the scene until every setup has a keeper.
+  async function onCover(shots, plate) {
+    if (!user?.id) { notify?.("Sign in to save coverage."); return; }
+    if (!activeProject?.id) { notify?.("Choose a project first — coverage is saved against one."); return; }
+    if (!shots.length) { notify?.("No camera is framing anyone yet."); return; }
+
+    const planId = crypto.randomUUID();
+    const label = `${current?.data?.title || "Rehearsal"} — ${shots.length} angles`;
+    const rows = shots.map((s, i) => ({
+      user_id: user.id,
+      project_id: activeProject.id,
+      plan_id: planId,
+      plan_label: label.slice(0, 300),
+      slug: s.slug,
+      purpose: String(s.purpose || `Blocked in the Rehearsal Studio${s.subject ? ", on " + s.subject : ""}`).slice(0, 400),
+      shot_size: String(s.shotSize || "").slice(0, 60),
+      camera: String(s.cameraNote || "").slice(0, 200),
+      duration_seconds: Number(s.seconds) || null,
+      priority: i === 0 ? "essential" : "recommended",
+      prompt: String(s.prompt || "").slice(0, 2000),
+      model_key: null,
+      sort: i,
+    }));
+
+    const { error } = await supabase.from("coverage_slots").insert(rows);
+    if (error) { notify?.("Couldn't save coverage: " + error.message); return; }
+
+    // Keep the specs too, so each angle carries its blocking into the take.
+    await supabase.from("film_specs").insert(shots.map((s) => ({
+      user_id: user.id,
+      project_id: activeProject.id,
+      title: s.spec.identity?.title || s.slug,
+      version: 1,
+      origin: "rehearsal",
+      spec: s.spec,
+    })));
+
+    notify?.(`${rows.length} setups saved to ${activeProject.name}. Fill them from the board on Projects.`);
+    setPage?.("projects");
+  }
+
   async function onShoot(out) {
     let specId = null;
     let version = 1;
@@ -209,7 +251,7 @@ export default function RehearsalPage({ user, activeProject, notify, onSignInCli
           </div>
         )}
 
-        <RehearsalStudio key={current.key} initial={current.data} onChange={onStudioChange} setGenPrefill={setGenPrefill} setPage={setPage} notify={notify} onShoot={onShoot} user={user} activeProject={activeProject} />
+        <RehearsalStudio key={current.key} initial={current.data} onChange={onStudioChange} setGenPrefill={setGenPrefill} setPage={setPage} notify={notify} onShoot={onShoot} onCover={onCover} user={user} activeProject={activeProject} />
       </section>
     </div>
   );
