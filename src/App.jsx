@@ -1213,9 +1213,25 @@ function HomePage({ creations, setPage, setDetailId, user, onSignInClick }) {
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("contact")}>Contact</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("guidelines")}>Guidelines</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("premium-prompts")}>Premium Films</span>
-    <a className="footer-copy" href="https://discord.gg/tQyAhhAK5" target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>Discord</a>
-    <a className="footer-copy" href="https://www.instagram.com/revaultai" target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>Instagram</a>
-    <a className="footer-copy" href="https://x.com/airevault" target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>X</a>
+    <span style={{ display: "inline-flex", gap: 14, alignItems: "center", marginLeft: 4 }}>
+      <a className="footer-copy" href="https://discord.gg/tQyAhhAK5" target="_blank" rel="noopener noreferrer" aria-label="RevaultAI on Discord" title="Discord" style={{ display: "inline-flex" }}>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M19.54 5.34A16.2 16.2 0 0 0 15.5 4.1l-.2.4a12.4 12.4 0 0 1 3.5 1.8 17.6 17.6 0 0 0-13.6 0 12.4 12.4 0 0 1 3.5-1.8l-.2-.4a16.2 16.2 0 0 0-4.04 1.24C1.9 9.1 1.2 12.8 1.5 16.4a16.4 16.4 0 0 0 5 2.5l.9-1.5c-.6-.2-1.2-.5-1.8-.9l.4-.3a11.7 11.7 0 0 0 10 0l.4.3c-.6.4-1.2.7-1.8.9l.9 1.5a16.4 16.4 0 0 0 5-2.5c.4-4.2-.7-7.9-2.96-11.06ZM8.5 14.3c-1 0-1.8-.9-1.8-2s.8-2 1.8-2 1.8.9 1.8 2-.8 2-1.8 2Zm7 0c-1 0-1.8-.9-1.8-2s.8-2 1.8-2 1.8.9 1.8 2-.8 2-1.8 2Z"/>
+        </svg>
+      </a>
+      <a className="footer-copy" href="https://www.instagram.com/revaultai" target="_blank" rel="noopener noreferrer" aria-label="RevaultAI on Instagram" title="Instagram" style={{ display: "inline-flex" }}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+          <rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/>
+          <circle cx="12" cy="12" r="4.2"/>
+          <circle cx="17.6" cy="6.4" r="1.1" fill="currentColor" stroke="none"/>
+        </svg>
+      </a>
+      <a className="footer-copy" href="https://x.com/airevault" target="_blank" rel="noopener noreferrer" aria-label="RevaultAI on X" title="X" style={{ display: "inline-flex" }}>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M17.7 3h3.3l-7.2 8.2L22 21h-6.6l-5.2-6.8L4.3 21H1l7.7-8.8L1.5 3h6.8l4.7 6.2L17.7 3Zm-1.2 16h1.8L7.6 4.9H5.7L16.5 19Z"/>
+        </svg>
+      </a>
+    </span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("about")}>About</span><span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("blog")}>Journal</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("ai-video-generator")}>AI Video Generator</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("become-creator")}>Become a Creator</span>
@@ -1225,7 +1241,6 @@ function HomePage({ creations, setPage, setDetailId, user, onSignInClick }) {
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("dmca")}>DMCA</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("ai-disclaimer")}>AI Disclaimer</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("prompts")}>AI Video Prompts</span>
-    <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("scene-breakdown")}>Scene Breakdown</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("prompt-builder")}></span>
   </div>
   <div className="footer-copy">&copy; 2026 RevaultAI</div>
