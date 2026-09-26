@@ -123,7 +123,9 @@ async function buildSetFromModels(set, loader) {
     const src = await loadPiece(loader, p.piece);
     if (!src) return;
     const o = src.clone(true);
-    o.scale.setScalar(pieceInfo(p.piece).scale);
+    const info = pieceInfo(p.piece);
+    o.scale.setScalar(info.scale);
+    o.position.y = (p.y ?? 0) + (info.lift ?? 0) * info.scale;
     o.position.set(p.x, p.y ?? 0, p.z);
     o.rotation.y = (-(p.rot ?? 0) * Math.PI) / 180;
     o.traverse((m) => { if (m.isMesh) m.frustumCulled = false; });

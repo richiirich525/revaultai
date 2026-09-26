@@ -156,6 +156,8 @@ export const EXTERIORS = [
     floor: { w: 26, d: 20 },
     walls: [],
     props: [
+      { id: "sedan-park", piece: "sedan", label: "the parked car", x: -4.5, z: -1.2, rot: 90 },
+      { id: "taxi-park", piece: "taxi", label: "the taxi", x: 5.5, z: 2.4, rot: 270 },
       { id: "road-0", piece: "road", label: "road", x: -9.0, z: -6, rot: 0 },
       { id: "road-1", piece: "road", label: "road", x: -2.6, z: -6, rot: 0 },
       { id: "road-2", piece: "road", label: "road", x: 3.8, z: -6, rot: 0 },
@@ -202,6 +204,7 @@ export const EXTERIORS = [
     floor: { w: 18, d: 16 },
     walls: [],
     props: [
+      { id: "van-park", piece: "van", label: "the delivery van", x: 5.2, z: 3.2, rot: 90 },
       { id: "building-type-a-0", piece: "building-type-a", label: "the shop", x: 0, z: -7, rot: 0 },
       { id: "detail-overhang-wide-1", piece: "detail-overhang-wide", label: "the overhang", x: 0, z: -3.6, rot: 0 },
       { id: "road-2", piece: "road", label: "the road", x: 0, z: 4, rot: 0 },
@@ -223,6 +226,7 @@ export const EXTERIORS = [
     floor: { w: 18, d: 14 },
     walls: [],
     props: [
+      { id: "car-drive", piece: "suv", label: "the car on the drive", x: 4.2, z: -1.0, rot: 0 },
       { id: "building-type-j-0", piece: "building-type-j", label: "the house", x: 0, z: -7.5, rot: 0 },
       { id: "driveway-long-1", piece: "driveway-long", label: "the driveway", x: 4.2, z: -1, rot: 0 },
       { id: "path-long-2", piece: "path-long", label: "the path", x: 0, z: -1.6, rot: 0 },

@@ -17,6 +17,7 @@ const GROUPS = [
   ["Storage", /^(bookcase|cabinet|cardboard|coatRack|trashcan)/i],
   ["Screens & sound", /^(television|computer|laptop|speaker|radio)/i],
   ["Dressing", /^(rug|plant|potted|lamp|pillow|books)/i],
+  ["Vehicles", /^(sedan|suv|van|truck|taxi|police|ambulance|firetruck|garbage|delivery|hatchback|race|cone|box|debris-tire)/i],
   ["Buildings", /^(building|low-detail|detail-awning|detail-overhang|crypt)/i],
   ["Street", /^(road|path-|driveway|lightpost|fence-|iron-fence)/i],
   ["Nature", /^(tree|pine|grass|flower|rock|log|stump|ground_|plant_)/i],

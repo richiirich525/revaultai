@@ -1,4 +1,5 @@
 import { EXTERIOR_PIECES, PIECE_META, EXTERIORS } from "./setExteriors.js";
+import { VEHICLE_PIECES, VEHICLE_META } from "./setVehicles.js";
 /*
   setCatalog — RevaultAI
   The set library: rooms as data. Walls, floors and furniture are Kenney's CC0
@@ -373,11 +374,11 @@ export function getSet(id) {
 // Where a piece's model lives and how much to scale it. Kenney's kits aren't
 // built to one size: the furniture is half-scale, the city kit far smaller.
 export function pieceInfo(name) {
-  return PIECE_META[name] ?? { dir: "furniture", scale: SCALE };
+  return VEHICLE_META[name] ?? PIECE_META[name] ?? { dir: "furniture", scale: SCALE, lift: 0 };
 }
 
 // Footprint of a placed piece, allowing for how it's turned.
-export const ALL_PIECES = { ...PIECES, ...EXTERIOR_PIECES };
+export const ALL_PIECES = { ...PIECES, ...EXTERIOR_PIECES, ...VEHICLE_PIECES };
 
 export function pieceSize(placement) {
   const p = ALL_PIECES[placement.piece];
