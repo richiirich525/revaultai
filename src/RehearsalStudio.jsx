@@ -251,6 +251,8 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
               setId={genId ? null : r.setId ?? null}
               setData={room}
               light={r.light ?? defaultLight()}
+              height={r.cameras.find((c) => c.id === r.activeCamera)?.height ?? null}
+              lensMmOverride={r.cameras.find((c) => c.id === r.activeCamera)?.lens ?? null}
               genSet={genSet}
               plateRef={plateRef}
               setScale={r.setScale}

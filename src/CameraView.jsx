@@ -257,7 +257,7 @@ function drivePerformer(m, a, t, realDt) {
   m.rotation.y = yawFromBearing(u.yaw);
 }
 
-export default function CameraView({ state, lens, subject, aspect = "16:9", title, setId, genSet, setScale, setGround, onSetError, onSetFit, plateRef, setData, light }) {
+export default function CameraView({ state, lens, subject, aspect = "16:9", title, setId, genSet, setScale, setGround, onSetError, onSetFit, plateRef, setData, light, height, lensMmOverride }) {
   const box = useRef(null);
   const three = useRef(null);
   const lastFrame = useRef(0);
@@ -526,7 +526,8 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
     }
 
     const c = toWorld(state.camera.x, state.camera.y);
-    camera.position.set(c.x, EYE_HEIGHT, c.z);
+    const eye = Number(height) > 0 ? Number(height) : EYE_HEIGHT;
+    camera.position.set(c.x, eye, c.z);
     const d = dirFromBearing(state.camera.rotation ?? 0);
     // Aim at the subject's head at the subject's distance, so a close-up on
     // someone sitting tilts down the way a real camera would.
@@ -537,8 +538,9 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
       dist = Math.max(0.6, Math.hypot(sw.x - c.x, sw.z - c.z));
       targetY = HEAD_HEIGHT - poseDrop(subj.pose) - 0.05;
     }
-    camera.lookAt(c.x + d.x * dist, targetY, c.z + d.z * dist);
-    camera.fov = verticalFov(lensMm(lens), camera.aspect || 16 / 9);
+    // Aim at the subject's chest, so a low camera looks up and a high one down.
+    camera.lookAt(c.x + d.x * dist, Math.abs(eye - EYE_HEIGHT) > 0.2 ? 1.15 : targetY, c.z + d.z * dist);
+    camera.fov = verticalFov(Number(lensMmOverride) > 0 ? Number(lensMmOverride) : lensMm(lens), camera.aspect || 16 / 9);
     camera.updateProjectionMatrix();
     renderer.render(scene, camera);
   });
