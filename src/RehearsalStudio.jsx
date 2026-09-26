@@ -334,7 +334,18 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
             </div>
           )}
           <div className="rs-row" style={{ marginTop: 10, alignItems: "center" }}>
-            <span className="rs-body" style={{ fontSize: 10 }}>Lens</span>
+            <span className="rs-body" style={{ fontSize: 10 }}>Background</span>
+            <button className="rs-btn" onClick={() => setR((p) => {
+              const x = 30 + Math.round(Math.random() * 40), y = 26 + Math.round(Math.random() * 30);
+              return { ...p, extras: [...(p.extras ?? []), { id: crypto.randomUUID(), x, y, facing: Math.round(Math.random() * 360) }] };
+            })}>+ Add a person</button>
+            {(r.extras ?? []).length > 0 && (
+              <>
+                <span className="rs-body" style={{ fontSize: 10 }}>{r.extras.length} in the background</span>
+                <button className="rs-btn" onClick={() => setR((p) => ({ ...p, extras: (p.extras ?? []).slice(0, -1) }))}>Remove one</button>
+              </>
+            )}
+            <span className="rs-body" style={{ fontSize: 10, marginLeft: 6 }}>Lens</span>
             {[null, 18, 24, 28, 35, 50, 75, 100].map((mm) => {
               const cam = r.cameras.find((c) => c.id === r.activeCamera);
               const active = (cam?.lens ?? null) === mm;

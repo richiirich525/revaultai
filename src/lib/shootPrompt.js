@@ -111,6 +111,21 @@ export function buildShootPrompt(r, cameraId) {
     .filter(Boolean);
   if (moves.length) lines.push(moves.join(". ") + ".");
 
+  // Background performers: a scene reads as a place when there are people in
+  // it who aren't the scene. They're described as a crowd, never named.
+  const extras = (rehearsal.extras ?? []).length;
+  if (extras) {
+    const near = (rehearsal.extras ?? []).filter((e) => {
+      const d = Math.hypot(e.x - s0.camera.x, e.y - s0.camera.y) / 5;
+      return d < 9;
+    }).length;
+    lines.push(
+      extras === 1
+        ? "One other person in the background, going about their own business, not involved in the scene."
+        : `${near >= 6 ? "A busy background" : extras >= 4 ? "Several people" : "A couple of people"} in the background, going about their own business, not involved in the scene.`
+    );
+  }
+
   // Eyelines at the middle of the shot, where the scene is usually playing.
   const eyes = eyelinesFor(sMid.camera, sMid.actors);
   if (eyes.length) lines.push(eyes.map((e) => e.text).join(" "));
