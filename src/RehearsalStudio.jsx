@@ -332,6 +332,31 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
             </div>
           )}
           <div className="rs-row" style={{ marginTop: 10, alignItems: "center" }}>
+            <span className="rs-body" style={{ fontSize: 10 }}>Lens</span>
+            {[null, 18, 24, 28, 35, 50, 75, 100].map((mm) => {
+              const cam = r.cameras.find((c) => c.id === r.activeCamera);
+              const active = (cam?.lens ?? null) === mm;
+              return (
+                <button key={String(mm)} className={"rs-btn" + (active ? " on" : "")}
+                  title={mm ? `${mm}mm` : "Chosen from how far the camera is standing"}
+                  onClick={() => setR((p) => ({ ...p, cameras: p.cameras.map((c) => c.id === p.activeCamera ? { ...c, lens: mm } : c) }))}>
+                  {mm ? mm + "mm" : "Auto"}
+                </button>
+              );
+            })}
+            <span className="rs-body" style={{ fontSize: 10, marginLeft: 6 }}>Height</span>
+            {[["Floor", 0.4], ["Low", 0.9], ["Eye", 1.55], ["High", 2.2], ["Above", 3.6]].map(([label, h]) => {
+              const cam = r.cameras.find((c) => c.id === r.activeCamera);
+              const active = Math.abs((cam?.height ?? 1.55) - h) < 0.01;
+              return (
+                <button key={label} className={"rs-btn" + (active ? " on" : "")}
+                  onClick={() => setR((p) => ({ ...p, cameras: p.cameras.map((c) => c.id === p.activeCamera ? { ...c, height: h } : c) }))}>
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+          <div className="rs-row" style={{ marginTop: 10, alignItems: "center" }}>
             <span className="rs-body" style={{ fontSize: 10 }}>Light</span>
             {LIGHT_PRESETS.map((p) => (
               <button key={p.id} title={p.note}

@@ -87,8 +87,17 @@ export function buildShootPrompt(r, cameraId) {
   if (set) lines.push(setSentence(set, s0.actors));
   else if (rehearsal.setName) lines.push(`Shot inside ${rehearsal.setName}.`);
 
-  // Framing, as the geometry engine reads it.
-  lines.push(describeStage(read0));
+  // Framing, as the geometry engine reads it — with the chosen lens and height
+  // where the director has overridden them.
+  const cam = (rehearsal.cameras ?? []).find((c) => c.id === rehearsal.activeCamera);
+  let framing = describeStage(read0);
+  if (cam?.lens) framing = framing.replace(/\b\d+\s*mm\b/i, `${cam.lens}mm`);
+  lines.push(framing);
+  const h = cam?.height ?? 1.55;
+  if (h <= 0.5) lines.push("Camera on the floor, looking up — a very low angle.");
+  else if (h <= 1.0) lines.push("Camera low, below eye level, looking slightly up.");
+  else if (h >= 3.0) lines.push("Camera high above the scene, looking down.");
+  else if (h >= 2.0) lines.push("Camera above eye level, looking down.");
   if (read1.shotSize && read1.shotSize !== read0.shotSize) {
     lines.push(`By the end it has become a ${read1.shotSize.toLowerCase()}.`);
   }
@@ -172,7 +181,13 @@ export function buildShootSpec(r, cameraId) {
     },
     camera: {
       shotSize: read1.shotSize && read1.shotSize !== read0.shotSize ? `${read0.shotSize} to ${read1.shotSize}` : read0.shotSize || "",
-      lens: read0.lens || "",
+      lens: (rehearsal.cameras ?? []).find((c) => c.id === rehearsal.activeCamera)?.lens
+        ? `${(rehearsal.cameras ?? []).find((c) => c.id === rehearsal.activeCamera).lens}mm`
+        : read0.lens || "",
+      height: (() => {
+        const hh = (rehearsal.cameras ?? []).find((c) => c.id === rehearsal.activeCamera)?.height ?? 1.55;
+        return hh <= 0.5 ? "floor level" : hh <= 1.0 ? "low" : hh >= 3.0 ? "high above" : hh >= 2.0 ? "above eye level" : "eye level";
+      })(),
       movement: cameraMove(s0.camera, s1.camera,
         s0.actors.find((a) => a.name === read0.subject) ?? null,
         s1.actors.find((a) => a.name === read0.subject) ?? null),
