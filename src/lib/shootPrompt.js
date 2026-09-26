@@ -13,6 +13,7 @@ import { stateAt } from "./rehearsal.js";
 import { readStage, describeStage, eyelinesFor } from "./stageGeometry.js";
 import { blankSpec, mergeSpec } from "./filmSpec.js";
 import { activeRoom } from "./setEdit.js";
+import { describeLight, lightSpec } from "./lighting.js";
 import { setSentence } from "./setGeometry.js";
 
 const UNITS_PER_METRE = 5;
@@ -93,6 +94,7 @@ export function buildShootPrompt(r, cameraId) {
   }
 
   lines.push(cameraMove(s0.camera, s1.camera, subj0, subj1));
+  if (rehearsal.light) lines.push(describeLight(rehearsal.light, s0.camera.rotation));
 
   // Who moves, and where they end up.
   const moves = s0.actors
@@ -185,6 +187,7 @@ export function buildShootSpec(r, cameraId) {
       positions: s0.actors.map((a) => ({ name: a.name, side: side(s0.camera, a) })),
       eyelines: eyelinesFor(sMid.camera, sMid.actors).map((e) => e.text),
     },
+    lighting: rehearsal.light ? lightSpec(rehearsal.light, s0.camera.rotation) : undefined,
     timing: { durationSeconds: duration, aspectRatio: mapAspect(rehearsal.aspect) },
     performance: { notes: beats.map((b) => `${b.t.toFixed(1)}s: ${b.label.trim()}`).join(". ") },
     model: { compiledPrompt: built.prompt },

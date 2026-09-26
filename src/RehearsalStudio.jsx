@@ -5,6 +5,7 @@ import { stateAt, setKey, removeKey, keyTimes, newRehearsal, addCamera } from ".
 import { motionState, defaultBody, BODIES } from "./lib/performers.js";
 import { buildShootPrompt, buildShootSpec } from "./lib/shootPrompt.js";
 import { SETS, EXTERIORS, getSet } from "./lib/setCatalog.js";
+import { LIGHT_PRESETS, defaultLight } from "./lib/lighting.js";
 import SetEditor from "./SetEditor.jsx";
 import { startEditing, packSet, unpackSet, activeRoom } from "./lib/setEdit.js";
 // Generated sets (Marble) are switched off: worlds built from a text prompt
@@ -249,6 +250,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
               aspect={r.aspect ?? "16:9"}
               setId={genId ? null : r.setId ?? null}
               setData={room}
+              light={r.light ?? defaultLight()}
               genSet={genSet}
               plateRef={plateRef}
               setScale={r.setScale}
@@ -329,6 +331,22 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
               </span>
             </div>
           )}
+          <div className="rs-row" style={{ marginTop: 10, alignItems: "center" }}>
+            <span className="rs-body" style={{ fontSize: 10 }}>Light</span>
+            {LIGHT_PRESETS.map((p) => (
+              <button key={p.id} title={p.note}
+                className={"rs-btn" + ((r.light?.preset ?? defaultLight().preset) === p.id ? " on" : "")}
+                onClick={() => setR((prev) => ({ ...prev, light: { ...(prev.light ?? defaultLight()), preset: p.id } }))}>
+                {p.label}
+              </button>
+            ))}
+            <span className="rs-body" style={{ fontSize: 10, marginLeft: 6 }}>From</span>
+            <input type="range" min={0} max={359} step={5}
+              value={r.light?.bearing ?? defaultLight().bearing}
+              onChange={(e) => setR((prev) => ({ ...prev, light: { ...(prev.light ?? defaultLight()), bearing: Number(e.target.value) } }))}
+              style={{ width: 130, accentColor: "var(--accent)" }} />
+            <span className="rs-body" style={{ fontSize: 10 }}>{r.light?.bearing ?? defaultLight().bearing}°</span>
+          </div>
           <div className="rs-row" style={{ marginTop: 10 }}>
             <span className="rs-body" style={{ fontSize: 10 }}>Frame</span>
             {["16:9", "2.39:1", "9:16", "1:1"].map((a) => (

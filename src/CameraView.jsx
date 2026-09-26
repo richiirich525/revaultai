@@ -9,6 +9,7 @@ import {
 } from "./lib/stage3d.js";
 import { chooseClip, clipTimeFor, MOVING } from "./lib/performers.js";
 import { getSet, MODEL_PATH, filesFor, pieceInfo } from "./lib/setCatalog.js";
+import { getPreset } from "./lib/lighting.js";
 
 /*
   CameraView — RevaultAI (Rehearsal Studio, tiers 2 and 3)
@@ -256,7 +257,7 @@ function drivePerformer(m, a, t, realDt) {
   m.rotation.y = yawFromBearing(u.yaw);
 }
 
-export default function CameraView({ state, lens, subject, aspect = "16:9", title, setId, genSet, setScale, setGround, onSetError, onSetFit, plateRef, setData }) {
+export default function CameraView({ state, lens, subject, aspect = "16:9", title, setId, genSet, setScale, setGround, onSetError, onSetFit, plateRef, setData, light }) {
   const box = useRef(null);
   const three = useRef(null);
   const lastFrame = useRef(0);
@@ -340,6 +341,37 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
     const T = three.current;
     if (!T || !state) return;
     const { scene, camera, renderer, actors } = T;
+
+    // Find the lights once, then drive them from the chosen time of day.
+    if (!T.lights) {
+      T.lights = { hemi: null, key: null, rim: null };
+      scene.traverse((o) => {
+        if (o.isHemisphereLight && !T.lights.hemi) T.lights.hemi = o;
+        else if (o.isDirectionalLight) { if (!T.lights.key) T.lights.key = o; else if (!T.lights.rim) T.lights.rim = o; }
+      });
+    }
+    {
+      const p = getPreset(light?.preset);
+      const rad = (Number(light?.bearing ?? 300) * Math.PI) / 180;
+      const hRad = (p.height * Math.PI) / 180;
+      const r = 12, flat = r * Math.cos(hRad);
+      if (T.lights.key) {
+        T.lights.key.color.set(p.key);
+        T.lights.key.intensity = p.keyPower;
+        T.lights.key.position.set(Math.sin(rad) * flat, Math.max(1, r * Math.sin(hRad)), -Math.cos(rad) * flat);
+      }
+      if (T.lights.hemi) {
+        T.lights.hemi.color.set(p.sky);
+        T.lights.hemi.groundColor.set(p.ground);
+        T.lights.hemi.intensity = p.fill;
+      }
+      if (T.lights.rim) {
+        T.lights.rim.intensity = p.fill * 0.5;
+        T.lights.rim.position.set(-Math.sin(rad) * r, r * 0.6, Math.cos(rad) * r);
+      }
+      if (scene.fog) scene.fog.color.set(p.ground);
+      renderer.setClearColor(p.sky, 1);
+    }
 
     // Swap the room when the creator picks a different set.
     // Rebuild only when the room really differs — not on every render, or it
