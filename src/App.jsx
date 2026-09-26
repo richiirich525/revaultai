@@ -1761,7 +1761,11 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
   async function handleGenerate() {
     if (!user) { notify("Sign in to generate."); return; }
     if (!prompt.trim()) { notify("Write a prompt first."); return; }
-    if ((profile?.credits ?? 0) < COST) { notify("Not enough credits — top up on your Profile page."); return; }
+    // Only stop when the balance is actually known to be short. An unloaded
+    // profile is not an empty wallet, and blocking on it costs a written prompt.
+    if (profile && typeof profile.credits === "number" && profile.credits < COST) {
+      notify("Not enough credits — top up on your Profile page."); return;
+    }
     setSubmitting(true);
     try {
       const token = await getSessionToken();
@@ -1942,7 +1946,7 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
                     </select>
                   );
                 })()}
-                <span style={{ marginLeft: 12 }}>Cost: {COST} credits · Balance: {profile?.credits ?? 0}</span>
+                <span style={{ marginLeft: 12 }}>Cost: {COST} credits · Balance: {typeof profile?.credits === "number" ? profile.credits : "…"}</span>
               </div>
               <button className="gen-button" onClick={handleGenerate} disabled={submitting}>
                 {submitting ? "Starting..." : "Generate"}
@@ -4143,12 +4147,28 @@ const [purchasesLoaded, setPurchasesLoaded] = useState(false);
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => { const u = data.session?.user ?? null; setUser(u); if (u) loadOrCreateProfile(u); });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      const u = setUser(session?.user ?? null);
+      const u = session?.user ?? null;
+      setUser(u);
 if (session?.user) { identifyUser(session.user.id, session.user.email); } else { resetUser(); }
       if (event === "PASSWORD_RECOVERY") setPage("set-password");
       if (u) { loadOrCreateProfile(u); } else { setProfile(null); setPurchasedIds(new Set()); }
     });
-    return () => subscription.unsubscribe();
+    // Credits change behind the page's back: a purchase completes through
+    // Stripe, a generation spends, a tab sits idle while the token refreshes.
+    function refresh() {
+      if (document.visibilityState !== "visible") return;
+      supabase.auth.getSession().then(({ data }) => {
+        const u = data.session?.user ?? null;
+        if (u) loadOrCreateProfile(u);
+      });
+    }
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
   }, []);
 
   useEffect(() => { const hash = window.location.hash; if (hash && hash.includes("type=signup")) { setPage("email-confirmed"); window.history.replaceState({}, "", window.location.pathname); } }, []);
