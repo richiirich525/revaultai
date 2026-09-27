@@ -91,7 +91,7 @@ export default async function handler(req, res) {
     }
 
     // 2. Validate input
-    const { prompt, model, duration, imageUrl, aspectRatio, projectId, filmSpecId, filmSpecVersion, vaultRefIds, coverageSlotId, promotedFrom, locationData, locationName } = req.body;
+    const { prompt, model, duration, imageUrl, aspectRatio, projectId, filmSpecId, filmSpecVersion, vaultRefIds, coverageSlotId, promotedFrom, locationUrl, locationName } = req.body;
     const pid = typeof projectId === "string" ? projectId : null;
 
     // Normalise a prompt so trivial edits still count as the same shot.
@@ -161,10 +161,9 @@ export default async function handler(req, res) {
     // room rather than one rebuilt from words each time.
     // The set plate goes to fal's own storage: a private R2 link is one fal
     // can't fetch, which is what a 422 from the model actually means.
-    if (refModel && !imageUrl && typeof locationData === "string" && locationData.startsWith("data:image/") && locationData.length < 4_000_000) {
+    if (refModel && !imageUrl && typeof locationUrl === "string" && /^https:\/\//.test(locationUrl)) {
       try {
-        const bytes = Buffer.from(locationData.split(",")[1] ?? "", "base64");
-        const plateUrl = await fal.storage.upload(new Blob([bytes], { type: "image/jpeg" }));
+        const plateUrl = locationUrl;
         if (plateUrl) {
           refs.push({
             id: null,

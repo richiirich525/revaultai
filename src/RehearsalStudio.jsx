@@ -11,8 +11,8 @@ import { startEditing, packSet, unpackSet, activeRoom } from "./lib/setEdit.js";
 // Generated sets (Marble) are switched off: worlds built from a text prompt
 // didn't look good enough to shoot. The code and endpoints remain, ready if
 // photo input — where the set is a real room — is ever worth trying.
-// import GeneratedSets from "./GeneratedSets.jsx";
 import { supabase } from "./lib/supabase.js";
+import PlateApproval from "./PlateApproval.jsx";
 
 // three.js is heavy, so the camera view loads only with the studio —
 // it stays out of the bundle every other page downloads.
@@ -59,6 +59,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
   const [beatText, setBeatText] = useState("");
   const [genSet, setGenSet] = useState(null);
   const [genFit, setGenFit] = useState(null);
+  const [pendingShot, setPendingShot] = useState(null);
   const plateRef = useRef(null);
   const [mySets, setMySets] = useState([]);
   const [selPiece, setSelPiece] = useState(null);
@@ -165,9 +166,22 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
     const out = buildShootPrompt(r, cameraId);
     if (!out.ok) { notify?.("Point that camera at someone first."); return; }
     if (onShoot) {
-      // With a set loaded, the model is shown the room itself, not just told about it.
-      const plate = (r.setId && cameraId === r.activeCamera) ? plateRef.current?.() : null;
-      onShoot({ ...out, spec: buildShootSpec(r, cameraId), plate, setName: r.setName || getSet(r.setId)?.name || null });
+      const spec = buildShootSpec(r, cameraId);
+      const setName = r.setName || getSet(r.setId)?.name || null;
+      const usingSet = (r.setId || r.setCustom) && cameraId === r.activeCamera;
+      const plate = usingSet ? plateRef.current?.() : null;
+      if (!plate) { onShoot({ ...out, spec, setName }); return; }
+      // The render itself is never sent: a model shown a low-poly house makes a
+      // low-poly film. It becomes a photograph first, and the creator approves it.
+      const cam = r.cameras.find((c) => c.id === r.activeCamera);
+      const key = [
+        r.setCustom?.savedId || r.setId || "set",
+        Math.round(now.camera.x), Math.round(now.camera.y), Math.round(now.camera.rotation),
+        cam?.height ?? 1.55, cam?.lens ?? "auto",
+        r.light?.preset ?? "default", r.light?.bearing ?? 300,
+        (r.hiddenPieces ?? []).join("-"),
+      ].join("|");
+      setPendingShot({ out, spec, setName, plate, cacheKey: key, note: setName || "" });
       return;
     }
     setGenPrefill?.({ prompt: out.prompt, aspectRatio: out.aspect });
@@ -297,6 +311,19 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
               <button key={s.id} className={"rs-btn" + (r.setId === s.id ? " on" : "")} title={s.note} onClick={() => setR((p) => ({ ...p, setId: s.id, setName: null, setCustom: null }))}>{s.name}</button>
             ))}
           </div>
+          {pendingShot && (
+            <PlateApproval
+              pending={pendingShot}
+              activeProject={activeProject}
+              notify={notify}
+              onCancel={() => setPendingShot(null)}
+              onUse={(url) => {
+                const p = pendingShot;
+                setPendingShot(null);
+                onShoot({ ...p.out, spec: p.spec, setName: p.setName, plateUrl: url });
+              }}
+            />
+          )}
           {r.setCustom && (
             <SetEditor
               room={r.setCustom}

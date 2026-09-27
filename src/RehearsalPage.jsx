@@ -133,12 +133,12 @@ export default function RehearsalPage({ user, activeProject, notify, onSignInCli
     setGenPrefill?.({
       prompt: out.prompt,
       aspectRatio: out.aspect,
-      locationData: out.plate ?? null,
+      locationUrl: out.plateUrl ?? null,
       locationName: out.setName ?? null,
       ...(specId ? { filmSpecId: specId, filmSpecVersion: version } : {}),
     });
     notify?.(specId
-      ? `${out.camera} saved as a shot spec${out.plate ? ", with the set attached as a location reference" : ""}. Your rehearsal runs ${out.seconds}s — set the length to match.`
+      ? `${out.camera} saved as a shot spec${out.plateUrl ? ", with the location attached" : ""}. Your rehearsal runs ${out.seconds}s — set the length to match.`
       : `Prompt built from ${out.camera}. Your rehearsal runs ${out.seconds}s — set the length to match.`);
     setPage?.("generate");
   }
