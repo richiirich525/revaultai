@@ -128,6 +128,7 @@ async function buildSetFromModels(set, loader) {
     o.position.y = (p.y ?? 0) + (info.lift ?? 0) * info.scale;
     o.position.set(p.x, p.y ?? 0, p.z);
     o.rotation.y = (-(p.rot ?? 0) * Math.PI) / 180;
+    o.userData.pieceId = p.id;   // so a piece can be kept out of the reference
     o.traverse((m) => { if (m.isMesh) m.frustumCulled = false; });
     group.add(o);
   };
@@ -274,7 +275,7 @@ function drivePerformer(m, a, t, realDt) {
   m.rotation.y = yawFromBearing(u.yaw);
 }
 
-export default function CameraView({ state, lens, subject, aspect = "16:9", title, setId, genSet, setScale, setGround, onSetError, onSetFit, plateRef, setData, light, height, lensMmOverride, extras }) {
+export default function CameraView({ state, lens, subject, aspect = "16:9", title, setId, genSet, setScale, setGround, onSetError, onSetFit, plateRef, setData, light, height, lensMmOverride, extras, hiddenPieces }) {
   const box = useRef(null);
   const three = useRef(null);
   const lastFrame = useRef(0);
@@ -282,6 +283,8 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
   const [outsideSet, setOutsideSet] = useState(false);
   const [wildWall, setWildWall] = useState(false);
   const outsideRef = useRef(false);
+  const hiddenRef = useRef([]);
+  hiddenRef.current = hiddenPieces ?? [];
   const [assets, setAssets] = useState(null);
   const [loadNote, setLoadNote] = useState("Loading performers…");
 
@@ -588,6 +591,14 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
       const hidden = [];
       for (const m of T.actors.values()) if (m.visible) { m.visible = false; hidden.push(m); }
       for (const m of (T.extras?.values() ?? [])) if (m.visible) { m.visible = false; hidden.push(m); }
+      // Anything the creator will describe themselves stays out of the picture,
+      // or the model uses the stand-in instead of building it from the words.
+      const keepOut = new Set(hiddenRef.current ?? []);
+      if (keepOut.size && T.set) {
+        T.set.traverse((o) => {
+          if (o.userData?.pieceId && keepOut.has(o.userData.pieceId) && o.visible) { o.visible = false; hidden.push(o); }
+        });
+      }
       T.renderer.render(T.scene, T.camera);
       const url = T.renderer.domElement.toDataURL("image/jpeg", 0.92);
       for (const m of hidden) m.visible = true;

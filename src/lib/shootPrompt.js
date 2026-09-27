@@ -136,6 +136,9 @@ export function buildShootPrompt(r, cameraId) {
     lines.push(beats.map((b) => `At ${b.t.toFixed(1)} seconds, ${b.label.trim().replace(/\.$/, "")}.`).join(" "));
   }
 
+  // Earned its place in testing: it fixes materials and light, though not shapes.
+  if (set) lines.push("The reference image is a layout guide only: it shows where things are and where the camera is. The final result must be photorealistic — real materials, real surfaces, natural daylight and real shadows.");
+
   return {
     // A camera pointing at nobody has nothing to shoot.
     ok: !!read0.subject,

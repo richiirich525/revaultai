@@ -253,6 +253,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
               setId={genId ? null : r.setId ?? null}
               setData={room}
               light={r.light ?? defaultLight()}
+              hiddenPieces={r.hiddenPieces ?? []}
               extras={r.extras ?? []}
               height={r.cameras.find((c) => c.id === r.activeCamera)?.height ?? null}
               lensMmOverride={r.cameras.find((c) => c.id === r.activeCamera)?.lens ?? null}
@@ -336,6 +337,30 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
               </span>
             </div>
           )}
+          {(() => {
+            // Pieces a creator is likely to describe in the prompt. If one is in
+            // the reference picture, the model uses that one instead.
+            const risky = (room?.props ?? []).filter((p) =>
+              /^(sedan|suv|van|truck|taxi|police|ambulance|firetruck|garbage|delivery|hatchback|race|tree|pine|plant_|pottedPlant|televisionModern|cabinetTelevision)/i.test(p.piece));
+            if (!risky.length) return null;
+            const hidden = r.hiddenPieces ?? [];
+            return (
+              <div className="rs-row" style={{ marginTop: 10, alignItems: "center" }}>
+                <span className="rs-body" style={{ fontSize: 10 }}>Keep out of the reference</span>
+                {risky.map((p) => (
+                  <button key={p.id}
+                    className={"rs-btn" + (hidden.includes(p.id) ? " on" : "")}
+                    title="If your prompt describes this yourself, hide it here — otherwise the model copies the set's version"
+                    onClick={() => setR((prev) => {
+                      const list = prev.hiddenPieces ?? [];
+                      return { ...prev, hiddenPieces: list.includes(p.id) ? list.filter((x) => x !== p.id) : [...list, p.id] };
+                    })}>
+                    {hidden.includes(p.id) ? "✓ " : ""}{(p.label || p.piece).replace(/^the /, "")}
+                  </button>
+                ))}
+              </div>
+            );
+          })()}
           <div className="rs-row" style={{ marginTop: 10, alignItems: "center" }}>
             <span className="rs-body" style={{ fontSize: 10 }}>Background</span>
             <button className="rs-btn" onClick={() => setR((p) => {
