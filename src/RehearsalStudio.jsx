@@ -68,6 +68,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
   const [genSet, setGenSet] = useState(null);
   const [genFit, setGenFit] = useState(null);
   const [pendingShot, setPendingShot] = useState(null);
+  const [dressOpen, setDressOpen] = useState(false);
   const plateRef = useRef(null);
   const [mySets, setMySets] = useState([]);
   const [selPiece, setSelPiece] = useState(null);
@@ -388,16 +389,21 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
               return Math.max(s.w, s.d) >= 0.9 || s.h >= 1.2;
             });
             if (!risky.length) return null;
+            const describedCount = risky.filter((p) => p.asked).length;
             // Vehicles are nearly always described in the prompt, so they start
             // hidden — otherwise the model uses the set's car instead of yours.
             const autoHide = risky.filter((p) => /^(sedan|suv|van|truck|taxi|police|ambulance|firetruck|garbage|delivery|hatchback|race)/i.test(p.piece)).map((p) => p.id);
             const hidden = r.hiddenPieces ?? autoHide;
             return (
-              <div className="rs-row" style={{ marginTop: 10, alignItems: "center" }}>
-                <span className="rs-body" style={{ fontSize: 10 }}>Say what these really are</span>
-                {risky.map((p) => (
+              <div className="rs-row" style={{ marginTop: 10, alignItems: "center", flexWrap: "wrap" }}>
+                <button className="rs-btn" onClick={() => setDressOpen((o) => !o)}>
+                  {dressOpen ? "▾" : "▸"} Say what things really are{describedCount ? ` · ${describedCount} described` : ""}
+                </button>
+                <span className="rs-body" style={{ fontSize: 10, display: dressOpen ? undefined : "none" }}>Leave empty to use the set's own</span>
+                {(dressOpen ? risky : []).map((p) => (
                   <input
                     key={p.id}
+                    data-dress
                     value={p.asked ?? ""}
                     placeholder={(p.label || p.piece).replace(/^the /, "")}
                     title="Leave empty to use the set's version. Describe it and the location is built with yours instead, in the same place."
