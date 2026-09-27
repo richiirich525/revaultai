@@ -36,6 +36,7 @@ export default function PlateApproval({ pending, activeProject, notify, onUse, o
           mode,
           projectId: activeProject?.id ?? null,
           note: pending.note ?? "",
+          replacements: pending.replacements ?? [],
         }),
       });
       const j = await r.json().catch(() => ({}));

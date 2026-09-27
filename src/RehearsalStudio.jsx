@@ -6,8 +6,16 @@ import { motionState, defaultBody, BODIES } from "./lib/performers.js";
 import { buildShootPrompt, buildShootSpec, buildCoverage } from "./lib/shootPrompt.js";
 import { SETS, EXTERIORS, getSet } from "./lib/setCatalog.js";
 import { LIGHT_PRESETS, defaultLight } from "./lib/lighting.js";
+import { toStage } from "./lib/setGeometry.js";
+
+// Which side of frame something sits on, for the plate's instruction.
+function sideOfFrame(camera, p) {
+  const bearing = (Math.atan2(p.x - camera.x, -(p.y - camera.y)) * 180) / Math.PI;
+  const off = ((((bearing - (camera.rotation ?? 0)) % 360) + 540) % 360) - 180;
+  return Math.abs(off) < 8 ? "centre of frame" : off < 0 ? "left of frame" : "right of frame";
+}
 import SetEditor from "./SetEditor.jsx";
-import { startEditing, packSet, unpackSet, activeRoom } from "./lib/setEdit.js";
+import { startEditing, packSet, unpackSet, activeRoom, describePiece } from "./lib/setEdit.js";
 // Generated sets (Marble) are switched off: worlds built from a text prompt
 // didn't look good enough to shoot. The code and endpoints remain, ready if
 // photo input — where the set is a real room — is ever worth trying.
@@ -181,7 +189,13 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
         r.light?.preset ?? "default", r.light?.bearing ?? 300,
         (r.hiddenPieces ?? []).join("-"),
       ].join("|");
-      setPendingShot({ out, spec, setName, plate, cacheKey: key, note: setName || "" });
+      const replacements = (room?.props ?? [])
+        .filter((p) => p.asked)
+        .map((p) => {
+          const st = toStage(p.x, p.z);
+          return { label: p.label || p.piece, asked: p.asked, where: sideOfFrame(now.camera, st) };
+        });
+      setPendingShot({ out, spec, setName, plate, cacheKey: key + "|" + replacements.map((x) => x.asked).join(","), note: setName || "", replacements });
       return;
     }
     setGenPrefill?.({ prompt: out.prompt, aspectRatio: out.aspect });
@@ -267,7 +281,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
               setId={genId ? null : r.setId ?? null}
               setData={room}
               light={r.light ?? defaultLight()}
-              hiddenPieces={r.hiddenPieces ?? (room?.props ?? []).filter((p) => /^(sedan|suv|van|truck|taxi|police|ambulance|firetruck|garbage|delivery|hatchback|race)/i.test(p.piece)).map((p) => p.id)}
+              hiddenPieces={r.hiddenPieces ?? []}
               extras={r.extras ?? []}
               height={r.cameras.find((c) => c.id === r.activeCamera)?.height ?? null}
               lensMmOverride={r.cameras.find((c) => c.id === r.activeCamera)?.lens ?? null}
@@ -376,17 +390,22 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
             const hidden = r.hiddenPieces ?? autoHide;
             return (
               <div className="rs-row" style={{ marginTop: 10, alignItems: "center" }}>
-                <span className="rs-body" style={{ fontSize: 10 }}>Keep out of the reference</span>
+                <span className="rs-body" style={{ fontSize: 10 }}>Say what these really are</span>
                 {risky.map((p) => (
-                  <button key={p.id}
-                    className={"rs-btn" + (hidden.includes(p.id) ? " on" : "")}
-                    title="If your prompt describes this yourself, hide it here — otherwise the model copies the set's version"
-                    onClick={() => setR((prev) => {
-                      const list = prev.hiddenPieces ?? [];
-                      return { ...prev, hiddenPieces: list.includes(p.id) ? list.filter((x) => x !== p.id) : [...list, p.id] };
-                    })}>
-                    {hidden.includes(p.id) ? "✓ " : ""}{(p.label || p.piece).replace(/^the /, "")}
-                  </button>
+                  <input
+                    key={p.id}
+                    value={p.asked ?? ""}
+                    placeholder={(p.label || p.piece).replace(/^the /, "")}
+                    title="Leave empty to use the set's version. Describe it and the location is built with yours instead, in the same place."
+                    onChange={(e) => {
+                      const text = e.target.value;
+                      setR((prev) => {
+                        const base = prev.setCustom ?? startEditing(getSet(prev.setId));
+                        return { ...prev, setCustom: describePiece(base, p.id, text) };
+                      });
+                    }}
+                    style={{ width: 150, background: "var(--bg)", border: "1px solid " + (p.asked ? "var(--accent)" : "var(--border)"), borderRadius: 3, padding: "5px 8px", fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--text)" }}
+                  />
                 ))}
               </div>
             );

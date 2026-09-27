@@ -49,8 +49,19 @@ export default async function handler(req, res) {
     const { data: { user } } = await supabase.auth.getUser(token);
     if (!user) return res.status(401).json({ error: "Not signed in" });
 
-    const { plate, cacheKey, projectId, note, mode } = req.body || {};
-    const instruction = INSTRUCTIONS[mode] ?? INSTRUCTIONS.rebuild;
+    const { plate, cacheKey, projectId, note, mode, replacements } = req.body || {};
+    let instruction = INSTRUCTIONS[mode] ?? INSTRUCTIONS.rebuild;
+
+    // Objects the creator has described themselves. The render's stand-in is a
+    // placeholder: build the described thing in that same spot, same size, same
+    // angle, so it lands where they put it rather than where the words imply.
+    const asked = (Array.isArray(replacements) ? replacements : [])
+      .filter((r) => r && typeof r.asked === "string" && r.asked.trim())
+      .slice(0, 6)
+      .map((r) => `${r.where ? r.where + ": " : ""}replace ${r.label || "the object"} with ${r.asked.trim()}`);
+    if (asked.length) {
+      instruction += ` Some objects in the render are placeholders and must be replaced, keeping the same position, footprint, orientation and scale in the frame: ${asked.join("; ")}. The replacement is a real full-size object photographed in place, sitting on the ground with proper contact shadows.`;
+    }
     if (typeof cacheKey !== "string" || cacheKey.length < 8) return res.status(400).json({ error: "Missing cache key" });
 
     // Already made this exact view before: no charge, same picture.

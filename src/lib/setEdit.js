@@ -82,6 +82,13 @@ export const turnPiece = (room, id, by = 90) =>
 export const raisePiece = (room, id, by) =>
   edit(room, id, (p) => ({ y: Math.max(0, Math.round(((p.y ?? 0) + by) * 100) / 100) || undefined }));
 
+// What this object should really be. The render's version is a stand-in;
+// the plate builds this description in its place, at its position.
+export const describePiece = (room, id, text) => ({
+  ...room,
+  props: (room.props ?? []).map((p) => (p.id === id ? { ...p, asked: String(text || "").slice(0, 200) || undefined } : p)),
+});
+
 export const removePiece = (room, id) => ({
   ...room,
   walls: (room.walls ?? []).filter((w) => w.id !== id),
