@@ -85,6 +85,22 @@ export function buildShootPrompt(r, cameraId) {
   // The room first: where this happens, and where everyone stands in it.
   const set = activeRoom(rehearsal);
   if (set) lines.push(setSentence(set, s0.actors));
+
+  // Anything kept out of the reference picture still has a place in the scene.
+  // Without this the model puts it wherever the words imply, usually frame left.
+  const keptOut = new Set(rehearsal.hiddenPieces ?? []);
+  if (set && keptOut.size) {
+    const placed = (set.props ?? [])
+      .filter((p) => keptOut.has(p.id))
+      .map((p) => {
+        const s = toStage(p.x, p.z);
+        const where = side(s0.camera, { x: s.x, y: s.y });
+        const far = Math.hypot(s.x - s0.camera.x, s.y - s0.camera.y) / 5;
+        const depth = far > 9 ? "in the background" : far > 5 ? "in the mid-ground" : "in the foreground";
+        return `${p.label || "it"} ${where}, ${depth}`;
+      });
+    if (placed.length) lines.push(`Also in shot: ${placed.join("; ")}.`);
+  }
   else if (rehearsal.setName) lines.push(`Shot inside ${rehearsal.setName}.`);
 
   // Framing, as the geometry engine reads it — with the chosen lens and height
