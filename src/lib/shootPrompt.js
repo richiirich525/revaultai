@@ -137,7 +137,7 @@ export function buildShootPrompt(r, cameraId) {
   }
 
   // Earned its place in testing: it fixes materials and light, though not shapes.
-  if (set) lines.push("The reference image is a layout guide only: it shows where things are and where the camera is. The final result must be photorealistic — real materials, real surfaces, natural daylight and real shadows.");
+  if (set) lines.push("Photographed at full scale on a cinema camera: a real place with real-world proportions, real materials and natural light. Not a miniature, not a scale model, not a diorama, not a toy, not a 3D render.");
 
   return {
     // A camera pointing at nobody has nothing to shoot.

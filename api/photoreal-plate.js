@@ -16,13 +16,30 @@ fal.config({ credentials: process.env.FAL_KEY });
 const COST = 2;
 const MODEL = "fal-ai/nano-banana-2/edit";
 
-const INSTRUCTION = [
-  "Turn this 3D previz render into a photograph of the same place.",
-  "Keep the geometry exactly: every wall, window, door, roofline, path and object stays in the same position, at the same size and the same proportions, seen from the same camera angle with the same perspective.",
-  "Do not move, add or remove anything. Do not change the shape of anything.",
-  "Replace only the surfaces and the light: real brick, render, plaster, wood, glass, roof tiles, fabric, foliage and paving, with natural light, soft shadows, contact shadows where objects meet the ground, and believable depth.",
-  "Photographic, shot on a full-frame camera, natural colour, no illustration, no cartoon, no 3D render look.",
+const REAL = [
+  "This is a full-size real place photographed on a cinema camera with a full-frame sensor.",
+  "It is not a miniature, not a scale model, not a diorama, not a model railway, not claymation, not a toy, not a 3D render.",
+  "Real-world proportions and real-world materials, natural daylight, soft shadows, contact shadows where objects meet the ground, depth of field consistent with a real lens, and the ordinary wear and irregularity of a real place.",
 ].join(" ");
+
+const INSTRUCTIONS = {
+  // Geometry untouched: safest for continuity, but keeps whatever reads as blocky.
+  faithful: [
+    "Turn this 3D previz render into a photograph of the same place.",
+    "Keep the geometry exactly: every wall, window, door, roofline, path and object stays in the same position, at the same size and the same proportions, seen from the same camera angle with the same perspective.",
+    "Do not move, add or remove anything.",
+    "Replace only the surfaces and the light.",
+    REAL,
+  ].join(" "),
+  // Same place, redrawn as real architecture: the layout survives, the blockiness doesn't.
+  rebuild: [
+    "This 3D previz render shows the layout of a location and the camera angle. Photograph that same location for real.",
+    "Keep the camera position and lens, the ground plan, and where every object sits relative to the others and to the frame.",
+    "Redraw the buildings and objects as real ones at real architectural proportions: proper window reveals with real glass and frames, real door furniture, real roof edges and gutters, real kerbs and paving joints. Thick chunky bevelled edges from the render must become real construction.",
+    "Add nothing that isn't in the render and remove nothing that is.",
+    REAL,
+  ].join(" "),
+};
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
@@ -32,7 +49,8 @@ export default async function handler(req, res) {
     const { data: { user } } = await supabase.auth.getUser(token);
     if (!user) return res.status(401).json({ error: "Not signed in" });
 
-    const { plate, cacheKey, projectId, note } = req.body || {};
+    const { plate, cacheKey, projectId, note, mode } = req.body || {};
+    const instruction = INSTRUCTIONS[mode] ?? INSTRUCTIONS.rebuild;
     if (typeof cacheKey !== "string" || cacheKey.length < 8) return res.status(400).json({ error: "Missing cache key" });
 
     // Already made this exact view before: no charge, same picture.
@@ -60,7 +78,7 @@ export default async function handler(req, res) {
 
       const result = await fal.subscribe(MODEL, {
         input: {
-          prompt: note ? `${INSTRUCTION} The place is: ${String(note).slice(0, 300)}` : INSTRUCTION,
+          prompt: note ? `${instruction} The place is: ${String(note).slice(0, 300)}` : instruction,
           image_urls: [sourceUrl],
         },
         logs: false,

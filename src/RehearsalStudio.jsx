@@ -267,7 +267,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
               setId={genId ? null : r.setId ?? null}
               setData={room}
               light={r.light ?? defaultLight()}
-              hiddenPieces={r.hiddenPieces ?? []}
+              hiddenPieces={r.hiddenPieces ?? (room?.props ?? []).filter((p) => /^(sedan|suv|van|truck|taxi|police|ambulance|firetruck|garbage|delivery|hatchback|race)/i.test(p.piece)).map((p) => p.id)}
               extras={r.extras ?? []}
               height={r.cameras.find((c) => c.id === r.activeCamera)?.height ?? null}
               lensMmOverride={r.cameras.find((c) => c.id === r.activeCamera)?.lens ?? null}
@@ -370,7 +370,10 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
             const risky = (room?.props ?? []).filter((p) =>
               /^(sedan|suv|van|truck|taxi|police|ambulance|firetruck|garbage|delivery|hatchback|race|tree|pine|plant_|pottedPlant|televisionModern|cabinetTelevision)/i.test(p.piece));
             if (!risky.length) return null;
-            const hidden = r.hiddenPieces ?? [];
+            // Vehicles are nearly always described in the prompt, so they start
+            // hidden — otherwise the model uses the set's car instead of yours.
+            const autoHide = risky.filter((p) => /^(sedan|suv|van|truck|taxi|police|ambulance|firetruck|garbage|delivery|hatchback|race)/i.test(p.piece)).map((p) => p.id);
+            const hidden = r.hiddenPieces ?? autoHide;
             return (
               <div className="rs-row" style={{ marginTop: 10, alignItems: "center" }}>
                 <span className="rs-body" style={{ fontSize: 10 }}>Keep out of the reference</span>
