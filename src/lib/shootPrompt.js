@@ -14,7 +14,7 @@ import { readStage, describeStage, eyelinesFor } from "./stageGeometry.js";
 import { blankSpec, mergeSpec } from "./filmSpec.js";
 import { activeRoom } from "./setEdit.js";
 import { describeLight, lightSpec } from "./lighting.js";
-import { setSentence } from "./setGeometry.js";
+import { setSentence, toStage } from "./setGeometry.js";
 
 const UNITS_PER_METRE = 5;
 
