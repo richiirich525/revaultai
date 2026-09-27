@@ -4,7 +4,7 @@ import { readStage, describeStage } from "./lib/stageGeometry.js";
 import { stateAt, setKey, removeKey, keyTimes, newRehearsal, addCamera } from "./lib/rehearsal.js";
 import { motionState, defaultBody, BODIES } from "./lib/performers.js";
 import { buildShootPrompt, buildShootSpec, buildCoverage } from "./lib/shootPrompt.js";
-import { SETS, EXTERIORS, getSet } from "./lib/setCatalog.js";
+import { SETS, EXTERIORS, getSet, pieceSize } from "./lib/setCatalog.js";
 import { LIGHT_PRESETS, defaultLight } from "./lib/lighting.js";
 import { toStage } from "./lib/setGeometry.js";
 
@@ -381,8 +381,12 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
           {(() => {
             // Pieces a creator is likely to describe in the prompt. If one is in
             // the reference picture, the model uses that one instead.
-            const risky = (room?.props ?? []).filter((p) =>
-              /^(sedan|suv|van|truck|taxi|police|ambulance|firetruck|garbage|delivery|hatchback|race|tree|pine|plant_|pottedPlant|televisionModern|cabinetTelevision)/i.test(p.piece));
+            // Anything big enough to read on screen can be described. Small
+            // dressing is left out, or the list becomes unusable.
+            const risky = (room?.props ?? []).filter((p) => {
+              const s = pieceSize(p);
+              return Math.max(s.w, s.d) >= 0.9 || s.h >= 1.2;
+            });
             if (!risky.length) return null;
             // Vehicles are nearly always described in the prompt, so they start
             // hidden — otherwise the model uses the set's car instead of yours.
