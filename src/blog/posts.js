@@ -4,6 +4,102 @@
 
 export const POSTS = [
   {
+    slug: "why-ai-video-looks-like-a-video-game",
+    title: "Why Your AI Video Looks Like a Video Game (And How to Fix It)",
+    seoTitle: "Why Your AI Video Looks Like a Video Game (and How to Fix It)",
+    description:
+      "Why AI video looks like a video game: the model copies the style of your reference image, not just its content. How to make AI video look photorealistic.",
+    date: "2026-09-27",
+    author: "Richard Garland",
+    category: "Guides",
+    readingTime: "8 min",
+    faq: [
+      ["Why does my AI video look 3D rendered?", "Usually because something you gave the model looked 3D rendered. A start frame, a location reference or a still from an earlier generation sets the look of the whole shot, not just its content. If that image has flat lighting, clean surfaces and simple shapes, the video inherits them, whatever the prompt says."],
+      ["Does adding \"photorealistic\" to the prompt help?", "A little, and only on the surface. Telling the model a reference is a layout guide and the result must be photorealistic can change materials and light — real brick instead of flat colour, proper shadows. It won't change the shapes the reference shows. Blocky windows stay blocky. If the geometry is the problem, change the image."],
+      ["Can I use a screenshot or a game capture as a reference?", "You can, but expect the result to look like one. A game capture carries game geometry, game materials and game lighting, and the model will copy all three. Use it for layout if you must, and convert it to a photoreal image before it goes to the video model."],
+    ],
+    content: `
+<p>You know the look. The people are a little too smooth, like good wax figures. The light falls evenly on everything, with no source you could point to. Walls have no scuffs, roads have no cracks, and every surface is a single clean colour. It's a well-made shot of a place that doesn't exist, and it looks like a cutscene.</p>
+
+<p>The standard advice is to write a better prompt: add "photorealistic", "35mm film", "natural lighting", "shot on ARRI". Sometimes that helps. Often it doesn't, and people conclude the model just can't do realism. In a lot of cases, neither the prompt nor the model is the cause. The cause is an image.</p>
+
+<h2>The Rule: Images Outrank Words</h2>
+
+<p>A video model copies what you show it. If a generation starts from a start frame, or takes a reference image for a location or a character, that image doesn't just tell the model what is in the shot. It tells the model what the shot looks like. Its style carries through — the lighting, the materials, the level of detail, the shapes — and it carries through more strongly than anything you write.</p>
+
+<p>We saw this plainly while building location references for RevaultAI. A stylised 3D previz render of an exterior set went to a video model as the location reference. The render was simple on purpose: flat green roofs, windows drawn as plain blue rectangles, a path with an orange edge. The prompt described the people in the scene and a car.</p>
+
+<p>The generated shot reproduced the set exactly. Flat green roofs, blue rectangle windows, the orange-edged path — all of it, in the render's look. The people and the car, which came only from the words, were photoreal. One frame held two different kinds of image, and the line between them fell precisely between what the model was shown and what it was told.</p>
+
+<p>That split is the whole lesson. Everything the model saw, it copied, style included. Everything it only read about, it built from its own idea of the world, which for a model trained on footage is photographic. The words weren't ignored. They just didn't reach anything the picture had already decided.</p>
+
+<h2>What Prompt Wording Does and Doesn't Fix</h2>
+
+<p>The obvious next step was to tell the model what the picture was for. The prompt was rewritten to say that the reference was a layout guide only, and that the result must be photorealistic.</p>
+
+<p>That changed a lot, and it changed a specific kind of thing. The flat roofs became roof tiles. The walls became real brick. The green ground became grass. The light became a low golden-hour sun with long shadows. Materials and lighting moved a long way towards a photograph.</p>
+
+<p>The shapes didn't move at all. The windows were still blocky rectangles, now with glass in them. The path still had its edging, now in brick instead of orange. Every building was the same simplified volume it had been in the render, just surfaced better.</p>
+
+<p>So wording moves surfaces, not geometry. A prompt can repaint what an image shows; it can't redraw it. If your AI video looks fake because the materials are wrong, a clear instruction can help. If it looks fake because the shapes are too simple — boxy architecture, smooth faces, props with no detail — no amount of wording will fix it, because the shapes are coming from the image.</p>
+
+<h2>The Trap: The Object in the Picture Wins</h2>
+
+<p>There's a second effect, and it's the one people almost never diagnose. When a reference contains an object and the prompt describes that kind of object, the model treats them as the same thing.</p>
+
+<p>The previz set had a toy-like SUV parked in it, a stand-in for the car in the scene. The prompt asked for a realistic car. What came back was the set's SUV — same boxy shape, same spot — re-textured to look a bit more real. The model didn't draw a new car from the description. It found a car in the picture and decided that was the car the prompt meant.</p>
+
+<p>From the model's side, this is reasonable. It's been given a picture with a car in it and a sentence about a car. Of course they're the same car. The picture is specific and the sentence is vague, so the picture supplies the shape, and the sentence gets applied as a light coat on top.</p>
+
+<p>This is why a shot can look fake in one particular place while the rest is fine: a prop, a vehicle or a piece of furniture that reads like a model kit. Somewhere upstream, a placeholder for that object was in an image, and the description never had a chance.</p>
+
+<h2>What Actually Works</h2>
+
+<p>Four things, in the order worth checking them.</p>
+
+<p><strong>1. Check what you're feeding it.</strong> List every image that goes into the generation: a start frame, a location reference, a character photo, a still pulled from another generation. Each one sets a ceiling on the look. A low-resolution frame, an over-smoothed upscale or a stylised render caps the output at its own quality, and a still from a generation that already looked slightly plastic will pass that plasticity on. The weakest image in the set usually decides the result.</p>
+
+<p><strong>2. Use photographic references.</strong> A photo of a real place or a real person carries photographic qualities the model will copy along with the content: grain, depth of field, lens falloff, uneven light, wear on surfaces, the small imperfections that make an image read as captured rather than made. Those are exactly what the video-game look is missing, and they're far easier to show than to describe. This is also why a photo of a real room is such a strong location reference, as covered in <a href="/blog/same-location-across-ai-video-shots">how to keep the same location across AI video shots</a>.</p>
+
+<p><strong>3. Don't show a placeholder for something you're describing.</strong> If the prompt describes a car, a sofa or a person, either show the real thing or don't show a stand-in at all. A grey mannequin becomes a mannequin in the shot. A toy SUV becomes a slightly better toy SUV. If you're working from a layout render, remove the stand-ins before it goes to the model, and let the description fill the gap.</p>
+
+<p><strong>4. Convert stylised references to photoreal before generating.</strong> Sometimes a stylised image is the only thing that has the layout you need — a previz render, a sketch, a game capture, a frame from an animatic. Don't send it straight to the video model. Run it through an image-editing model first, with an instruction to keep the layout and the camera exactly and rebuild every surface as a real photograph: real materials, real light, real wear. Then use the result as your reference.</p>
+
+<p>This works because an image edit is the right tool for the job the prompt couldn't do. A video model given a stylised reference treats its style as part of the brief. An image model asked to convert that reference treats its style as the thing to change. Almost any capable image-editing model can do it, and it's much cheaper to iterate on a still than on a video. Look at the converted image before you use it: if it still looks like a render, the video will too.</p>
+
+<h2>How RevaultAI Does It</h2>
+
+<p>The Rehearsal Studio is built around that last technique. You block a scene in a 3D set, which gives you a layout and a camera — and a render that looks exactly like previz. Before any video credits are spent, the studio turns that render into a photoreal plate that keeps the blocking and camera and rebuilds the surfaces as real materials. It shows you the render and the plate side by side for approval, and only the photograph goes to the video model. The previz never does.</p>
+
+<p>The placeholder problem is handled the same way. Any sizeable object in a set can be told what it really is — the grey SUV is "a dusty red 1990s pickup truck" — so the described car is built into the plate as a real object, instead of being left to the words to fight the picture.</p>
+
+<div class="cta-inline">
+<strong>Turn Your Blocking Into a Photograph</strong>
+<p>Block a scene in the Rehearsal Studio, approve a photoreal plate, then generate from the photograph. Sign-in required.</p>
+<a class="cta-btn" href="/tools">See the Tools</a>
+</div>
+
+<h2>Honest Limits</h2>
+
+<p>A photoreal reference improves the look of a shot. It can't rescue a model that renders people badly. If a model gives you smooth, waxy faces from a good photograph, the reference isn't the problem, and a different model might be the fix.</p>
+
+<p>Converting a stylised image can drift details. An image edit that rebuilds surfaces sometimes moves a window, merges two props, or adds something that wasn't there. Compare the converted image against the original before using it, especially for anything you need to stay consistent between shots.</p>
+
+<p>And text is always a weaker instruction than an image. That isn't a flaw in any one model; it's how they're built to use what they're given. Anything that matters to the shot — a specific car, a specific face, a specific building — should be shown, not only described. When a shot keeps failing for reasons that aren't about the look, <a href="/blog/why-ai-video-generations-fail">why AI video generations fail</a> covers the other common causes.</p>
+
+<h2>Frequently Asked Questions</h2>
+
+<h3>Why does my AI video look 3D rendered?</h3>
+<p>Usually because something you gave the model looked 3D rendered. A start frame, a location reference or a still from an earlier generation sets the look of the whole shot, not just its content. If that image has flat lighting, clean surfaces and simple shapes, the video inherits them, whatever the prompt says.</p>
+
+<h3>Does adding "photorealistic" to the prompt help?</h3>
+<p>A little, and only on the surface. Telling the model a reference is a layout guide and the result must be photorealistic can change materials and light — real brick instead of flat colour, proper shadows. It won't change the shapes the reference shows. Blocky windows stay blocky. If the geometry is the problem, change the image.</p>
+
+<h3>Can I use a screenshot or a game capture as a reference?</h3>
+<p>You can, but expect the result to look like one. A game capture carries game geometry, game materials and game lighting, and the model will copy all three. Use it for layout if you must, and convert it to a photoreal image before it goes to the video model.</p>
+`,
+  },
+  {
     slug: "same-location-across-ai-video-shots",
     title: "How to Keep the Same Location Across AI Video Shots",
     seoTitle: "How to Keep the Same Location Across AI Video Shots (2026)",
