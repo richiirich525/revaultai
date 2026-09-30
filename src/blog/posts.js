@@ -4,6 +4,127 @@
 
 export const POSTS = [
   {
+    slug: "kling-4-what-it-changes-for-filmmakers",
+    title: "Kling 4.0: What It Actually Changes for Filmmakers",
+    seoTitle: "Kling 4.0: Features, Release Date and What It Changes for Filmmakers",
+    description:
+      "Kling 4.0 brings 30-second generations, 15 reference inputs and 10 keyframes. What each changes for filmmakers, what we don't know yet, and what to do now.",
+    date: "2026-09-30",
+    author: "Richard Garland",
+    category: "News",
+    readingTime: "7 min",
+    faq: [
+      ["When is Kling 4.0 released?", "Kuaishou announced Kling 4.0 on 28 September 2026. A lightweight version, Kling 4.0 Flash, went to limited beta for Black Gold annual members the same day. The full version is scheduled for October."],
+      ["Is Kling 4.0 available through an API?", "Not yet announced. Kuaishou hasn't said when Kling 4.0 will reach API providers. This article will be updated when it does."],
+      ["What's the difference between Kling 4.0 and Kling 3.0?", "According to Kuaishou, Kling 4.0 doubles the maximum single generation to 30 seconds, extends output to two minutes with multi-shot continuation, accepts up to 15 reference inputs and 10 keyframes, offers 4K and 1080p output and a new 21:9 aspect ratio, and improves stability in fast motion and complex camera moves. No independent comparison exists yet."],
+    ],
+    content: `
+<p>Kuaishou announced Kling 4.0 on 28 September 2026, seven months after Kling 3.0 arrived in February. The headline numbers are big ones: 30-second generations, two-minute continuation, fifteen reference inputs, ten keyframes, 4K output and a 21:9 frame. The easy article lists them. This one treats each as a filmmaking question — what it lets you do on a scene that you couldn't do before, and where the number flatters.</p>
+
+<p>One thing up front: nobody outside the beta has used Kling 4.0 yet, and that includes us. Every capability below comes from Kuaishou's announcement. What it means for a film is our reading of that announcement, not a test result.</p>
+
+<h2>What Kuaishou Announced</h2>
+
+<ul>
+<li><strong>Length:</strong> the maximum single generation doubles to 30 seconds, and multi-shot continuation extends output up to two minutes.</li>
+<li><strong>References:</strong> up to 15 multimodal reference inputs — text, images and existing video.</li>
+<li><strong>Keyframes:</strong> up to 10 keyframes for narrative control across a generation.</li>
+<li><strong>Output:</strong> 4K and 1080p, with 10-bit HDR described as coming.</li>
+<li><strong>Framing:</strong> a new 21:9 ultra-wide aspect ratio.</li>
+<li><strong>Motion:</strong> improved stability in fast motion, continuous action and complex camera moves.</li>
+</ul>
+
+<p>Availability is staged. Kling 4.0 Flash, a lightweight version, went to limited beta for Black Gold annual members on 28 September. The full version is scheduled for October. API availability through providers has not been announced.</p>
+
+<h2>Thirty Seconds: A Scene, Not a Shot</h2>
+
+<p>A 30-second generation, with continuation up to two minutes, is long enough to hold a scene rather than a shot. Someone enters, crosses the room, sits, says something and gets an answer. Until now, a sequence like that had to be built from pieces, and every join was a place where the room, the light or a face could change.</p>
+
+<p>Fewer joins is a real gain. But longer isn't automatically better, for three reasons.</p>
+
+<p><strong>Drift has more room.</strong> Everything that wanders over ten seconds — a face, a costume, the layout of a room — has three times as long to wander over thirty. A long take that slowly turns into a different room is harder to use than two short ones that don't.</p>
+
+<p><strong>Performances wander.</strong> A real actor sustains intent through a long take because they know what the scene is about. A generated performance has only the prompt. Over thirty seconds, expect the moment to lose its point halfway through, or a gesture to repeat, or a look to land at the wrong beat.</p>
+
+<p><strong>Editors don't cut because they have to.</strong> Cutting controls emphasis: whose face we see when the line lands, how long a silence lasts, which reaction the audience gets. A single long take hands all those decisions to the model. For a oner, a continuous action beat or a slow establishing move, that's the point. For most dialogue, you'll still want coverage — and a clean 30-second take gives you more to cut from, not a reason to stop cutting.</p>
+
+<p>Kuaishou's claim of better stability in fast motion, continuous action and complex camera moves matters most here. Long takes are where instability shows. Whether the claim holds is the first thing worth testing.</p>
+
+<h2>Fifteen References: The Number That Matters Most</h2>
+
+<p>Duration gets the headlines. The reference count is the bigger change for anyone making a scene rather than a clip.</p>
+
+<p>Until now, the practical ceiling has been a couple of character photos and maybe a location. That forces a choice on every shot: which things get shown and which get left to words. Whatever gets left to words is reinvented each generation, which is why the hero's jacket, the prop on the table or the colour of the light can change between shots that are supposed to be continuous.</p>
+
+<p>Fifteen inputs means characters, location, props and a look reference at once. That's the list of things that have to match for two shots to cut together. It's a larger change than duration because a scene is several shots, and consistency across shots is what has been missing — not length within one.</p>
+
+<p>Two cautions. First, images outrank words, and each reference sets the look as well as the content. A weak reference caps the result, and fifteen references are fifteen chances to pass a flaw on — a point covered in <a href="/blog/why-ai-video-looks-like-a-video-game">why your AI video looks like a video game</a>. Second, the announcement says existing video can be an input, but not how the model uses it. Whether a clip carries motion, identity or just a look is something to find out, not assume.</p>
+
+<h2>Ten Keyframes: The Closest Thing to Directing</h2>
+
+<p>Today's control is mostly a start frame and an end frame. You pin where the shot begins and where it ends, and the model invents everything in between. That works well for a reveal, a transition or a shot that has to match the next cut. The middle is still a guess, and the longer the shot, the bigger the guess.</p>
+
+<p>Ten keyframes changes the question from describing a shot to specifying how it develops. The push-in reaches her face here. She turns here. The door opens here. That's the closest any of these tools has come to directing: saying what happens when, instead of writing a paragraph and hoping the model paces it the way you imagined.</p>
+
+<p>It also moves the work. Keyframes are images, and someone has to make them. They have to agree with each other — same room, same people, same light — or the model will be interpolating between inconsistencies. The filmmakers who get the most from this will be the ones who already storyboard.</p>
+
+<h2>21:9: What the Ultrawide Frame Is For</h2>
+
+<p>An ultrawide frame is for space. Landscape and scale. A figure small against a wide horizon. Two people at opposite edges of the frame with the distance between them doing the work. It reads as cinema because it's what cinema looks like.</p>
+
+<p>It isn't for everything. In close dialogue coverage the extra width is empty wall. If the film is going to a vertical feed or a 16:9 edit, a 21:9 shot composed for its width gets cropped into something nobody composed. Decide the delivery frame before you generate, and keep it consistent across the film.</p>
+
+<h2>What the Announcement Doesn't Tell Us</h2>
+
+<p>Quite a lot, and it's worth being plain about it.</p>
+
+<ul>
+<li><strong>Pricing:</strong> nothing announced, for Flash or the full version.</li>
+<li><strong>Faces and hands:</strong> nothing on how it performs on either, and they matter in almost every narrative shot.</li>
+<li><strong>Independent testing:</strong> none yet. The stability improvements are Kuaishou's description, not a measured result.</li>
+<li><strong>Flash versus full:</strong> no detail on how the lightweight version differs in output.</li>
+<li><strong>API access:</strong> not announced. This article will be updated when it is.</li>
+</ul>
+
+<p>Until people outside the beta have made real scenes with it, the numbers describe what the model accepts, not what it delivers.</p>
+
+<h2>What to Do Now</h2>
+
+<p>You don't need Kling 4.0 to start working the way it rewards. The techniques that matter transfer to whatever model you use.</p>
+
+<p><strong>Let reference images do the heavy lifting.</strong> A picture outranks prompt text on every model that takes one. Get good at making clean, photographic references for your characters, locations and props now, and fifteen slots will be fifteen useful inputs rather than fifteen guesses.</p>
+
+<p><strong>Lock your location.</strong> A room described in words is rebuilt every shot. A room shown as a reference stays put. The method is in <a href="/blog/same-location-across-ai-video-shots">how to keep the same location across AI video shots</a>, and it works on current models today.</p>
+
+<p><strong>Plan coverage before you generate.</strong> Know which shots the scene needs, which ones a long take could replace and which it couldn't, and where each keyframe would sit. That plan is what turns more duration and more keyframes into a scene rather than a longer clip.</p>
+
+<div class="cta-inline">
+<strong>Plan the Scene Before the Model</strong>
+<p>Block scenes, build shot specs and attach location references with RevaultAI's planning tools. Sign-in required.</p>
+<a class="cta-btn" href="/tools">See the Tools</a>
+</div>
+
+<h2>Where RevaultAI Fits</h2>
+
+<p>RevaultAI adds models as providers make them available. Kling 4.0 isn't available through an API yet, so it isn't on RevaultAI yet; when that changes, this article will say so.</p>
+
+<p>The planning side doesn't wait on it. Blocking, shot specs, coverage and location plates are model-independent by design: they describe the scene, not the settings of one model. When a new model arrives with more references or more keyframes, the plan you've already made carries across and simply has more room to land.</p>
+
+<h2>Frequently Asked Questions</h2>
+
+<h3>When is Kling 4.0 released?</h3>
+<p>Kuaishou announced Kling 4.0 on 28 September 2026. A lightweight version, Kling 4.0 Flash, went to limited beta for Black Gold annual members the same day. The full version is scheduled for October.</p>
+
+<h3>Is Kling 4.0 available through an API?</h3>
+<p>Not yet announced. Kuaishou hasn't said when Kling 4.0 will reach API providers. This article will be updated when it does.</p>
+
+<h3>What's the difference between Kling 4.0 and Kling 3.0?</h3>
+<p>According to Kuaishou, Kling 4.0 doubles the maximum single generation to 30 seconds, extends output to two minutes with multi-shot continuation, accepts up to 15 reference inputs and 10 keyframes, offers 4K and 1080p output and a new 21:9 aspect ratio, and improves stability in fast motion and complex camera moves. No independent comparison exists yet.</p>
+
+<p class="editorial-note">Specifications in this article are from Kuaishou's announcement of 28 September 2026. Kling 4.0 has not been independently tested, and API availability has not been announced. This article will be updated when it is.</p>
+`,
+  },
+  {
     slug: "why-ai-video-looks-like-a-video-game",
     title: "Why Your AI Video Looks Like a Video Game (And How to Fix It)",
     seoTitle: "Why Your AI Video Looks Like a Video Game (and How to Fix It)",
