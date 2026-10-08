@@ -164,6 +164,8 @@ export default function CoverageBoard({ project, user, setPage, setGenPrefill, n
                   </div>
                   <div className="cb-acts">
                     {st !== "covered" && st !== "skipped" && s.prompt && <button className="cb-btn go" onClick={() => fill(s)}>Fill this slot →</button>}
+                    {/* One angle can be redone without touching the keepers on the others. */}
+                    {st === "covered" && s.prompt && <button className="cb-btn" onClick={() => fill(s)}>Shoot it again</button>}
                     {st === "attempted" && <button className="cb-btn" onClick={() => setPage("takes")}>Pick a keeper</button>}
                     {!s.manual_status && st !== "covered" && <button className="cb-btn" onClick={() => setManual(s, "covered")} title="Covered some other way">Mark covered</button>}
                     {!s.manual_status && st !== "covered" && s.priority !== "essential" && <button className="cb-btn" onClick={() => setManual(s, "skipped")}>Skip</button>}

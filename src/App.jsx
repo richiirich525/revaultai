@@ -34,6 +34,7 @@ import TakeDebugger from "./TakeDebugger.jsx";
 "projects","tools","specs","rehearsal","finish";
 import ProjectsPage from "./ProjectsPage.jsx";
 import ToolsPage from "./ToolsPage.jsx";
+import ShotPresets from "./ShotPresets.jsx";
 import { updateCommentsEnabled } from "./lib/comments.js";
 import {
   fetchCreations,
@@ -1969,6 +1970,19 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
               <button className="gen-button" onClick={handleGenerate} disabled={submitting}>
                 {submitting ? "Starting..." : "Generate"}
               </button>
+            </div>
+            <ShotPresets
+              user={user}
+              notify={notify}
+              current={{ model, duration, aspect, prompt }}
+              onApply={(d) => {
+                if (d?.model) setModel(d.model);
+                if (d?.duration) setDuration(Number(d.duration));
+                if (d?.aspect) setAspect(d.aspect);
+                if (d?.promptStart && !prompt.trim()) setPrompt(d.promptStart);
+              }}
+            />
+            <div className="gen-form-row" style={{ display: "none" }}>
             </div>
             <VaultRefPicker
               model={model}
