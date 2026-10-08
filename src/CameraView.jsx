@@ -424,8 +424,11 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
       const a = genSet?.assets;
       if (a?.splat500k || a?.splat100k) {
         // Phones get the light tier, tablets the middle, computers the sharpest.
-        const w = window.innerWidth;
-        const url = (w < 760 ? a.splat100k : w < 1100 ? a.splat500k : a.splatFull || a.splat500k)
+        // Judged by the device, not the window: zooming the page or opening
+        // DevTools narrows the window and used to hand a computer the phone file.
+        const touch = window.matchMedia?.("(pointer: coarse)")?.matches;
+        const shortSide = Math.min(window.screen?.width || 9999, window.screen?.height || 9999);
+        const url = (touch && shortSide < 760 ? a.splat100k : touch ? a.splat500k : a.splatFull || a.splat500k)
           || a.splat500k || a.splat100k;
         const outer = new THREE.Group();   // height only
         const world = new THREE.Group();   // Marble's frame: turned and scaled
@@ -579,6 +582,19 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
     camera.fov = verticalFov(Number(lensMmOverride) > 0 ? Number(lensMmOverride) : lensMm(lens), camera.aspect || 16 / 9);
     camera.updateProjectionMatrix();
     renderer.render(scene, camera);
+
+    // Splats are sorted for the camera a moment after each frame is drawn, and
+    // the file itself arrives late — so a generated set needs frames to keep
+    // coming, or the picture is left unsorted and streaky.
+    if (genId && !T.loop) {
+      const tick = () => {
+        const cur = three.current;
+        if (!cur || !cur.genId) { if (cur) cur.loop = null; return; }
+        cur.renderer.render(cur.scene, cur.camera);
+        cur.loop = requestAnimationFrame(tick);
+      };
+      T.loop = requestAnimationFrame(tick);
+    }
   });
 
   // A plate of the set with nobody in it. Stand-ins are never sent to a model,
