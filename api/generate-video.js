@@ -63,13 +63,16 @@ const MODELS = {
 // Models that can take Vault reference photos, and how. Wan is absent on
 // purpose: its references must be videos, not photos. Kling uses its O3
 // reference model, which takes each Vault entry as an "element".
+// maxRefs counts everything sent as a reference, the location plate included.
+// Seedance 2.5 accepts up to 50; the lower figure here keeps the prompt that
+// names them readable. Kling's elements and Veo's reference mode are narrower.
 const REF_MODELS = {
-  'seedance-2.0': { falId: 'bytedance/seedance-2.0/fast/reference-to-video', named: true },
-  'seedance-2.0-480': { falId: 'bytedance/seedance-2.0/fast/reference-to-video', named: true },
-  'seedance-2.5': { falId: 'bytedance/seedance-2.5/reference-to-video', named: true },
-  'seedance-2.5-480': { falId: 'bytedance/seedance-2.5/reference-to-video', named: true },
-  'veo-3.1': { falId: 'fal-ai/veo3.1/fast/reference-to-video', named: false, seconds: 8 },
-  'kling-3.0': { falId: 'fal-ai/kling-video/o3/standard/reference-to-video', named: true, mode: 'elements', extra: { generate_audio: true } },
+  'seedance-2.0': { falId: 'bytedance/seedance-2.0/fast/reference-to-video', named: true, maxRefs: 9 },
+  'seedance-2.0-480': { falId: 'bytedance/seedance-2.0/fast/reference-to-video', named: true, maxRefs: 9 },
+  'seedance-2.5': { falId: 'bytedance/seedance-2.5/reference-to-video', named: true, maxRefs: 12, bracketRefs: true },
+  'seedance-2.5-480': { falId: 'bytedance/seedance-2.5/reference-to-video', named: true, maxRefs: 12, bracketRefs: true },
+  'veo-3.1': { falId: 'fal-ai/veo3.1/fast/reference-to-video', named: false, seconds: 8, maxRefs: 3 },
+  'kling-3.0': { falId: 'fal-ai/kling-video/o3/standard/reference-to-video', named: true, mode: 'elements', extra: { generate_audio: true }, maxRefs: 4 },
 };
 
 export default async function handler(req, res) {
@@ -126,8 +129,12 @@ export default async function handler(req, res) {
 
     // 2b. Vault reference photos — resolved before any credits are spent, so a
     //     failed lookup never charges anyone.
+    
+    // Keep a slot for the location plate when one is coming, so a scene with
+    // several characters doesn't quietly lose its room.
     const refModel = REF_MODELS[model];
-    const wantedRefs = Array.isArray(vaultRefIds) ? vaultRefIds.filter((x) => typeof x === "string").slice(0, 3) : [];
+    const refCap = Math.max(1, (refModel?.maxRefs ?? 3) - (typeof locationUrl === "string" && !imageUrl ? 1 : 0));
+    const wantedRefs = Array.isArray(vaultRefIds) ? vaultRefIds.filter((x) => typeof x === "string").slice(0, refCap) : [];
     const refs = [];
     if (refModel && wantedRefs.length && !imageUrl) {
       if (refModel.seconds && seconds !== refModel.seconds) {
@@ -182,7 +189,12 @@ export default async function handler(req, res) {
 
     // Seedance reads references by name; Veo just takes the images.
     const refPrompt = refs.length && refModel.named
-      ? `${prompt.trim()}\n\n${refs.map((r, i) => `@${refModel.mode === "elements" ? "Element" : "Image"}${i + 1} is ${r.name}${r.kind === "location" ? ", the location" : r.kind === "prop" ? ", a prop" : ""}.`).join(" ")}`
+      ? `${prompt.trim()}\n\n${refs.map((r, i) => {
+          // Seedance 2.5 indexes references as [Image1]; 2.0 and Kling use @.
+          const label = refModel.mode === "elements" ? "Element" : "Image";
+          const token = refModel.bracketRefs ? `[${label}${i + 1}]` : `@${label}${i + 1}`;
+          return `${token} is ${r.name}${r.kind === "location" ? ", the location" : r.kind === "prop" ? ", a prop" : ""}.`;
+        }).join(" ")}`
       : prompt.trim();
 
     // 3. Deduct credits atomically — fails cleanly if balance is short

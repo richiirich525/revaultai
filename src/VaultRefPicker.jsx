@@ -18,7 +18,17 @@ const SUPPORT = {
   "kling-3.0": "kling",
   "wan-2.6": "no",
 };
-const MAX_REFS = 3;
+// The ceiling the picker will ever allow; the real limit is per model below.
+const MAX_REFS = 12;
+
+// Seedance takes many references, Kling's elements and Veo's reference mode
+// few. One slot is kept back for the location plate.
+const MODEL_MAX = {
+  "seedance-2.5": 11, "seedance-2.5-480": 11,
+  "seedance-2.0": 8, "seedance-2.0-480": 8,
+  "kling-3.0": 3, "veo-3.1": 2,
+};
+const capFor = (m) => MODEL_MAX[m] ?? 3;
 
 export function refSupport(model) { return SUPPORT[model] ?? "no"; }
 
@@ -80,7 +90,7 @@ export default function VaultRefPicker({ model, prompt, imageUrl, duration, setD
   useEffect(() => {
     if (!entries || touched.current) return;
     const text = (prompt || "").toLowerCase();
-    const picks = entries.filter((e) => named(text, e.name)).slice(0, MAX_REFS).map((e) => e.id);
+    const picks = entries.filter((e) => named(text, e.name)).slice(0, capFor(model)).map((e) => e.id);
     if (picks.join(",") !== (value ?? []).join(",")) onChange(picks);
   }, [prompt, entries]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -93,7 +103,7 @@ export default function VaultRefPicker({ model, prompt, imageUrl, duration, setD
     touched.current = true;
     const cur = value ?? [];
     if (cur.includes(id)) onChange(cur.filter((x) => x !== id));
-    else if (cur.length < MAX_REFS) onChange([...cur, id]);
+    else if (cur.length < capFor(model)) onChange([...cur, id]);
   }
 
   if (entries === null) return null;
@@ -116,7 +126,7 @@ export default function VaultRefPicker({ model, prompt, imageUrl, duration, setD
         ? "Kling takes every photo on each entry, through its reference model built for consistent characters."
         : support === "veo"
           ? "Veo uses reference photos at 16:9 or 9:16, in 8-second clips."
-          : `Up to ${MAX_REFS}. Chosen from the names in your prompt — tap to change.`;
+          : `Up to ${capFor(model)}. Chosen from the names in your prompt — tap to change.`;
 
   return (
     <div style={{ border: "1px solid " + (usable && chosen.length ? "var(--accent)" : "var(--border)"), borderRadius: 6, padding: "12px 14px", margin: "12px 0", background: "var(--surface)" }}>
