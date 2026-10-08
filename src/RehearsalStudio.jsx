@@ -69,6 +69,8 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
   const [genSet, setGenSet] = useState(null);
   const [genFit, setGenFit] = useState(null);
   const [pendingShot, setPendingShot] = useState(null);
+  const [shootNext, setShootNext] = useState(null);
+  const shootRef = useRef(null);
   const [dressOpen, setDressOpen] = useState(false);
   const plateRef = useRef(null);
   const [mySets, setMySets] = useState([]);
@@ -78,7 +80,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
 
   useEffect(() => {
     if (!user?.id) { setMySets([]); return; }
-    supabase.from("user_sets").select("id, data, updated_at").order("updated_at", { ascending: false }).limit(30)
+    supabase.from("user_sets").select("id, data, updated_at").eq("user_id", user.id).order("updated_at", { ascending: false }).limit(30)
       .then(({ data }) => setMySets(data ?? []));
   }, [user?.id]);
 
@@ -87,9 +89,12 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
     setSavingSet(true);
     const packed = packSet(r.setCustom);
     const existing = r.setCustom?.savedId ?? null;
-    const res = existing
-      ? await supabase.from("user_sets").update({ data: packed, updated_at: new Date().toISOString() }).eq("id", existing).select("id, data").single()
-      : await supabase.from("user_sets").insert({ user_id: user.id, project_id: activeProject?.id ?? null, data: packed }).select("id, data").single();
+    const saveNew = () => supabase.from("user_sets").insert({ user_id: user.id, project_id: activeProject?.id ?? null, data: packed }).select("id, data").single();
+    let res = existing
+      ? await supabase.from("user_sets").update({ data: packed, updated_at: new Date().toISOString() }).eq("id", existing).select("id, data").maybeSingle()
+      : await saveNew();
+    // The saved copy was deleted since this set was opened: keep it as a new one.
+    if (existing && !res.error && !res.data) res = await saveNew();
     setSavingSet(false);
     if (res.error) { notify?.("Couldn't save: " + res.error.message); return; }
     setR((p) => ({ ...p, setCustom: { ...p.setCustom, savedId: res.data.id } }));
@@ -179,6 +184,14 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
   function shoot(cameraId) {
     const out = buildShootPrompt(r, cameraId);
     if (!out.ok) { notify?.("Point that camera at someone first."); return; }
+    // The location picture is taken from the camera view, which shows the
+    // selected camera. Shooting a different one selects it first, and the
+    // shot goes ahead once the view has caught up.
+    if (onShoot && (r.setId || r.setCustom) && cameraId !== r.activeCamera) {
+      setShootNext(cameraId);
+      setR((p) => ({ ...p, activeCamera: cameraId }));
+      return;
+    }
     if (onShoot) {
       const spec = buildShootSpec(r, cameraId);
       const setName = r.setName || genSet?.name || getSet(r.setId)?.name || null;
@@ -208,6 +221,15 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
     notify?.(`Prompt built from ${out.camera}. Your rehearsal runs ${out.seconds}s — set the length to match.`);
     setPage?.("generate");
   }
+
+  shootRef.current = shoot;
+  useEffect(() => {
+    if (!shootNext || r.activeCamera !== shootNext) return;
+    // A moment for the view to redraw from the new camera — a generated set
+    // also re-sorts itself for the new angle.
+    const wait = setTimeout(() => { setShootNext(null); shootRef.current?.(shootNext); }, genId ? 500 : 150);
+    return () => clearTimeout(wait);
+  }, [shootNext, r.activeCamera]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function setPose(actorIndex, pose) {
     setR((prev) => {
@@ -359,8 +381,12 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
               saved={mySets}
               onLoad={(s) => { const u = unpackSet(s); setR((p) => ({ ...p, setCustom: u, setId: null, setName: u.name })); }}
               onDelete={async (id) => {
-                await supabase.from("user_sets").delete().eq("id", id);
+                const { error } = await supabase.from("user_sets").delete().eq("id", id);
+                if (error) { notify?.("Couldn't delete that set: " + error.message); return; }
                 setMySets((list) => list.filter((s) => s.id !== id));
+                // If that was the set on the stage, it stays there but is no
+                // longer saved — the next save keeps it as a new set.
+                setR((p) => (p.setCustom?.savedId === id ? { ...p, setCustom: { ...p.setCustom, savedId: null } } : p));
               }}
               selected={selPiece}
               onSelect={setSelPiece}
@@ -402,10 +428,6 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
             });
             if (!risky.length) return null;
             const describedCount = risky.filter((p) => p.asked).length;
-            // Vehicles are nearly always described in the prompt, so they start
-            // hidden — otherwise the model uses the set's car instead of yours.
-            const autoHide = risky.filter((p) => /^(sedan|suv|van|truck|taxi|police|ambulance|firetruck|garbage|delivery|hatchback|race)/i.test(p.piece)).map((p) => p.id);
-            const hidden = r.hiddenPieces ?? autoHide;
             return (
               <div className="rs-row" style={{ marginTop: 10, alignItems: "center", flexWrap: "wrap" }}>
                 <button className="rs-btn" onClick={() => setDressOpen((o) => !o)}>
