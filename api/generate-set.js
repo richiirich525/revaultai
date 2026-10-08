@@ -20,10 +20,24 @@ export default async function handler(req, res) {
     if (!user) return res.status(401).json({ error: "Not signed in" });
     if (!process.env.WORLDLABS_API_KEY) return res.status(503).json({ error: "Set generation isn't switched on yet." });
 
-    const { name, prompt, tier, projectId } = req.body || {};
+    const { name, prompt, tier, projectId, imageUrl } = req.body || {};
     const chosen = TIERS[tier] ?? TIERS.full;
     const text = String(prompt || "").trim();
-    if (text.length < 10 || text.length > 1000) {
+
+    // Optional photo of the room. World Labs fetches it itself, so it has to
+    // be a public https link. With a photo, the description becomes optional.
+    let image = null;
+    if (imageUrl) {
+      try {
+        const u = new URL(String(imageUrl));
+        if (u.protocol !== "https:") throw new Error("not https");
+        image = u.toString();
+      } catch {
+        return res.status(400).json({ error: "The photo link must be a public https address." });
+      }
+    }
+
+    if (text.length > 1000 || (!image && text.length < 10)) {
       return res.status(400).json({ error: "Describe the set in a sentence or two (10–1000 characters)." });
     }
 
@@ -42,7 +56,7 @@ export default async function handler(req, res) {
       });
     };
 
-    const title = String(name || text).trim().slice(0, 64);
+    const title = (String(name || text).trim() || "Photo set").slice(0, 64);
     let row;
     try {
       const insert = await supabase
@@ -51,7 +65,7 @@ export default async function handler(req, res) {
           user_id: user.id,
           project_id: typeof projectId === "string" ? projectId : null,
           name: title,
-          prompt: text,
+          prompt: text || "(from a photo)",
           tier,
           model: chosen.model,
           status: "queued",
@@ -73,7 +87,9 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           display_name: title,
           model: chosen.model,
-          world_prompt: { type: "text", text_prompt: text },
+          world_prompt: image
+            ? { type: "image", image_prompt: { source: "uri", uri: image }, ...(text ? { text_prompt: text } : {}) }
+            : { type: "text", text_prompt: text },
         }),
       });
       const j = await r.json().catch(() => ({}));

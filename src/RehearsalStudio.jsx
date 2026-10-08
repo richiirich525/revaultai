@@ -121,6 +121,13 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
 
   // A generated set is stored on the rehearsal as "gen:<id>"; its asset links
   // are fetched fresh, because Marble hands them out per request.
+  // Test hook: /rehearsal?gen=<set id> loads a generated set, since the
+  // picker for generated sets has been removed.
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("gen");
+    if (id) setR((p) => ({ ...p, setId: "gen:" + id, setName: null, setCustom: null }));
+  }, []);
+
   const genId = typeof r.setId === "string" && r.setId.startsWith("gen:") ? r.setId.slice(4) : null;
   useEffect(() => {
     if (!genId) { setGenSet(null); return; }
@@ -134,7 +141,11 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
         body: JSON.stringify({ setId: genId }),
       }).catch(() => null);
       const j = await res?.json().catch(() => ({}));
-      if (alive && j?.status === "ready") setGenSet({ id: genId, name: j.name, assets: j.assets });
+      if (!alive) return;
+      if (j?.status === "ready") setGenSet({ id: genId, name: j.name, assets: j.assets });
+      else notify?.(j?.status === "failed" ? "That set failed: " + (j.error || "no reason given")
+        : j?.status === "processing" ? "The set is still building — reload in a couple of minutes."
+        : "Couldn't load that set" + (j?.error ? " — " + j.error : "."));
     })();
     return () => { alive = false; };
   }, [genId]); // eslint-disable-line react-hooks/exhaustive-deps
