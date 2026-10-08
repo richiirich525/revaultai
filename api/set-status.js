@@ -7,6 +7,9 @@ const MARBLE = "https://api.worldlabs.ai/marble/v1";
 // A world takes about five minutes. One still unfinished after this long
 // isn't coming, and its credits go back.
 const GIVE_UP_AFTER_MS = 2 * 60 * 60 * 1000;
+// No set has ever cost more than this, so no refund is ever larger —
+// whatever the row itself claims was spent.
+const MAX_REFUND = 35;
 
 // Marble's asset links are handed out fresh each time, so a finished set is
 // re-read from World Labs rather than copied into our own storage.
@@ -62,7 +65,7 @@ async function failAndRefund(row, message) {
     .select("id");
   if (flipped?.length) {
     await supabase.rpc("add_credits", {
-      p_user_id: row.user_id, p_amount: row.credits_spent ?? 0, p_reason: "refund", p_session_id: null,
+      p_user_id: row.user_id, p_amount: Math.max(0, Math.min(Number(row.credits_spent) || 0, MAX_REFUND)), p_reason: "refund", p_session_id: null,
     });
   }
 }

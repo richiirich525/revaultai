@@ -10,6 +10,7 @@ import {
 import { chooseClip, clipTimeFor, MOVING } from "./lib/performers.js";
 import { getSet, MODEL_PATH, filesFor, pieceInfo } from "./lib/setCatalog.js";
 import { getPreset } from "./lib/lighting.js";
+import { traceRoom, roomExtent, nearestSurface } from "./lib/setMeasure.js";
 
 /*
   CameraView — RevaultAI (Rehearsal Studio, tiers 2 and 3)
@@ -282,6 +283,7 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
   const [failed, setFailed] = useState(false);
   const [outsideSet, setOutsideSet] = useState(false);
   const [wildWall, setWildWall] = useState(false);
+  const [nearWall, setNearWall] = useState(false);
   const outsideRef = useRef(false);
   const hiddenRef = useRef([]);
   hiddenRef.current = hiddenPieces ?? [];
@@ -421,6 +423,7 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
       T.genId = genId;
       T.genFit = null;
       T.genBase = null;
+      T.genRing = null;
       const a = genSet?.assets;
       if (a?.splat500k || a?.splat100k) {
         // Phones get the light tier, tablets the middle, computers the sharpest.
@@ -447,7 +450,8 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
             if (!three.current || three.current.genId !== genId) return;
             const collider = g.scene;
             collider.traverse((o) => {
-              if (o.isMesh) { o.material = new THREE.MeshStandardMaterial({ color: 0x14151c, roughness: 1 }); o.frustumCulled = false; }
+              // Both faces count, so the room can be measured from inside whichever way the mesh was wound.
+              if (o.isMesh) { o.material = new THREE.MeshStandardMaterial({ color: 0x14151c, roughness: 1, side: THREE.DoubleSide }); o.frustumCulled = false; }
             });
             world.scale.setScalar(1);
             outer.position.set(0, 0, 0);
@@ -460,13 +464,22 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
             // Measured, so hide it. Left visible, this dark mesh sits on the same
             // surfaces as the splats and blocks every splat that falls just behind it.
             collider.visible = false;
-            T.genFit = {
-              minX: box.min.x * metric, maxX: box.max.x * metric,
-              minZ: box.min.z * metric, maxZ: box.max.z * metric,
-              width: (box.max.x - box.min.x) * metric,
-              depth: (box.max.z - box.min.z) * metric,
-              metric: !!Number(a.scale),
-            };
+            // The room is traced from the inside rather than boxed from the
+            // outside, so what Marble invented beyond the walls isn't counted.
+            let fit;
+            try {
+              T.genRing = traceRoom(collider, box, metric);
+              fit = roomExtent(T.genRing, box, metric);
+            } catch {
+              T.genRing = null;
+              fit = {
+                minX: box.min.x * metric, maxX: box.max.x * metric,
+                minZ: box.min.z * metric, maxZ: box.max.z * metric,
+                width: (box.max.x - box.min.x) * metric,
+                depth: (box.max.z - box.min.z) * metric,
+              };
+            }
+            T.genFit = { ...fit, metric: !!Number(a.scale) };
             onSetFit?.(T.genFit);
           }).catch(() => {});
         }
@@ -508,8 +521,12 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
       const tooFar = out > 3.5;
       if (tooFar !== outsideRef.current) { outsideRef.current = tooFar; setOutsideSet(tooFar); }
       if (T.wild !== (out > pad)) { T.wild = out > pad; setWildWall(out > pad); }
-    } else if (outsideRef.current || T.wild) {
+      // Splats smear when the camera stands right against a surface.
+      const close = out <= pad && !!T.genRing && nearestSurface(T.genRing, c.x, c.z, Number(setScale) || 1) < 0.6;
+      if (close !== !!T.close) { T.close = close; setNearWall(close); }
+    } else if (outsideRef.current || T.wild || T.close) {
       outsideRef.current = false; setOutsideSet(false); T.wild = false; setWildWall(false);
+      T.close = false; setNearWall(false);
       camera.near = 0.05; camera.updateProjectionMatrix();
     }
 
@@ -642,11 +659,13 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
         <div style={{ position: "absolute", top: 8, left: 10, fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.75)", pointerEvents: "none", textShadow: "0 1px 3px rgba(0,0,0,0.8)" }}>
           {title}
         </div>
-        {(outsideSet || wildWall) && (
-          <div style={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: "0.1em", borderRadius: 3, padding: "3px 10px",
-            color: outsideSet ? "#0e0f14" : "rgba(255,255,255,0.75)",
-            background: outsideSet ? "#E5B769" : "rgba(0,0,0,0.45)" }}>
-            {outsideSet ? "Too far back — you're seeing past the set" : "Shooting through the wild wall"}
+        {(outsideSet || wildWall || nearWall) && (
+          <div style={{ position: "absolute", bottom: 8, left: 10, maxWidth: "62%", pointerEvents: "none", fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: "0.1em", borderRadius: 3, padding: "3px 10px",
+            color: outsideSet || nearWall ? "#0e0f14" : "rgba(255,255,255,0.75)",
+            background: outsideSet || nearWall ? "#E5B769" : "rgba(0,0,0,0.45)" }}>
+            {outsideSet ? "Too far back — you're seeing past the set"
+              : wildWall ? "Shooting through the wild wall"
+              : "Very close to a wall — it will look smeared. Step the camera in"}
           </div>
         )}
         {loadNote && !failed && (

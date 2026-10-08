@@ -66,6 +66,24 @@ async function uploadPhoto(bytes) {
   return assetId;
 }
 
+// World Labs forgets a job about an hour after it starts, and only the job
+// says which world it is building. So that's asked for straight away and
+// kept — the finished set can then be found however late someone comes back.
+async function worldIdFor(operationId) {
+  for (const wait of [1200, 1800]) {
+    await new Promise((done) => setTimeout(done, wait));
+    try {
+      const r = await fetch(`${MARBLE}/operations/${operationId}`, {
+        headers: { "WLT-Api-Key": process.env.WORLDLABS_API_KEY },
+      });
+      const op = await r.json().catch(() => ({}));
+      const id = op?.metadata?.world_id ?? op?.response?.id ?? null;
+      if (id) return id;
+    } catch { /* the status check picks it up later */ }
+  }
+  return null;
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
@@ -152,6 +170,13 @@ export default async function handler(req, res) {
         .from("sets")
         .update({ operation_id: j.operation_id, status: "processing", updated_at: new Date().toISOString() })
         .eq("id", row.id);
+
+      // The job has started and is saved. Nothing below may undo that.
+      try {
+        const worldId = await worldIdFor(j.operation_id);
+        if (worldId) await supabase.from("sets").update({ world_id: worldId }).eq("id", row.id);
+      } catch { /* not fatal */ }
+
       return res.status(200).json({ setId: row.id, credits: CREDITS });
     } catch (e) {
       await refund();
