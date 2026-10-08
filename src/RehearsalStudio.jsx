@@ -577,10 +577,17 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
               <div className="rs-cam-s">{c.read.shotSize ? `${c.read.shotSize} · ${c.read.lens}` : "Not framing anyone"}</div>
               {c.read.subject && <div className="rs-cam-s">on {c.read.subject}</div>}
               {onCover && camReads.filter((x) => x.read.subject).length > 1 && c.id === camReads.find((x) => x.read.subject)?.id && (
-                <button className="rs-btn" style={{ marginTop: 8, borderColor: "var(--accent)", color: "var(--accent)" }}
-                  onClick={(e) => { e.stopPropagation(); onCover(buildCoverage(r), r.setId || r.setName ? plateRef.current?.() : null); }}>
-                  Cover the scene — all {camReads.filter((x) => x.read.subject).length} angles →
-                </button>
+                <span style={{ display: "inline-flex", flexDirection: "column", gap: 3, marginTop: 8 }}>
+                  <button className="rs-btn" style={{ borderColor: "var(--accent)", color: "var(--accent)" }}
+                    onClick={(e) => { e.stopPropagation(); onCover(buildCoverage(r), r.setId || r.setName ? plateRef.current?.() : null); }}>
+                    Cover the scene — all {camReads.filter((x) => x.read.subject).length} angles →
+                  </button>
+                  {/* Nothing is charged here, but the scene's real cost should be
+                      visible before anyone starts filling slots. */}
+                  <span className="rs-body" style={{ fontSize: 9, opacity: 0.75 }}>
+                    Free to plan.{(r.setId || r.setCustom) ? ` Location plates ${camReads.filter((x) => x.read.subject).length * 2} credits when you shoot them.` : ""} Each shot priced when you generate it.
+                  </span>
+                </span>
               )}
               {c.read.subject && (setGenPrefill || onShoot) && (
                 <button className="rs-btn" style={{ marginTop: 8 }} onClick={(e) => { e.stopPropagation(); shoot(c.id); }}>

@@ -108,7 +108,8 @@ export default function RehearsalPage({ user, activeProject, notify, onSignInCli
       spec: s.spec,
     })));
 
-    notify?.(`${rows.length} setups saved to ${activeProject.name}. Fill them from the board on Projects.`);
+    const plates = (shots[0]?.spec?.subjects?.locations?.length ? rows.length * 2 : 0);
+    notify?.(`${rows.length} setups saved to ${activeProject.name}${plates ? ` — ${plates} credits of location plates to come` : ""}. Fill them from the board on Projects.`);
     setPage?.("projects");
   }
 
