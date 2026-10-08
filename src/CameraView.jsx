@@ -456,7 +456,10 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
             const box = new THREE.Box3().setFromObject(collider);
             const h = box.max.y - box.min.y;
             const metric = Number(a.scale) || (h > 0.01 ? 2.6 / h : 1);
-            T.genBase = { scale: metric, minY: box.min.y };
+             T.genBase = { scale: metric, minY: box.min.y };
+            // Measured, so hide it. Left visible, this dark mesh sits on the same
+            // surfaces as the splats and blocks every splat that falls just behind it.
+            collider.visible = false;
             T.genFit = {
               minX: box.min.x * metric, maxX: box.max.x * metric,
               minZ: box.min.z * metric, maxZ: box.max.z * metric,
