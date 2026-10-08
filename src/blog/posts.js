@@ -4,6 +4,122 @@
 
 export const POSTS = [
   {
+    slug: "block-a-scene-before-you-generate",
+    title: "How to Block a Scene Before You Generate It",
+    seoTitle: "How to Plan AI Video Shots: Block the Scene Before You Generate",
+    description:
+      "How to plan AI video shots: block the scene first — positions, camera, the 180-degree line — so every shot you generate cuts together as one scene.",
+    date: "2026-10-07",
+    author: "Richard Garland",
+    category: "Guides",
+    readingTime: "8 min",
+    faq: [
+      ["Do I need to plan a single AI video clip?", "Not much. A one-off shot only has to work on its own, so a clear prompt is usually enough. Blocking earns its time when several shots have to cut together as one scene, because that's where positions, eyelines and the camera's side of the line start to matter."],
+      ["What is the 180-degree rule?", "Draw an imaginary line through the two people in a scene. Keep every camera on one side of it and the two people stay on the same sides of the frame, looking at each other across the cut. Put a camera on the other side and they swap sides, so the audience reads the cut as a jump rather than a conversation."],
+      ["How many angles does a two-person scene need?", "A workable minimum is three: a wide that shows both people and the room, and a single on each person from the same side of the line. Add tighter singles or over-the-shoulder shots if the scene has moments that need emphasis, and an insert for any object the scene turns on."],
+    ],
+    content: `
+<p>Most AI filmmaking works like this: write a prompt, generate, look, rewrite, generate again, pay again. Call it prompt-and-pray. It can produce a beautiful shot. It almost never produces a scene.</p>
+
+<p>Live-action solved this a century ago, and the solution has a name: blocking. Before the camera rolls, the director walks the scene — who stands where, who moves when, where the camera goes — because actors and crew are expensive and nobody wants to discover a problem on take twelve. AI made the camera cheap, and a lot of people concluded that planning had become unnecessary. It hasn't. Planning is where consistency, coverage and continuity come from, and skipping it is the main reason so much AI video is single shots rather than scenes. This is how to plan AI video shots the way a set would.</p>
+
+<h2>The Cost of Not Planning</h2>
+
+<p>Take a typical unplanned scene. The first shot: two people at a kitchen table. Good. The second: a closer shot of one of them. The face is right, but she's now on the left of frame when she was on the right, she's looking the wrong way, and the window behind her has moved. You rewrite the prompt and generate again. The window comes back; she's still looking the wrong way. Another rewrite, another generation.</p>
+
+<p>Each attempt improves the shot. None of them reliably improves the thing that matters, which is whether shot two cuts with shot one. That isn't a property of either shot alone. It's a relationship between them, and you can't prompt your way towards a relationship you never defined.</p>
+
+<p>The credits spent on shots you never use are the smaller loss. The bigger one is reaching the edit with a folder of good clips that refuse to become a scene — and no way to fix it except starting again.</p>
+
+<h2>What Blocking Actually Is</h2>
+
+<p>Blocking is deciding the geography of a scene. Where each person stands. Where they move, and when. Where the camera sits for each shot, and what it sees from there.</p>
+
+<p>Two ideas do most of the work.</p>
+
+<p><strong>The 180-degree line.</strong> Imagine a straight line running through the two people in a conversation, from one to the other. As long as every camera stays on one side of that line, each person stays on the same side of the frame: she's always screen left, he's always screen right, and when you cut between them they look like they're facing each other. Move a camera across the line and they swap sides. Now both appear to be looking in the same direction, and the audience reads the cut as a jump — as if someone teleported — rather than as two people talking. That's why two shots that each look fine can refuse to cut together: they were taken from opposite sides of the line.</p>
+
+<p><strong>Eyelines.</strong> An eyeline is where a person is looking, and it has to point at what they're looking at. If she's screen left talking to him, her close-up should have her looking off towards frame right, and his should have him looking towards frame left. Get one backwards and they seem to be talking past each other. Eyeline height matters too: if he's standing and she's sitting, she looks up and he looks down, in every shot, or the space stops making sense.</p>
+
+<h2>How to Block a Scene on Paper</h2>
+
+<p>You don't need software. You need a sheet of paper, a pencil, and ten minutes.</p>
+
+<p><strong>1. Draw the room from above.</strong> A rough rectangle, with the things that matter: the table, the door, the window, the counter.</p>
+
+<p><strong>2. Place the performers as circles.</strong> Label them with initials. Add a short tick on each circle for the way they face. If someone moves during the scene, draw a second circle where they end up and an arrow between the two.</p>
+
+<p><strong>3. Draw the line.</strong> Rule a line through the two people who are talking and extend it to the walls on both sides. Shade one side lightly. That's where the cameras live.</p>
+
+<p><strong>4. Place the cameras as arrows.</strong> Each arrow sits where the camera is and points where it's looking. Number them. Draw two short lines fanning out from the tip to show roughly what each one sees — narrow for a close-up, wide for a wide shot.</p>
+
+<p><strong>5. Check each camera against the line.</strong> Every arrow should be on the shaded side. If one isn't, move it.</p>
+
+<p><strong>6. Write the shot list beside it.</strong> One line per camera: number, shot size, who's in frame, and what moment of the scene it's for.</p>
+
+<p>If someone crosses the room mid-scene, the line moves with them. Draw the new line from their new position and check the later cameras against that one. This sketch is the plan. Everything after it is translation.</p>
+
+<h2>What Blocking Gives You That a Prompt Can't</h2>
+
+<p><strong>Coverage.</strong> The sketch tells you which angles the scene needs before you spend anything: a wide to establish the room, a reverse to answer it, a close-up for the line that lands. Without it, you find out in the edit that the scene has no way to get from one moment to the next. For more on deciding shots from a script, see <a href="/blog/how-to-break-script-into-shots-ai-video">how to break a script into shots</a>.</p>
+
+<p><strong>Consistency.</strong> Every shot comes from the same room with the same spatial relationships: the window is behind her, the door is behind him, the table is between them. You can carry that into each prompt, and pair it with a reference image of the room so the model doesn't rebuild it every time — the method is in <a href="/blog/same-location-across-ai-video-shots">how to keep the same location across AI video shots</a>.</p>
+
+<p><strong>A reason for each shot.</strong> The note beside each camera — "his reaction when she says it" — is what stops a scene being a slideshow. Shots chosen because they look good play as pictures; shots chosen because they show what the audience needs next play as a scene.</p>
+
+<h2>Turning a Block Into Prompts</h2>
+
+<p>Each camera on the sketch becomes one shot description. Read it off the plan in this order:</p>
+
+<ul>
+<li><strong>Shot size:</strong> wide, medium, close-up, over-the-shoulder.</li>
+<li><strong>Lens:</strong> wider for space and context, longer for faces and compression.</li>
+<li><strong>Positions in frame:</strong> who is screen left, who is screen right, who is foreground.</li>
+<li><strong>Eyelines:</strong> which way each person looks, and whether up or down.</li>
+<li><strong>Camera move:</strong> static, a slow push, a pan to follow — and why.</li>
+</ul>
+
+<p>Here's the difference on one shot. The vague version:</p>
+
+<blockquote><p>Two people argue in a kitchen.</p></blockquote>
+
+<p>The blocked version, for camera 2 on a plan where Maya sits at the table and Daniel stands by the counter:</p>
+
+<blockquote><p>Medium close-up, 50mm lens, of Maya seated at a kitchen table, framed screen left, window behind her. She looks up and off towards frame right, at Daniel, who is out of shot. Shallow focus; the counter is soft in the background. The camera holds still, then pushes in slowly as she answers him.</p></blockquote>
+
+<p>The first leaves the room, positions, eyelines and camera to the model, which will invent them differently every shot. The second leaves it almost nothing structural to decide. Daniel's reverse is written the same way: he's framed screen right, looking down and off towards frame left. The two shots now agree before either is generated. For the vocabulary of shot sizes and moves, see <a href="/blog/ai-video-camera-shots-movements">AI video camera shots and movements</a>.</p>
+
+<h2>Where RevaultAI Fits</h2>
+
+<p>RevaultAI's Rehearsal Studio is the same method on a timeline. You place performers and cameras on an overhead plan, see each camera through its lens, and block in one of sixteen sets, with lighting. One button turns every camera that's framing someone into a prompt and a coverage slot, so the scene's shot list exists before any generation. It's free and costs no credits. When you do generate, a photoreal plate of the set can travel with each shot — the reason it's a photograph rather than a render is explained in <a href="/blog/why-ai-video-looks-like-a-video-game">why your AI video looks like a video game</a>.</p>
+
+<div class="cta-inline">
+<strong>Block the Scene Before You Spend</strong>
+<p>Place performers and cameras on an overhead plan in the Rehearsal Studio and turn every angle into a prompt. Free, no credits. Sign-in required.</p>
+<a class="cta-btn" href="/tools">See the Tools</a>
+</div>
+
+<h2>Honest Limits</h2>
+
+<p>Blocking doesn't make a model follow you perfectly. A model can still flip an eyeline, ignore a push-in or put someone on the wrong side of the frame. A precise prompt makes that less likely and makes it obvious when it happens, but it doesn't prevent it.</p>
+
+<p>A plan is a starting point, not a guarantee. You'll still regenerate shots, and sometimes the take that breaks the plan is better.</p>
+
+<p>And over-planning a single short clip is wasted effort. If the shot only has to work on its own — a mood shot, a social clip, a test — write a clear prompt and generate. Blocking pays for itself on scenes: anything where two or more shots have to cut together.</p>
+
+<h2>Frequently Asked Questions</h2>
+
+<h3>Do I need to plan a single AI video clip?</h3>
+<p>Not much. A one-off shot only has to work on its own, so a clear prompt is usually enough. Blocking earns its time when several shots have to cut together as one scene, because that's where positions, eyelines and the camera's side of the line start to matter.</p>
+
+<h3>What is the 180-degree rule?</h3>
+<p>Draw an imaginary line through the two people in a scene. Keep every camera on one side of it and the two people stay on the same sides of the frame, looking at each other across the cut. Put a camera on the other side and they swap sides, so the audience reads the cut as a jump rather than a conversation.</p>
+
+<h3>How many angles does a two-person scene need?</h3>
+<p>A workable minimum is three: a wide that shows both people and the room, and a single on each person from the same side of the line. Add tighter singles or over-the-shoulder shots if the scene has moments that need emphasis, and an insert for any object the scene turns on.</p>
+`,
+  },
+  {
     slug: "kling-4-what-it-changes-for-filmmakers",
     title: "Kling 4.0: What It Actually Changes for Filmmakers",
     seoTitle: "Kling 4.0: Features, Release Date and What It Changes for Filmmakers",
