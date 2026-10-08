@@ -471,9 +471,10 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
           }).catch(() => {});
         }
 
-        fetch(url, { headers: { Range: "bytes=0-1" } })
+        // A quick check that the file is there, without downloading it twice.
+        fetch(url, { method: "HEAD" })
           .then((r) => {
-            if (!r.ok && r.status !== 206) throw new Error("the set file came back " + r.status);
+            if (!r.ok) throw new Error("the set file came back " + r.status);
             return import("@sparkjsdev/spark");
           })
           .then(({ SplatMesh, SparkRenderer }) => {

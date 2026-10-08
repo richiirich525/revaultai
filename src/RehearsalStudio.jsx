@@ -16,9 +16,10 @@ function sideOfFrame(camera, p) {
 }
 import SetEditor from "./SetEditor.jsx";
 import { startEditing, packSet, unpackSet, activeRoom, describePiece } from "./lib/setEdit.js";
-// Generated sets (Marble) are switched off: worlds built from a text prompt
-// didn't look good enough to shoot. The code and endpoints remain, ready if
-// photo input — where the set is a real room — is ever worth trying.
+// Generated sets (Marble): a photoreal set built from a photo of a real room,
+// a description, or both. Picked and generated in GeneratedSets below the
+// library row; drawn by CameraView as Gaussian splats.
+import GeneratedSets from "./GeneratedSets.jsx";
 import { supabase } from "./lib/supabase.js";
 import PlateApproval from "./PlateApproval.jsx";
 
@@ -121,13 +122,6 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
 
   // A generated set is stored on the rehearsal as "gen:<id>"; its asset links
   // are fetched fresh, because Marble hands them out per request.
-  // Test hook: /rehearsal?gen=<set id> loads a generated set, since the
-  // picker for generated sets has been removed.
-  useEffect(() => {
-    const id = new URLSearchParams(window.location.search).get("gen");
-    if (id) setR((p) => ({ ...p, setId: "gen:" + id, setName: null, setCustom: null }));
-  }, []);
-
   const genId = typeof r.setId === "string" && r.setId.startsWith("gen:") ? r.setId.slice(4) : null;
   useEffect(() => {
     if (!genId) { setGenSet(null); return; }
@@ -144,7 +138,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
       if (!alive) return;
       if (j?.status === "ready") setGenSet({ id: genId, name: j.name, assets: j.assets });
       else notify?.(j?.status === "failed" ? "That set failed: " + (j.error || "no reason given")
-        : j?.status === "processing" ? "The set is still building — reload in a couple of minutes."
+        : j?.status === "processing" || j?.status === "queued" ? "That set is still building — it'll be ready to pick under Your sets in a few minutes."
         : "Couldn't load that set" + (j?.error ? " — " + j.error : "."));
     })();
     return () => { alive = false; };
@@ -187,7 +181,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
     if (!out.ok) { notify?.("Point that camera at someone first."); return; }
     if (onShoot) {
       const spec = buildShootSpec(r, cameraId);
-      const setName = r.setName || getSet(r.setId)?.name || null;
+      const setName = r.setName || genSet?.name || getSet(r.setId)?.name || null;
       const usingSet = (r.setId || r.setCustom) && cameraId === r.activeCamera;
       const plate = usingSet ? plateRef.current?.() : null;
       if (!plate) { onShoot({ ...out, spec, setName }); return; }
@@ -324,7 +318,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
           <div className="rs-row" style={{ marginTop: 10 }}>
             <span className="rs-body" style={{ fontSize: 10 }}>Set</span>
             <button className={"rs-btn" + (!r.setId && !r.setCustom ? " on" : "")} onClick={() => setR((p) => ({ ...p, setId: null, setName: null, setCustom: null }))}>Empty stage</button>
-            {r.setId && !r.setCustom && (
+            {r.setId && !genId && !r.setCustom && (
               <button className="rs-btn" onClick={() => setR((p) => ({ ...p, setCustom: startEditing(getSet(p.setId)) }))}>Dress this set →</button>
             )}
             {mySets.map((s) => (
@@ -337,6 +331,13 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
               <button key={s.id} className={"rs-btn" + (r.setId === s.id ? " on" : "")} title={s.note} onClick={() => setR((p) => ({ ...p, setId: s.id, setName: null, setCustom: null }))}>{s.name}</button>
             ))}
           </div>
+          <GeneratedSets
+            user={user}
+            activeProject={activeProject}
+            notify={notify}
+            selectedId={genId}
+            onPick={(id, name) => setR((p) => ({ ...p, setId: "gen:" + id, setName: name, setCustom: null }))}
+          />
           {pendingShot && (
             <PlateApproval
               pending={pendingShot}

@@ -36,7 +36,8 @@ export default async function handler(req, res) {
     if (Number(exp) < Date.now()) return res.status(410).send("That link has expired — reopen the set.");
 
     const expected = crypto.createHmac("sha256", SECRET()).update(`${id}.${k}.${exp}`).digest("hex").slice(0, 32);
-    if (!crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(String(sig)))) {
+    const given = Buffer.from(String(sig));
+    if (given.length !== expected.length || !crypto.timingSafeEqual(Buffer.from(expected), given)) {
       return res.status(403).send("Bad signature");
     }
 
@@ -49,6 +50,13 @@ export default async function handler(req, res) {
     const world = await w.json().catch(() => ({}));
     const url = kind.pick((world?.world ?? world)?.assets);
     if (!url) return res.status(404).send("That file isn't available");
+
+    // A HEAD request only asks whether the file is there — answer without
+    // pulling the whole thing through this function.
+    if (req.method === "HEAD") {
+      res.setHeader("Content-Type", kind.type);
+      return res.status(200).end();
+    }
 
     const file = await fetch(url);
     if (!file.ok || !file.body) return res.status(502).send("Couldn't fetch that file");
