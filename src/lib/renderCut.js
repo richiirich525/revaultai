@@ -18,9 +18,12 @@
 */
 
 import { FFmpeg } from "@ffmpeg/ffmpeg";
-import coreURL from "@ffmpeg/core/dist/esm/ffmpeg-core.js?url";
-import wasmURL from "@ffmpeg/core/dist/esm/ffmpeg-core.wasm?url";
-import classWorkerURL from "@ffmpeg/ffmpeg/dist/esm/worker.js?url";
+// These must be the specifiers the packages actually export. Both ship strict
+// exports maps with no wildcards, so a deep path into dist/ resolves in dev,
+// where Vite resolves lazily, and then fails the production build outright.
+import coreURL from "@ffmpeg/core?url";
+import wasmURL from "@ffmpeg/core/wasm?url";
+import classWorkerURL from "@ffmpeg/ffmpeg/worker?url";
 
 const r3 = (n) => Math.round(n * 1000) / 1000;
 
