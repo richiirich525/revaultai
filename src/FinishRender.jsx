@@ -32,7 +32,12 @@ export default function FinishRender({ cut, urls, title }) {
 
       const got = Object.values(byId);
       if (!got.length) {
-        setResult({ error: "Couldn't fetch any of the clips. Reload the page and try again — the playback links may have expired." });
+        const why = failed[0]?.why;
+        setResult({
+          error: why
+            ? `Couldn't fetch the clips — ${why}.`
+            : "Couldn't fetch any of the clips. Reload the page and try again, as the playback links may have expired.",
+        });
         return;
       }
 
@@ -62,6 +67,7 @@ export default function FinishRender({ cut, urls, title }) {
         mb: (blob.size / 1048576).toFixed(1),
         format,
         skipped: failed.length ? shots.length - used : 0,
+        why: failed[0]?.why || "",
       });
     } catch (err) {
       if (err?.name === "AbortError") setResult({ error: "Render canceled." });
@@ -108,7 +114,7 @@ export default function FinishRender({ cut, urls, title }) {
       {result && !result.error && (
         <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", lineHeight: 1.8, marginTop: 12 }}>
           <span style={{ color: "#4ADE80" }}>✓</span> {result.pieces} piece{result.pieces === 1 ? "" : "s"} joined into {result.seconds}s at {result.format.width}&times;{result.format.height}, {result.format.fps} fps — {result.mb} MB.
-          {result.skipped > 0 && <div style={{ color: "#E5B769" }}>{result.skipped} shot{result.skipped === 1 ? "" : "s"} left out because a clip couldn't be fetched.</div>}
+          {result.skipped > 0 && <div style={{ color: "#E5B769" }}>{result.skipped} shot{result.skipped === 1 ? "" : "s"} left out{result.why ? ` — ${result.why}` : " because a clip couldn't be fetched"}.</div>}
         </div>
       )}
     </div>

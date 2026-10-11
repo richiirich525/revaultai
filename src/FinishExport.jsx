@@ -42,7 +42,12 @@ export default function FinishExport({ cut, urls, gens, title, scene }) {
     if (!got.length) {
       setBusy(false);
       setStatus("");
-      setResult({ error: "Couldn't fetch any of the clips. Reload the page and try again — the playback links may have expired." });
+      const why = failed[0]?.why;
+      setResult({
+        error: why
+          ? `Couldn't fetch the clips — ${why}.`
+          : "Couldn't fetch any of the clips. Reload the page and try again, as the playback links may have expired.",
+      });
       return;
     }
 
@@ -86,6 +91,7 @@ export default function FinishExport({ cut, urls, gens, title, scene }) {
       mb: (blob.size / 1048576).toFixed(1),
       mixedRates,
       skipped: failed.length ? shots.length - used : 0,
+      why: failed[0]?.why || "",
     });
     setBusy(false);
     setStatus("");
@@ -111,7 +117,7 @@ export default function FinishExport({ cut, urls, gens, title, scene }) {
       {result && !result.error && (
         <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", lineHeight: 1.8, marginTop: 12 }}>
           <span style={{ color: "#4ADE80" }}>✓</span> {result.shots} shot{result.shots === 1 ? "" : "s"} from {result.clips} clip{result.clips === 1 ? "" : "s"}, at {result.fps} fps — {result.mb} MB. Unzip it into one folder, then follow README.txt.
-          {result.skipped > 0 && <div style={{ color: "#E5B769" }}>{result.skipped} shot{result.skipped === 1 ? "" : "s"} left out because a clip couldn't be fetched.</div>}
+          {result.skipped > 0 && <div style={{ color: "#E5B769" }}>{result.skipped} shot{result.skipped === 1 ? "" : "s"} left out{result.why ? ` — ${result.why}` : " because a clip couldn't be fetched"}.</div>}
           {result.mixedRates && <div style={{ color: "#E5B769" }}>Frame rates differ: {result.mixedRates}</div>}
         </div>
       )}

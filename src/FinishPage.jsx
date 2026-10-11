@@ -44,7 +44,7 @@ function sampleFrames(url) {
     const v = document.createElement("video");
     v.crossOrigin = "anonymous"; v.preload = "auto"; v.muted = true; v.playsInline = true; v.src = url;
     const frames = []; let i = 0; let times = []; let duration = 0;
-    v.addEventListener("error", () => reject(new Error("Couldn't load the clip.")));
+    v.addEventListener("error", () => reject(new Error("Couldn't load the clip. If it plays on the page, the storage bucket needs GET allowed in its CORS policy.")));
     v.addEventListener("loadedmetadata", () => {
       duration = v.duration || 0;
       if (!duration || !isFinite(duration)) return reject(new Error("Couldn't read the clip's length."));

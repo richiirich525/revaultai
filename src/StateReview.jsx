@@ -38,7 +38,7 @@ export default function StateReview({ generation, videoUrl, notify }) {
       const v = document.createElement("video");
       v.crossOrigin = "anonymous"; v.preload = "auto"; v.muted = true; v.playsInline = true; v.src = url;
       const frames = []; let i = 0; let times = [];
-      v.addEventListener("error", () => reject(new Error("Couldn't load the clip.")));
+      v.addEventListener("error", () => reject(new Error("Couldn't load the clip. If it plays on the page, the storage bucket needs GET allowed in its CORS policy.")));
       v.addEventListener("loadedmetadata", () => {
         const d = v.duration || 0;
         if (!d || !isFinite(d)) return reject(new Error("Couldn't read the clip's duration."));

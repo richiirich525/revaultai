@@ -22,16 +22,27 @@ export async function fetchCutShots({ cut, urls, onStatus, signal }) {
     n++;
     onStatus?.(`Fetching clip ${n} of ${ids.length}…`);
     try {
-      if (!urls[id]) throw new Error("no link");
-      const r = await fetch(urls[id], { signal });
-      if (!r.ok) throw new Error("fetch failed");
+      if (!urls[id]) throw new Error("no playback link yet");
+      let r;
+      try {
+        r = await fetch(urls[id], { signal });
+      } catch (netErr) {
+        if (netErr?.name === "AbortError") throw netErr;
+        // A cross-origin fetch blocked by CORS throws a bare TypeError, with
+        // no status to inspect — the browser never hands us the response.
+        throw new Error(
+          "blocked before it could download. If the clip plays on the page, the storage bucket needs GET allowed in its CORS policy",
+          { cause: netErr },
+        );
+      }
+      if (!r.ok) throw new Error(`the server returned ${r.status}`);
       const buf = await r.arrayBuffer();
       const info = readMp4Info(buf);
-      if (!info) throw new Error("unreadable");
+      if (!info) throw new Error("the file could not be read as an MP4");
       byId[id] = { data: new Uint8Array(buf), info };
     } catch (err) {
       if (err?.name === "AbortError") throw err;
-      failed.push(id);
+      failed.push({ id, why: err?.message || "unknown error" });
     }
   }
 

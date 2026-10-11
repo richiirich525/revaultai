@@ -137,7 +137,7 @@ export default function TakeDebugger({ generation, videoUrl, notify, setGenPrefi
       let i = 0;
       let times = [];
 
-      v.addEventListener("error", () => reject(new Error("Couldn't load the clip for sampling.")));
+      v.addEventListener("error", () => reject(new Error("Couldn't load the clip for sampling. If it plays on the page, the storage bucket needs GET allowed in its CORS policy.")));
       v.addEventListener("loadedmetadata", () => {
         const d = v.duration || 0;
         if (!d || !isFinite(d)) return reject(new Error("Couldn't read the clip's duration."));
