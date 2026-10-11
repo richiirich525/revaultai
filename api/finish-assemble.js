@@ -53,7 +53,7 @@ export default async function handler(req, res) {
     if (!user) return res.status(401).json({ error: "Not signed in" });
 
     const { projectId, scene, length, clipIds } = req.body || {};
-    if (!projectId || !Array.isArray(clipIds) || clipIds.length === 0) return res.status(400).json({ error: "Choose some analysed clips first." });
+    if (!projectId || !Array.isArray(clipIds) || clipIds.length === 0) return res.status(400).json({ error: "Choose some analyzed clips first." });
     const target = LENGTHS.includes(Number(length)) ? Number(length) : 30;
     const ids = [...new Set(clipIds.map(String))].slice(0, MAX_CLIPS);
 
@@ -66,7 +66,7 @@ export default async function handler(req, res) {
       .eq("project_id", projectId)
       .order("created_at", { ascending: true });
     const clips = (gens ?? []).filter((g) => g.finish_analysis?.duration);
-    if (clips.length === 0) return res.status(400).json({ error: "Analyse at least one chosen clip first." });
+    if (clips.length === 0) return res.status(400).json({ error: "Analyze at least one chosen clip first." });
 
     const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
     const { count } = await supabase
@@ -84,11 +84,11 @@ export default async function handler(req, res) {
     ]);
     const keepers = new Set((shots ?? []).map((s) => s.selected_generation_id).filter(Boolean));
 
-    const labelled = clips.map((g, i) => ({ label: "C" + (i + 1), g }));
-    const byLabel = Object.fromEntries(labelled.map((l) => [l.label, l.g]));
+    const labeled = clips.map((g, i) => ({ label: "C" + (i + 1), g }));
+    const byLabel = Object.fromEntries(labeled.map((l) => [l.label, l.g]));
 
     let text = `Scene: ${str(scene, 1200).trim() || "(not described — infer it from the clips)"}\nTarget length: ${target}s\n\nCLIPS\n\n`;
-    text += labelled.map((l) => describe(l.label, l.g, keepers.has(l.g.id))).join("\n\n");
+    text += labeled.map((l) => describe(l.label, l.g, keepers.has(l.g.id))).join("\n\n");
     if (shots?.length) {
       text += `\n\nPLANNED SHOTS IN THIS PROJECT\n` + shots.map((s) => `- ${str(s.name, 80) || "Untitled"}: ${str(s.prompt, 240)}`).join("\n");
     }

@@ -12,7 +12,7 @@ import { toStage } from "./lib/setGeometry.js";
 function sideOfFrame(camera, p) {
   const bearing = (Math.atan2(p.x - camera.x, -(p.y - camera.y)) * 180) / Math.PI;
   const off = ((((bearing - (camera.rotation ?? 0)) % 360) + 540) % 360) - 180;
-  return Math.abs(off) < 8 ? "centre of frame" : off < 0 ? "left of frame" : "right of frame";
+  return Math.abs(off) < 8 ? "center of frame" : off < 0 ? "left of frame" : "right of frame";
 }
 import SetEditor from "./SetEditor.jsx";
 import { startEditing, packSet, unpackSet, activeRoom, describePiece } from "./lib/setEdit.js";

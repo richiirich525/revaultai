@@ -16,10 +16,10 @@ import { traceRoom, roomExtent, nearestSurface } from "./lib/setMeasure.js";
   CameraView — RevaultAI (Rehearsal Studio, tiers 2 and 3)
   What the active camera sees. Performers are animated characters that idle,
   sit, crouch and walk between their marks. Until the characters have loaded
-  — or if they can't — grey mannequins stand in, so the view always works.
+  — or if they can't — gray mannequins stand in, so the view always works.
 */
 
-const PERFORMER_HEIGHT = 1.75; // metres
+const PERFORMER_HEIGHT = 1.75; // meters
 
 // ---- Characters load once per visit and are shared by every view ----
 let assetsPromise = null;
@@ -86,8 +86,8 @@ function loadAssets() {
 }
 
 // A fitted stand-in suit: below the collar the body takes the performer's
-// colour, calmed toward charcoal so it reads as fabric, not paint. Face,
-// skin tone, hair and eyes stay exactly as modelled.
+// color, calmed toward charcoal so it reads as fabric, not paint. Face,
+// skin tone, hair and eyes stay exactly as modeled.
 function makeSuit(orig, color, neckY) {
   const m = orig.clone();
   const suit = { value: new THREE.Color(color).lerp(new THREE.Color(0x2b2b34), 0.45) };
@@ -106,7 +106,7 @@ function makeSuit(orig, color, neckY) {
   return m;
 }
 
-// Kenney's kit is modelled at half size, so every piece is doubled. Loaded
+// Kenney's kit is modeled at half size, so every piece is doubled. Loaded
 // pieces are cached and shared between rooms — each is a few dozen kilobytes.
 const pieceCache = new Map();
 async function loadPiece(loader, name) {
@@ -177,10 +177,10 @@ function unusedGreyBoxSet(set) {
 // the director whether a room reads as full or empty.
 function makeExtra() {
   const g = new THREE.Group();
-  const grey = new THREE.MeshStandardMaterial({ color: 0x4a4b55, roughness: 0.9 });
-  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.21, 1.3, 10), grey);
+  const gray = new THREE.MeshStandardMaterial({ color: 0x4a4b55, roughness: 0.9 });
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.21, 1.3, 10), gray);
   body.position.y = 0.65;
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.115, 12, 10), grey);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.115, 12, 10), gray);
   head.position.y = 1.44;
   g.add(body, head);
   g.traverse((o) => { if (o.isMesh) o.frustumCulled = false; });

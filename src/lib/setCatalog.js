@@ -3,19 +3,19 @@ import { VEHICLE_PIECES, VEHICLE_META } from "./setVehicles.js";
 /*
   setCatalog — RevaultAI
   The set library: rooms as data. Walls, floors and furniture are Kenney's CC0
-  Furniture Kit pieces, which are modelled at half real size — SCALE doubles
+  Furniture Kit pieces, which are modeled at half real size — SCALE doubles
   them so a doorway stands 2 m tall beside our 1.75 m performers. Every piece's
   real footprint is recorded here so the overhead plan can draw it without
   loading anything. Adding a room is one object in SETS.
 
-  Metres, room centred on (0, 0). Positive z is toward the open fourth wall,
+  Meters, room centered on (0, 0). Positive z is toward the open fourth wall,
   which is left out the way it is on a real set so the camera can get back.
 */
 
 export const SCALE = 2;          // Kenney's kit is built at half size
 export const MODEL_PATH = "/models/furniture/";
 
-// file -> real-world [width, depth, height] in metres, after scaling
+// file -> real-world [width, depth, height] in meters, after scaling
 export const PIECES = {
   bathroomCabinet: [0.86, 0.44, 0.78],
   bathroomMirror: [0.6, 0.28, 0.86],

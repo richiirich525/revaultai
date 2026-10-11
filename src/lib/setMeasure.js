@@ -23,10 +23,10 @@ function triangles(object) {
 }
 
 // A ring of points around the capture point: in each direction, how far the
-// room runs before it meets a surface (metres, or null where nothing is hit).
+// room runs before it meets a surface (meters, or null where nothing is hit).
 // Two heights are tried and the farther one kept, so a wall counts and a
 // sofa in front of it doesn't. Expects the collider at 1:1 with its world
-// matrix up to date; `metric` turns its units into metres.
+// matrix up to date; `metric` turns its units into meters.
 export function traceRoom(collider, box, metric) {
   const eye = Math.max(0, -box.min.y);              // the floor sits this far below the capture point
   const heights = eye > 0 ? [0, eye * 0.35] : [0];
@@ -80,7 +80,7 @@ function toSegment(px, pz, ax, az, bx, bz) {
 }
 
 // How close a point on the floor plan stands to the nearest traced surface,
-// in metres. `scale` is the creator's own set-size adjustment.
+// in meters. `scale` is the creator's own set-size adjustment.
 export function nearestSurface(ring, x, z, scale = 1) {
   let best = Infinity;
   for (let i = 0; i < ring.length; i++) {

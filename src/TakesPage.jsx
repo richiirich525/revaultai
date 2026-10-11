@@ -284,7 +284,7 @@ export default function TakesPage({ user, onSignInClick, setPage, notify, active
                     {takes.map((g, i) => {
                       const isSel = shot.selected_generation_id === g.id;
                       const isRej = g.take_status === "rejected";
-                      const isFav = g.take_status === "favourite";
+                      const isFav = g.take_status === "favorite";
                       return (
                         <div className={"tk-take" + (isSel ? " sel" : "") + (isRej ? " rej" : "")} key={g.id}>
                           <div className="tk-take-n">
@@ -302,7 +302,7 @@ export default function TakesPage({ user, onSignInClick, setPage, notify, active
                           )}
                           <div className="tk-actions">
                             <button className={"tk-btn" + (isSel ? " on" : "")} onClick={() => selectTake(shot, g.id)}>{isSel ? "\u2713 Selected" : "Select"}</button>
-                            <button className={"tk-btn" + (isFav ? " on" : "")} onClick={() => setStatus(g, "favourite")}>Star</button>
+                            <button className={"tk-btn" + (isFav ? " on" : "")} onClick={() => setStatus(g, "favorite")}>Star</button>
                             <button className="tk-btn" onClick={() => setStatus(g, "rejected")}>{isRej ? "Unreject" : "Reject"}</button>
                             <button className={"tk-btn" + (compare.includes(g.id) ? " on" : "")} onClick={() => toggleCompare(g.id)}>Compare</button>
                           </div>

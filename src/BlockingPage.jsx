@@ -384,7 +384,7 @@ export default function BlockingPage({ setPage, user, onSignInClick, setGenPrefi
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 22 }}>
               {[
                 ["Playable beats", "\"Feels nervous\" isn't direction — a model can't render it and an actor couldn't play it. \"Holds the glass with both hands and doesn't drink\" is something you can see."],
-                ["Relative to camera", "Blocking is only useful if it's stated in terms of frame: who enters camera-left, who holds centre, who turns and when. That's also what keeps your 180-degree axis intact."],
+                ["Relative to camera", "Blocking is only useful if it's stated in terms of frame: who enters camera-left, who holds center, who turns and when. That's also what keeps your 180-degree axis intact."],
                 ["Your words stay yours", "Dialogue comes back exactly as you wrote it, with delivery notes attached. This directs how a line lands — it doesn't rewrite the line."],
               ].map(([t, d], i) => (
                 <div key={i} style={{ border: "1px solid var(--border)", borderRadius: 8, padding: "26px 24px", background: "var(--bg)" }}>

@@ -25,7 +25,7 @@ Rules:
 - "consequential" is true when the difference would affect the NEXT shot — a moved prop, an open door, a character on the other side of frame. False for things that don't carry, like a momentary expression.
 - Set confidence low when lighting, motion blur or compression could explain what you're seeing.
 - Return an empty differences array when the footage matches the plan. Do not invent discrepancies.
-- Be concrete. "Sarah is centre frame rather than camera-left" is useful; "blocking differs" is not.`;
+- Be concrete. "Sarah is center frame rather than camera-left" is useful; "blocking differs" is not.`;
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });

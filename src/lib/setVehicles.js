@@ -1,8 +1,8 @@
 /*
   setVehicles — RevaultAI
-  Kenney's CC0 Car Kit. The models are modelled a little small, so they're
+  Kenney's CC0 Car Kit. The models are modeled a little small, so they're
   scaled to believable sizes, and most sit below their own origin — a sedan by
-  0.3m, the delivery van by a full metre — so each carries the lift it needs to
+  0.3m, the delivery van by a full meter — so each carries the lift it needs to
   stand on the road rather than sink into it.
 */
 

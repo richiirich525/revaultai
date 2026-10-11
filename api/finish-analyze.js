@@ -21,7 +21,7 @@ Return ONLY a JSON object:
 }
 
 Rules:
-- Times are in seconds and must lie within the clip's duration. Frames are labelled with their times; the truth between two frames is uncertain, so keep ranges honest to the sampling.
+- Times are in seconds and must lie within the clip's duration. Frames are labeled with their times; the truth between two frames is uncertain, so keep ranges honest to the sampling.
 - A usable range must be at least 0.7 seconds — shorter than that won't cut together.
 - Judge what an audience would notice: faces changing, hands deforming, objects appearing or vanishing, the camera doing something unmotivated, text garbling. Don't flag compression or normal motion blur.
 - "best" is the single strongest stretch. If nothing is usable, return "usable": [] and "best": null.
@@ -66,11 +66,11 @@ export default async function handler(req, res) {
       .eq("user_id", user.id)
       .gte("finish_analysis->>ranAt", since);
     if ((count ?? 0) >= DAILY_LIMIT) {
-      return res.status(429).json({ error: `You've analysed ${DAILY_LIMIT} clips in the last day — the limit while Finish is free. Clips already analysed can still be cut together.` });
+      return res.status(429).json({ error: `You've analyzed ${DAILY_LIMIT} clips in the last day — the limit while Finish is free. Clips already analyzed can still be cut together.` });
     }
 
     const clean = frames.slice(0, MAX_FRAMES).filter((f) => typeof f?.data === "string" && f.data.length < MAX_FRAME_BYTES);
-    if (clean.length < 2) return res.status(400).json({ error: "Frames were too large to analyse." });
+    if (clean.length < 2) return res.status(400).json({ error: "Frames were too large to analyze." });
 
     const content = [];
     clean.forEach((f) => {

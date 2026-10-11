@@ -40,6 +40,26 @@ const STATIC_PAGES = [
   ["/ai-disclaimer", "0.3", "yearly"],
 ];
 
+// A handle that collides with a route, or looks like a leftover test account,
+// shouldn't be offered to search engines.
+const RESERVED_HANDLES = new Set([
+  "home", "explore", "creators", "creator", "feed", "generate", "settings", "admin",
+  "submit", "set-password", "email-confirmed", "purchase-success", "terms", "privacy",
+  "faq", "contact", "guidelines", "refunds", "dmca", "ai-disclaimer", "about", "blog",
+  "premium-prompts", "become-creator", "founding-creators", "discovered", "search",
+  "tools", "prompts", "prompt-builder", "ai-video-generator", "scene-breakdown",
+  "which-model", "vault", "continuity-check", "shot-director", "coverage",
+  "frame-planner", "blocking", "autopsy", "takes", "projects", "specs", "rehearsal",
+  "api", "billing", "film", "test", "testing", "demo", "null", "undefined",
+]);
+
+function listableHandle(username) {
+  const h = String(username || "").trim();
+  if (h.length < 3) return false;              // too short to be a real profile
+  if (/^\d+$/.test(h)) return false;           // numeric-only: auto-generated
+  return !RESERVED_HANDLES.has(h.toLowerCase());
+}
+
 function esc(s) {
   return String(s ?? "")
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
@@ -107,6 +127,7 @@ export default async function handler(req, res) {
         .limit(5000);
 
       for (const p of profiles ?? []) {
+        if (!listableHandle(p.username)) continue;
         entries.push(urlEntry({
           loc: `${SITE}/creator/${encodeURIComponent(p.username)}`,
           changefreq: "weekly",

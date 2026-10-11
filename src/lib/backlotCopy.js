@@ -13,9 +13,9 @@ export const HOME_BACKLOT = {
     { lead: "The soundstage.", body: "Block the scene before you spend anything. Move your performers and cameras through a shot on a timeline, watch it from each angle, and see the shot size, lens, eyelines and the 180° line update as you work. When an angle is right, it becomes the shot you generate. Free, and it costs no credits to change your mind." },
     { lead: "Casting and the prop house.", body: "Your characters, locations and props, written down once with reference photos. Their descriptions are reproduced word for word in every shot they appear in, and their photos go to the model itself — so a character arrives looking like themselves rather than like a sentence about themselves." },
     { lead: "The camera cage.", body: "Four model families on one balance, and an honest answer about which one suits the shot: what it will cost, how long it can hold, and what's most likely to break." },
-    { lead: "The script supervisor.", body: "Someone reading every shot against every other shot: a jacket that changes colour, a prop that swaps hands, a reverse angle that crosses the line, a character who knows something they haven't learned yet." },
+    { lead: "The script supervisor.", body: "Someone reading every shot against every other shot: a jacket that changes color, a prop that swaps hands, a reverse angle that crosses the line, a character who knows something they haven't learned yet." },
     { lead: "The cutting room.", body: "Your takes, including the failures, assembled into a cut you can watch — then exported as an edit that opens already cut in DaVinci Resolve or Premiere Pro." },
-    { lead: "The theatre.", body: "Where the finished film plays. Curated, not algorithmic: no infinite scroll, no ranking, nothing auto-playing over the top of something else. Work is shown because it's good." },
+    { lead: "The theater.", body: "Where the finished film plays. Curated, not algorithmic: no infinite scroll, no ranking, nothing auto-playing over the top of something else. Work is shown because it's good." },
   ],
   cta: {
     heading: "Bring your story. The lot is open.",
@@ -38,9 +38,9 @@ export const ABOUT_BACKLOT = {
     { lead: "The soundstage.", body: "Before you generate anything, block the scene: performers and cameras moving through a shot on a timeline, seen through the lens the geometry chooses. Compare two angles on the same performance. Watch where the eyelines land, and whether you've crossed the line. It costs nothing, because in a real studio rehearsal doesn't cost film." },
     { lead: "Casting and the prop house.", body: "A production bible your tools actually read. Write a character down once, with photographs, and every shot they appear in reproduces that description exactly and sends those photographs to the model. Record what happens to them as the story goes — a cracked phone, a soaked coat — and later shots carry it." },
     { lead: "The camera cage.", body: "Several generation models behind one credit balance, with no subscription and no keys to manage. Describe a shot and get a straight answer about which model suits it, what it will really cost, and what tends to go wrong. Test at draft quality for half the credits, check the result, and only then pay full price for a prompt that works." },
-    { lead: "The script supervisor's notebook.", body: "Your takes, grouped into shots, with the reason each rejection failed — and a read across the whole project when something contradicts something else. Over time it tells you what a usable shot actually costs you, and which models earn your approvals rather than which market best." },
+    { lead: "The script supervisor's notebook.", body: "Your takes, grouped into shots, with the reason each rejection failed — and a read across the whole project when something contradicts something else. Over time it tells you what a usable shot actually costs you, and which models earn your approval — not which ones market themselves best." },
     { lead: "The cutting room.", body: "Hand over every take, including the ones you threw away — a failed clip often hides a usable second. Get back a cut you can watch in the browser, a list of the shots still missing, and an edit that opens already assembled in DaVinci Resolve or Premiere Pro." },
-    { lead: "The theatre.", body: "A gallery, not a feed. Films are chosen, not ranked. Nothing autoplays over the last thing you watched, and there's no algorithm deciding who deserves attention this week." },
+    { lead: "The theater.", body: "A gallery, not a feed. Films are chosen, not ranked. Nothing autoplays over the last thing you watched, and there's no algorithm deciding who deserves attention this week." },
   ],
   sections: [
     {

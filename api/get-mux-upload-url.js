@@ -36,7 +36,7 @@ export default async function handler(req, res) {
         playback_policy: ["public"],
         mp4_support:     "standard",
       },
-      cors_origin: req.headers.origin || "https://revaultai.com",
+      cors_origin: req.headers.origin || "https://www.revaultai.com",
       timeout:     3600,
     });
 

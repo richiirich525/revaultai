@@ -41,7 +41,7 @@ const HELP = {
   character: "This exact text goes into every shot they appear in. Concrete and visual beats long — four to seven strong anchors carry further than a paragraph of adjectives.",
   location: "This exact text goes into every shot set here. Name the materials, the light sources and the dressing rather than the mood.",
   prop: "This exact text goes into every shot the prop appears in. Specific beats generic — a battered black Canon AE-1 holds where 'a camera' drifts.",
-  look: "A Look applies to the whole scene, not one subject. Every shot in a breakdown inherits it — lens, lighting, palette, texture and camera behaviour.",
+  look: "A Look applies to the whole scene, not one subject. Every shot in a breakdown inherits it — lens, lighting, palette, texture and camera behavior.",
 };
 
 const styles = `

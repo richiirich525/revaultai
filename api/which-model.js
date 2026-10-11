@@ -124,7 +124,7 @@ Difficulty scoring — score 1-10, where 1 is a locked close-up of one still sub
 - Reflective, transparent or liquid surfaces
 - Spoken dialogue, and lip sync in particular
 - Text or signage that must be legible
-- Crowds, and any scene where background figures need consistent behaviour
+- Crowds, and any scene where background figures need consistent behavior
 - Wardrobe or props that must stay consistent across the take
 List 2-5 factors and 1-3 safe points. Both should be short phrases, not sentences. The "strategy" field should be concrete and actionable, or empty when the shot is genuinely straightforward — do not invent advice for an easy shot.`;
 

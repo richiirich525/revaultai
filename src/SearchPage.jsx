@@ -47,17 +47,17 @@ export default function SearchPage({ creations, setPage, setDetailId, setCreator
   const [discovered, setDiscovered] = useState([]);
 
   useEffect(() => {
-    let cancelled = false;
+    let canceled = false;
     (async () => {
       const { data: cs } = await fetchCreators();
-      if (!cancelled) setCreators(cs ?? []);
+      if (!canceled) setCreators(cs ?? []);
       const { data: df } = await supabase
         .from("discovered_films")
         .select("id, title, director_name, genre, note, youtube_id")
         .order("sort_order", { ascending: true });
-      if (!cancelled) setDiscovered(df ?? []);
+      if (!canceled) setDiscovered(df ?? []);
     })();
-    return () => { cancelled = true; };
+    return () => { canceled = true; };
   }, []);
 
   const results = useMemo(() => {

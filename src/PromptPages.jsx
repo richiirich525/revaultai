@@ -251,7 +251,7 @@ export function PromptGenrePage({ slug, setPage, openPromptModel, openPromptGenr
           <div className="pd-cta" style={{ marginTop: 8 }}>
             <div className="pd-cta-label">Free, no account</div>
             <div className="pd-cta-text">
-              Writing prompts this way is the manual version. Paste a shot list into the Continuity Check and it reads them the way a script supervisor does — flagging the character described two ways, the jacket that changes colour, the light that moves without reason. Or start further back: Scene Breakdown turns a scene into a shot list with the character and location descriptions locked and repeated word-for-word across every shot, so the drift never gets written in the first place. Both are free, with no sign-in and no credits.
+              Writing prompts this way is the manual version. Paste a shot list into the Continuity Check and it reads them the way a script supervisor does — flagging the character described two ways, the jacket that changes color, the light that moves without reason. Or start further back: Scene Breakdown turns a scene into a shot list with the character and location descriptions locked and repeated word-for-word across every shot, so the drift never gets written in the first place. Both are free, with no sign-in and no credits.
             </div>
             <div className="pd-cta-row">
               <button className="btn-primary" onClick={() => setPage("continuity-check")}>Check a shot list</button>

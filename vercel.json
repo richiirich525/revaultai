@@ -1,4 +1,5 @@
 {
+  "trailingSlash": false,
   "rewrites": [
     {
       "source": "/sitemap.xml",
@@ -9,15 +10,15 @@
       "destination": "/api/$1"
     },
     {
-      "source": "/set-password",
+      "source": "/film/(.*)",
       "destination": "/index.html"
     },
     {
-      "source": "/email-confirmed",
+      "source": "/creator/(.*)",
       "destination": "/index.html"
     },
     {
-      "source": "/(.*)",
+      "source": "/(settings|admin|set-password|email-confirmed|purchase-success|vault|takes|projects|specs)",
       "destination": "/index.html"
     }
   ]

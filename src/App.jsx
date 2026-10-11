@@ -1119,7 +1119,7 @@ function SpotlightSection({ creations, onView }) {
 function DiscoveredStrip({ setPage }) {
   const [films, setFilms] = useState([]);
   useEffect(() => {
-    let cancelled = false;
+    let canceled = false;
     (async () => {
       const { data } = await supabase
         .from("discovered_films")
@@ -1127,9 +1127,9 @@ function DiscoveredStrip({ setPage }) {
         .order("sort_order", { ascending: true })
         .order("created_at", { ascending: false })
         .limit(4);
-      if (!cancelled) setFilms(data ?? []);
+      if (!canceled) setFilms(data ?? []);
     })();
-    return () => { cancelled = true; };
+    return () => { canceled = true; };
   }, []);
 
   if (films.length === 0) return null;
@@ -2151,20 +2151,20 @@ function FollowFeedPage({ user, setPage, setDetailId, setCreatorUser }) {
 
   useEffect(() => {
     if (!user?.id) { setLoading(false); return; }
-    let cancelled = false;
+    let canceled = false;
     setLoading(true);
     (async () => {
       const { data } = await fetchFollowingFeed(user.id);
-      if (cancelled) return;
+      if (canceled) return;
       const items = data ?? [];
       setFeed(items);
       if (items.length === 0) {
         const { data: creators } = await fetchCreators();
-        if (!cancelled) setSuggested((creators ?? []).slice(0, 6));
+        if (!canceled) setSuggested((creators ?? []).slice(0, 6));
       }
       setLoading(false);
     })();
-    return () => { cancelled = true; };
+    return () => { canceled = true; };
   }, [user?.id]);
 
   function goDetail(id) { setDetailId(id); setPage("detail"); }
@@ -2498,16 +2498,16 @@ function ProfilePage({ username, creations: allCreations, setPage, setDetailId, 
 }
 
 function DetailPage({ id, creations, setCreations, user, profile, setProfile, purchasedIds, purchasesLoaded, setPage, setCreatorUser, dbLoaded, onSignInClick, notify }) {
-  // A film opened from a link can't rely on the full catalogue having loaded
+  // A film opened from a link can't rely on the full catalog having loaded
   // first — if it isn't in the list, fetch it directly.
   const listed = creations.find((c) => c.id === id);
   const [fetchedCreation, setFetchedCreation] = useState(null);
   const [lookupDone, setLookupDone] = useState(!!listed);
   useEffect(() => {
     if (listed || !id) return;
-    let cancelled = false;
-    fetchCreationById(id).then(({ data }) => { if (cancelled) return; if (data) setFetchedCreation(data); setLookupDone(true); });
-    return () => { cancelled = true; };
+    let canceled = false;
+    fetchCreationById(id).then(({ data }) => { if (canceled) return; if (data) setFetchedCreation(data); setLookupDone(true); });
+    return () => { canceled = true; };
   }, [id, listed]);
   const creation = listed ?? fetchedCreation;
   const [checkingOut, setCheckingOut] = useState(false);
@@ -2521,7 +2521,7 @@ function DetailPage({ id, creations, setCreations, user, profile, setProfile, pu
   useEffect(() => {
     setPlaybackUrl(null);
     if (!creation?.id || !creation.video_url || !unlockedForPlayback) return;
-    let cancelled = false;
+    let canceled = false;
     (async () => {
       try {
         const token = await getSessionToken();
@@ -2531,19 +2531,19 @@ function DetailPage({ id, creations, setCreations, user, profile, setProfile, pu
           body: JSON.stringify({ type: "creation", id: creation.id }),
         });
         const j = await r.json().catch(() => ({}));
-        if (!cancelled && r.ok && j.url) setPlaybackUrl(j.url);
+        if (!canceled && r.ok && j.url) setPlaybackUrl(j.url);
       } catch { /* poster remains as fallback */ }
     })();
-    return () => { cancelled = true; };
+    return () => { canceled = true; };
   }, [creation?.id, unlockedForPlayback]);
   
   useEffect(() => {
     const creatorId = creation?.user_id;
     if (!creatorId) { setToolMap({}); return; }
-    let cancelled = false;
+    let canceled = false;
     (async () => {
       const { data } = await fetchProfile(creatorId);
-      if (cancelled) return;
+      if (canceled) return;
       const map = {};
       const links = Array.isArray(data?.tool_links) ? data.tool_links : [];
       for (const t of links) {
@@ -2553,7 +2553,7 @@ function DetailPage({ id, creations, setCreations, user, profile, setProfile, pu
       }
       setToolMap(map);
     })();
-    return () => { cancelled = true; };
+    return () => { canceled = true; };
   }, [creation?.user_id]);
   const [cmBusy, setCmBusy] = useState(false);
   if (!creation) return <div className="page"><div className="empty-state"><div className="empty-text">{dbLoaded && lookupDone ? "Creation not found." : "Loading film..."}</div></div></div>;
@@ -4251,12 +4251,12 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
   async function handlePurchaseReturn() {
     const params = new URLSearchParams(window.location.search);
     const sessionId = params.get("session_id");
-    const cancelled  = params.get("cancelled");
+    const canceled  = params.get("canceled");
 
     // Handle cancel return
-    if (cancelled === "true") {
+    if (canceled === "true") {
       window.history.replaceState({}, "", window.location.pathname);
-      setNotifMsg("Checkout cancelled — no charge was made.");
+      setNotifMsg("Checkout canceled — no charge was made.");
       return;
     }
 

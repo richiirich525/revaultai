@@ -57,7 +57,7 @@ export default async function handler(req, res) {
         <p style="font-size: 14px; color: #6B6878; line-height: 1.7; margin-bottom: 24px;">
           Hi ${creatorName}, your submission <strong style="color: #E8E6F0;">"${creationTitle}"</strong> has been reviewed and approved by the RevaultAI team. It is now live on the platform.
         </p>
-        <a href="https://revaultai.com" style="display: inline-block; background: #7B3FE4; color: white; padding: 12px 28px; border-radius: 4px; text-decoration: none; font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;">
+        <a href="https://www.revaultai.com" style="display: inline-block; background: #7B3FE4; color: white; padding: 12px 28px; border-radius: 4px; text-decoration: none; font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;">
           View on RevaultAI
         </a>
         <p style="font-size: 11px; color: #6B6878; margin-top: 40px; line-height: 1.6;">

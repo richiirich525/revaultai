@@ -1,17 +1,17 @@
 /*
   stage3d — RevaultAI
   Converts the overhead plan into 3D space. The plan is a 100x100 stage at
-  5 units per metre, y increasing downward, rotation in degrees with 0 pointing
+  5 units per meter, y increasing downward, rotation in degrees with 0 pointing
   up the plan and increasing clockwise. In 3D, Y is up and the plan's y becomes
   depth (Z). Pure functions, so the maths can be tested without a browser.
 */
 
 export const UNITS_PER_METRE = 5;
-export const EYE_HEIGHT = 1.6;       // camera height, metres
-export const HEAD_HEIGHT = 1.62;     // standing mannequin head, metres
+export const EYE_HEIGHT = 1.6;       // camera height, meters
+export const HEAD_HEIGHT = 1.62;     // standing mannequin head, meters
 export const LEG_HEIGHT = 0.85;
 
-// Stage point to world metres, with the stage centre at the origin.
+// Stage point to world meters, with the stage center at the origin.
 export function toWorld(x, y) {
   return { x: (x - 50) / UNITS_PER_METRE, z: (y - 50) / UNITS_PER_METRE };
 }

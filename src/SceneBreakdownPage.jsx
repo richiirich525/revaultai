@@ -249,7 +249,7 @@ export default function SceneBreakdownPage({ setPage, user, onSignInClick, setGe
         <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 60, fontWeight: 300, color: "var(--text)", marginBottom: 16, lineHeight: 1.1 }}>Scene Breakdown</h1>
         <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 23, fontWeight: 300, color: "var(--muted)", marginBottom: 24, fontStyle: "italic" }}>One scene in, a full shot list out.</div>
         <div className="sb-body" style={{ fontSize: 12, maxWidth: 560, margin: "0 auto" }}>
-          Paste a scene or a logline. Get back a numbered shot list — each shot with its size, camera move, lighting, duration and a complete prompt. Characters and locations are locked and repeated word-for-word across every shot, which is what keeps them recognisable from cut to cut. No account needed.
+          Paste a scene or a logline. Get back a numbered shot list — each shot with its size, camera move, lighting, duration and a complete prompt. Characters and locations are locked and repeated word-for-word across every shot, which is what keeps them recognizable from cut to cut. No account needed.
         </div>
       </div>
 

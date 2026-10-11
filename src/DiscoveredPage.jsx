@@ -17,19 +17,19 @@ import { supabase } from "./lib/supabase.js";
   const [visible, setVisible] = useState(12);
 
   useEffect(() => {
-    let cancelled = false;
+    let canceled = false;
     (async () => {
       const { data, error } = await supabase
         .from("discovered_films")
         .select("*")
         .order("sort_order", { ascending: true })
         .order("created_at", { ascending: false });
-      if (cancelled) return;
+      if (canceled) return;
       if (error) console.warn("[RevaultAI] Could not load discovered films:", error.message);
       setFilms(data ?? []);
       setLoading(false);
     })();
-       return () => { cancelled = true; };
+       return () => { canceled = true; };
   }, []);
 
   const GENRE_ORDER = ["Sci-Fi", "Action", "Thriller", "Horror", "Fantasy", "Drama", "Comedy", "Animation", "Documentary"];
@@ -45,7 +45,7 @@ import { supabase } from "./lib/supabase.js";
   useEffect(() => {
     const needed = films.filter((f) => f.vimeo_id && !f.thumbnail_url);
     if (!needed.length) return;
-    let cancelled = false;
+    let canceled = false;
     (async () => {
       const out = {};
       for (const f of needed) {
@@ -55,9 +55,9 @@ import { supabase } from "./lib/supabase.js";
           if (r.ok) { const j = await r.json(); if (j.thumbnail_url) out[f.id] = j.thumbnail_url; }
         } catch { /* skip */ }
       }
-      if (!cancelled) setVimeoThumbs(out);
+      if (!canceled) setVimeoThumbs(out);
     })();
-    return () => { cancelled = true; };
+    return () => { canceled = true; };
   }, [films]);
 
 

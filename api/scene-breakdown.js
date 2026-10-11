@@ -39,7 +39,7 @@ const STYLES = {
   },
   "doc-16mm": {
     label: "Documentary 16mm",
-    directives: "Handheld 16mm with visible grain, slightly soft resolution, available light only, occasional focus hunting and imperfect framing. Naturalistic colour, observational distance.",
+    directives: "Handheld 16mm with visible grain, slightly soft resolution, available light only, occasional focus hunting and imperfect framing. Naturalistic color, observational distance.",
   },
   technicolor: {
     label: "Technicolor Golden Age",
@@ -52,15 +52,15 @@ const STYLES = {
 };
 
 const STRENGTHS = {
-  subtle: "Apply the style preset lightly — let it colour the lighting and grade without dominating.",
+  subtle: "Apply the style preset lightly — let it color the lighting and grade without dominating.",
   balanced: "Apply the style preset clearly and evenly across camera, lighting, palette and style.",
   heavy: "Commit fully to the style preset. It should be the defining characteristic of every shot.",
 };
 
 const RATIOS = {
   "16:9": "Compose for 16:9 landscape: horizontal staging, wider shot sizes, lateral camera movement.",
-  "9:16": "Compose for 9:16 vertical: tighter framing, vertical layering front-to-back, subject centred, vertical camera movement over lateral pans.",
-  "1:1": "Compose for a 1:1 square frame: centred subject, symmetrical staging, minimal lateral movement.",
+  "9:16": "Compose for 9:16 vertical: tighter framing, vertical layering front-to-back, subject centered, vertical camera movement over lateral pans.",
+  "1:1": "Compose for a 1:1 square frame: centered subject, symmetrical staging, minimal lateral movement.",
 };
 
 const SYSTEM_PROMPT = `You are a director and first AD breaking a scene into a shot list for AI video generation. You think in coverage: how a scene is actually assembled from shots, not one continuous impossible take.
@@ -92,7 +92,7 @@ Return ONLY a JSON object. No markdown fences, no preamble, no commentary. Use e
 }
 
 CONTINUITY — the most important rule:
-Every character and location description you write in the "characters" and "locations" arrays must be repeated VERBATIM inside the "prompt" of every shot in which that character or location appears. Do not paraphrase, shorten, or vary the wording between shots. Identical wording across shots is what keeps the character recognisable from shot to shot. This repetition is intentional and required.
+Every character and location description you write in the "characters" and "locations" arrays must be repeated VERBATIM inside the "prompt" of every shot in which that character or location appears. Do not paraphrase, shorten, or vary the wording between shots. Identical wording across shots is what keeps the character recognizable from shot to shot. This repetition is intentional and required.
 
 STATE CONTINUITY:
 Each shot's "start_state" must match the previous shot's "end_state" unless something in between changes it. This is what lets a sequence hold together: if shot 3 ends with the door open and the glass on the counter, shot 4 begins that way. State what is true, concretely — positions in frame, what is held and in which hand, doors, lights, weather, the condition of clothing. Do not describe mood or intent here, only observable facts.
@@ -197,7 +197,7 @@ ${lookEntries.length ? `
 PROJECT LOOK — the visual language for this entire scene:
 ${lookEntries.map((e) => `${e.name}: ${e.description}`).join("\n")}
 
-Apply this look to EVERY shot without exception. It governs lens, lighting, palette, texture and camera behaviour throughout. Weave it into each shot's prompt naturally rather than appending it as a list.
+Apply this look to EVERY shot without exception. It governs lens, lighting, palette, texture and camera behavior throughout. Weave it into each shot's prompt naturally rather than appending it as a list.
 ` : ""}${lockedEntries.length ? `
 LOCKED ENTRIES — these come from the creator's vault and are FIXED:
 ${lockedEntries.map((e) => `- [${e.kind}] ${e.name}: ${e.description}`).join("\n")}

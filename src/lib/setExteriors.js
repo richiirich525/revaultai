@@ -1,8 +1,8 @@
 /*
   setExteriors — RevaultAI
   Six outdoor sets from Kenney's CC0 city, nature and graveyard kits. The
-  city kit is modelled far smaller than the others, so every piece carries
-  its own scale rather than sharing one number. Sizes here are real metres.
+  city kit is modeled far smaller than the others, so every piece carries
+  its own scale rather than sharing one number. Sizes here are real meters.
 */
 
 // --- Exteriors: Kenney's city, nature and graveyard kits. The city kit is

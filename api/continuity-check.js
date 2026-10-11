@@ -50,7 +50,7 @@ Screen direction and the 180-degree rule — check these as "screen-direction" f
 - Establish the axis from the first shot that places two subjects relative to each other, or that gives a subject a direction of travel. Track it across the sequence.
 - Flag when a subject who was camera-left becomes camera-right, or vice versa, with no motivated move in between. That is an "error".
 - Flag when an over-the-shoulder or reverse angle appears to cross the established axis, which would swap the subjects' screen positions. That is an "error".
-- Flag when a subject travelling screen-left-to-right in one shot travels right-to-left in the next without turning, cutting away, or a neutral shot between. That is an "error".
+- Flag when a subject traveling screen-left-to-right in one shot travels right-to-left in the next without turning, cutting away, or a neutral shot between. That is an "error".
 - A deliberate crossing IS allowed when the shots contain the cause: the camera moves across the axis on screen, a subject turns or crosses, or a neutral head-on shot sits between. Do not flag those.
 - When the sequence holds its axis cleanly, say so as an "ok" finding naming the positions, e.g. "Maya remains camera-left and Jonah camera-right across shots 1-5".
 - If the shots simply don't state screen positions or directions of travel, say that once as a "warning" — you cannot verify the axis from wording that doesn't specify a side.

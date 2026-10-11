@@ -5,7 +5,7 @@ import CutPreview from "./CutPreview.jsx";
 import FinishExport from "./FinishExport.jsx";
 
 /*
-  FinishPage — RevaultAI (pass 1: choose and analyse)
+  FinishPage — RevaultAI (pass 1: choose and analyze)
   Turn a project's generations — keepers and rejects alike — into a scene.
   This pass reads each clip for what could be used in an edit. Assembly,
   preview and export build on these readings.
@@ -155,7 +155,7 @@ export default function FinishPage({ user, activeProject, setPage, notify, onSig
     });
   }
 
-  async function analyse() {
+  async function analyze() {
     const todo = gens.filter((g) => picked.has(g.id) && !g.finish_analysis);
     if (todo.length === 0) return;
     setRunning(true);
@@ -174,10 +174,10 @@ export default function FinishPage({ user, activeProject, setPage, notify, onSig
           body: JSON.stringify({ generationId: g.id, frames, duration }),
         });
         const j = await r.json().catch(() => ({}));
-        if (!r.ok) { notify?.(j.error || "Couldn't analyse a clip."); if (r.status === 429) break; continue; }
+        if (!r.ok) { notify?.(j.error || "Couldn't analyze a clip."); if (r.status === 429) break; continue; }
         setGens((list) => list.map((x) => (x.id === g.id ? { ...x, finish_analysis: j.analysis } : x)));
       } catch (e) {
-        notify?.(e.message || "Couldn't analyse a clip.");
+        notify?.(e.message || "Couldn't analyze a clip.");
       }
     }
     setRunning(false);
@@ -236,7 +236,7 @@ export default function FinishPage({ user, activeProject, setPage, notify, onSig
 
   const chosen = gens.filter((g) => picked.has(g.id));
   const pending = chosen.filter((g) => !g.finish_analysis).length;
-  const analysed = chosen.length - pending;
+  const analyzed = chosen.length - pending;
 
   return (
     <div className="page">
@@ -297,7 +297,7 @@ export default function FinishPage({ user, activeProject, setPage, notify, onSig
                       <div className="fn-body" style={{ color: "var(--text)", fontSize: 11, marginBottom: 2 }}>
                         {a?.summary || (g.prompt ? g.prompt.slice(0, 140) + (g.prompt.length > 140 ? "…" : "") : "Untitled take")}
                       </div>
-                      {a ? <ClipTimeline a={a} /> : <div className="fn-body" style={{ fontSize: 10, opacity: 0.7 }}>Not analysed yet.</div>}
+                      {a ? <ClipTimeline a={a} /> : <div className="fn-body" style={{ fontSize: 10, opacity: 0.7 }}>Not analyzed yet.</div>}
                     </div>
                   </div>
                 );
@@ -305,11 +305,11 @@ export default function FinishPage({ user, activeProject, setPage, notify, onSig
             )}
 
             <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", marginTop: 18 }}>
-              <button className="btn-primary" onClick={analyse} disabled={running || pending === 0}>
-                {running ? progress || "Working…" : pending === 0 ? (chosen.length ? "\u2713 All chosen clips analysed" : "Choose some clips") : `Analyse ${pending} clip${pending === 1 ? "" : "s"}`}
+              <button className="btn-primary" onClick={analyze} disabled={running || pending === 0}>
+                {running ? progress || "Working…" : pending === 0 ? (chosen.length ? "\u2713 All chosen clips analyzed" : "Choose some clips") : `Analyze ${pending} clip${pending === 1 ? "" : "s"}`}
               </button>
-              {analysed > 0 && !running && (
-                <button className="fn-btn on" onClick={assemble} disabled={assembling}>{assembling ? "Assembling the cut…" : `${cut ? "Reassemble" : "Assemble"} a cut from ${analysed} clip${analysed === 1 ? "" : "s"}`}</button>
+              {analyzed > 0 && !running && (
+                <button className="fn-btn on" onClick={assemble} disabled={assembling}>{assembling ? "Assembling the cut…" : `${cut ? "Reassemble" : "Assemble"} a cut from ${analyzed} clip${analyzed === 1 ? "" : "s"}`}</button>
               )}
             </div>
           </div>

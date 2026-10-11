@@ -26,15 +26,15 @@ const STYLES = {
   "anamorphic-70s": { label: "70s Anamorphic", directives: "2x anamorphic glass, oval bokeh, horizontal blue flares, mild barrel distortion. Warm halation, gentle grain, lifted blacks, muted earth-toned grade." },
   "neo-noir": { label: "Neo-Noir Cyberpunk", directives: "Hard low-key chiaroscuro, single hard key, deep unlit shadow. Neon practicals in magenta and cyan on wet surfaces. Volumetric haze, crushed blacks." },
   "imax-70": { label: "IMAX 70mm", directives: "Large-format clarity, extreme depth of field, edge-to-edge sharpness, minimal grain. Wide static or slow deliberate camera, natural high-dynamic-range light." },
-  "doc-16mm": { label: "Documentary 16mm", directives: "Handheld 16mm, visible grain, softer resolution, available light only, imperfect framing, naturalistic colour, observational distance." },
+  "doc-16mm": { label: "Documentary 16mm", directives: "Handheld 16mm, visible grain, softer resolution, available light only, imperfect framing, naturalistic color, observational distance." },
   technicolor: { label: "Technicolor Golden Age", directives: "Saturated three-strip palette, vivid primaries, glowing skin tones. Soft studio key with strong fill, low contrast, classical staging." },
   "realtime-engine": { label: "Real-Time Engine (UE5)", directives: "Physically based materials, ray-traced reflections, global illumination, volumetric fog, crisp specular detail, smooth interpolated camera." },
 };
 
 const RATIOS = {
   "16:9": "Compose for 16:9 landscape: horizontal staging, wider shot sizes, lateral camera movement.",
-  "9:16": "Compose for 9:16 vertical: tighter framing, vertical layering front-to-back, subject centred, vertical camera movement over lateral pans.",
-  "1:1": "Compose for a 1:1 square frame: centred subject, symmetrical staging, minimal lateral movement.",
+  "9:16": "Compose for 9:16 vertical: tighter framing, vertical layering front-to-back, subject centered, vertical camera movement over lateral pans.",
+  "1:1": "Compose for a 1:1 square frame: centered subject, symmetrical staging, minimal lateral movement.",
 };
 
 const SYSTEM_PROMPT = `You are a director deciding how to shoot one specific moment. You are not writing a shot list — you are offering the same moment three genuinely different ways, the way a director and DP would argue it out before committing.

@@ -398,7 +398,9 @@ try {
     for (const p of profileRows ?? []) {
       const name = p.display_name || p.username;
       const title = `${name} — AI Filmmaker on RevaultAI`;
-      const desc = String(p.bio || `Films, prompts, and workflows by ${name} on RevaultAI, a curated archive of AI-native creative work.`).replace(/\s+/g, " ").slice(0, 155);
+      const bio = String(p.bio || "").replace(/\s+/g, " ").trim();
+      // A one-word bio makes a useless description — fall back rather than ship it.
+      const desc = (bio.length >= 40 ? bio : `Films by ${name} on RevaultAI, streaming free in a curated gallery of AI-native work.`).slice(0, 155);
       const pageUrl = `${SITE}/creator/${p.username}`;
       let html = template;
       html = setTitle(html, title);

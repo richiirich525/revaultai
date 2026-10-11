@@ -24,7 +24,7 @@ const TARGET_MODELS = {
 
 const REGISTERS = {
   none: "",
-  "restrained-fear": "Restrained fear — the character is frightened and working hard not to show it. Stillness, controlled breath, tension that escapes at the edges rather than the centre.",
+  "restrained-fear": "Restrained fear — the character is frightened and working hard not to show it. Stillness, controlled breath, tension that escapes at the edges rather than the center.",
   "concealed-anger": "Concealed anger — fury held under a civil surface. Precision rather than volume. The body betrays it before the face does.",
   "exhausted-resignation": "Exhausted resignation — past the point of fighting. Slow, heavy, economical movement. No urgency left.",
   "nervous-humour": "Nervous humour — deflecting through jokes nobody finds funny. Too much movement, misplaced smiles, eyes that don't match the mouth.",
@@ -42,7 +42,7 @@ Return ONLY a JSON object. No markdown fences, no preamble. Use exactly this sch
   "blocking": [
     {
       "beat": 1,
-      "instruction": "one specific staging instruction, stated relative to camera — e.g. 'Jonah begins seated centre-right, angled away from the door' or 'Maya enters frame left and stops two paces short of the desk'",
+      "instruction": "one specific staging instruction, stated relative to camera — e.g. 'Jonah begins seated center-right, angled away from the door' or 'Maya enters frame left and stops two paces short of the desk'",
       "why": "one short clause on what this staging does dramatically"
     }
   ],
@@ -67,16 +67,16 @@ Return ONLY a JSON object. No markdown fences, no preamble. Use exactly this sch
   "prompt": "one flowing paragraph of 70-120 words folding the blocking and performance into a generation-ready shot description"
 }
 
-The "layout" is an overhead plan of the scene on a 100x100 stage, roughly 20 metres across, so 5 units is about a metre. Y increases downward. Rotation is degrees, 0 = pointing up the plan, increasing clockwise. Place the camera and every actor to match the blocking you wrote:
+The "layout" is an overhead plan of the scene on a 100x100 stage, roughly 20 meters across, so 5 units is about a meter. Y increases downward. Rotation is degrees, 0 = pointing up the plan, increasing clockwise. Place the camera and every actor to match the blocking you wrote:
 - Distance from camera to subject sets the shot size. Under 12 units reads as a close-up, 18-28 as a medium, over 42 as a wide.
 - Each actor's "facing" is the direction they are turned, not where they are. Two people talking face each other.
 - Keep the camera on one side of the line between the first two actors — that is the 180-degree axis.
-- Use the whole stage. Do not cluster everyone at the centre.
+- Use the whole stage. Do not cluster everyone at the center.
 
 Rules:
 - NEVER rewrite, paraphrase, shorten or improve the creator's dialogue. Reproduce each line exactly as given, including punctuation. Your job is delivery, not writing.
 - If no dialogue is given, return an empty "lines" array for each character and direct the physical performance only.
-- Blocking must be specific and stageable: name positions relative to camera (frame left, centre, camera-right, foreground, background) and give distances or counts where it helps.
+- Blocking must be specific and stageable: name positions relative to camera (frame left, center, camera-right, foreground, background) and give distances or counts where it helps.
 - 4-8 blocking beats. Each one is a change — an entrance, a move, a stop, a turn, a piece of business. Do not pad.
 - Performance direction must be playable. "Feels sad" is not direction. "Holds the glass with both hands and doesn't drink" is.
 - Respect the 180-degree rule in the camera_relationship: establish who is on which side and keep the staging consistent with it.

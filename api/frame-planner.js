@@ -53,7 +53,7 @@ Return ONLY a JSON object. No markdown fences, no preamble. Use exactly this sch
 
 Rules:
 - The two frames must describe the SAME shot at two moments. Same location, same wardrobe, same light source, same lens. Only what the shot changes should change.
-- Be explicit about screen position in both frames - camera-left, camera-right, centre, foreground, background. That is what makes the motion legible.
+- Be explicit about screen position in both frames - camera-left, camera-right, center, foreground, background. That is what makes the motion legible.
 - The image prompts describe still photographs. No motion verbs, no "as she turns", no "while the camera moves". A frozen moment.
 - The video prompt assumes the opening frame already exists and directs what happens next. Do not re-describe everything visible in the opening frame.
 - Respect the target model's duration limits.

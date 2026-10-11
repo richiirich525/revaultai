@@ -61,16 +61,16 @@ export default function Comments({ creation, user, isOwner, setPage, setCreatorU
 
   useEffect(() => {
     if (!creation?.id || !enabled) { setItems([]); setLoading(false); return; }
-    let cancelled = false;
+    let canceled = false;
     setLoading(true);
     (async () => {
       const { data, error } = await fetchComments(creation.id);
-      if (cancelled) return;
+      if (canceled) return;
       if (error) console.warn("[RevaultAI] Could not load comments:", error.message);
       setItems(data ?? []);
       setLoading(false);
     })();
-    return () => { cancelled = true; };
+    return () => { canceled = true; };
   }, [creation?.id, enabled]);
 
   async function handlePost() {

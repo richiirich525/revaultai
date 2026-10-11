@@ -170,7 +170,7 @@ export const POSTS = [
 
 <p>Duration gets the headlines. The reference count is the bigger change for anyone making a scene rather than a clip.</p>
 
-<p>Until now, the practical ceiling has been a couple of character photos and maybe a location. That forces a choice on every shot: which things get shown and which get left to words. Whatever gets left to words is reinvented each generation, which is why the hero's jacket, the prop on the table or the colour of the light can change between shots that are supposed to be continuous.</p>
+<p>Until now, the practical ceiling has been a couple of character photos and maybe a location. That forces a choice on every shot: which things get shown and which get left to words. Whatever gets left to words is reinvented each generation, which is why the hero's jacket, the prop on the table or the color of the light can change between shots that are supposed to be continuous.</p>
 
 <p>Fifteen inputs means characters, location, props and a look reference at once. That's the list of things that have to match for two shots to cut together. It's a larger change than duration because a scene is several shots, and consistency across shots is what has been missing — not length within one.</p>
 
@@ -252,11 +252,11 @@ export const POSTS = [
     readingTime: "8 min",
     faq: [
       ["Why does my AI video look 3D rendered?", "Usually because something you gave the model looked 3D rendered. A start frame, a location reference or a still from an earlier generation sets the look of the whole shot, not just its content. If that image has flat lighting, clean surfaces and simple shapes, the video inherits them, whatever the prompt says."],
-      ["Does adding \"photorealistic\" to the prompt help?", "A little, and only on the surface. Telling the model a reference is a layout guide and the result must be photorealistic can change materials and light — real brick instead of flat colour, proper shadows. It won't change the shapes the reference shows. Blocky windows stay blocky. If the geometry is the problem, change the image."],
+      ["Does adding \"photorealistic\" to the prompt help?", "A little, and only on the surface. Telling the model a reference is a layout guide and the result must be photorealistic can change materials and light — real brick instead of flat color, proper shadows. It won't change the shapes the reference shows. Blocky windows stay blocky. If the geometry is the problem, change the image."],
       ["Can I use a screenshot or a game capture as a reference?", "You can, but expect the result to look like one. A game capture carries game geometry, game materials and game lighting, and the model will copy all three. Use it for layout if you must, and convert it to a photoreal image before it goes to the video model."],
     ],
     content: `
-<p>You know the look. The people are a little too smooth, like good wax figures. The light falls evenly on everything, with no source you could point to. Walls have no scuffs, roads have no cracks, and every surface is a single clean colour. It's a well-made shot of a place that doesn't exist, and it looks like a cutscene.</p>
+<p>You know the look. The people are a little too smooth, like good wax figures. The light falls evenly on everything, with no source you could point to. Walls have no scuffs, roads have no cracks, and every surface is a single clean color. It's a well-made shot of a place that doesn't exist, and it looks like a cutscene.</p>
 
 <p>The standard advice is to write a better prompt: add "photorealistic", "35mm film", "natural lighting", "shot on ARRI". Sometimes that helps. Often it doesn't, and people conclude the model just can't do realism. In a lot of cases, neither the prompt nor the model is the cause. The cause is an image.</p>
 
@@ -298,7 +298,7 @@ export const POSTS = [
 
 <p><strong>2. Use photographic references.</strong> A photo of a real place or a real person carries photographic qualities the model will copy along with the content: grain, depth of field, lens falloff, uneven light, wear on surfaces, the small imperfections that make an image read as captured rather than made. Those are exactly what the video-game look is missing, and they're far easier to show than to describe. This is also why a photo of a real room is such a strong location reference, as covered in <a href="/blog/same-location-across-ai-video-shots">how to keep the same location across AI video shots</a>.</p>
 
-<p><strong>3. Don't show a placeholder for something you're describing.</strong> If the prompt describes a car, a sofa or a person, either show the real thing or don't show a stand-in at all. A grey mannequin becomes a mannequin in the shot. A toy SUV becomes a slightly better toy SUV. If you're working from a layout render, remove the stand-ins before it goes to the model, and let the description fill the gap.</p>
+<p><strong>3. Don't show a placeholder for something you're describing.</strong> If the prompt describes a car, a sofa or a person, either show the real thing or don't show a stand-in at all. A gray mannequin becomes a mannequin in the shot. A toy SUV becomes a slightly better toy SUV. If you're working from a layout render, remove the stand-ins before it goes to the model, and let the description fill the gap.</p>
 
 <p><strong>4. Convert stylised references to photoreal before generating.</strong> Sometimes a stylised image is the only thing that has the layout you need — a previz render, a sketch, a game capture, a frame from an animatic. Don't send it straight to the video model. Run it through an image-editing model first, with an instruction to keep the layout and the camera exactly and rebuild every surface as a real photograph: real materials, real light, real wear. Then use the result as your reference.</p>
 
@@ -308,7 +308,7 @@ export const POSTS = [
 
 <p>The Rehearsal Studio is built around that last technique. You block a scene in a 3D set, which gives you a layout and a camera — and a render that looks exactly like previz. Before any video credits are spent, the studio turns that render into a photoreal plate that keeps the blocking and camera and rebuilds the surfaces as real materials. It shows you the render and the plate side by side for approval, and only the photograph goes to the video model. The previz never does.</p>
 
-<p>The placeholder problem is handled the same way. Any sizeable object in a set can be told what it really is — the grey SUV is "a dusty red 1990s pickup truck" — so the described car is built into the plate as a real object, instead of being left to the words to fight the picture.</p>
+<p>The placeholder problem is handled the same way. Any sizeable object in a set can be told what it really is — the gray SUV is "a dusty red 1990s pickup truck" — so the described car is built into the plate as a real object, instead of being left to the words to fight the picture.</p>
 
 <div class="cta-inline">
 <strong>Turn Your Blocking Into a Photograph</strong>
@@ -330,7 +330,7 @@ export const POSTS = [
 <p>Usually because something you gave the model looked 3D rendered. A start frame, a location reference or a still from an earlier generation sets the look of the whole shot, not just its content. If that image has flat lighting, clean surfaces and simple shapes, the video inherits them, whatever the prompt says.</p>
 
 <h3>Does adding "photorealistic" to the prompt help?</h3>
-<p>A little, and only on the surface. Telling the model a reference is a layout guide and the result must be photorealistic can change materials and light — real brick instead of flat colour, proper shadows. It won't change the shapes the reference shows. Blocky windows stay blocky. If the geometry is the problem, change the image.</p>
+<p>A little, and only on the surface. Telling the model a reference is a layout guide and the result must be photorealistic can change materials and light — real brick instead of flat color, proper shadows. It won't change the shapes the reference shows. Blocky windows stay blocky. If the geometry is the problem, change the image.</p>
 
 <h3>Can I use a screenshot or a game capture as a reference?</h3>
 <p>You can, but expect the result to look like one. A game capture carries game geometry, game materials and game lighting, and the model will copy all three. Use it for layout if you must, and convert it to a photoreal image before it goes to the video model.</p>
@@ -398,7 +398,7 @@ export const POSTS = [
 
 <p><strong>A 3D previz render.</strong> This is what RevaultAI's set library does. You block the scene in a 3D room, and when you shoot an angle, a render of that room from that camera goes with the shot as a location reference. Move the camera to the reverse and the reverse is rendered, because the room exists on every side. It won't look like a photograph, and it doesn't need to: the model takes the layout from it and the look from your prompt.</p>
 
-<p>The performers' stand-ins are hidden for that render, so the model receives an empty room. That's deliberate: a model given a picture of grey figures copies the grey figures, and they'd turn up in your shot as mannequins. Your characters come from their own references; the set render carries only the room.</p>
+<p>The performers' stand-ins are hidden for that render, so the model receives an empty room. That's deliberate: a model given a picture of gray figures copies the gray figures, and they'd turn up in your shot as mannequins. Your characters come from their own references; the set render carries only the room.</p>
 
 <h2>The RevaultAI Workflow</h2>
 

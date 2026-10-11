@@ -35,7 +35,7 @@ export default async function handler(req, res) {
     return res.status(404).json({ error: "Creation not found" });
   }
 
-  const origin = req.headers.origin || "https://revaultai.com";
+  const origin = req.headers.origin || "https://www.revaultai.com";
 
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
@@ -49,7 +49,7 @@ export default async function handler(req, res) {
     }],
     metadata: { creation_id, user_id },
     success_url: origin + "/purchase-success?session_id={CHECKOUT_SESSION_ID}",
-    cancel_url: origin + "/?cancelled=true",
+    cancel_url: origin + "/?canceled=true",
   });
 
   return res.status(200).json({ url: session.url });

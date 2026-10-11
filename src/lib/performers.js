@@ -21,7 +21,7 @@ export const CLIPS = {
   crouchWalk: "Crouch_Fwd_Loop",
 };
 
-// How fast each travelling clip moves, in metres per second. The animation is
+// How fast each traveling clip moves, in meters per second. The animation is
 // advanced by distance covered rather than time passed, so a performer's feet
 // keep pace with the ground instead of skating. Tune these if feet slide.
 export const CLIP_SPEED = { Walk_Loop: 1.4, Jog_Fwd_Loop: 3.2, Crouch_Fwd_Loop: 0.9 };

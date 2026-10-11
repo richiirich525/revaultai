@@ -23,7 +23,7 @@ export const JOBS = [
     tools: [
       { name: "Scene Breakdown", page: "scene-breakdown", access: "free",
         give: "A scene or a logline", get: "A numbered shot list, with a full prompt for every shot",
-        blurb: "Size, camera move, lighting and duration for each shot. Character and location descriptions are locked and repeated word for word, which is what keeps them recognisable from cut to cut." },
+        blurb: "Size, camera move, lighting and duration for each shot. Character and location descriptions are locked and repeated word for word, which is what keeps them recognizable from cut to cut." },
       { name: "Coverage Planner", page: "coverage", access: "free",
         give: "A scene", get: "The setups an editor needs — and what's missing",
         blurb: "Master, singles, over-the-shoulders, reactions and inserts, ranked by how essential each is. The most useful part is the gaps, and the editorial problem each one creates." },
@@ -54,7 +54,7 @@ export const JOBS = [
         blurb: "A real duration and credit cost for each model, an honest trade-off, and a difficulty score — before you spend anything." },
       { name: "Prompt Library", page: "prompts", access: "free",
         give: "Nothing — just browse", get: "Copy-ready prompts across genres and models",
-        blurb: "Director-grade prompts organised by model and genre, including a continuity set with notes on what makes each one hold together." },
+        blurb: "Director-grade prompts organized by model and genre, including a continuity set with notes on what makes each one hold together." },
     ],
   },
   {

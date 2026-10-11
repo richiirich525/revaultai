@@ -180,10 +180,10 @@ export default function TakeDebugger({ generation, videoUrl, notify, setGenPrefi
         body: JSON.stringify({ generationId: generation.id, frames, refs, force }),
       });
       const j = await r.json().catch(() => ({}));
-      if (!r.ok) notify?.(j.error || "Could not analyse the take.");
+      if (!r.ok) notify?.(j.error || "Could not analyze the take.");
       else setReport(j);
     } catch (err) {
-      notify?.(err.message || "Could not analyse the take.");
+      notify?.(err.message || "Could not analyze the take.");
     }
     setBusy(false); setStage("");
   }

@@ -28,7 +28,7 @@ const delta = (a, b) => ((((b - a) % 360) + 540) % 360) - 180;
 // Which side of frame something sits, from this camera.
 function side(camera, p) {
   const off = delta(camera.rotation ?? 0, bearingTo(camera, p));
-  return Math.abs(off) < 5 ? "centre frame" : off < 0 ? "frame left" : "frame right";
+  return Math.abs(off) < 5 ? "center frame" : off < 0 ? "frame left" : "frame right";
 }
 
 function cameraMove(c0, c1, subj0, subj1) {
@@ -42,21 +42,21 @@ function cameraMove(c0, c1, subj0, subj1) {
   if (travel < 0.25) return `The camera pans ${delta(c0.rotation ?? 0, c1.rotation ?? 0) > 0 ? "right" : "left"} across ${Math.round(turn)} degrees.`;
   if (Math.abs(closing) > 0.6 * travel) {
     return closing > 0
-      ? `The camera pushes in about ${closing.toFixed(1)} metres, tightening as it goes.`
-      : `The camera pulls back about ${Math.abs(closing).toFixed(1)} metres, opening the frame out.`;
+      ? `The camera pushes in about ${closing.toFixed(1)} meters, tightening as it goes.`
+      : `The camera pulls back about ${Math.abs(closing).toFixed(1)} meters, opening the frame out.`;
   }
-  if (turn > 15) return `The camera arcs around the subject, travelling about ${travel.toFixed(1)} metres.`;
-  return `The camera tracks about ${travel.toFixed(1)} metres, holding the subject as it moves.`;
+  if (turn > 15) return `The camera arcs around the subject, traveling about ${travel.toFixed(1)} meters.`;
+  return `The camera tracks about ${travel.toFixed(1)} meters, holding the subject as it moves.`;
 }
 
 function movementOf(a0, a1, c0, c1, name) {
-  const travelled = m(a0, a1);
+  const traveled = m(a0, a1);
   const turned = Math.abs(delta(a0.facing ?? 0, a1.facing ?? 0));
   const bits = [];
-  if (travelled > 0.6) {
+  if (traveled > 0.6) {
     const from = side(c0, a0), to = side(c1, a1);
     bits.push(from === to
-      ? `${name} moves about ${travelled.toFixed(1)} metres, staying ${from}`
+      ? `${name} moves about ${traveled.toFixed(1)} meters, staying ${from}`
       : `${name} crosses from ${from} to ${to}`);
   } else if (turned > 35) {
     bits.push(`${name} turns on the spot`);

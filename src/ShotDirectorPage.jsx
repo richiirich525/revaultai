@@ -23,7 +23,7 @@ const RATIOS = [["16:9", "16:9 Landscape"], ["9:16", "9:16 Vertical"], ["1:1", "
 const EXAMPLES = [
   "Maya walks into the abandoned train station and realises someone is watching her.",
   "A father sees his daughter's name on a list he was never supposed to read.",
-  "Two rivals recognise each other across a crowded market and neither moves.",
+  "Two rivals recognize each other across a crowded market and neither moves.",
   "An astronaut hears a knock on the outside of the hull.",
 ];
 
@@ -266,7 +266,7 @@ export default function ShotDirectorPage({ setPage, user, onSignInClick, setGenP
             <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 34, fontWeight: 300, color: "var(--text)", marginBottom: 34, textAlign: "center" }}>The same moment, shot three ways</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 22 }}>
               {[
-                ["Coverage is a choice", "A push-in says pay attention. A pull-out says there's more here than you realised. A locked camera says you don't get to look away. Same beat, three different films."],
+                ["Coverage is a choice", "A push-in says pay attention. A pull-out says there's more here than you realized. A locked camera says you don't get to look away. Same beat, three different films."],
                 ["Restraint counts as an option", "One of the three approaches will always be simple — a locked frame or a single slow move. The showiest coverage is rarely the strongest, and it's usually the hardest to generate."],
                 ["The reasoning comes with it", "Each approach explains what it does that the others don't. The point isn't to pick one blindly — it's to understand why a director would."],
               ].map(([t, d], i) => (

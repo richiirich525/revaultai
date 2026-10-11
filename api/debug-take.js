@@ -38,7 +38,7 @@ Rules:
 - The repair prompt must be the same shot. Do not simplify the creative intent to make it easier.
 - Only suggest a reason when there is at least one "error" finding, and pick the single one that best explains the worst failure. identity = wrong or changing face; anatomy = hands, limbs, bodies; motion = mushy, too slow, wrong physics; camera = the move or framing wasn't followed; adherence = part of the prompt ignored; continuity = wardrobe, props or lighting broke; performance = expression or delivery wrong; artifact = warping, flicker, garbled text.
 
-REFERENCE PHOTOS: If reference photos from the filmmaker's Vault are provided, they are canon for how those characters, props and places must look. Compare the frames against them — face, hair, build, skin tone, wardrobe, a prop's shape, colour and markings, a location's defining features. Report each mismatch as a finding that names the reference and quotes what differs ("Maya's hair is shoulder-length in the reference; cropped short from 2.4s"). Where a reference is matched well, say so in an "ok" finding. Judge identity and design, not lighting or angle — a different angle on the same face is a match.`;
+REFERENCE PHOTOS: If reference photos from the filmmaker's Vault are provided, they are canon for how those characters, props and places must look. Compare the frames against them — face, hair, build, skin tone, wardrobe, a prop's shape, color and markings, a location's defining features. Report each mismatch as a finding that names the reference and quotes what differs ("Maya's hair is shoulder-length in the reference; cropped short from 2.4s"). Where a reference is matched well, say so in an "ok" finding. Judge identity and design, not lighting or angle — a different angle on the same face is a match.`;
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
@@ -78,7 +78,7 @@ ${gen.prompt || "(none recorded)"}`;
     }
 
     const clean = frames.slice(0, MAX_FRAMES).filter((f) => typeof f?.data === "string" && f.data.length < MAX_FRAME_BYTES);
-    if (clean.length < 2) return res.status(400).json({ error: "Frames were too large to analyse. Try a shorter clip." });
+    if (clean.length < 2) return res.status(400).json({ error: "Frames were too large to analyze. Try a shorter clip." });
 
     // The filmmaker's Vault photos — canon for how people and things must look.
     const cleanRefs = (Array.isArray(refs) ? refs : [])

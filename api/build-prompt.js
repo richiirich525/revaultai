@@ -63,7 +63,7 @@ const STYLES = {
   "doc-16mm": {
     label: "Documentary 16mm",
     directives:
-      "Handheld 16mm with visible grain, slightly soft resolution, available light only, occasional focus hunting and imperfect framing. Naturalistic colour, no grade beyond a mild lift, observational distance.",
+      "Handheld 16mm with visible grain, slightly soft resolution, available light only, occasional focus hunting and imperfect framing. Naturalistic color, no grade beyond a mild lift, observational distance.",
   },
   "technicolor": {
     label: "Technicolor Golden Age",
@@ -78,15 +78,15 @@ const STYLES = {
 };
 
 const STRENGTHS = {
-  subtle: "Apply the style preset lightly — let it colour the lighting and grade without dominating the description.",
+  subtle: "Apply the style preset lightly — let it color the lighting and grade without dominating the description.",
   balanced: "Apply the style preset clearly and evenly across camera, lighting, palette and style.",
   heavy: "Commit fully to the style preset. It should be the defining characteristic of the shot, shaping every technical choice.",
 };
 
 const RATIOS = {
   "16:9": "Compose for 16:9 landscape: use horizontal space, wider shot sizes, lateral camera movement.",
-  "9:16": "Compose for 9:16 vertical: favour tighter framing, vertical layering front-to-back, subject centred with headroom, and vertical camera movement over lateral pans.",
-  "1:1": "Compose for a 1:1 square frame: centred subject, symmetrical staging, minimal lateral movement.",
+  "9:16": "Compose for 9:16 vertical: favour tighter framing, vertical layering front-to-back, subject centered with headroom, and vertical camera movement over lateral pans.",
+  "1:1": "Compose for a 1:1 square frame: centered subject, symmetrical staging, minimal lateral movement.",
 };
 
 const SYSTEM_PROMPT = `You are a cinematography-literate prompt engineer for AI video models. You turn a rough idea into one precise, shootable prompt.
@@ -100,7 +100,7 @@ Return ONLY a JSON object. No markdown fences, no preamble, no commentary. Use e
   "setting": "location, time of day, weather, era",
   "camera": "shot size, angle, lens, and camera movement",
   "lighting": "key light, quality, direction, contrast",
-  "palette": "dominant colours and grading",
+  "palette": "dominant colors and grading",
   "style": "film stock, aesthetic register, visual reference language",
   "audio": "ambience, score, or dialogue cue - empty string if the model has no audio",
   "avoid": "artifacts and failure modes to suppress",

@@ -38,8 +38,8 @@ export default async function handler(req, res) {
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       line_items: [{ price: selected.priceId, quantity: 1 }],
-      success_url: 'https://revaultai.com/?credits=success',
-      cancel_url: 'https://revaultai.com/?credits=cancelled',
+      success_url: 'https://www.revaultai.com/?credits=success',
+      cancel_url: 'https://www.revaultai.com/?credits=canceled',
       metadata: {
         type: 'credit_purchase',
         user_id: userId,

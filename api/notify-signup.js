@@ -39,7 +39,7 @@ export default async function handler(req, res) {
           <p style="font-size: 14px; color: #6B6878; line-height: 1.7; margin-bottom: 24px;">
             Joined ${createdAt} PT.
           </p>
-          <a href="https://revaultai.com" style="display: inline-block; background: #7B3FE4; color: white; padding: 12px 28px; border-radius: 4px; text-decoration: none; font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;">
+          <a href="https://www.revaultai.com" style="display: inline-block; background: #7B3FE4; color: white; padding: 12px 28px; border-radius: 4px; text-decoration: none; font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;">
             Open RevaultAI
           </a>
         </div>

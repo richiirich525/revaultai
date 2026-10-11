@@ -4,8 +4,8 @@
   someone stands inside it. No three.js here — the camera view builds the
   meshes; this answers what the plan and the prompt need.
 
-  The stage is 100 x 100 units at 5 units per metre, centred on (50, 50), so a
-  room metre and a world metre are the same thing.
+  The stage is 100 x 100 units at 5 units per meter, centered on (50, 50), so a
+  room meter and a world meter are the same thing.
 */
 import { pieceSize } from "./setCatalog.js";
 

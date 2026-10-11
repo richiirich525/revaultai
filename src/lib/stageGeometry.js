@@ -2,8 +2,8 @@
   stageGeometry — RevaultAI
   Pure functions turning an overhead layout into filmmaking language.
 
-  Coordinate space: a 100x100 stage. Treat it as roughly 20 metres across,
-  so 5 units ≈ 1 metre. Y increases downward (screen convention). Rotation is
+  Coordinate space: a 100x100 stage. Treat it as roughly 20 meters across,
+  so 5 units ≈ 1 meter. Y increases downward (screen convention). Rotation is
   in degrees, 0 = pointing up the screen (north), increasing clockwise.
 */
 
@@ -56,7 +56,7 @@ export function screenOffset(camera, actor) {
 
 export function screenSide(camera, actor) {
   const off = screenOffset(camera, actor);
-  if (Math.abs(off) < 4) return "centre";
+  if (Math.abs(off) < 4) return "center";
   return off < 0 ? "camera-left" : "camera-right";
 }
 
@@ -148,7 +148,7 @@ export function readStage(camera, actors) {
   };
 }
 
-// Turn the read into a sentence a director would recognise — and a block that
+// Turn the read into a sentence a director would recognize — and a block that
 // can go straight into a generation prompt.
 export function describeStage(read) {
   if (!read.subject) return "The camera isn't pointing at anyone. Turn it toward an actor, or move someone into frame.";
@@ -162,7 +162,7 @@ export function describeStage(read) {
   if (read.lens) bits.push(`${read.lens} lens`);
 
   for (const p of read.positions) {
-    bits.push(`${p.name} ${p.side === "centre" ? "centred in frame" : p.side}, ${p.facing}`);
+    bits.push(`${p.name} ${p.side === "center" ? "centered in frame" : p.side}, ${p.facing}`);
   }
   if (read.offstage.length) {
     bits.push(`${read.offstage.join(" and ")} ${read.offstage.length === 1 ? "is" : "are"} out of frame`);
