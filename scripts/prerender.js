@@ -23,6 +23,11 @@ const { PAGES, NOINDEX } = await import(path.join(ROOT, "src/lib/seo.js"));
 const { POSTS } = await import(path.join(ROOT, "src/blog/posts.js"));
 const { MODELS, GENRE_PAGES, promptsByGenre } = await import(path.join(ROOT, "src/prompts/models.js"));
 const { HOME_BACKLOT, ABOUT_BACKLOT } = await import(path.join(ROOT, "src/lib/backlotCopy.js"));
+const { LEGAL_CONTENT } = await import(path.join(ROOT, "src/lib/legalContent.js"));
+const { FAQS } = await import(path.join(ROOT, "src/lib/faqContent.js"));
+const { GEN_MODELS, GEN_TOOLS } = await import(path.join(ROOT, "src/lib/generatorCatalog.js"));
+const { JOBS, ACCESS_LABEL } = await import(path.join(ROOT, "src/lib/toolCatalog.js"));
+const { PAGE_SUMMARIES } = await import(path.join(ROOT, "src/lib/pageSummaries.js"));
 
 const template = fs.readFileSync(path.join(DIST, "index.html"), "utf8");
 
@@ -194,6 +199,210 @@ function noteHtml(note) {
 
 let count = 0;
 
+// ---- Page bodies and structured data ------------------------------------
+
+const ORG = { "@type": "Organization", name: "RevaultAI", url: SITE };
+
+const ORG_FULL = {
+  ...ORG,
+  logo: { "@type": "ImageObject", url: SITE + "/og-image.png" },
+  sameAs: ["https://www.instagram.com/revaultai", "https://x.com/airevault"],
+};
+
+// The twelve public tool routes. `tools` is the index of them, not a tool.
+const TOOL_INDEX = "tools";
+const TOOL_PAGES = new Set([
+  "ai-video-generator", "prompt-builder", "scene-breakdown", "which-model",
+  "continuity-check", "shot-director", "coverage", "frame-planner",
+  "blocking", "rehearsal", "autopsy",
+]);
+
+// An H1 is a heading, not a search-result title — drop the brand suffix the
+// <title> needs and the page keeps a readable headline.
+function pageH1(slug, meta) {
+  if (slug === "home") return "The AI era doesn't need more content. It needs curation.";
+  return String(meta.title ?? "")
+    .replace(/\s*[|\u2014\u2013]\s*RevaultAI\s*$/i, "")
+    .replace(/^RevaultAI\s*[|\u2014\u2013]\s*/i, "")
+    .trim() || "RevaultAI";
+}
+
+function catalogEntries(page) {
+  const out = [];
+  for (const job of JOBS) for (const t of job.tools) if (t.page === page) out.push({ job, tool: t });
+  return out;
+}
+
+function toolBody(page) {
+  const mine = catalogEntries(page);
+  if (mine.length === 0) return "";
+  const named = new Set();
+  let html = "";
+  for (const { job, tool } of mine) {
+    if (named.has(tool.name)) continue;
+    named.add(tool.name);
+    html += `<h2>${esc(tool.name)}</h2>`
+      + `<p><strong>You give it:</strong> ${esc(tool.give)}</p>`
+      + `<p><strong>You get back:</strong> ${esc(tool.get)}</p>`
+      + `<p>${esc(tool.blurb)}</p>`
+      + `<p>${esc(ACCESS_LABEL[tool.access] ?? tool.access)}. Part of ${esc(String(job.name).toLowerCase())} \u2014 ${esc(String(job.when).toLowerCase())}.</p>`;
+  }
+  const jobIds = new Set(mine.map((x) => x.job.id));
+  const seen = new Set([page]);
+  const siblings = [];
+  for (const job of JOBS) {
+    if (jobIds.has(job.id) === false) continue;
+    for (const t of job.tools) {
+      if (seen.has(t.page) || NOINDEX.has(t.page)) continue;
+      seen.add(t.page);
+      siblings.push(t);
+    }
+  }
+  if (siblings.length) {
+    html += `<h2>Use it with</h2><ul>`
+      + siblings.map((t) => `<li><a href="/${esc(t.page)}">${esc(t.name)}</a> \u2014 ${esc(t.get)}</li>`).join("")
+      + `</ul>`;
+  }
+  return html;
+}
+
+function publicTools() {
+  const seen = new Set();
+  const out = [];
+  for (const job of JOBS) for (const t of job.tools) {
+    if (seen.has(t.page) || NOINDEX.has(t.page)) continue;
+    seen.add(t.page);
+    out.push({ job, tool: t });
+  }
+  return out;
+}
+
+function toolsIndexBody() {
+  return JOBS.map((job) => {
+    const seen = new Set();
+    const items = job.tools
+      .filter((t) => ((seen.has(t.page) || NOINDEX.has(t.page)) ? false : seen.add(t.page)))
+      .map((t) => `<li><a href="/${esc(t.page)}">${esc(t.name)}</a> \u2014 ${esc(t.get)}. ${esc(t.blurb)}</li>`)
+      .join("");
+    return items ? `<h2>${esc(job.name)}</h2><p>${esc(job.when)}</p><ul>${items}</ul>` : "";
+  }).join("");
+}
+
+function generatorBody() {
+  return `<h2>The models</h2>`
+    + GEN_MODELS.map((m) => `<h3>${esc(m.name)}, by ${esc(m.by)}</h3><p>${esc(m.note)}</p>`).join("")
+    + `<h2>Finishing tools</h2>`
+    + GEN_TOOLS.map(([t, n]) => `<h3>${esc(t)}</h3><p>${esc(n)}</p>`).join("")
+    + `<p>Pay per second of output with credits \u2014 no subscription, no API keys, and credits are returned automatically if a generation fails.</p>`;
+}
+
+function legalBody(slug) {
+  const c = LEGAL_CONTENT[slug];
+  return c ? `<p>Last updated: ${esc(c.updated)}</p>` + c.body : "";
+}
+
+function faqBody() {
+  return FAQS.map((f) => `<h2>${esc(f.q)}</h2><p>${esc(f.a)}</p>`).join("");
+}
+
+function summaryBody(slug) {
+  const s = PAGE_SUMMARIES[slug];
+  if (!s) return "";
+  const sections = s.sections.map(([h, p]) => `<h2>${esc(h)}</h2><p>${esc(p)}</p>`).join("");
+  const links = (s.links ?? []).length
+    ? `<h2>Next</h2><ul>${s.links.map(([href, label]) => `<li><a href="${esc(href)}">${esc(label)}</a></li>`).join("")}</ul>`
+    : "";
+  return sections + links;
+}
+
+const TAGLINE = `<p><a href="/">RevaultAI</a> \u2014 a curated gallery for AI-generated film.</p>`;
+
+function bodyFor(slug, meta) {
+  if (slug === "about") return aboutHtml() + TAGLINE;
+
+  const h1 = `<h1>${esc(pageH1(slug, meta))}</h1>`;
+  const lede = `<p>${esc(meta.description)}</p>`;
+
+  if (slug === "home") return h1 + lede + homeBacklotHtml() + toolsIndexBody() + TAGLINE;
+  if (slug === "faq") return h1 + lede + faqBody() + TAGLINE;
+  if (slug === "ai-video-generator") return h1 + lede + generatorBody() + TAGLINE;
+  if (slug === TOOL_INDEX) return h1 + lede + toolsIndexBody() + TAGLINE;
+  if (slug in LEGAL_CONTENT) return h1 + legalBody(slug) + TAGLINE;
+  if (slug in PAGE_SUMMARIES) return h1 + lede + summaryBody(slug) + TAGLINE;
+
+  const tool = toolBody(slug);
+  if (tool) return h1 + lede + tool + TAGLINE;
+  return h1 + lede + TAGLINE;
+}
+
+function schemasFor(slug, meta, url) {
+  if (NOINDEX.has(slug)) return [];
+
+  if (slug === "home") {
+    return [
+      { "@context": "https://schema.org", ...ORG_FULL, description: meta.description },
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        name: "RevaultAI",
+        url: SITE,
+        description: meta.description,
+        publisher: ORG,
+      },
+    ];
+  }
+
+  if (slug === "faq") {
+    return [{
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: FAQS.map((f) => ({
+        "@type": "Question",
+        name: f.q,
+        acceptedAnswer: { "@type": "Answer", text: f.a },
+      })),
+    }];
+  }
+
+  if (slug === TOOL_INDEX) {
+    const tools = publicTools();
+    return [{
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      name: "RevaultAI filmmaking tools",
+      itemListElement: tools.map(({ tool }, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        name: tool.name,
+        description: tool.get,
+        url: `${SITE}/${tool.page}`,
+      })),
+    }];
+  }
+
+  if (TOOL_PAGES.has(slug)) {
+    const entry = catalogEntries(slug)[0];
+    const app = {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      name: entry ? entry.tool.name : pageH1(slug, meta),
+      description: meta.description,
+      applicationCategory: "MultimediaApplication",
+      operatingSystem: "Web browser",
+      url,
+      publisher: ORG,
+    };
+    // Only genuinely free tools claim a zero price. The generator runs on
+    // credits, so it states no price rather than a misleading one.
+    if (entry && entry.tool.access === "free") {
+      app.offers = { "@type": "Offer", price: "0", priceCurrency: "USD" };
+    }
+    return [app];
+  }
+
+  return [];
+}
+
 // ---- Static pages -------------------------------------------------------
 for (const [slug, meta] of Object.entries(PAGES)) {
   const routePath = slug === "home" ? "/" : "/" + slug;
@@ -210,12 +419,8 @@ for (const [slug, meta] of Object.entries(PAGES)) {
   html = setMeta(html, "name", "twitter:url", url);
   html = setCanonical(html, url);
   html = setRobots(html, !NOINDEX.has(slug));
-  const tagline = `<p><a href="/">RevaultAI</a> — a curated gallery for AI-generated film.</p>`;
-  const body =
-    slug === "about" ? aboutHtml() + tagline :
-    slug === "home" ? `<h1>${esc(meta.title)}</h1><p>${esc(meta.description)}</p>${homeBacklotHtml()}${tagline}` :
-    `<h1>${esc(meta.title)}</h1><p>${esc(meta.description)}</p>${tagline}`;
-  html = injectBody(html, body);
+  for (const schema of schemasFor(slug, meta, url)) html = injectJsonLd(html, schema);
+  html = injectBody(html, bodyFor(slug, meta));
   writeRoute(routePath, html);
   count++;
 }

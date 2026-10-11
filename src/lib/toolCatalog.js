@@ -85,7 +85,7 @@ export const JOBS = [
     when: "Generating, and recovering when it goes wrong",
     tools: [
       { name: "Generate", page: "generate", access: "credits",
-        give: "A prompt, or a still to animate", get: "Video from four models on one credit balance",
+        give: "A prompt, or a still to animate", get: "Video from five models on one credit balance",
         blurb: "Seedance, Veo, Kling and Wan behind one balance. No subscription and no API keys — pay per second of output." },
       { name: "Generation Autopsy", page: "autopsy", access: "free",
         give: "A prompt that disappointed", get: "Why it failed, and a revised prompt",

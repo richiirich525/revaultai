@@ -5,36 +5,12 @@
   and hands people off to it. Styled with the site's CSS variables.
 */
 
-export default function AiVideoGeneratorPage({ setPage, user, onSignInClick }) {
-  const MODELS = [
-    {
-      name: "Seedance 2.0",
-      by: "ByteDance",
-      note: "Tops the public leaderboards. Director-level camera control, real-world physics, and native synchronized audio in a single pass. Available as a cheap 480p draft tier and a 720p flagship tier.",
-    },
-    {
-      name: "Veo 3.1",
-      by: "Google DeepMind",
-      note: "The strongest all-around image quality, with native audio and lip-synced dialogue generated alongside the picture. Best for hero shots that need to look expensive.",
-    },
-    {
-      name: "Kling 3.0",
-      by: "Kuaishou",
-      note: "The motion specialist. Fast action, physical performance, crowds, and fight choreography hold together where other models smear.",
-    },
-    {
-      name: "Wan 2.6",
-      by: "Alibaba",
-      note: "The workhorse. Fast and cheap enough to iterate without rationing takes, which is what previz and blocking actually need.",
-    },
-  ];
+import { GEN_MODELS, GEN_TOOLS } from "./lib/generatorCatalog.js";
 
-  const TOOLS = [
-    ["Image to video", "Attach a starting frame and any model animates from it. Your still becomes the first frame instead of a description the model has to guess at."],
-    ["Upscale", "Take a finished clip to 1080p or 4K with temporal consistency — no shimmer or flicker between frames. Pairs with the 480p draft tier: iterate cheap, upscale the keeper."],
-    ["Extend", "Continue a clip past its original length with consistent motion, style, and audio. Chain extensions to build past the 15-second ceiling every model shares."],
-    ["Lip sync", "Upload an audio track and the mouth is re-timed to match it, carrying emotion and speaking style from the recording. Dialogue without a reshoot."],
-  ];
+export default function AiVideoGeneratorPage({ setPage, user, onSignInClick }) {
+  const MODELS = GEN_MODELS;
+
+  const TOOLS = GEN_TOOLS;
 
   return (
     <div className="page avg-page">
@@ -74,9 +50,9 @@ export default function AiVideoGeneratorPage({ setPage, user, onSignInClick }) {
       <div className="avg-wrap">
         <header className="avg-hero">
           <span className="avg-eyebrow">AI Video Generator</span>
-          <h1>Four frontier models.<br />One <em>credit balance</em>.</h1>
+          <h1>Five frontier models.<br />One <em>credit balance</em>.</h1>
           <p className="avg-lede">
-            Generate cinematic video with Seedance 2.0, Veo 3.1, Kling 3.0, and Wan 2.6 — then
+            Generate cinematic video with Seedance 2.5, Seedance 2.0, Veo 3.1, Kling 3.0 and Wan 2.6 — then
             upscale, extend, and lip-sync the result without leaving the page. No subscription,
             no API keys, no separate account for every model. Pay per second with credits, and
             keep what you make.
