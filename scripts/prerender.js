@@ -96,6 +96,102 @@ function aboutHtml() {
     `<p><strong>${esc(a.closing)}</strong></p>`;
 }
 
+// Production notes are written in markdown. A raw slice of one puts "# TITLE
+// ## Making Of ### The Original Idea" into the meta description, so strip the
+// syntax, drop heading-only lines, and cut on a word boundary.
+function plainTextFromNote(note) {
+  const lines = String(note ?? "").split(/\r?\n/);
+  const prose = [];
+  for (let line of lines) {
+    line = line.trim();
+    if (line === "") continue;
+    if (/^#{1,6}\s/.test(line)) continue;            // heading
+    if (/^(?:[-*_]\s*){3,}$/.test(line)) continue;    // horizontal rule
+    line = line
+      .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")        // images
+      .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")      // links -> text
+      .replace(/<[^>]+>/g, " ")                       // stray html
+      .replace(/^>\s*/, "")                           // blockquote
+      .replace(/^(?:[-*+]|\d+\.)\s+/, "")            // list bullet
+      .replace(/`+/g, "")                             // code ticks
+      .replace(/\*\*([^*]+)\*\*/g, "$1")            // bold
+      .replace(/(^|\s)[*_]([^*_]+)[*_](?=\s|$)/g, "$1$2") // italic
+      .trim();
+    if (line === "") continue;
+    if (/^[A-Za-z0-9 &'"()\-]{1,40}:$/.test(line)) continue; // bare label line
+    prose.push(line);
+  }
+  return prose.join(" ").replace(/\s+/g, " ").trim();
+}
+
+// Cut to a limit without breaking a word. Prefers a sentence end once past
+// 60% of the budget, so most descriptions read as finished sentences.
+function clipWords(text, limit) {
+  const t = String(text ?? "").trim();
+  if (t.length <= limit) return t;
+  const window = t.slice(0, limit + 1);
+  const sentence = Math.max(window.lastIndexOf(". "), window.lastIndexOf("! "), window.lastIndexOf("? "));
+  if (sentence >= Math.floor(limit * 0.6)) return window.slice(0, sentence + 1).trim();
+  const space = window.lastIndexOf(" ");
+  const cut = space > 0 ? window.slice(0, space) : t.slice(0, limit);
+  return cut.replace(/[\s,;:.\-–—]+$/, "") + "\u2026";
+}
+
+// Google shows roughly 60 characters. Keep the creator's own title intact and
+// drop our suffix rather than truncating their words, falling back in tiers.
+function filmTitle(rawTitle, limit) {
+  const t = String(rawTitle ?? "").replace(/\s+/g, " ").trim() || "Untitled";
+  const suffixes = [" — AI Film | RevaultAI", " | RevaultAI", ""];
+  for (const suffix of suffixes) {
+    if ((t + suffix).length <= limit) return t + suffix;
+  }
+  // Too long even bare. Shorten the creator's title, then re-offer the
+  // suffixes — clipping often frees enough room to keep the brand on.
+  const short = clipWords(t, limit - 1).replace(/\.$/, "");
+  for (const suffix of suffixes) {
+    if ((short + suffix).length <= limit) return short + suffix;
+  }
+  return short;
+}
+
+// A generic stock photo stands in when a real frame isn't available. It is a
+// worse social preview than the site image, so it never becomes og:image.
+// A bad timestamp would throw out of toISOString() and fail the whole build.
+function isoDate(value) {
+  if (!value) return null;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+const PLACEHOLDER_IMAGE = "photo-1462331940025-496dfbfc7564";
+
+function filmThumb(c) {
+  if (c.youtube_id) return `https://i.ytimg.com/vi/${c.youtube_id}/maxresdefault.jpg`;
+  for (const candidate of [c.thumbnail_image, c.hero_image]) {
+    const v = String(candidate ?? "");
+    if (/^https?:\/\//.test(v) && v.includes(PLACEHOLDER_IMAGE) === false) return v;
+  }
+  if (c.mux_playback_id) return `https://image.mux.com/${c.mux_playback_id}/thumbnail.jpg?time=0&width=1200`;
+  return null;
+}
+
+// Production note as readable HTML for the crawler-facing body, instead of a
+// paragraph full of literal hash marks and asterisks.
+function noteHtml(note) {
+  const out = [];
+  for (let line of String(note ?? "").split(/\r?\n/)) {
+    line = line.trim();
+    if (line === "") continue;
+    const h = line.match(/^(#{1,6})\s+(.*)$/);
+    if (h) { out.push(`<h3>${escBold(h[2])}</h3>`); continue; }
+    if (/^(?:[-*_]\s*){3,}$/.test(line)) continue;
+    const li = line.match(/^(?:[-*+]|\d+\.)\s+(.*)$/);
+    if (li) { out.push(`<p>&bull; ${escBold(li[1])}</p>`); continue; }
+    out.push(`<p>${escBold(line)}</p>`);
+  }
+  return out.join("");
+}
+
 let count = 0;
 
 // ---- Static pages -------------------------------------------------------
@@ -365,16 +461,33 @@ try {
 
     const { data: creations, error: cErr } = await supabase
       .from("creations")
-      .select("id, title, prompt_full, category, user_id, premium_status, youtube_id")
+      .select("id, title, prompt_full, category, user_id, premium_status, youtube_id, created_at, mux_playback_id, thumbnail_image, hero_image")
       .not("premium_status", "in", '("Pending","Rejected")')
       .limit(2000);
     if (cErr) console.warn("[prerender] creations query error:", cErr.message);
 
     for (const c of creations ?? []) {
       const who = nameById[c.user_id] || "a RevaultAI creator";
-      const title = `${c.title} — AI Film by ${who} | RevaultAI`;
-      const desc = String(c.prompt_full || c.title).replace(/\s+/g, " ").slice(0, 155);
+      const kind = String(c.category || "film").toLowerCase();
+      const title = filmTitle(c.title, 60);
+
+      // The note is markdown; clean it before it becomes a search snippet. A
+      // note that is only headings leaves nothing usable, so fall back.
+      const note = plainTextFromNote(c.prompt_full);
+      let desc;
+      if (note.length >= 60) {
+        // Lead with the note — repeating the title wastes snippet width — and
+        // add attribution only when it fits inside the budget.
+        const tail = ` An AI ${kind} by ${who} on RevaultAI.`;
+        const withTail = clipWords(note, 155 - tail.length) + tail;
+        desc = withTail.length <= 155 ? withTail : clipWords(note, 155);
+      } else {
+        desc = clipWords(`${c.title} — an AI ${kind} by ${who}, streaming free on RevaultAI.`, 155);
+      }
+
       const pageUrl = `${SITE}/film/${c.id}`;
+      const thumb = filmThumb(c);
+
       let html = template;
       html = setTitle(html, title);
       html = setMeta(html, "name", "title", title);
@@ -382,15 +495,45 @@ try {
       html = setMeta(html, "property", "og:title", title);
       html = setMeta(html, "property", "og:description", desc);
       html = setMeta(html, "property", "og:url", pageUrl);
+      html = setMeta(html, "property", "og:type", "video.other");
       html = setMeta(html, "name", "twitter:url", pageUrl);
-      if (c.youtube_id) {
-        const thumb = `https://i.ytimg.com/vi/${c.youtube_id}/maxresdefault.jpg`;
+      if (thumb) {
         html = setMeta(html, "property", "og:image", thumb);
         html = setMeta(html, "name", "twitter:image", thumb);
       }
       html = setCanonical(html, pageUrl);
       html = setRobots(html, true);
-      html = injectBody(html, `<h1>${esc(c.title)}</h1><p>An AI-generated ${esc(String(c.category || "film").toLowerCase())} by ${esc(who)} on RevaultAI.</p><h2>Production note</h2><p>${esc(c.prompt_full || "")}</p>`);
+
+      // VideoObject needs a real thumbnail and an upload date to be eligible
+      // for a video rich result. Without them, emit nothing rather than
+      // something Search Console will flag.
+      const uploadDate = isoDate(c.created_at);
+      if (thumb && uploadDate) {
+        const video = {
+          "@context": "https://schema.org",
+          "@type": "VideoObject",
+          name: String(c.title ?? "Untitled"),
+          description: desc,
+          thumbnailUrl: [thumb],
+          uploadDate,
+          url: pageUrl,
+          genre: kind,
+          creator: { "@type": "Person", name: who },
+          publisher: {
+            "@type": "Organization",
+            name: "RevaultAI",
+            url: SITE,
+            logo: { "@type": "ImageObject", url: SITE + "/og-image.png" },
+          },
+        };
+        if (c.youtube_id) video.embedUrl = `https://www.youtube.com/embed/${c.youtube_id}`;
+        else if (c.mux_playback_id) video.contentUrl = `https://stream.mux.com/${c.mux_playback_id}.m3u8`;
+        html = injectJsonLd(html, video);
+      }
+
+      const body = `<h1>${esc(c.title)}</h1><p>An AI-generated ${esc(kind)} by ${esc(who)} on RevaultAI.</p>`
+        + `<h2>Production note</h2>${noteHtml(c.prompt_full)}`;
+      html = injectBody(html, body);
       writeRoute("/film/" + c.id, html);
       count++;
     }
