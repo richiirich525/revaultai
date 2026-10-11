@@ -1447,6 +1447,20 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
   const [imageUrl, setImageUrl] = useState(null);
   const [imageName, setImageName] = useState("");
   const [imageBusy, setImageBusy] = useState(false);
+  // Credits are spent server-side, so the balance held in state goes stale the
+  // moment a generation starts. Refresh it after every spend: leaving it stale
+  // shows the wrong number and also trips handleGenerate's own pre-flight
+  // check, which refuses to generate against a balance it thinks is short.
+  async function refreshCredits() {
+    if (!user) return;
+    try {
+      const { data } = await fetchProfile(user.id);
+      if (data) setProfile(data);
+    } catch (err) {
+      // Cosmetic only — never let a failed refresh break the caller.
+      console.warn("[RevaultAI] Could not refresh credit balance:", err.message);
+    }
+  }
   async function handleGenerateImage() {
     if (!imgPrompt.trim()) { notify("Describe the image you want."); return; }
     setImgGenBusy(true);
@@ -1461,7 +1475,7 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
       if (!r.ok || !j.imageUrl) { notify(j.error || "Image generation failed."); setImgGenBusy(false); return; }
       setImageUrl(j.imageUrl);
       setImageName("Generated: " + imgPrompt.slice(0, 40));
-      loadProfile?.();
+      refreshCredits();
     } catch (err) {
       notify("Image generation failed: " + err.message);
     }
@@ -1657,6 +1671,7 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
       notify(a.label + " started — it usually takes a few minutes.");
       setEditing(null);
       loadGens();
+      refreshCredits();
     } catch (err) {
       notify("Could not start edit: " + err.message);
       setEditing(null);
@@ -1717,7 +1732,7 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
     setPbLoading(false);
   }
 
-  function usePrompt(text) {
+  function applyPrompt(text) {
     setPrompt(text);
     setPbOpen(false);
     setPbResult(null);
@@ -1807,6 +1822,7 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
       setImageName("");
       setSubmitting(false);
       loadGens();
+      refreshCredits();
     } catch (err) {
       notify("Could not start generation: " + err.message);
       setSubmitting(false);
@@ -1876,7 +1892,7 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
                         <strong style={{ color: "var(--accent)" }}>{pbResult.applied.style} ({pbResult.applied.strength}):</strong> {pbResult.applied.directives}
                       </div>
                     )}
-                    <button className="gen-button" onClick={() => usePrompt(pbResult.built.prompt)}>Use this prompt</button>
+                    <button className="gen-button" onClick={() => applyPrompt(pbResult.built.prompt)}>Use this prompt</button>
                   </div>
                 )}
 
@@ -1886,7 +1902,7 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
                     {history.map((h) => (
                       <div
                         key={h.id}
-                        onClick={() => usePrompt(h.prompt)}
+                        onClick={() => applyPrompt(h.prompt)}
                         style={{ padding: "8px 10px", borderRadius: 4, cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", lineHeight: 1.6 }}
                         onMouseEnter={(e) => { e.currentTarget.style.background = "var(--bg)"; }}
                         onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
@@ -2725,43 +2741,28 @@ function AdminPage({ creations, setCreations, notify }) {
     console.warn("[RevaultAI] Email notification failed:", err.message);
   }
 }
-async function reject(id) {
-  const item = creations.find((c) => c.id === id);
-  if (!item?._fromDb) { notify("Cannot modify seed creations."); return; }
-  const { error } = await updateCreationStatus(id, "Rejected");
-  if (error) { notify("Error: " + error.message); return; }
-  const { data } = await fetchCreations();
-  if (data) setCreations(data);
-  track("creation_rejected", { creation_id: id, title: item.title });
-  notify("Rejected.");
-}
-async function toggleSpotlight(id) {
-  const item = creations.find((c) => c.id === id);
-  const wasSpotlit = item?.spotlight;
-  if (!item) return;
-  if (!item?._fromDb) { notify("Cannot modify seed creations."); return; }
-  if (!item.spotlight && spotlightCount >= 3) { notify("Spotlight limited to 3."); return; }
-  const { error } = await updateCreationSpotlight(id, !item.spotlight);
-  if (error) { notify("Error: " + error.message); return; }
-  const { data } = await fetchCreations();
-  if (data) setCreations(data);
-  track(wasSpotlit ? "spotlight_removed" : "spotlight_added", { creation_id: id });
-}
-async function reject(id) {
-  const { error } = await updateCreationStatus(id, "Rejected");
-  if (error) { notify("Error: " + error.message); return; }
-  setCreations((prev) => prev.map((c) => c.id === id ? { ...c, premium_status: "Rejected" } : c));
-  notify("Rejected.");
-}
-async function toggleSpotlight(id) {
-  const item = creations.find((c) => c.id === id);
-if (!item) return;
-if (!item?._fromDb) { notify("Cannot modify seed creations."); return; }
-  if (!item.spotlight && spotlightCount >= 3) { notify("Spotlight limited to 3."); return; }
-  const { error } = await updateCreationSpotlight(id, !item.spotlight);
-  if (error) { notify("Error: " + error.message); return; }
-  setCreations((prev) => prev.map((c) => c.id === id ? { ...c, spotlight: !c.spotlight } : c));
-}
+  async function reject(id) {
+    const item = creations.find((c) => c.id === id);
+    if (!item) return;
+    if (!item._fromDb) { notify("Cannot modify seed creations."); return; }
+    const { error } = await updateCreationStatus(id, "Rejected");
+    if (error) { notify("Error: " + error.message); return; }
+    setCreations((prev) => prev.map((c) => c.id === id ? { ...c, premium_status: "Rejected" } : c));
+    track("creation_rejected", { creation_id: id, title: item.title });
+    notify("Rejected.");
+  }
+
+  async function toggleSpotlight(id) {
+    const item = creations.find((c) => c.id === id);
+    if (!item) return;
+    if (!item._fromDb) { notify("Cannot modify seed creations."); return; }
+    if (!item.spotlight && spotlightCount >= 3) { notify("Spotlight limited to 3."); return; }
+    const wasSpotlit = item.spotlight;
+    const { error } = await updateCreationSpotlight(id, !item.spotlight);
+    if (error) { notify("Error: " + error.message); return; }
+    setCreations((prev) => prev.map((c) => c.id === id ? { ...c, spotlight: !c.spotlight } : c));
+    track(wasSpotlit ? "spotlight_removed" : "spotlight_added", { creation_id: id });
+  }
   const eligible = creations.filter((c) => c._fromDb && c.premium_status !== "Pending" && c.premium_status !== "Rejected");
   return (
     <div className="page">
