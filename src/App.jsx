@@ -3108,24 +3108,35 @@ function LegalPage({ setPage, page }) {
   const content = {
     terms: {
       title: "Terms of Service",
-      updated: "May 2025",
+      updated: "October 2026",
       body: `
         <h2>1. Acceptance of Terms</h2>
-        <p>By accessing or using RevaultAI, you agree to be bound by these Terms of Service. If you do not agree, do not use the platform.</p>
+        <p>By accessing or using RevaultAI, you agree to be bound by these Terms of Service. If you do not agree, do not use the platform. RevaultAI is operated by RevaultAI LLC.</p>
         <h2>2. Platform Use</h2>
         <p>RevaultAI is a platform for sharing AI-generated creative content. You must be at least 18 years old to create an account or make purchases. You are responsible for all activity under your account.</p>
         <h2>3. Content Submissions</h2>
-        <p>By submitting content to RevaultAI, you represent that you have the right to share it and grant RevaultAI a non-exclusive license to display it on the platform. You retain ownership of your original prompts and creative work.</p>
+        <p>By submitting content to RevaultAI, you represent that you own it or hold all rights necessary to share it, and that it does not infringe the copyright, trademark, privacy or publicity rights of anyone else. You grant RevaultAI a non-exclusive license to host, display and promote it on the platform. You retain ownership of your original prompts and creative work.</p>
         <h2>4. Premium Purchases</h2>
-        <p>Premium prompt purchases are processed via Stripe. All sales are subject to our Refund Policy. RevaultAI reserves the right to revoke access to content that violates these terms.</p>
+        <p>Premium purchases are processed via Stripe. All sales are subject to our Refund Policy. RevaultAI reserves the right to revoke access to content that violates these terms.</p>
         <h2>5. Prohibited Content</h2>
         <p>You may not submit content that is illegal, harmful, deceptive, or violates the rights of others. RevaultAI reserves the right to remove any content and terminate any account at its discretion.</p>
-        <h2>6. Disclaimers</h2>
+        <h2>6. Copyright and DMCA</h2>
+        <p>RevaultAI responds to notices of claimed copyright infringement under the Digital Millennium Copyright Act and terminates the accounts of repeat infringers. RevaultAI LLC has registered a designated copyright agent with the United States Copyright Office:</p>
+        <p>
+          Richard Garland, DMCA Agent<br>
+          RevaultAI LLC<br>
+          10800 S Main St, Apt 210<br>
+          Los Angeles, CA 90061, United States<br>
+          Phone: (213) 864-3926<br>
+          Email: <a href="mailto:dmca@revaultai.com" style="color: var(--accent);">dmca@revaultai.com</a>
+        </p>
+        <p>The full requirements for a takedown notice and for a counter-notice are set out in our <a href="/dmca" style="color: var(--accent);">DMCA Policy</a>. Notices sent to any address other than the one above may not reach the agent and may not be effective.</p>
+        <h2>7. Disclaimers</h2>
         <p>RevaultAI is provided "as is" without warranties of any kind. We are not liable for any damages arising from your use of the platform.</p>
-        <h2>7. Changes to Terms</h2>
+        <h2>8. Changes to Terms</h2>
         <p>We may update these terms at any time. Continued use of RevaultAI after changes constitutes acceptance of the new terms.</p>
-        <h2>8. Contact</h2>
-        <p>For questions about these terms, contact us at rich@revaultai.com.</p>
+        <h2>9. Contact</h2>
+        <p>For questions about these terms, contact us at rich@revaultai.com. For copyright notices, use the agent address in section 6.</p>
       `
     },
     privacy: {
@@ -3164,23 +3175,49 @@ function LegalPage({ setPage, page }) {
     },
     dmca: {
       title: "DMCA Policy",
-      updated: "May 2025",
+      updated: "October 2026",
       body: `
         <h2>Copyright Policy</h2>
-        <p>RevaultAI respects intellectual property rights and expects users to do the same. We respond to valid DMCA takedown notices in accordance with the Digital Millennium Copyright Act.</p>
-        <h2>Reporting Infringement</h2>
-        <p>If you believe content on RevaultAI infringes your copyright, send a written notice to rich@revaultai.com including:</p>
+        <p>RevaultAI respects intellectual property rights and expects the same of everyone who uses the platform. We respond to valid takedown notices under the Digital Millennium Copyright Act (17 U.S.C. &sect; 512) and we terminate the accounts of repeat infringers.</p>
+        <h2>Designated Copyright Agent</h2>
+        <p>RevaultAI LLC, operating as RevaultAI and revaultai.com, has designated the following agent to receive notifications of claimed infringement. This designation is registered with the United States Copyright Office.</p>
+        <p>
+          Richard Garland, DMCA Agent<br>
+          RevaultAI LLC<br>
+          10800 S Main St, Apt 210<br>
+          Los Angeles, CA 90061<br>
+          United States<br>
+          Phone: (213) 864-3926<br>
+          Email: <a href="mailto:dmca@revaultai.com" style="color: var(--accent);">dmca@revaultai.com</a>
+        </p>
+        <p>Email is the fastest route and the method we recommend. Please use this address for copyright notices only. General support, account and purchase questions go to rich@revaultai.com and are answered faster there.</p>
+        <h2>Filing a Takedown Notice</h2>
+        <p>If you believe material on RevaultAI infringes a copyright you own or are authorized to act for, send a written notice to the agent above containing all six of the following elements. A notice missing any of them may not be effective, and we may ask you to resubmit it.</p>
         <ul>
-          <li>Your contact information</li>
-          <li>A description of the copyrighted work</li>
-          <li>The URL of the allegedly infringing content</li>
-          <li>A statement that you believe in good faith the use is unauthorized</li>
-          <li>Your electronic or physical signature</li>
+          <li>Your physical or electronic signature.</li>
+          <li>Identification of the copyrighted work you claim has been infringed. If a single notice covers multiple works, include a representative list of them.</li>
+          <li>Identification of the material you claim is infringing, with enough detail for us to find it. The full URL of the film, image or page is best.</li>
+          <li>Your name, mailing address, telephone number and email address.</li>
+          <li>A statement that you have a good faith belief the use of the material is not authorized by the copyright owner, its agent, or the law.</li>
+          <li>A statement that the information in the notice is accurate, and, under penalty of perjury, that you are the copyright owner or authorized to act on the owner's behalf.</li>
         </ul>
-        <h2>Counter-Notices</h2>
-        <p>If you believe your content was removed in error, you may file a counter-notice with the same contact information above.</p>
+        <p>Knowingly making a material misrepresentation in a takedown notice can make you liable for damages, including costs and attorney's fees, under 17 U.S.C. &sect; 512(f). If you are unsure whether a use is infringing, consider seeking legal advice before filing.</p>
+        <h2>What Happens Next</h2>
+        <p>We review every notice we receive. If it is complete and appears valid, we remove or disable access to the material, usually within one business day, and we notify the creator who posted it, including a copy of your notice. We keep a record of every notice and of the action taken on it.</p>
+        <h2>Filing a Counter-Notice</h2>
+        <p>If your work was removed and you believe that was a mistake or a misidentification, you may send a counter-notice to the agent above. It must include all of the following.</p>
+        <ul>
+          <li>Your physical or electronic signature.</li>
+          <li>Identification of the material that was removed and the location where it appeared before it was removed.</li>
+          <li>A statement, under penalty of perjury, that you have a good faith belief the material was removed as a result of mistake or misidentification.</li>
+          <li>Your name, mailing address and telephone number.</li>
+          <li>A statement that you consent to the jurisdiction of the Federal District Court for the judicial district in which your address is located, or, if your address is outside the United States, for any judicial district in which RevaultAI may be found, and that you will accept service of process from the person who filed the original notice or from their agent.</li>
+        </ul>
+        <p>We forward valid counter-notices to the person who filed the original takedown notice. If they do not tell us within ten to fourteen business days that they have filed an action seeking a court order against you, we may restore the material. A knowing material misrepresentation in a counter-notice carries the same liability under 17 U.S.C. &sect; 512(f).</p>
         <h2>Repeat Infringers</h2>
-        <p>RevaultAI will terminate accounts of users who repeatedly infringe copyrights.</p>
+        <p>RevaultAI maintains a repeat infringer policy. Every takedown notice is recorded against the account that posted the material. An account that accumulates repeated valid notices is terminated, its films are removed from the gallery, and the account holder is barred from creating a new one. We may also terminate an account on a single notice where the infringement is flagrant.</p>
+        <h2>A Note on AI-Generated Work</h2>
+        <p>Every film on RevaultAI is AI-generated, which does not place it outside copyright law. Submitting work that reproduces someone else's footage, score, screenplay, characters or likeness, or a model output built to imitate a specific protected work closely enough to substitute for it, violates our <a href="/terms" style="color: var(--accent);">Terms of Service</a> whether or not a notice is ever filed. If you are not certain you hold the rights to what you made, do not publish it here.</p>
       `
     },
     "ai-disclaimer": {
@@ -3335,7 +3372,7 @@ function ContactPage({ setPage }) {
   const contacts = [
     { category: "General Support", description: "Questions about your account, purchases, or how the platform works.", email: "rich@revaultai.com", response: "We respond within 48 hours." },
     { category: "Creator Inquiries", description: "Questions about submitting work, prompt pricing, or becoming a featured creator.", email: "rich@revaultai.com", response: "We respond within 48 hours." },
-    { category: "Copyright and DMCA", description: "To report infringing content or file a DMCA takedown notice.", email: "rich@revaultai.com", response: "We respond within 24 hours." },
+    { category: "Copyright and DMCA", description: "To report infringing content or file a DMCA takedown notice. This reaches our registered copyright agent.", email: "dmca@revaultai.com", response: "We respond within 24 hours." },
     { category: "Business and Partnerships", description: "Licensing inquiries, brand partnerships, or press requests.", email: "rich@revaultai.com", response: "We respond within 5 business days." },
   ];
   return (
