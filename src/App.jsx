@@ -1213,7 +1213,7 @@ function HomePage({ creations, setPage, setDetailId, user, onSignInClick }) {
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("faq")}>FAQ</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("contact")}>Contact</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("guidelines")}>Guidelines</span>
-    <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("premium-prompts")}>Premium Films</span>
+    <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("premium-films")}>Premium Films</span>
     <span style={{ display: "inline-flex", gap: 14, alignItems: "center", marginLeft: 4 }}>
       <a className="footer-copy" href="https://discord.gg/tQyAhhAK5" target="_blank" rel="noopener noreferrer" aria-label="RevaultAI on Discord" title="Discord" style={{ display: "inline-flex" }}>
         <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -3517,7 +3517,7 @@ function GuidelinesPage({ setPage }) {
     </div>
   );
 }
-function PremiumPromptsPage({ setPage }) {
+function PremiumFilmsPage({ setPage }) {
   return (
     <div className="page">
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "80px 48px" }}>
@@ -4038,7 +4038,7 @@ function BecomeCreatorPage({ setPage, user, onSignInClick }) {
         <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.25em", color: "var(--accent)", textTransform: "uppercase", marginBottom: 24 }}>Early Creator Program</div>
         <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 64, fontWeight: 300, color: "var(--text)", marginBottom: 16, lineHeight: 1.1 }}>Become a Creator</h1>
         <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 24, fontWeight: 300, color: "var(--muted)", marginBottom: 24, fontStyle: "italic" }}>Help define the future of AI-native filmmaking.</div>
-        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 1.9, maxWidth: 560, margin: "0 auto 40px" }}>RevaultAI is building a curated home for exceptional AI films, animations, short films, and premium prompts. We are currently inviting a small group of creators to help shape the platform before public launch.</div>
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 1.9, maxWidth: 560, margin: "0 auto 40px" }}>RevaultAI is building a curated home for exceptional AI films, short films and animation. We are currently inviting a small group of creators to help shape the platform before public launch.</div>
         <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
           <button className="btn-primary" onClick={() => user ? setPage("submit") : onSignInClick?.()}>{user ? "Start Creating" : "Create Your Account"}</button>
           <button className="btn-ghost" onClick={() => setPage("guidelines")}>View Submission Guidelines</button>
@@ -4083,20 +4083,20 @@ function BecomeCreatorPage({ setPage, user, onSignInClick }) {
         </div>
       </div>
 
-      {/* PREMIUM PROMPTS */}
+      {/* PREMIUM FILMS */}
       <div style={{ maxWidth: 960, margin: "0 auto", padding: "80px 48px" }}>
-        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 40, fontWeight: 300, color: "var(--text)", marginBottom: 16, textAlign: "center" }}>Monetize Your Creative Process</div>
-        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", textAlign: "center", marginBottom: 48, lineHeight: 1.8 }}>Creators may publish their work as Open or Premium. You maintain full ownership of your creative work.</div>
+        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 40, fontWeight: 300, color: "var(--text)", marginBottom: 16, textAlign: "center" }}>Monetize Your Films</div>
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", textAlign: "center", marginBottom: 48, lineHeight: 1.8 }}>Every film streams free either way. Premium simply adds the option to buy a download, and selling is entirely optional. You keep full ownership of your work.</div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 24 }}>
           <div style={{ border: "1px solid var(--border)", borderRadius: 8, padding: "40px 32px" }}>
             <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.2em", color: "var(--muted)", textTransform: "uppercase", marginBottom: 16 }}>Open</div>
-            <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 20, fontWeight: 700, color: "var(--text)", marginBottom: 16 }}>Free to All</div>
-            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", lineHeight: 1.8 }}>Your full prompt is visible to everyone. Great for building your audience and showcasing your creative range to the community.</div>
+            <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 20, fontWeight: 700, color: "var(--text)", marginBottom: 16 }}>Free to Watch</div>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", lineHeight: 1.8 }}>Your film streams free to everyone, with your production note published alongside it. The simplest way to build an audience and show your range.</div>
           </div>
           <div style={{ border: "1px solid var(--accent)", borderRadius: 8, padding: "40px 32px", background: "var(--surface)" }}>
             <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.2em", color: "var(--accent)", textTransform: "uppercase", marginBottom: 16 }}>Premium</div>
-            <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 20, fontWeight: 700, color: "var(--text)", marginBottom: 16 }}>Prompt for Purchase</div>
-            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", lineHeight: 1.8 }}>A teaser prompt is visible to everyone. After purchase at $4.99, buyers unlock the full creative brief and a download of the finished film. You earn visibility and credibility on a premium platform.</div>
+            <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 20, fontWeight: 700, color: "var(--text)", marginBottom: 16 }}>Film for Purchase</div>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", lineHeight: 1.8 }}>Your film still streams free and your production note stays open to everyone. Viewers who want to keep it can buy a full-quality download. You set the price and keep 80% of net revenue on every sale.</div>
           </div>
         </div>
       </div>
@@ -4105,7 +4105,7 @@ function BecomeCreatorPage({ setPage, user, onSignInClick }) {
       <div style={{ maxWidth: 640, margin: "0 auto", padding: "80px 48px", textAlign: "center" }}>
         <div style={{ display: "inline-block", border: "1px solid var(--accent)", borderRadius: 4, padding: "4px 16px", fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: "0.2em", color: "var(--accent)", textTransform: "uppercase", marginBottom: 16 }}>On the Roadmap</div>
         <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 40, fontWeight: 300, color: "var(--text)", marginBottom: 16, lineHeight: 1.1 }}>More ways to earn, ahead.</div>
-        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 1.9 }}>Premium prompts are just the start. We're building additional ways for creators to be rewarded for exceptional work, and we'll share more as those options take shape. RevaultAI is designed around creators first — earning included.</div>
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 1.9 }}>Premium films are just the start. We're building additional ways for creators to be rewarded for exceptional work, and we'll share more as those options take shape. RevaultAI is designed around creators first — earning included.</div>
       </div>
 
       {/* SPOTLIGHT */}
@@ -4195,7 +4195,7 @@ const [page, setPageState]        = useState("home");
   // ---- URL routing ----
   const detailIdRef = useRef(null);
   const creatorUserRef = useRef(null);
-  const KNOWN_PAGES = ["home","explore","creators","feed","generate","settings","admin","submit","set-password","email-confirmed","terms","faq","contact","guidelines","premium-prompts","about","become-creator","privacy","refunds","dmca","ai-disclaimer","purchase-success","founding-creators","blog","ai-video-generator","prompt-builder","prompts","search","scene-breakdown","which-model","vault","continuity-check","shot-director","coverage","frame-planner","blocking","autopsy","takes","projects","tools","specs","rehearsal"];
+  const KNOWN_PAGES = ["home","explore","creators","feed","generate","settings","admin","submit","set-password","email-confirmed","terms","faq","contact","guidelines","premium-films","about","become-creator","privacy","refunds","dmca","ai-disclaimer","purchase-success","founding-creators","blog","ai-video-generator","prompt-builder","prompts","search","scene-breakdown","which-model","vault","continuity-check","shot-director","coverage","frame-planner","blocking","autopsy","takes","projects","tools","specs","rehearsal"];
 
   function setDetailId(id) { detailIdRef.current = id; setDetailIdState(id); }
   const blogSlugRef = useRef(null);
@@ -4396,7 +4396,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       case "faq":       return <FAQPage setPage={setPage} />;
       case "contact":   return <ContactPage setPage={setPage} />;
       case "guidelines": return <GuidelinesPage setPage={setPage} />;
-      case "premium-prompts": return <PremiumPromptsPage setPage={setPage} />;
+      case "premium-films": return <PremiumFilmsPage setPage={setPage} />;
       case "about": return <AboutPage setPage={setPage} />;
       case "become-creator": return <BecomeCreatorPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} />;
       case "prompt-builder": return <PromptBuilderPage setGenPrefill={setGenPrefill} activeProject={activeProject} setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} />;

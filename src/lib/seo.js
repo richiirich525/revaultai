@@ -8,21 +8,21 @@ const DEFAULT_IMAGE = SITE + "/og-image.png";
 const DEFAULT = {
   title: "RevaultAI — The AI-Native Creative Vault",
   description:
-    "A curated archive of exceptional AI-generated films, animations, and premium prompts. Signal over noise.",
+    "A curated archive of exceptional AI-generated films, short films and animation. Signal over noise.",
 };
 
 // Static pages. Titles stay under ~60 characters, descriptions under ~155,
 // so Google shows them in full instead of truncating with an ellipsis.
 export const PAGES = {
   home: {
-    title: "RevaultAI — Curated AI Films and Premium Prompts",
+    title: "RevaultAI — Curated AI Films, Shorts and Animation",
     description:
-      "A curated archive of exceptional AI-generated films, short films, and premium prompts. A vault, not a feed — creators keep 80% of net revenue.",
+      "A curated gallery of exceptional AI-generated films, short films and animation. A vault, not a feed — creators keep 80% of net revenue.",
   },
   explore: {
     title: "Explore AI Films and Creations — RevaultAI",
     description:
-      "Browse every AI-generated film, animation, and prompt collection published to the RevaultAI archive. Curated, reviewed, and free to watch.",
+      "Browse every AI-generated film, short film and animation published to the RevaultAI gallery. Curated, reviewed, and free to watch.",
   },
   creators: {
     title: "AI Filmmakers and Creators — RevaultAI",
@@ -54,7 +54,7 @@ export const PAGES = {
     description:
       "What we accept, what we reject, and how to get featured. Quality standards for submitting AI films to the RevaultAI archive.",
   },
-  "premium-prompts": {
+  "premium-films": {
     title: "Premium Films — Own the Work, Back the Creator",
     description:
       "Every film on RevaultAI streams free. Buying a premium film gets you a full-quality download and pays the creator directly.",
