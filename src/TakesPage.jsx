@@ -57,6 +57,7 @@ export default function TakesPage({ user, onSignInClick, setPage, notify, active
   const [urls, setUrls] = useState({});
   const [loading, setLoading] = useState(true);
   const [compare, setCompare] = useState([]);   // up to two generation ids
+  const [urlFails, setUrlFails] = useState({}); // generation id -> why playback is unavailable
 
   // Playback links are signed for the takes actually on screen, in batches.
   // Signing the whole page up front cost one request per take and wasted
@@ -72,12 +73,17 @@ export default function TakesPage({ user, onSignInClick, setPage, notify, active
     const ids = [...wantRef.current];
     wantRef.current.clear();
     if (ids.length === 0) return;
-    const got = await signGenerationUrls(ids);
+    const { urls: got, failed } = await signGenerationUrls(ids);
     const now = Date.now();
     const keys = Object.keys(got);
-    if (keys.length === 0) return;
     for (const id of keys) signedAtRef.current.set(id, now);
-    setUrls((u) => ({ ...u, ...got }));
+    if (keys.length > 0) setUrls((u) => ({ ...u, ...got }));
+    // Clear any previous failure for the ids that worked this time.
+    setUrlFails((f) => {
+      const next = { ...f, ...failed };
+      for (const id of keys) delete next[id];
+      return next;
+    });
   }, []);
 
   const queueSigning = useCallback((id) => {
@@ -125,6 +131,16 @@ export default function TakesPage({ user, onSignInClick, setPage, notify, active
     observer.current = null;
     if (flushTimer.current) clearTimeout(flushTimer.current);
   }, []);
+
+  const retrySigning = useCallback((id) => {
+    signedAtRef.current.delete(id);
+    setUrlFails((f) => {
+      const next = { ...f };
+      delete next[id];
+      return next;
+    });
+    queueSigning(id);
+  }, [queueSigning]);
 
   // The compare panel can hold a take the list has scrolled away from, so it
   // asks for its own links rather than relying on the observer.
@@ -363,7 +379,21 @@ export default function TakesPage({ user, onSignInClick, setPage, notify, active
                           ) : g.status === "failed" ? (
                             <div className="tk-body" style={{ padding: "20px 0", fontSize: 10 }}>Failed — credits refunded.</div>
                           ) : (
-                            <div className="tk-body" style={{ padding: "20px 0", fontSize: 10 }}>{g.status === "complete" ? "Preparing playback…" : "Generating…"}</div>
+                            <div className="tk-body" style={{ padding: "20px 0", fontSize: 10 }}>
+                              {g.status !== "complete" ? "Generating…" : urlFails[g.id] ? (
+                                <>
+                                  <span style={{ color: "#E5B769" }}>{urlFails[g.id]}</span>
+                                  {" · "}
+                                  <span
+                                    role="button"
+                                    tabIndex={0}
+                                    style={{ color: "var(--accent)", cursor: "pointer" }}
+                                    onClick={() => retrySigning(g.id)}
+                                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") retrySigning(g.id); }}
+                                  >Try again</span>
+                                </>
+                              ) : "Preparing playback…"}
+                            </div>
                           )}
                           <div className="tk-actions">
                             <button className={"tk-btn" + (isSel ? " on" : "")} onClick={() => selectTake(shot, g.id)}>{isSel ? "\u2713 Selected" : "Select"}</button>
@@ -422,7 +452,9 @@ export default function TakesPage({ user, onSignInClick, setPage, notify, active
           <div className="tk-compare-grid">
             {compareGens.map((g) => (
               <div key={g.id}>
-                {urls[g.id] ? <video src={urls[g.id]} controls playsInline /> : <div className="tk-body">Preparing playback…</div>}
+                {urls[g.id]
+                  ? <video src={urls[g.id]} controls playsInline />
+                  : <div className="tk-body" style={urlFails[g.id] ? { color: "#E5B769" } : undefined}>{urlFails[g.id] || "Preparing playback…"}</div>}
                 {g.take_note && <div className="tk-body" style={{ marginTop: 10 }}>{g.take_note}</div>}
               </div>
             ))}

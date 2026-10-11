@@ -1513,6 +1513,7 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
   }
   const [gens, setGens] = useState([]);
   const [videoUrls, setVideoUrls] = useState({});
+  const [videoUrlFails, setVideoUrlFails] = useState({});   // id -> why playback is unavailable
   const videoUrlsRef = useRef({});
   const [chainFor, setChainFor] = useState(null);      // generation id being scrubbed
   const [chainTime, setChainTime] = useState(0);
@@ -1521,7 +1522,7 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
   const chainVideoRef = useRef(null);
 
   function openChain(g) {
-    if (!videoUrls[g.id]) { notify("Still preparing playback for that clip — try again in a moment."); return; }
+    if (!videoUrls[g.id]) { notify(videoUrlFails[g.id] || "Still preparing playback for that clip — try again in a moment."); return; }
     setChainFor(chainFor === g.id ? null : g.id);
     setChainTime(0);
     setChainMax(0);
@@ -1594,11 +1595,16 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
     const need = items.filter((g) => g.status === "complete" && g.video_url && !videoUrlsRef.current[g.id]);
     if (need.length > 0) {
       try {
-        const got = await signGenerationUrls(need.map((g) => g.id));
+        const { urls: got, failed } = await signGenerationUrls(need.map((g) => g.id));
         if (Object.keys(got).length > 0) {
           videoUrlsRef.current = { ...videoUrlsRef.current, ...got };
           setVideoUrls(videoUrlsRef.current);
         }
+        setVideoUrlFails((f) => {
+          const next = { ...f, ...failed };
+          for (const id of Object.keys(got)) delete next[id];
+          return next;
+        });
       } catch { /* retry on the next poll */ }
     }
   }
@@ -2042,7 +2048,9 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
                 <div className="gen-item-prompt">{g.prompt}</div>
                 {g.status === "complete" && g.video_url ? (
                   <>
-                    {videoUrls[g.id] ? <video className="gen-item-video" src={videoUrls[g.id]} controls playsInline /> : <div className="gen-item-status">Preparing playback...</div>}
+                    {videoUrls[g.id]
+                      ? <video className="gen-item-video" src={videoUrls[g.id]} controls playsInline />
+                      : <div className="gen-item-status" style={videoUrlFails[g.id] ? { color: "#E5B769" } : undefined}>{videoUrlFails[g.id] || "Preparing playback..."}</div>}
                     <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
                       <button className="gen-button" onClick={() => handleDownload(g)}>
                         ⬇ Download

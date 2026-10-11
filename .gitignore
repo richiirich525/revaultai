@@ -24,3 +24,9 @@ dist-ssr
 *.sw?
 
 .vercel
+
+# Environment — *.local above already covers .env.local, but a plain .env
+# or .env.production would otherwise be committable.
+.env
+.env.*
+!.env.example
