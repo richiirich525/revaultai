@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
+import { signGenerationUrls, URL_FRESH_MS } from "./lib/videoUrls.js";
 import { supabase } from "./lib/supabase.js";
 import StateReview from "./StateReview.jsx";
 import EndFrame from "./EndFrame.jsx";
@@ -57,19 +58,79 @@ export default function TakesPage({ user, onSignInClick, setPage, notify, active
   const [loading, setLoading] = useState(true);
   const [compare, setCompare] = useState([]);   // up to two generation ids
 
-  async function signUrl(g) {
-    if (urls[g.id] || g.status !== "complete" || !g.video_url) return;
-    try {
-      const { data: sess } = await supabase.auth.getSession();
-      const r = await fetch("/api/get-video-url", {
-        method: "POST",
-        headers: { Authorization: "Bearer " + sess?.session?.access_token, "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "generation", id: g.id }),
-      });
-      const j = await r.json().catch(() => ({}));
-      if (r.ok && j.url) setUrls((u) => ({ ...u, [g.id]: j.url }));
-    } catch { /* best effort */ }
-  }
+  // Playback links are signed for the takes actually on screen, in batches.
+  // Signing the whole page up front cost one request per take and wasted
+  // most of them: links last 15 minutes, and a long takes list scrolls for
+  // far longer than that.
+  const wantRef = useRef(new Set());
+  const signedAtRef = useRef(new Map());
+  const flushTimer = useRef(null);
+  const observer = useRef(null);
+
+  const flushSigning = useCallback(async () => {
+    flushTimer.current = null;
+    const ids = [...wantRef.current];
+    wantRef.current.clear();
+    if (ids.length === 0) return;
+    const got = await signGenerationUrls(ids);
+    const now = Date.now();
+    const keys = Object.keys(got);
+    if (keys.length === 0) return;
+    for (const id of keys) signedAtRef.current.set(id, now);
+    setUrls((u) => ({ ...u, ...got }));
+  }, []);
+
+  const queueSigning = useCallback((id) => {
+    const at = signedAtRef.current.get(id);
+    if (at && Date.now() - at < URL_FRESH_MS) return;
+    wantRef.current.add(id);
+    if (flushTimer.current) return;
+    // A short wait lets a screenful of takes arrive as one request.
+    flushTimer.current = setTimeout(flushSigning, 120);
+  }, [flushSigning]);
+
+  // Built on demand: ref callbacks run before effects, so an observer
+  // created in an effect would miss the first screenful.
+  const getObserver = useCallback(() => {
+    if (!observer.current && typeof IntersectionObserver !== "undefined") {
+      observer.current = new IntersectionObserver(
+        (entries) => {
+          for (const e of entries) {
+            if (!e.isIntersecting) continue;
+            const id = e.target.dataset.genId;
+            if (id) queueSigning(id);
+          }
+        },
+        { rootMargin: "400px" },   // start signing just before it scrolls in
+      );
+    }
+    return observer.current;
+  }, [queueSigning]);
+
+  // React 19 runs the function a ref callback returns as its cleanup.
+  const watchTake = useCallback((el) => {
+    if (!el) return undefined;
+    const obs = getObserver();
+    if (!obs) {
+      // No IntersectionObserver (very old browser): sign it immediately.
+      if (el.dataset.genId) queueSigning(el.dataset.genId);
+      return undefined;
+    }
+    obs.observe(el);
+    return () => obs.unobserve(el);
+  }, [getObserver, queueSigning]);
+
+  useEffect(() => () => {
+    observer.current?.disconnect();
+    observer.current = null;
+    if (flushTimer.current) clearTimeout(flushTimer.current);
+  }, []);
+
+  // The compare panel can hold a take the list has scrolled away from, so it
+  // asks for its own links rather than relying on the observer.
+  useEffect(() => {
+    for (const id of compare) queueSigning(id);
+  }, [compare, queueSigning]);
 
   async function load() {
     if (!user?.id) { setShots([]); setGens([]); setLoading(false); return; }
@@ -80,7 +141,6 @@ export default function TakesPage({ user, onSignInClick, setPage, notify, active
     setShots(s ?? []);
     setGens(g ?? []);
     setLoading(false);
-    for (const one of g ?? []) signUrl(one);
   }
   useEffect(() => { load(); }, [user?.id]);
 
@@ -286,7 +346,12 @@ export default function TakesPage({ user, onSignInClick, setPage, notify, active
                       const isRej = g.take_status === "rejected";
                       const isFav = g.take_status === "favorite";
                       return (
-                        <div className={"tk-take" + (isSel ? " sel" : "") + (isRej ? " rej" : "")} key={g.id}>
+                        <div
+                          className={"tk-take" + (isSel ? " sel" : "") + (isRej ? " rej" : "")}
+                          key={g.id}
+                          ref={g.status === "complete" && g.video_url ? watchTake : undefined}
+                          data-gen-id={g.status === "complete" && g.video_url ? g.id : undefined}
+                        >
                           <div className="tk-take-n">
                             <span>Take {i + 1}</span>
                             {isSel && <span className="tk-badge" style={{ color: "var(--accent)", border: "1px solid rgba(123,63,228,0.4)" }}>Selected</span>}
@@ -327,7 +392,6 @@ export default function TakesPage({ user, onSignInClick, setPage, notify, active
                           {isSel && g.status === "complete" && (
                             <div style={{ marginTop: 10 }}>
                               <StateReview generation={g} videoUrl={urls[g.id]} notify={notify} />
-                              <EndFrame generation={g} videoUrl={urls[g.id]} notify={notify} setGenPrefill={setGenPrefill} setPage={setPage} />
                               <EndFrame generation={g} videoUrl={urls[g.id]} notify={notify} setGenPrefill={setGenPrefill} setPage={setPage} />
                             </div>
                           )}

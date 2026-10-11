@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from "./lib/supabase.js";
 import { initAnalytics, identifyUser, resetUser, track } from "./lib/analytics.js";
 import { applySEO } from "./lib/seo.js";
+import { signGenerationUrls } from "./lib/videoUrls.js";
 import { BlogPage, BlogPostPage } from "./BlogPage.jsx";
 import Comments from "./Comments.jsx";
 import AiVideoGeneratorPage from "./AiVideoGeneratorPage.jsx";
@@ -1587,22 +1588,18 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
     const items = data ?? [];
     setGens(items);
 
-    // Fetch a signed playback URL for each completed video we don't have yet
+    // Sign the playback links we don't have yet, in one request. This used to
+    // be a sequential loop that read the session token and called the API once
+    // per clip, so twenty clips meant twenty round trips end to end.
     const need = items.filter((g) => g.status === "complete" && g.video_url && !videoUrlsRef.current[g.id]);
-    for (const g of need) {
+    if (need.length > 0) {
       try {
-        const token = await getSessionToken();
-        const r = await fetch("/api/get-video-url", {
-          method: "POST",
-          headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
-          body: JSON.stringify({ type: "generation", id: g.id }),
-        });
-        const j = await r.json().catch(() => ({}));
-        if (r.ok && j.url) {
-          videoUrlsRef.current = { ...videoUrlsRef.current, [g.id]: j.url };
+        const got = await signGenerationUrls(need.map((g) => g.id));
+        if (Object.keys(got).length > 0) {
+          videoUrlsRef.current = { ...videoUrlsRef.current, ...got };
           setVideoUrls(videoUrlsRef.current);
         }
-      } catch { /* retry on next poll */ }
+      } catch { /* retry on the next poll */ }
     }
   }
 

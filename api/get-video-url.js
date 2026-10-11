@@ -2,19 +2,26 @@ import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { createClient } from "@supabase/supabase-js";
 
+let r2Client = null;
+
 function getR2Client() {
+  if (r2Client) return r2Client;
   const accountId = process.env.R2_ACCOUNT_ID;
   const accessKeyId = process.env.R2_ACCESS_KEY_ID;
   const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
   if (!accountId || !accessKeyId || !secretAccessKey) {
     throw new Error("Missing R2 credentials.");
   }
-  return new S3Client({
+  r2Client = new S3Client({
     region: "auto",
     endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
     credentials: { accessKeyId, secretAccessKey },
   });
+  return r2Client;
 }
+
+const SIGNED_SECONDS = 900;   // 15 minutes
+const MAX_BATCH = 50;
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -34,8 +41,47 @@ export default async function handler(req, res) {
     }
 
     const { type, id } = req.body || {};
-    if (!id || !["creation", "generation", "vault"].includes(type)) {
+    if (type !== "generations" && (!id || !["creation", "generation", "vault"].includes(type))) {
       return res.status(400).json({ error: "Invalid request" });
+    }
+
+    // Many takes at once. A page showing thirty clips used to cost thirty
+    // auth round trips and thirty invocations; this costs one of each.
+    // Ownership is enforced in the query, so a caller can only ever receive
+    // links for their own generations however many ids they send.
+    if (type === "generations") {
+      const ids = (Array.isArray(req.body?.ids) ? req.body.ids : [])
+        .filter((x) => typeof x === "string" && x.length > 0)
+        .slice(0, MAX_BATCH);
+      if (ids.length === 0) {
+        return res.status(400).json({ error: "No generation ids given" });
+      }
+
+      const { data: rows, error: rowsError } = await supabase
+        .from("generations")
+        .select("id, video_url")
+        .eq("user_id", user.id)
+        .in("id", ids);
+      if (rowsError) {
+        return res.status(500).json({ error: "Could not look up those clips" });
+      }
+
+      const publicBase = (process.env.R2_PUBLIC_URL ?? "").replace(/\/$/, "");
+      const r2c = getR2Client();
+      const urls = {};
+      await Promise.all(
+        (rows ?? []).map(async (row) => {
+          const stored = typeof row.video_url === "string" ? row.video_url : "";
+          if (!stored.startsWith(publicBase + "/")) return;
+          const k = decodeURIComponent(stored.slice(publicBase.length + 1));
+          urls[row.id] = await getSignedUrl(
+            r2c,
+            new GetObjectCommand({ Bucket: process.env.R2_BUCKET_NAME, Key: k }),
+            { expiresIn: SIGNED_SECONDS }
+          );
+        })
+      );
+      return res.status(200).json({ urls });
     }
 
     // Vault entries hold up to three reference images and return them all at
@@ -122,7 +168,7 @@ export default async function handler(req, res) {
       Key: key,
       ...(asAttachment ? { ResponseContentDisposition: "attachment" } : {}),
     });
-    const url = await getSignedUrl(r2, command, { expiresIn: 900 }); // 15 minutes
+    const url = await getSignedUrl(r2, command, { expiresIn: SIGNED_SECONDS });
 
     return res.status(200).json({ url });
   } catch (err) {
