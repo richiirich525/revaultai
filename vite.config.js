@@ -9,6 +9,12 @@ export default defineConfig(({ mode }) => {
   Object.assign(process.env, env);
 
   return {
+    // The ffmpeg.wasm build ships its own module worker and a 32 MB wasm
+    // payload. Pre-bundling rewrites the worker's imports and breaks the dev
+    // server, so leave both packages alone and let Vite serve them as-is.
+    optimizeDeps: {
+      exclude: ["@ffmpeg/ffmpeg", "@ffmpeg/core"],
+    },
     plugins: [
   react(),
   r2UploadPlugin(),

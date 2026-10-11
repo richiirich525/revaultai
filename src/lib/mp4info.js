@@ -1,10 +1,8 @@
 /*
   mp4info — RevaultAI (Finish, pass 4)
-  Reads a video file's own header for its frame rate, length and whether it
-  has sound. Exact, no playback, no dependencies.
+  Reads a video file's own header for its frame rate, length, pixel size and
+  whether it has sound. Exact, no playback, no dependencies.
 */
-
-const CONTAINERS = new Set(["moov", "trak", "mdia", "minf", "stbl"]);
 
 function boxes(view, start, end, out = []) {
   let p = start;
@@ -50,6 +48,7 @@ export function readMp4Info(buffer) {
     let frames = 0, delta = 0;
     const stbl = child(view, child(view, mdia, "minf") ?? mdia, "stbl");
     const stts = stbl ? child(view, stbl, "stts") : null;
+    const stsd = stbl ? child(view, stbl, "stsd") : null;
     if (stts) {
       const n = view.getUint32(stts.start + 4);
       let best = 0;
@@ -60,11 +59,30 @@ export function readMp4Info(buffer) {
         if (count > best) { best = count; delta = d; }
       }
     }
+    // Coded pixel size lives in the visual sample entry: past stsd's
+    // version/flags and entry count, then 24 bytes into the entry's body.
+    let width = 0, height = 0;
+    if (stsd && stsd.start + 8 < stsd.end) {
+      const entry = boxes(view, stsd.start + 8, stsd.end)[0];
+      if (entry && entry.start + 26 <= entry.end) {
+        width = view.getUint16(entry.start + 24);
+        height = view.getUint16(entry.start + 26);
+      }
+    }
+
     const fps = delta && timescale ? timescale / delta : frames && duration ? (frames * timescale) / duration : 0;
-    video = { fps, timescale, seconds: timescale ? duration / timescale : 0, frames };
+    video = { fps, timescale, seconds: timescale ? duration / timescale : 0, frames, width, height };
   }
   if (!video || !video.fps) return null;
 
   const fps = Math.round(video.fps * 1000) / 1000;
-  return { fps, nominal: Math.round(fps), seconds: Math.round(video.seconds * 1000) / 1000, frames: video.frames, hasAudio };
+  return {
+    fps,
+    nominal: Math.round(fps),
+    seconds: Math.round(video.seconds * 1000) / 1000,
+    frames: video.frames,
+    width: video.width,
+    height: video.height,
+    hasAudio,
+  };
 }

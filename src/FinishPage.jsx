@@ -3,6 +3,7 @@ import { supabase } from "./lib/supabase.js";
 import FinishCut from "./FinishCut.jsx";
 import CutPreview from "./CutPreview.jsx";
 import FinishExport from "./FinishExport.jsx";
+import FinishRender from "./FinishRender.jsx";
 
 /*
   FinishPage — RevaultAI (pass 1: choose and analyze)
@@ -314,6 +315,7 @@ export default function FinishPage({ user, activeProject, setPage, notify, onSig
             </div>
           </div>
           {cut?.shots?.length > 0 && <CutPreview shots={cut.shots} urls={urls} />}
+          {cut && <FinishRender cut={cut} urls={urls} title={activeProject?.name} />}
           {cut && <FinishExport cut={cut} urls={urls} gens={gens} title={activeProject?.name} scene={scene} />}
           {cut && <FinishCut cut={cut} gens={gens} urls={urls} notify={notify} />}
         </div>

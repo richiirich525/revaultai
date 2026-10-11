@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { readMp4Info } from "./lib/mp4info.js";
+import { fetchCutShots } from "./lib/cutClips.js";
 import { buildEdl, buildCutSheet, buildReadme } from "./lib/edl.js";
 import { zipParts } from "./lib/zipStore.js";
 
@@ -18,33 +18,24 @@ export default function FinishExport({ cut, urls, gens, title, scene }) {
   const [result, setResult] = useState(null);
 
   async function exportEdit() {
-    const shots = (cut?.shots ?? []).map((s) => ({ ...s, from: Number(s.from), to: Number(s.to) })).filter((s) => s.to > s.from);
-    const ids = [...new Set(shots.map((s) => s.generationId))];
-    if (!ids.length) return;
     setBusy(true);
     setResult(null);
 
+    const { shots, byId, failed } = await fetchCutShots({ cut, urls, onStatus: setStatus });
+    if (!shots.length) {
+      setBusy(false);
+      setStatus("");
+      return;
+    }
+
+    // Name the clips in fetch order, which is the order the EDL refers to them.
     const clips = {};
     const files = [];
-    const failed = [];
-    let n = 0;
-    for (const id of ids) {
-      n++;
-      setStatus(`Fetching clip ${n} of ${ids.length}…`);
-      try {
-        if (!urls[id]) throw new Error("no link");
-        const r = await fetch(urls[id]);
-        if (!r.ok) throw new Error("fetch failed");
-        const buf = await r.arrayBuffer();
-        const info = readMp4Info(buf);
-        if (!info) throw new Error("unreadable");
-        const model = gens?.find((g) => g.id === id)?.model;
-        const name = `clip-${String(Object.keys(clips).length + 1).padStart(2, "0")}_${slug(model)}.mp4`;
-        clips[id] = { name, ...info };
-        files.push({ name, data: new Uint8Array(buf) });
-      } catch {
-        failed.push(id);
-      }
+    for (const id of Object.keys(byId)) {
+      const model = gens?.find((g) => g.id === id)?.model;
+      const name = `clip-${String(Object.keys(clips).length + 1).padStart(2, "0")}_${slug(model)}.mp4`;
+      clips[id] = { name, ...byId[id].info };
+      files.push({ name, data: byId[id].data });
     }
 
     const got = Object.values(clips);
