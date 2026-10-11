@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./lib/supabase.js";
+import { freshGenerationUrl } from "./lib/videoUrls.js";
 import FinishCut from "./FinishCut.jsx";
 import CutPreview from "./CutPreview.jsx";
 import FinishExport from "./FinishExport.jsx";
@@ -110,18 +111,11 @@ export default function FinishPage({ user, activeProject, setPage, notify, onSig
   const [cut, setCut] = useState(null);
   const [assembling, setAssembling] = useState(false);
 
+  // Returns a link signed right now, and throws the reason if it can't.
   async function signUrl(g) {
-    try {
-      const { data: sess } = await supabase.auth.getSession();
-      const r = await fetch("/api/get-video-url", {
-        method: "POST",
-        headers: { Authorization: "Bearer " + sess?.session?.access_token, "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "generation", id: g.id }),
-      });
-      const j = await r.json().catch(() => ({}));
-      if (r.ok && j.url) { setUrls((u) => ({ ...u, [g.id]: j.url })); return j.url; }
-    } catch { /* best effort */ }
-    return null;
+    const url = await freshGenerationUrl(g.id);
+    setUrls((u) => ({ ...u, [g.id]: url }));
+    return url;
   }
 
   useEffect(() => {
@@ -166,9 +160,7 @@ export default function FinishPage({ user, activeProject, setPage, notify, onSig
       done++;
       setProgress(`Reading clip ${done} of ${todo.length}…`);
       try {
-        const url = urls[g.id] ?? (await signUrl(g));
-        if (!url) throw new Error("Couldn't open the clip.");
-        const { frames, duration } = await sampleFrames(url);
+        const { frames, duration } = await sampleFrames(await signUrl(g));
         const r = await fetch("/api/finish-analyze", {
           method: "POST",
           headers: { Authorization: "Bearer " + sess?.session?.access_token, "Content-Type": "application/json" },

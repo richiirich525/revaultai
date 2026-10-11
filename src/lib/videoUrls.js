@@ -74,3 +74,19 @@ export async function signGenerationUrls(ids, { signal } = {}) {
 // Links last 15 minutes. Re-sign a little early so a clip someone scrolls
 // back to still plays.
 export const URL_FRESH_MS = 12 * 60 * 1000;
+
+/**
+ * A link signed right now, for an action that is about to read the file.
+ *
+ * Anything that samples frames or downloads a clip should use this rather than
+ * a url the page signed earlier: a page open longer than 15 minutes is holding
+ * dead links, and the failure looks like a broken feature rather than an
+ * expired link.
+ *
+ * @throws the reason, so the caller can show it
+ */
+export async function freshGenerationUrl(id, { signal } = {}) {
+  const { urls, failed } = await signGenerationUrls([id], { signal });
+  if (urls[id]) return urls[id];
+  throw new Error(failed[id] || "Couldn't prepare playback");
+}

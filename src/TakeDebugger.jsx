@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { supabase } from "./lib/supabase.js";
+import { freshGenerationUrl } from "./lib/videoUrls.js";
 
 /*
   TakeDebugger — RevaultAI
@@ -114,7 +115,7 @@ const styles = `
   .dbg-note { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); line-height: 1.7; margin-top: 12px; opacity: 0.75; }
 `;
 
-export default function TakeDebugger({ generation, videoUrl, notify, setGenPrefill, setPage }) {
+export default function TakeDebugger({ generation, notify, setGenPrefill, setPage }) {
   const [busy, setBusy] = useState(false);
   const [stage, setStage] = useState("");
   const [report, setReport] = useState(generation.debug_report ?? null);
@@ -166,10 +167,10 @@ export default function TakeDebugger({ generation, videoUrl, notify, setGenPrefi
   }
 
   async function run(force = false) {
-    if (!videoUrl) { notify?.("Still preparing playback — try again in a moment."); return; }
     setBusy(true); setStage("Loading the clip…");
     try {
-      const frames = await sampleFrames(videoUrl, 8);
+      // Signed now, not when the page loaded — see StateReview.
+      const frames = await sampleFrames(await freshGenerationUrl(generation.id), 8);
       setStage("Gathering your Vault photos…");
       const refs = await gatherRefs(generation);
       setStage(refs.length ? `Comparing against ${refs.length} Vault photo${refs.length === 1 ? "" : "s"}…` : "Reading the frames against your intent…");

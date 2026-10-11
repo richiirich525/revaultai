@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from "./lib/supabase.js";
 import { initAnalytics, identifyUser, resetUser, track } from "./lib/analytics.js";
 import { applySEO } from "./lib/seo.js";
-import { signGenerationUrls } from "./lib/videoUrls.js";
+import { signGenerationUrls, URL_FRESH_MS } from "./lib/videoUrls.js";
 import { BlogPage, BlogPostPage } from "./BlogPage.jsx";
 import Comments from "./Comments.jsx";
 import AiVideoGeneratorPage from "./AiVideoGeneratorPage.jsx";
@@ -1515,6 +1515,7 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
   const [videoUrls, setVideoUrls] = useState({});
   const [videoUrlFails, setVideoUrlFails] = useState({});   // id -> why playback is unavailable
   const videoUrlsRef = useRef({});
+  const videoSignedAtRef = useRef({});   // id -> when its link was signed
   const [chainFor, setChainFor] = useState(null);      // generation id being scrubbed
   const [chainTime, setChainTime] = useState(0);
   const [chainMax, setChainMax] = useState(0);
@@ -1592,12 +1593,22 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
     // Sign the playback links we don't have yet, in one request. This used to
     // be a sequential loop that read the session token and called the API once
     // per clip, so twenty clips meant twenty round trips end to end.
-    const need = items.filter((g) => g.status === "complete" && g.video_url && !videoUrlsRef.current[g.id]);
-    if (need.length > 0) {
+    // This page captures frames from the players rendered in the list, so it
+    // can't sign on demand the way the Takes page does. Instead each poll
+    // refreshes any link old enough to be near expiry.
+    const now = Date.now();
+    const wanted = items.filter((g) => {
+      if (g.status !== "complete" || !g.video_url) return false;
+      if (!videoUrlsRef.current[g.id]) return true;
+      return now - (videoSignedAtRef.current[g.id] ?? 0) > URL_FRESH_MS;
+    });
+    if (wanted.length > 0) {
       try {
-        const { urls: got, failed } = await signGenerationUrls(need.map((g) => g.id));
-        if (Object.keys(got).length > 0) {
+        const { urls: got, failed } = await signGenerationUrls(wanted.map((g) => g.id));
+        const keys = Object.keys(got);
+        if (keys.length > 0) {
           videoUrlsRef.current = { ...videoUrlsRef.current, ...got };
+          for (const id of keys) videoSignedAtRef.current[id] = Date.now();
           setVideoUrls(videoUrlsRef.current);
         }
         setVideoUrlFails((f) => {
@@ -2078,7 +2089,7 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
                           <button className="gen-button" onClick={() => { setApPrefill?.({ prompt: g.prompt, modelKey: g.model }); setPage("autopsy"); }}>
                             Why didn't this work?
                           </button>
-                          <TakeDebugger generation={g} videoUrl={videoUrls[g.id]} notify={notify} setGenPrefill={setGenPrefill} setPage={setPage} />
+                          <TakeDebugger generation={g} notify={notify} setGenPrefill={setGenPrefill} setPage={setPage} />
                           <PromoteDraft generation={g} setGenPrefill={setGenPrefill} setPage={setPage} />
                           <button className="gen-button" onClick={() => openChain(g)}>
                             {chainFor === g.id ? "Close frame picker" : "Use a frame \u2192"}

@@ -421,8 +421,8 @@ export default function TakesPage({ user, onSignInClick, setPage, notify, active
                           )}
                           {isSel && g.status === "complete" && (
                             <div style={{ marginTop: 10 }}>
-                              <StateReview generation={g} videoUrl={urls[g.id]} notify={notify} />
-                              <EndFrame generation={g} videoUrl={urls[g.id]} notify={notify} setGenPrefill={setGenPrefill} setPage={setPage} />
+                              <StateReview generation={g} notify={notify} />
+                              <EndFrame generation={g} notify={notify} setGenPrefill={setGenPrefill} setPage={setPage} />
                             </div>
                           )}
                           <textarea

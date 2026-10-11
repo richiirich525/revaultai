@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./lib/supabase.js";
+import { freshGenerationUrl } from "./lib/videoUrls.js";
 
 /*
   StateReview — RevaultAI
@@ -19,7 +20,7 @@ const styles = `
   .sr-done { border-color: var(--border); background: var(--bg3); }
 `;
 
-export default function StateReview({ generation, videoUrl, notify }) {
+export default function StateReview({ generation, notify }) {
   const [state, setState] = useState(null);
   const [busy, setBusy] = useState(false);
   const [checked, setChecked] = useState(false);
@@ -64,10 +65,11 @@ export default function StateReview({ generation, videoUrl, notify }) {
   }
 
   async function run() {
-    if (!videoUrl) { notify?.("Still preparing playback — try again in a moment."); return; }
     setBusy(true);
     try {
-      const frames = await closingFrames(videoUrl);
+      // Signed at the moment of the click. A link the page signed earlier may
+      // already have expired, which used to read as a broken feature.
+      const frames = await closingFrames(await freshGenerationUrl(generation.id));
       const { data: sess } = await supabase.auth.getSession();
       const r = await fetch("/api/observe-state", {
         method: "POST",

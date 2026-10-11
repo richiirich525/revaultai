@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "./lib/supabase.js";
+import { freshGenerationUrl } from "./lib/videoUrls.js";
 
 /*
   EndFrame — RevaultAI
@@ -16,7 +17,7 @@ const btn = {
   padding: "6px 12px", ...mono, fontSize: 10, letterSpacing: "0.08em", cursor: "pointer",
 };
 
-export default function EndFrame({ generation, videoUrl, notify, setGenPrefill, setPage }) {
+export default function EndFrame({ generation, notify, setGenPrefill, setPage }) {
   const [saved, setSaved] = useState(generation.end_frame_url ?? null);
   const [savedAt, setSavedAt] = useState(generation.end_frame_at ?? null);
   const [open, setOpen] = useState(false);
@@ -24,6 +25,23 @@ export default function EndFrame({ generation, videoUrl, notify, setGenPrefill, 
   const [t, setT] = useState(null);
   const [duration, setDuration] = useState(0);
   const video = useRef(null);
+  // The panel's player gets its own freshly signed link: the one the page
+  // signed when the card scrolled into view may already be dead.
+  const [liveUrl, setLiveUrl] = useState(null);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    let dropped = false;
+    (async () => {
+      try {
+        const fresh = await freshGenerationUrl(generation.id);
+        if (!dropped) setLiveUrl(fresh);
+      } catch (err) {
+        if (!dropped) notify?.(err.message || "Couldn't prepare the clip.");
+      }
+    })();
+    return () => { dropped = true; };
+  }, [open, generation.id, notify]);
 
   // Park the player near the end, where the closing frame lives.
   useEffect(() => {
@@ -39,7 +57,8 @@ export default function EndFrame({ generation, videoUrl, notify, setGenPrefill, 
     };
     v.addEventListener("loadedmetadata", onMeta, { once: true });
     if (v.readyState >= 1) onMeta();
-  }, [open]);
+    return () => v.removeEventListener("loadedmetadata", onMeta);
+  }, [open, liveUrl]);
 
   function scrub(value) {
     setT(value);
@@ -95,8 +114,6 @@ export default function EndFrame({ generation, videoUrl, notify, setGenPrefill, 
     notify?.("Loaded as the starting frame for your next shot.");
   }
 
-  if (!videoUrl) return null;
-
   if (saved && !open) {
     return (
       <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginTop: 10 }}>
@@ -119,8 +136,12 @@ export default function EndFrame({ generation, videoUrl, notify, setGenPrefill, 
       <div style={{ ...mono, fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--accent)", marginBottom: 8 }}>
         Closing frame
       </div>
-      <video ref={video} src={videoUrl} crossOrigin="anonymous" playsInline preload="auto" muted
-        style={{ width: "100%", maxWidth: 420, borderRadius: 4, background: "#000", display: "block" }} />
+      {liveUrl ? (
+        <video ref={video} src={liveUrl} crossOrigin="anonymous" playsInline preload="auto" muted
+          style={{ width: "100%", maxWidth: 420, borderRadius: 4, background: "#000", display: "block" }} />
+      ) : (
+        <div style={{ ...mono, fontSize: 10, color: "var(--muted)", padding: "28px 0" }}>Opening the clip…</div>
+      )}
       <div style={{ ...mono, fontSize: 10, color: "var(--muted)", lineHeight: 1.7, margin: "10px 0 6px" }}>
         Scrub the last seconds and stop where the shot should end. The final instant is often where a face or a hand has drifted furthest, so it's rarely the best choice.
       </div>
