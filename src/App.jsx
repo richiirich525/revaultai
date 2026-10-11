@@ -3141,22 +3141,68 @@ function LegalPage({ setPage, page }) {
     },
     privacy: {
       title: "Privacy Policy",
-      updated: "May 2025",
+      updated: "October 2026",
       body: `
-        <h2>1. Information We Collect</h2>
-        <p>We collect your email address when you create an account. We also collect content you submit, profile information you provide, and usage data through standard server logs.</p>
-        <h2>2. How We Use Your Information</h2>
-        <p>We use your information to operate RevaultAI, process payments, send approval notifications, and improve the platform. We do not sell your personal data to third parties.</p>
-        <h2>3. Third-Party Services</h2>
-        <p>RevaultAI uses the following third-party services: Supabase (database and auth), Cloudflare R2 (video storage), Mux (video processing), Stripe (payments), and Resend (email). Each has their own privacy policy.</p>
-        <h2>4. Cookies</h2>
-        <p>We use cookies and local storage to maintain your session. No advertising or tracking cookies are used.</p>
-        <h2>5. Data Retention</h2>
-        <p>Your account data is retained until you request deletion. You may contact us at any time to request deletion of your account and associated data.</p>
-        <h2>6. Security</h2>
-        <p>We use industry-standard security practices including encrypted connections and hashed credentials. No system is perfectly secure and we cannot guarantee absolute security.</p>
-        <h2>7. Contact</h2>
-        <p>For privacy questions or data deletion requests, contact us at rich@revaultai.com.</p>
+        <h2>1. Who We Are</h2>
+        <p>RevaultAI is operated by RevaultAI LLC, Los Angeles, California. This policy explains what we collect, why, who we share it with, and how to get rid of it. If anything here is unclear, write to rich@revaultai.com and ask.</p>
+        <h2>2. What We Collect</h2>
+        <p><strong>Account information.</strong> Your email address, and a password that is hashed before it is stored. We never see your password in readable form.</p>
+        <p><strong>Profile information.</strong> Your display name, handle, bio, avatar and any links you choose to add. All of this is public by design, because it appears on your creator page.</p>
+        <p><strong>Submissions.</strong> The films, images and production notes you submit, along with the title, credits and model information you supply.</p>
+        <p><strong>Creation inputs.</strong> When you use the creation tools, we process what you give them: prompts, scene text, reference images, blocking and camera settings, and photographs you upload to generate a set.</p>
+        <p><strong>Purchase and credit records.</strong> What you bought or sold, when, and for how much. Card details are handled entirely by Stripe and never reach our servers.</p>
+        <p><strong>Usage events.</strong> A small number of explicitly recorded product events, such as a sign-up, a submission, a purchase or a generation. We do not use automatic click or scroll capture, we do not record pageviews, and visitors who are not signed in are not given a profile.</p>
+        <p><strong>Server logs.</strong> Standard request logs kept by our hosting provider, including IP address, user agent and timestamps. These are used for security, abuse prevention and debugging.</p>
+        <h2>3. What We Do With It</h2>
+        <p>We use your information to run the platform: to sign you in, show your work, review submissions, run the creation tools, process payments and payouts, send the notifications you would expect, and diagnose problems. We also use aggregate usage data to decide what to build next.</p>
+        <h2>4. What We Do Not Do</h2>
+        <ul>
+          <li>We do not sell your personal data, and we never have.</li>
+          <li>We do not run advertising on RevaultAI and we do not use advertising or cross-site tracking cookies.</li>
+          <li>We do not train AI models. RevaultAI builds no models of its own and does not submit your films, prompts or images to anyone for training purposes.</li>
+          <li>We do not share your email address with other users. Creator contact happens through the platform or through links you publish yourself.</li>
+        </ul>
+        <h2>5. AI Processing</h2>
+        <p>The creation tools work by sending your inputs to third-party AI providers on your behalf. This is the part of the platform where your content leaves our systems, so it is worth being specific about it.</p>
+        <ul>
+          <li><strong>fal.ai</strong> runs the video and image models. Your prompts, reference images and generation settings are sent there and the output is returned to us.</li>
+          <li><strong>Anthropic</strong> powers the text tools, including scene breakdown, prompt building, shot direction and continuity checks. Your scene text and prompts are sent there.</li>
+          <li><strong>World Labs</strong> generates 3D sets. Photographs or descriptions you supply for a set are passed straight through to World Labs and are not stored by RevaultAI.</li>
+        </ul>
+        <p>Each of these providers handles data under its own terms and privacy policy, and their handling of it is outside our control. If you do not want a particular image, photograph or piece of writing processed by a third party, do not put it into the creation tools.</p>
+        <h2>6. Third-Party Services</h2>
+        <p>RevaultAI relies on the following providers. Each has its own privacy policy.</p>
+        <ul>
+          <li><strong>Supabase</strong> — database and authentication</li>
+          <li><strong>Cloudflare R2</strong> — file and video storage</li>
+          <li><strong>Mux</strong> — video processing and streaming</li>
+          <li><strong>Stripe</strong> — payments and creator payouts</li>
+          <li><strong>Resend</strong> — transactional email</li>
+          <li><strong>PostHog</strong> — product analytics</li>
+          <li><strong>Vercel</strong> — hosting and server logs</li>
+          <li><strong>fal.ai, Anthropic and World Labs</strong> — AI processing, as described in section 5</li>
+        </ul>
+        <h2>7. Payments</h2>
+        <p>All payments are processed by Stripe. RevaultAI never receives or stores your card number, expiry date or security code. We keep a record of the transaction itself: what was bought, when, and the amount. Creator payouts are also handled through Stripe, which collects the tax and identity information it is legally required to collect before paying anyone.</p>
+        <h2>8. Cookies and Local Storage</h2>
+        <p>We use cookies and browser local storage to keep you signed in and to remember interface preferences. We use no advertising cookies and no cross-site trackers. Analytics are limited to the explicit product events described in section 2. Clearing your browser storage will sign you out but will not delete your account.</p>
+        <h2>9. How Long We Keep Things</h2>
+        <p>Your account data is kept until you delete your account. Published films remain in the gallery until you remove them or delete your account. Transaction records are kept as long as we are required to keep them for tax and accounting purposes, even after an account is closed. Server logs are kept on a short rolling window by our hosting provider.</p>
+        <h2>10. Deleting Your Account</h2>
+        <p>You can delete your account yourself from your settings page. Doing so removes your profile, your submissions, your follows, your purchase history, your stored video and image files, and your login. It cannot be undone.</p>
+        <p>There is one exception. If you have published premium work that someone has already paid for, automatic deletion is blocked, because buyers keep permanent access to what they bought. Write to rich@revaultai.com and we will work through it with you.</p>
+        <h2>11. Your Rights</h2>
+        <p>Wherever you live, you can ask us to show you what we hold about you, correct it, or delete it. Write to rich@revaultai.com and we will respond within thirty days. If you are in California, the EEA or the United Kingdom, you have additional statutory rights, including the right to a portable copy of your data and the right to complain to a supervisory authority. We will honor a valid request regardless of where you are.</p>
+        <h2>12. Age</h2>
+        <p>RevaultAI is for adults. You must be at least 18 to create an account, submit work or make a purchase. We do not knowingly collect information from anyone under 18, and we delete any account we discover belongs to a minor.</p>
+        <h2>13. Security</h2>
+        <p>Accounts are protected by hashed credentials and all traffic is encrypted in transit. Uploaded files are held in private storage and served only through short-lived signed links, so a file URL cannot be shared or guessed into permanent access. Administrative keys are held on the server and are never exposed to the browser. No system is perfectly secure, and we do not claim otherwise.</p>
+        <h2>14. Where Your Data Is Held</h2>
+        <p>RevaultAI operates from the United States, and our providers may store or process data in the United States and in other countries. By using the platform you understand that your information will be handled in the United States.</p>
+        <h2>15. Changes</h2>
+        <p>We will update this policy as the platform changes. The date at the top always reflects the current version. If a change materially affects how we handle your information, we will tell you by email.</p>
+        <h2>16. Contact</h2>
+        <p>For privacy questions, data requests or deletion help, write to rich@revaultai.com. For copyright notices, use the registered agent address in our <a href="/dmca" style="color: var(--accent);">DMCA Policy</a>.</p>
       `
     },
     refunds: {

@@ -4,6 +4,158 @@
 
 export const POSTS = [
   {
+    slug: "ai-video-dialogue-and-sound",
+    title: "How to Get Usable Dialogue and Sound Out of AI Video",
+    seoTitle: "AI Video With Sound: Getting Dialogue and Audio That Works",
+    description:
+      "Which AI video models generate audio, how to write dialogue that survives generation, why lip sync fails, and when to mute it and build sound in the edit.",
+    date: "2026-10-10",
+    author: "Richard Garland",
+    category: "Guides",
+    readingTime: "9 min",
+    faq: [
+      ["Which AI video models generate audio?", "Seedance 2.5, Veo 3.1 and Kling 3.0 all generate synchronized sound in the same pass as the picture, including spoken dialogue with lip sync. Wan 2.6 does not generate audio, but it accepts an audio file as an input and will animate to it. Older tiers are picture only, so if a generation came back silent, check whether audio was enabled before you conclude the model can't do it."],
+      ["Why is the lip sync wrong in my AI video?", "Almost always one of four things: the face is too small or too turned away for the model to animate a mouth, the line is too long for the duration you asked for, two people speak at once, or the prompt never said which character was talking. Put the speaker in a medium shot or closer, cut the line to something sayable in the seconds you have, and name the speaker explicitly."],
+      ["Should I use the model's audio or add sound in the edit?", "Generate audio when the sound is physically tied to the picture — footsteps, a door, impacts — and for a single character speaking one short line. Build it in the edit for music, for anything that has to match across a cut, and for dialogue where the performance matters. Model audio is a sketching tool; a finished film still needs a sound pass."],
+    ],
+    content: `
+<p>Picture got solved first. That's the honest shape of AI filmmaking in 2026: the shots look good, and the films still sound like demos.</p>
+
+<p>Sound is where AI film most reliably gives itself away, and it gives itself away in two opposite directions. Half of what gets published has no sound design at all — a clip with whatever the model invented, or nothing. The other half has too much: music the model decided on, a room tone that changes at every cut, and dialogue that arrives half a syllable behind the mouth.</p>
+
+<p>Native audio made this harder before it made it easier. When models were silent, you knew sound was your job. Now the model hands you something, and something is a much more dangerous starting point than nothing.</p>
+
+<h2>Which models actually generate sound</h2>
+
+<p>This changes often enough that it's worth checking rather than remembering, but as of now:</p>
+
+<p><strong>Seedance 2.5</strong> generates audio by default — dialogue, effects and ambience, in the same pass as the picture. It responds well to being told what the soundtrack should contain, which is the whole trick and I'll come back to it.</p>
+
+<p><strong>Veo 3.1</strong> generates dialogue with lip sync across multiple languages, plus ambience and music, and audio can be switched off per request. For one character delivering one line, nothing else gets you there in a single step.</p>
+
+<p><strong>Kling 3.0</strong> generates dialogue, effects and ambience together, and it can tie a voice to a specific character through a reference — a short clip of that performer, or a still plus an audio sample of them speaking. It handles English, Chinese, Japanese, Korean and Spanish, and it will let two characters speak different languages in the same scene.</p>
+
+<p><strong>Wan 2.6</strong> does not generate audio. It takes audio <em>in</em> — hand it a track and it will animate to it. That's a different tool for a different job, and a genuinely useful one if you already have a recorded line.</p>
+
+<p>If a generation came back silent, check the model and the setting before you blame the model. A silent clip from a model that does audio usually means audio was never switched on.</p>
+
+<h2>Why lip sync fails</h2>
+
+<p>Bad lip sync looks like a model limitation. It's usually a prompt problem, and there are only four causes worth knowing.</p>
+
+<p><strong>The face isn't readable.</strong> A model can't animate a mouth it can barely see. In a wide shot, or a profile, or anything where the head is a small part of frame, you'll get mouth movement that approximates speech rather than matching it. Dialogue wants a medium shot or tighter, with the face reasonably square to camera. This is the single biggest cause and the easiest to fix.</p>
+
+<p><strong>The line is too long.</strong> Eight seconds of video will not hold twelve seconds of dialogue. The model doesn't refuse — it compresses, and compressed speech is what rushed, slightly-wrong lip sync actually is. Say the line out loud and time it. If it doesn't fit with room to breathe at both ends, cut it.</p>
+
+<p><strong>Two people talk at once.</strong> Overlapping dialogue is realistic and models are bad at it. You get two mouths moving through both lines. Give each character their own window, or their own shot.</p>
+
+<p><strong>The model doesn't know who's speaking.</strong> Put two people in frame and a line in quotes with no attribution, and the model picks. Sometimes it picks both. Name the speaker, and say that the other person stays silent.</p>
+
+<h2>How to write dialogue that survives generation</h2>
+
+<p>Dialogue in an AI prompt is not the same as dialogue in a screenplay. A screenplay tells an actor what to say. A prompt has to tell the model who speaks, when, with what face, and what everyone else is doing while it happens.</p>
+
+<p>The pattern that works:</p>
+
+<ul>
+  <li><strong>Put the line in straight quotation marks.</strong> This is how every model that does dialogue identifies spoken text. Not italics, not a "she says that" paraphrase — the actual words, in quotes.</li>
+  <li><strong>Name the speaker immediately before the line.</strong> By description if the character has no name: "the older man in the gray coat says, '...'"</li>
+  <li><strong>Give it a position in time.</strong> Seedance in particular responds to a timeline. Where in the clip the line lands is information the model can use.</li>
+  <li><strong>Block the action around the line.</strong> Silent before, speaking, silent after. A character who talks for the entire duration reads as a talking head; a character who does something, then speaks, then holds, reads as a performance.</li>
+  <li><strong>Say who stays silent.</strong> Explicitly. "The woman opposite does not speak; she holds his eye."</li>
+  <li><strong>One delivery note, not five.</strong> "Quietly" works. "Quietly, bitterly, with a trace of old affection and a note of warning" produces a model trying to average four emotions.</li>
+  <li><strong>Describe the face.</strong> Lip sync rides on facial performance. A described expression gives the model something to animate toward.</li>
+  <li><strong>Break long sentences into short ones.</strong> Both in the dialogue and in the prompt around it.</li>
+</ul>
+
+<div class="example">
+Medium shot, two people at a kitchen table, late afternoon window light from the left.<br><br>
+0 to 2s: the woman in the green cardigan sets down a mug, not looking up.<br>
+2 to 5s: she looks directly at him and says, quietly, "You told me it was finished." Her jaw is tight; she does not blink.<br>
+5 to 8s: she holds the look. The man opposite does not speak and does not move.<br><br>
+Audio: clean lip-synced speech, close and dry. Room tone of a quiet kitchen, a refrigerator hum, faint traffic outside. No music.
+</div>
+
+<p>That's longer than most people's prompts and it is doing six separate jobs. It names the speaker, it times the line, it blocks silence on both sides, it holds the other character still, it gives the face something to do, and it tells the model exactly what the soundtrack contains — including what it must not contain.</p>
+
+<h2>Effects and ambience are two different lists</h2>
+
+<p>The most useful thing I've learned about prompting audio: separate the sounds that are caused by something on screen from the sounds that are just the room.</p>
+
+<p><strong>Effects</strong> are events. Name them and place them where the picture causes them: the mug touching the table, a chair scraping, a door, a footstep on gravel, a glass breaking. A sound named at the moment of its cause lands in sync. A sound named vaguely lands wherever the model feels like.</p>
+
+<p><strong>Ambience</strong> is continuous and has no visible cause. Room tone, rain, traffic, the hum of a store, wind in trees. List it separately and briefly.</p>
+
+<p>Then close the prompt with an explicit audio line, and use it to rule things out as much as to ask for them. <strong>"No music"</strong> is the most valuable two words you can put in an audio prompt. Left to itself, a model will frequently score your shot, and it will score every shot differently, which brings us to the real problem.</p>
+
+<h2>The problem nobody warns you about: audio continuity</h2>
+
+<p>Every generation invents its own room.</p>
+
+<p>Generate three shots of the same conversation and you get three different room tones, three different ambience beds, three different ideas about whether there's music, and three different levels. Cut them together and the audio lurches at every edit — which is worse than silence, because a viewer who can't articulate why will nonetheless feel that something is wrong.</p>
+
+<p>This is the same class of problem as a location that changes between shots, and it has the same shape of solution: decide once, centrally, rather than hoping each generation agrees with the last. There are two ways to do it.</p>
+
+<p><strong>Mute everything and build one bed.</strong> Generate picture only where you can, strip the audio where you can't, and lay a single continuous ambience track under the whole scene in your edit. One room tone across all three shots, and the scene sounds like one place. This is what a real sound pass is, and it's not hard — one ambience loop and one pass of levels will do more for your film than any amount of prompt tuning.</p>
+
+<p><strong>Or generate audio only on the shots that need it.</strong> The shot with the line in it, the shot where the door slams. Everything else runs on your bed. You get the model's sync on the moments where sync matters, and consistency everywhere else.</p>
+
+<p>What doesn't work is taking whatever each generation gives you and cutting it together. That is the sound of an AI film, and it's recognizable across a room.</p>
+
+<h2>When to generate and when to cut it in later</h2>
+
+<p>A rule you can actually apply:</p>
+
+<p><strong>Generate it</strong> when the sound is physically tied to the picture and would be a pain to sync by hand — footsteps matched to a walk, an impact, a mechanism, an object set down. And for a single character speaking a short line, where the whole value is getting the mouth and the voice to agree in one step.</p>
+
+<p><strong>Cut it in later</strong> for music, always. For anything that has to be the same across a cut. For anything where the performance is the point and you have a specific delivery in mind. And for anything you'll want to adjust later, because audio baked into a generation can't be moved, ducked or replaced without regenerating the shot.</p>
+
+<h2>Fixing a line without regenerating the shot</h2>
+
+<p>This is the part that changes the economics, and most people don't know it's available.</p>
+
+<p>If the picture is right and the line is wrong — wrong delivery, wrong words, wrong language — you don't have to roll the dice on the shot again. Lip sync as a <em>post</em> tool takes a finished clip and an audio track and re-times the mouth to match, carrying the performance from the recording. Record the line yourself, or use a voice you've chosen, and apply it to the shot you already have.</p>
+
+<p>Which means you can stop generating dialogue hoping for a performance. Generate for the picture. Perform the line separately, where you have complete control over it, and attach it afterward. It's also how you dub a film into another language without reshooting a frame.</p>
+
+<h2>Why silence beats half-right audio</h2>
+
+<p>If you take one thing from this: a clip with no sound reads as unfinished. A clip with wrong sound reads as cheap. Those are not the same penalty, and the second one is much worse.</p>
+
+<p>Wrong sound is music that doesn't match the scene, a room tone that shifts at the cut, dialogue a frame behind the mouth, footsteps that don't land on the feet. Each of those tells a viewer that nobody was paying attention — and once they've registered that, they watch the rest of your film looking for the seams.</p>
+
+<p>Mute is a legitimate creative choice. Mute plus one considered ambience track is a better film than anything the model will hand you unasked. Sound design is still the cheapest substantial upgrade available to an AI film, and it's still the one most often skipped.</p>
+
+<h2>A working order</h2>
+
+<div class="flow">
+  <span>1. Decide which shots have sound</span>
+  <span>2. Dialogue in quotes, speaker named, timed</span>
+  <span>3. Effects on their causes, ambience separate</span>
+  <span>4. "No music" unless you want it</span>
+  <span>5. Generate picture-only elsewhere</span>
+  <span>6. One ambience bed in the edit</span>
+  <span>7. Lip sync to fix lines, don't regenerate</span>
+  <span>8. Final pass on levels</span>
+</div>
+
+<p>None of that is a trick. It's the order a sound editor would work in, applied to a camera that happens to be a model. The tools changed; the craft didn't.</p>
+
+<div class="cta-inline">
+  <strong>Route each shot to the model that suits it</strong>
+  <p>Seedance, Veo, Kling and Wan behind one credit balance, with lip sync, extension and upscaling in the same place — so you can generate audio where it helps, mute it where it doesn't, and fix a line without regenerating the shot. Pay per second, no subscription.</p>
+  <a class="cta-btn" href="/ai-video-generator">See how it works</a>
+  <a class="cta-btn cta-btn-ghost" href="/blog/edit-ai-video-clips-premiere-resolve">Then take it into an edit</a>
+</div>
+
+<p>If audio continuity is biting you, picture continuity probably is too — <a href="/blog/same-location-across-ai-video-shots">keeping the same location across shots</a> covers the other half of the same problem. And if you're writing the prompts that carry all this, <a href="/blog/how-to-write-ai-video-prompts">how to write AI video prompts</a> is the groundwork.</p>
+
+<h2>Where the finished films go</h2>
+
+<p>The reason I care about sound design is that it's the clearest signal of whether someone finished a film or published a generation. RevaultAI is a curated gallery for AI film — every submission reviewed, nothing buried in a feed, and creators keep 80% of net revenue on anything they sell. We're selecting a founding cohort of filmmakers now. If you're making work you're proud of, <a href="/founding-creators">apply as a founding creator</a>. Every application gets a personal reply either way.</p>
+`,
+  },
+  {
     slug: "block-a-scene-before-you-generate",
     title: "How to Block a Scene Before You Generate It",
     seoTitle: "How to Plan AI Video Shots: Block the Scene Before You Generate",
