@@ -23,7 +23,12 @@ import { FFmpeg } from "@ffmpeg/ffmpeg";
 // where Vite resolves lazily, and then fails the production build outright.
 import coreURL from "@ffmpeg/core?url";
 import wasmURL from "@ffmpeg/core/wasm?url";
-import classWorkerURL from "@ffmpeg/ffmpeg/worker?url";
+// ?worker&url, not ?url. A plain ?url copies worker.js verbatim, and that
+// file imports ./const.js and ./errors.js — which are never emitted, so the
+// worker 404s on load. @ffmpeg/ffmpeg attaches no error handler to its worker,
+// so load() then hangs forever instead of rejecting. ?worker&url bundles the
+// worker with its dependencies and hands back a URL.
+import classWorkerURL from "@ffmpeg/ffmpeg/worker?worker&url";
 
 const r3 = (n) => Math.round(n * 1000) / 1000;
 
