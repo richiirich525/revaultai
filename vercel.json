@@ -25,7 +25,7 @@
       "destination": "/index.html"
     },
     {
-      "source": "/(settings|admin|set-password|email-confirmed|purchase-success|vault|takes|projects|specs)",
+      "source": "/(settings|admin|set-password|email-confirmed|purchase-success|vault|takes|projects|specs|finish)",
       "destination": "/index.html"
     }
   ]
