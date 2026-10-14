@@ -68,7 +68,7 @@ export const JOBS = [
       { name: "Continuity Check", page: "continuity-check", access: "free",
         give: "A set of shot prompts", get: "Drift and crossed 180° lines, quoted exactly",
         blurb: "A script supervisor's read: characters described two ways, wardrobe that drifts, unmotivated lighting, reverse angles that break screen direction. It flags and quotes — it never rewrites." },
-      { name: "Script Supervisor", page: "projects", access: "account", inMenu: false, where: "Built into Projects",
+      { name: "Script Supervisor", page: "lot", access: "account", inMenu: true, where: "On the Lot",
         give: "A project with shots and takes", get: "Every contradiction across the project, including the story",
         blurb: "Reads the whole project at once: a shot starting where the last one didn't end, a declared change no later shot shows, an unresolved flaw in a take you're using. Then, on request, a story read — a character acting on something they haven't learned yet, time moving the wrong way." },
       { name: "Set Memory", page: "takes", access: "account", inMenu: false, where: "Built into Takes",

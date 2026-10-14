@@ -296,6 +296,7 @@ export default function CoveragePage({ setPage, user, onSignInClick, setGenPrefi
             <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
               <button className="btn-primary" onClick={() => { setCcPrefill?.({ shots: result.coverage.map((c) => c.prompt).filter(Boolean), lockedIds }); setPage("continuity-check"); }}>Check continuity</button>
               <button className="btn-ghost" onClick={() => setPage("shot-director")}>Direct one of these shots</button>
+              <button className="btn-ghost" onClick={() => setPage("lot")}>See it on the lot</button>
             </div>
           </div>
         </div>

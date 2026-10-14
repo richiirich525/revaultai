@@ -8,6 +8,21 @@
 */
 
 export const PAGE_SUMMARIES = {
+  lot: {
+    sections: [
+      ["What the lot is", "A film studio was never one building. It was a lot: a stage where scenes were blocked before anyone rolled, a first AD who knew which setups the cutting room would need, a script supervisor reading every shot against every other shot. Generation solved the camera. The Lot Supervisor is the departments around it."],
+      ["Staging and screen direction", "A single camera is always correct on its own. The error only exists between two: cut from one side of the line of action to the other and your performers swap places on screen. The lot reads a whole scene at once — every setup on one overhead plan, the line of action drawn, and any camera that crosses it marked, with the performer whose screen position flips named in the finding."],
+      ["Coverage an editor can cut", "Master, singles, over-the-shoulders, reactions, inserts — and an honest read on what is missing and what that costs in the cutting room. Reverse pairs are checked too: two halves of the same conversation shot on very different focal lengths will not cut together, however well each one is framed."],
+      ["Continuity across the whole film", "Beyond one scene, the lot reads a project: state that fails to carry from one shot into the next, a declared wardrobe or prop change that no later shot reflects, and the story problems a visual check cannot catch — a character acting on something they have not learned yet."],
+    ],
+    links: [
+      ["/rehearsal", "Rehearsal Studio — block a scene over time"],
+      ["/blocking", "Performance & Blocking — staging relative to camera"],
+      ["/coverage", "Coverage Planner — the setups an editor needs"],
+      ["/continuity-check", "Continuity Check — a script supervisor's read"],
+      ["/tools", "All the filmmaking tools"],
+    ],
+  },
   explore: {
     sections: [
       ["What's in the gallery", "Every AI film, short film, animation and image published to RevaultAI, in one browsable gallery. Films stream free and in full — no paywall, no locked preview, no clip that cuts off before the end. Each one is published alongside a production note explaining how it was made, in the creator's own words."],

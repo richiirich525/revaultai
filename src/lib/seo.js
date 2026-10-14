@@ -96,6 +96,10 @@ export const PAGES = {
     title: "AI Filmmaking Tools — Free Shot Lists & Prompts | RevaultAI",
     description: "Twenty-two tools for planning, writing and checking an AI film. Scene breakdowns, coverage, blocking, continuity checks and more — most free, no account.",
   },
+  lot: {
+    title: "Lot Supervisor — Staging, Coverage, Continuity | RevaultAI",
+    description: "The departments a film needs beyond the camera: block a scene, plan the coverage an editor needs, and catch a reverse that crosses the 180-degree line.",
+  },
   rehearsal: {
     title: "Rehearsal Studio — Blocking Before You Generate | RevaultAI",
     description: "Block a scene over time: move performers and cameras across a timeline, compare angles on one performance, and see shot size and eyelines update live.",

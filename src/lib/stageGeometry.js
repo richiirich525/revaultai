@@ -272,36 +272,48 @@ function slotLabel(slot, i) {
   return slot.slug || `Setup ${i + 1}`;
 }
 
-// One plan — one scene's worth of setups.
-function auditPlan(slots) {
-  const out = [];
-  const setups = slots
+// Does this setup read as the shot that establishes the geography?
+const isMaster = (s) =>
+  /wide|master|establish/i.test(`${s.row.shot_size || ""} ${s.row.slug || ""}`);
+
+/*
+  Everything the written findings and the drawn plan have to agree on: which
+  setups carry coordinates, where the axis runs, which side each camera sits
+  on, which side is the reference, and therefore which setups cross.
+
+  Exported so the overhead plan and the audit read the same geometry. Two
+  copies of this logic would drift, and a plan that disagreed with its own
+  findings would be worse than no plan.
+*/
+export function planGeometry(slots = []) {
+  const setups = (slots ?? [])
     .filter(isGeometric)
     .sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0))
     .map((s, i) => ({ row: s, name: slotLabel(s, i), camera: cameraOf(s), actors: actorsOf(s) }));
 
-  if (setups.length < 2) return out;
-
-  const planName = slots[0]?.plan_label || "this plan";
+  const planName = slots?.[0]?.plan_label || "this plan";
 
   // The axis comes from the setup that recorded the most actors — later setups
   // may have framed only one of them.
   const withActors = setups.filter((s) => s.actors.length >= 2);
-  const reference = withActors.sort((a, b) => b.actors.length - a.actors.length)[0];
+  const reference = [...withActors].sort((a, b) => b.actors.length - a.actors.length)[0] ?? null;
   const axis = reference ? axisFor(reference.actors) : null;
 
-  // --- Screen direction across setups ------------------------------------
-  if (axis) {
-    const sided = setups.map((s) => ({ ...s, side: sideOfAxis(axis, s.camera) }));
-    const left = sided.filter((s) => s.side === 1);
-    const right = sided.filter((s) => s.side === -1);
+  for (const s of setups) s.side = axis ? sideOfAxis(axis, s.camera) : 0;
 
+  let anchor = null;
+  let crossing = [];
+  let even = false;
+
+  if (axis) {
+    const left = setups.filter((s) => s.side === 1);
+    const right = setups.filter((s) => s.side === -1);
     if (left.length && right.length) {
       // Which side is the reference? A master establishes the geography of the
       // scene, so everything else conforms to it. Failing that, the side with
       // more setups. Failing that, the side that was blocked first.
       const score = (group) => [
-        group.some((s) => /wide|master|establish/i.test(`${s.row.shot_size || ""} ${s.row.slug || ""}`)) ? 1 : 0,
+        group.some(isMaster) ? 1 : 0,
         group.length,
         -Math.min(...group.map((s) => s.row.sort ?? 0)),
       ];
@@ -310,11 +322,37 @@ function auditPlan(slots) {
         : sa[1] !== sb[1] ? sa[1] > sb[1]
         : sa[2] >= sb[2];
       const majority = leftAnchors ? left : right;
-      const minority = leftAnchors ? right : left;
-      const even = majority.length === minority.length;
-      const anchor = majority.find((s) => /wide|master|establish/i.test(`${s.row.shot_size || ""} ${s.row.slug || ""}`)) ?? majority[0];
+      crossing = leftAnchors ? right : left;
+      even = majority.length === crossing.length;
+      anchor = majority.find(isMaster) ?? majority[0];
+    }
+  }
 
-      for (const s of minority) {
+  return {
+    setups,
+    planName,
+    reference,
+    axis,
+    anchor,
+    crossing,
+    crossingIds: new Set(crossing.map((s) => s.row.id)),
+    even,
+  };
+}
+
+// One plan — one scene's worth of setups.
+function auditPlan(slots) {
+  const out = [];
+  const { setups, planName, reference, axis, anchor, crossing, even } = planGeometry(slots);
+
+  if (setups.length < 2) return out;
+
+  // --- Screen direction across setups ------------------------------------
+  if (axis && crossing.length) {
+    {
+      const holding = setups.length - crossing.length;
+
+      for (const s of crossing) {
         // Name the actor whose screen side actually flips — that is the thing
         // an audience sees, rather than the abstraction.
         const flips = [];
@@ -333,7 +371,7 @@ function auditPlan(slots) {
             `The axis runs between ${axis.a.name} and ${axis.b.name}. ` +
             (even
               ? `This setup and "${anchor.name}" sit on opposite sides of it. `
-              : `${majority.length} of the ${setups.length} setups sit on one side of it; this one sits on the other. `) +
+              : `${holding} of the ${setups.length} setups sit on one side of it; this one sits on the other. `) +
             (flips.length ? flips.join(". ") + "." : "Cutting between them reverses screen direction."),
           fix: `Move the camera to the same side as "${anchor.name}", reframe it as a neutral shot straight down the axis, or earn the cross with a move the audience can follow.`,
           action: "rehearsal",
