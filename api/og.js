@@ -17,11 +17,6 @@ import { PAGES } from "../src/lib/seo.js";
   Usage:  /api/og?page=tools
 */
 
-// Every other route here is a Node function taking (req, res). This one
-// returns a web Response, which is the Edge runtime's signature — declared
-// explicitly rather than left for the platform to infer.
-export const config = { runtime: "edge" };
-
 const h = React.createElement;
 
 const BG = "#0E0F14";
@@ -37,10 +32,14 @@ const clamp = (s, n) => {
   return t.length > n ? t.slice(0, n - 1).trimEnd() + "…" : t;
 };
 
-export default function handler(req) {
+export default async function handler(req, res) {
   try {
-    const url = new URL(req.url, "https://www.revaultai.com");
-    const slug = (url.searchParams.get("page") || "home").toLowerCase();
+    // Vercel's Node runtime parses the query for us; fall back to the raw
+    // URL so the route also works when called directly.
+    const fromQuery = req.query && typeof req.query.page === "string" ? req.query.page : null;
+    const slug = (fromQuery
+      ?? new URL(req.url, "https://www.revaultai.com").searchParams.get("page")
+      ?? "home").toLowerCase();
     const meta = PAGES[slug];
 
     const title = meta ? stripBrand(meta.title) : "RevaultAI";
@@ -48,7 +47,7 @@ export default function handler(req) {
       ? clamp(meta.description, 150)
       : "A curated gallery for AI-generated film.";
 
-    return new ImageResponse(
+    const image = new ImageResponse(
       h("div", {
         style: {
           width: "100%", height: "100%", display: "flex", flexDirection: "column",
@@ -94,17 +93,16 @@ export default function handler(req) {
           h("div", { key: "tag", style: { display: "flex", color: MUTED } }, "A gallery, not a feed"),
         ]),
       ]),
-      {
-        width: 1200,
-        height: 630,
-        headers: {
-          // Deterministic per slug, so let the crawlers and CDN keep it.
-          "cache-control": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800",
-        },
-      }
+      { width: 1200, height: 630 }
     );
+
+    const png = Buffer.from(await image.arrayBuffer());
+    res.setHeader("Content-Type", "image/png");
+    // Deterministic per slug, so let the crawlers and the CDN keep it.
+    res.setHeader("Cache-Control", "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800");
+    return res.status(200).send(png);
   } catch (err) {
     console.error("og render failed:", err);
-    return new Response("Could not draw that card.", { status: 500 });
+    return res.status(500).send("Could not draw that card.");
   }
 }
