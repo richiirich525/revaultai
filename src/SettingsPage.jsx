@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import BuyCreditsSection from "./BuyCreditsSection.jsx";
+import PayoutSection from "./PayoutSection.jsx";
 import { avatarInitial } from "./lib/avatar.js";
 import { SOCIAL_PLATFORMS, normalizeContactUrl, normalizeSocialLinks, normalizeTipUrl, parseToolLinks, socialFormFromProfile, toolLinksToText } from "./lib/links.js";
 import { checkUsernameAvailable, uploadAvatar, upsertProfile } from "./lib/profiles.js";
@@ -284,6 +285,8 @@ export default function SettingsPage({ user, profile, setProfile, notify, setPag
             </button>
             <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--muted)", letterSpacing: "0.08em" }}>{user?.email}</span>
           </div>
+
+          <PayoutSection notify={notify} />
 
           <div className="settings-divider" />
           <div className="settings-section-title" style={{ color: "#F87171" }}>Delete Account</div>

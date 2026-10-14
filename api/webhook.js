@@ -35,11 +35,41 @@ export default async function handler(req, res) {
   const sig    = req.headers["stripe-signature"];
   const raw    = await getRawBody(req);
 
+  // Connect events may arrive on a second endpoint with its own signing
+  // secret. Try the platform secret first, then the Connect one if it is set.
   let event;
   try {
     event = stripe.webhooks.constructEvent(raw, sig, secret);
   } catch (err) {
-    return res.status(400).json({ error: "Webhook signature invalid: " + err.message });
+    const connectSecret = process.env.STRIPE_CONNECT_WEBHOOK_SECRET;
+    if (!connectSecret) {
+      return res.status(400).json({ error: "Webhook signature invalid: " + err.message });
+    }
+    try {
+      event = stripe.webhooks.constructEvent(raw, sig, connectSecret);
+    } catch (connectErr) {
+      return res.status(400).json({ error: "Webhook signature invalid: " + connectErr.message });
+    }
+  }
+
+  // A creator's payout account changed at Stripe — verification cleared, or a
+  // new requirement appeared. Mirror it onto the profile so the UI is right
+  // without waiting for them to open Settings and poll.
+  if (event.type === "account.updated") {
+    const account = event.data.object;
+    const supabase = createClient(
+      requireEnv("VITE_SUPABASE_URL"),
+      requireEnv("SUPABASE_SERVICE_ROLE_KEY")
+    );
+    const { error: syncError } = await supabase
+      .from("profiles")
+      .update({
+        stripe_payouts_enabled: !!account.payouts_enabled,
+        stripe_details_submitted: !!account.details_submitted,
+      })
+      .eq("stripe_account_id", account.id);
+    if (syncError) console.error("account.updated sync failed for", account.id, syncError);
+    return res.status(200).json({ received: true });
   }
 
   if (event.type === "charge.refunded") {
