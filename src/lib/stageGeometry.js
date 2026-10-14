@@ -236,3 +236,195 @@ export function eyelineProblems(camera, actors) {
   }
   return [...new Set(problems)];
 }
+/*
+  Auditing a SET of setups against each other.
+
+  Everything above reads one camera at a time. A scene is cut from several, and
+  the errors that hurt only exist between them: the reverse that crosses the
+  line, the pair that won't cut because one is an 85mm and the other a 24mm,
+  the scene with no wide to ground it. This reads a whole plan at once.
+
+  Input is coverage_slots rows carrying camera coordinates. Findings use the
+  same shape as scriptSupervisor so they render in the same panel.
+*/
+
+function num(v) {
+  const n = typeof v === "string" ? parseFloat(v) : v;
+  return Number.isFinite(n) ? n : null;
+}
+
+function cameraOf(slot) {
+  return { x: num(slot.camera_x), y: num(slot.camera_y), rotation: num(slot.camera_rotation) ?? 0 };
+}
+
+function actorsOf(slot) {
+  const raw = Array.isArray(slot.actors) ? slot.actors : [];
+  return raw
+    .filter((a) => a && num(a.x) != null && num(a.y) != null)
+    .map((a) => ({ name: a.name ?? "someone", x: num(a.x), y: num(a.y), facing: num(a.facing) ?? 0 }));
+}
+
+function isGeometric(slot) {
+  return num(slot?.camera_x) != null && num(slot?.camera_y) != null;
+}
+
+function slotLabel(slot, i) {
+  return slot.slug || `Setup ${i + 1}`;
+}
+
+// One plan — one scene's worth of setups.
+function auditPlan(slots) {
+  const out = [];
+  const setups = slots
+    .filter(isGeometric)
+    .sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0))
+    .map((s, i) => ({ row: s, name: slotLabel(s, i), camera: cameraOf(s), actors: actorsOf(s) }));
+
+  if (setups.length < 2) return out;
+
+  const planName = slots[0]?.plan_label || "this plan";
+
+  // The axis comes from the setup that recorded the most actors — later setups
+  // may have framed only one of them.
+  const withActors = setups.filter((s) => s.actors.length >= 2);
+  const reference = withActors.sort((a, b) => b.actors.length - a.actors.length)[0];
+  const axis = reference ? axisFor(reference.actors) : null;
+
+  // --- Screen direction across setups ------------------------------------
+  if (axis) {
+    const sided = setups.map((s) => ({ ...s, side: sideOfAxis(axis, s.camera) }));
+    const left = sided.filter((s) => s.side === 1);
+    const right = sided.filter((s) => s.side === -1);
+
+    if (left.length && right.length) {
+      const minority = left.length <= right.length ? left : right;
+      const majority = left.length <= right.length ? right : left;
+      const anchor = majority[0];
+
+      for (const s of minority) {
+        // Name the actor whose screen side actually flips — that is the thing
+        // an audience sees, rather than the abstraction.
+        const flips = [];
+        for (const a of reference.actors) {
+          const here = screenSide(s.camera, a);
+          const there = screenSide(anchor.camera, a);
+          if (here !== there && here !== "center" && there !== "center") {
+            flips.push(`${a.name} sits ${there} in ${anchor.name} but ${here} here`);
+          }
+        }
+        out.push({
+          kind: "break",
+          area: "screen direction",
+          title: `"${s.name}" crosses the line`,
+          detail:
+            `The axis runs between ${axis.a.name} and ${axis.b.name}. ` +
+            `${majority.length} of the ${setups.length} setups in ${planName} sit on one side of it; this one sits on the other. ` +
+            (flips.length ? flips.join(". ") + "." : "Cutting to it reverses screen direction."),
+          fix: `Move the camera to the same side as ${anchor.name}, reframe it as a neutral shot straight down the axis, or earn the cross with a move the audience can follow.`,
+          action: "rehearsal",
+        });
+      }
+    }
+  }
+
+  // --- Reverse pairs that won't cut --------------------------------------
+  const favoring = setups.filter((s) => s.row.favors);
+  const seen = new Set();
+  for (const a of favoring) {
+    for (const b of favoring) {
+      if (a.row.id === b.row.id || a.row.favors === b.row.favors) continue;
+      const key = [a.row.id, b.row.id].sort().join("|");
+      if (seen.has(key)) continue;
+      seen.add(key);
+
+      const la = num(a.row.lens_mm);
+      const lb = num(b.row.lens_mm);
+      if (la && lb && Math.max(la, lb) / Math.min(la, lb) >= 1.5) {
+        out.push({
+          kind: "warning",
+          area: "reverse pair",
+          title: `"${a.name}" and "${b.name}" won't cut as a pair`,
+          detail: `One is ${la}mm, the other ${lb}mm. These are the two halves of the same conversation, but the perspective on the two faces won't match — the reverse reads as a different scene rather than the other side of this one.`,
+          fix: "Pick one focal length and shoot both reverses on it.",
+          action: "rehearsal",
+        });
+      }
+
+      const ha = a.row.camera_height;
+      const hb = b.row.camera_height;
+      if (ha && hb && String(ha) !== String(hb)) {
+        out.push({
+          kind: "warning",
+          area: "reverse pair",
+          title: `Camera height changes between "${a.name}" and "${b.name}"`,
+          detail: `${ha} against ${hb}. Across a reverse pair that reads as a power shift between ${a.row.favors} and ${b.row.favors}, whether or not you meant one.`,
+          fix: "Match the heights unless the shift is deliberate.",
+          action: "rehearsal",
+        });
+      }
+    }
+  }
+
+  // --- Nothing grounding the space ---------------------------------------
+  const hasWide = setups.some((s) => /wide/i.test(String(s.row.shot_size || "")));
+  if (!hasWide) {
+    out.push({
+      kind: "warning",
+      area: "coverage",
+      title: `No wide shot in ${planName}`,
+      detail: `${setups.length === 2 ? "Both setups are" : `All ${setups.length} setups are`} medium or tighter. Nothing establishes where anyone is standing, so every cut asks the audience to work it out from faces alone.`,
+      fix: "Add a master from the side of the axis the rest of the coverage sits on.",
+      action: "rehearsal",
+    });
+  }
+
+  // --- One-sided coverage -------------------------------------------------
+  const favored = [...new Set(setups.map((s) => s.row.favors).filter(Boolean))];
+  if (favored.length === 1 && reference && reference.actors.length > 1) {
+    const other = reference.actors.find((a) => a.name !== favored[0]);
+    out.push({
+      kind: "warning",
+      area: "coverage",
+      title: `Every setup favors ${favored[0]}`,
+      detail: `${other ? other.name : "The other character"} appears only in whatever happens to be behind ${favored[0]}. In the edit this locks the scene into one point of view.`,
+      fix: `Add a single or an over-the-shoulder on ${other ? other.name : "the other character"}, on the same side of the axis.`,
+      action: "rehearsal",
+    });
+  }
+
+  // --- What's holding -----------------------------------------------------
+  if (axis && !out.some((f) => f.kind === "break")) {
+    out.push({
+      kind: "ok",
+      area: "screen direction",
+      title: `${setups.length} setups hold the same side of the line`,
+      detail: `The axis between ${axis.a.name} and ${axis.b.name} is intact across every setup in ${planName}. These will cut together.`,
+      fix: "",
+    });
+  }
+
+  return out;
+}
+
+/*
+  Audit every saved plan. Plans are separate scenes, so setups are only ever
+  compared against others in the same plan.
+*/
+export function auditSetups(slots = []) {
+  const byPlan = new Map();
+  for (const s of slots ?? []) {
+    const k = s.plan_id ?? "__none__";
+    if (!byPlan.has(k)) byPlan.set(k, []);
+    byPlan.get(k).push(s);
+  }
+
+  const order = { break: 0, warning: 1, ok: 2 };
+  const all = [];
+  for (const group of byPlan.values()) all.push(...auditPlan(group));
+  return all.sort((a, b) => (order[a.kind] ?? 1) - (order[b.kind] ?? 1)).slice(0, 10);
+}
+
+// How many setups in a set carry the coordinates this audit needs.
+export function geometricCount(slots = []) {
+  return (slots ?? []).filter(isGeometric).length;
+}

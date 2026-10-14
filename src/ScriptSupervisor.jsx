@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./lib/supabase.js";
 import { structuralFindings, narrativeContext } from "./lib/scriptSupervisor.js";
+import { auditSetups, geometricCount } from "./lib/stageGeometry.js";
 
 /*
   ScriptSupervisor — RevaultAI
@@ -39,17 +40,21 @@ export default function ScriptSupervisor({ project, user, setPage, notify }) {
   useEffect(() => {
     if (!user?.id || !project?.id) { setData(null); return; }
     (async () => {
-      const [specs, gens, shots, observed, mutations, vault] = await Promise.all([
+      const [specs, gens, shots, observed, mutations, vault, slots] = await Promise.all([
         supabase.from("film_specs").select("id, title, sequence, spec, breakdown_id").eq("project_id", project.id),
         supabase.from("generations").select("id, film_spec_id, debug_report").eq("project_id", project.id),
         supabase.from("shots").select("id, selected_generation_id").eq("project_id", project.id),
         supabase.from("observed_states").select("*").eq("project_id", project.id),
         supabase.from("asset_mutations").select("*").eq("project_id", project.id),
         supabase.from("vault_entries").select("id, name, kind").eq("project_id", project.id),
+        supabase.from("coverage_slots")
+          .select("id, plan_id, plan_label, slug, shot_size, sort, camera_x, camera_y, camera_rotation, lens_mm, camera_height, favors, actors")
+          .eq("project_id", project.id),
       ]);
       setData({
         specs: specs.data ?? [], gens: gens.data ?? [], shots: shots.data ?? [],
         observed: observed.data ?? [], mutations: mutations.data ?? [], vault: vault.data ?? [],
+        slots: slots.data ?? [],
       });
     })();
   }, [user?.id, project?.id]);
@@ -73,6 +78,8 @@ export default function ScriptSupervisor({ project, user, setPage, notify }) {
   if (!data) return null;
 
   const findings = structuralFindings(data);
+  const spatial = auditSetups(data.slots ?? []);
+  const blocked = geometricCount(data.slots ?? []);
   const withState = data.specs.filter((s) => s.spec?.action?.startState || s.spec?.action?.endState).length;
 
   if (data.specs.length === 0) return null;
@@ -99,6 +106,30 @@ export default function ScriptSupervisor({ project, user, setPage, notify }) {
             </div>
           );
         })
+      )}
+
+      {spatial.length > 0 && (
+        <>
+          <div className="ss-label" style={{ marginTop: 20 }}>Staging</div>
+          {spatial.map((f, i) => {
+            const k = KIND[f.kind] ?? KIND.warning;
+            return (
+              <div className="ss-find" key={"sp" + i}>
+                <div className="ss-tag" style={{ color: k.color, border: `1px solid ${k.color}55` }}>{k.label} · {f.area}</div>
+                <div className="ss-title">{f.title}</div>
+                <div className="ss-body">{f.detail}</div>
+                {f.fix && <div className="ss-fix"><b>Fix:</b> {f.fix}</div>}
+                {f.action && <button className="ss-btn" onClick={() => setPage(f.action)}>Go there →</button>}
+              </div>
+            );
+          })}
+        </>
+      )}
+
+      {blocked < 2 && (data.slots ?? []).length > 0 && (
+        <div className="ss-body" style={{ marginTop: 18, fontSize: 10, opacity: 0.8 }}>
+          Screen direction is checked across setups, and this project's saved coverage doesn't carry camera positions — the planner writes prompts, not geometry. Block the scene in the Rehearsal Studio and press Cover; those setups save where every camera stood.
+        </div>
       )}
 
       <div style={{ marginTop: 18 }}>

@@ -93,6 +93,15 @@ export default function RehearsalPage({ user, activeProject, notify, onSignInCli
       prompt: String(s.prompt || "").slice(0, 2000),
       model_key: null,
       sort: i,
+      // Geometry, so the staging audit can compare these setups against each
+      // other later — screen direction only means something across a set.
+      camera_x: s.spec?.camera?.layout?.camera?.x ?? null,
+      camera_y: s.spec?.camera?.layout?.camera?.y ?? null,
+      camera_rotation: s.spec?.camera?.layout?.camera?.rotation ?? null,
+      lens_mm: parseFloat(String(s.spec?.camera?.lens || "").replace(/[^0-9.]/g, "")) || null,
+      camera_height: s.spec?.camera?.height ?? null,
+      favors: s.subject ?? null,
+      actors: s.spec?.camera?.layout?.actors ?? null,
     }));
 
     const { error } = await supabase.from("coverage_slots").insert(rows);
