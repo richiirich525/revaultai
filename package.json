@@ -19,6 +19,7 @@
     "@mux/mux-player-react": "^3.13.0",
     "@sparkjsdev/spark": "^2.3.1",
     "@supabase/supabase-js": "^2.105.3",
+    "@vercel/og": "^1.0.3",
     "busboy": "^1.6.0",
     "formidable": "^3.5.4",
     "posthog-js": "^1.376.4",
