@@ -181,6 +181,130 @@ export function describeStage(read) {
   return bits.join(". ") + ".";
 }
 /*
+  The generation block — the part that pays for declaring intent.
+
+  AI video inherits nothing between shots. There was no camera last time and
+  no previous take, so the model picks screen direction fresh for every clip
+  unless the prompt states it. Position and eyeline therefore have to be
+  written out every single shot, which is the one thing a live-action crew
+  never has to think about and a generated film cannot survive without.
+
+  The division of labor: GEOMETRY supplies the directions, because the
+  blocking is what actually encodes them. The DECLARATION supplies the shot
+  type, because that is a statement of what you want rather than something a
+  distance can imply. When the two disagree, the audit already says so — so
+  this follows the declaration, and the finding is what tells you to fix
+  either the blocking or the label.
+*/
+
+// Said the way a model reads it, which is the way the frame is described
+// rather than where the crew would be standing.
+const FRAME_SIDE = {
+  "camera-left": "frame-left",
+  "camera-right": "frame-right",
+  center: "centered in frame",
+};
+
+// eyelinesFor words these for a human reading findings. A prompt has to match
+// the hyphenation used for frame position, or one sentence says both.
+const hyphenate = (dir) => dir.replace("toward frame left", "toward frame-left")
+                              .replace("toward frame right", "toward frame-right");
+
+export function promptFor(camera, actors, declared = {}) {
+  const cast = actors ?? [];
+  const read = readStage(camera, cast);
+  const eyes = eyelinesFor(camera, cast);
+  const intent = INTENTS[declared.intent] ? declared.intent : null;
+  const visible = cast.filter((a) => inFrame(camera, a));
+
+  const named = intent && INTENTS[intent].needsSubject
+    ? (declared.favors || read.subject)
+    : null;
+  const subjectActor = cast.find((a) => a.name === (named ?? read.subject)) ?? null;
+  const spatial = intent === "insert" || intent === "neutral";
+
+  // A shot of nobody cannot be prompted — except an insert or a neutral,
+  // which are about the space rather than a face.
+  if (!spatial && (!subjectActor || !visible.length)) {
+    return "The camera isn't pointing at anyone. Turn it toward a performer before writing a prompt.";
+  }
+
+  /*
+    The declared subject is not in frame. Following the declaration here would
+    emit "single on Vance" alongside "Vance is out of frame" — a prompt that
+    argues with itself and generates whatever the model feels like. There is
+    already a break-level finding for this, so say the same thing rather than
+    handing over something unusable.
+  */
+  if (!spatial && named && subjectActor && !inFrame(camera, subjectActor)) {
+    return `Marked ${intent === "ots" ? "an over-the-shoulder" : "a single"} on ${named}, but the camera is not pointed at ${named}. Fix the blocking or the label before prompting this shot.`;
+  }
+
+  // Measured from the declared subject when there is one, so a declared
+  // single is sized on the person it is on rather than whoever drifted nearer.
+  const d = subjectActor ? dist(camera, subjectActor) : null;
+  const size = d == null ? null : shotSizeFor(d);
+  const lens = d == null ? null : lensFor(d);
+
+  const bits = [];
+  // Named as standing in the foreground, and so not reported as off frame.
+  let foreground = null;
+
+  if (intent === "insert") {
+    bits.push("Insert");
+  } else if (intent === "neutral") {
+    bits.push(read.axis
+      ? `Neutral shot looking straight down the axis between ${read.axis.between.join(" and ")}`
+      : "Neutral shot looking straight down the axis");
+  } else if (intent === "master") {
+    bits.push(size ? `Master shot, ${size.toLowerCase()}` : "Master shot");
+  } else if (intent === "two_shot") {
+    const who = visible.map((a) => a.name);
+    bits.push(who.length >= 2
+      ? `Two-shot of ${who.join(" and ")}, ${(size ?? "Medium shot").toLowerCase()}`
+      : `Two-shot, ${(size ?? "Medium shot").toLowerCase()}`);
+  } else if (intent === "ots") {
+    const fg = read.overTheShoulder?.foreground
+      ?? overTheShoulder(camera, cast)?.foreground?.name
+      ?? visible.find((a) => a.name !== named)?.name
+      ?? null;
+    if (fg) foreground = fg;
+    bits.push(`Over-the-shoulder on ${named}${fg ? `, past ${fg} in the foreground` : ""}`);
+  } else if (intent === "single") {
+    bits.push(`${size ?? "Medium shot"} single on ${named}`);
+  } else if (read.overTheShoulder) {
+    bits.push(`Over-the-shoulder on ${read.overTheShoulder.subject}, past ${read.overTheShoulder.foreground} in the foreground`);
+  } else {
+    bits.push(`${read.shotSize} on ${read.subject}`);
+  }
+
+  if (lens) bits.push(`${lens} lens`);
+  if (declared.height) bits.push(`Camera at ${declared.height}`);
+
+  // Position and eyeline for everyone in frame. This is the half the model
+  // cannot infer and will otherwise invent, differently, on every take.
+  // Skipped for an insert, which is a detail shot — naming who stands where
+  // would describe the shot it is not.
+  if (intent !== "insert") {
+    for (const p of read.positions) {
+      const where = FRAME_SIDE[p.side] ?? p.side;
+      const look = eyes.find((e) => e.who === p.name);
+      bits.push(look ? `${p.name} ${where}, looking ${hyphenate(look.direction)}` : `${p.name} ${where}, ${p.facing}`);
+    }
+
+    const off = read.offstage.filter((n) => n !== foreground);
+    if (off.length) {
+      bits.push(`${off.join(" and ")} ${off.length === 1 ? "is" : "are"} out of frame`);
+    }
+  }
+
+  let text = bits.join(". ") + ".";
+  const note = typeof declared.note === "string" ? declared.note.trim() : "";
+  if (note) text += " " + (/[.!?]$/.test(note) ? note : note + ".");
+  return text;
+}
+
+/*
   Eyelines. A gaze reads correctly on screen when the direction a character
   looks matches where the other person actually is relative to camera. Get it
   wrong and two people in conversation appear to be looking past each other —

@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import {
   STAGE, INTENTS, planGeometry, auditSetups, halfFovFor, shotSizeFor, lensFor,
-  bearing, dist, readStage, describeStage,
+  bearing, dist, promptFor,
 } from "./lib/stageGeometry.js";
 
 /*
@@ -61,6 +61,7 @@ const styles = `
   .sb-note { width: 100%; box-sizing: border-box; margin-top: 7px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 3px; padding: 6px 7px; font-family: 'DM Mono', monospace; font-size: 10px; line-height: 1.65; resize: vertical; min-height: 46px; }
   .sb-note:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
   .sb-hint { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); line-height: 1.65; margin-top: 6px; opacity: 0.8; }
+  .sb-prompt { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text); line-height: 1.8; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 9px 10px; white-space: pre-wrap; }
 `;
 
 const KIND = {
@@ -93,6 +94,7 @@ export default function StagingBoard() {
   // not, and is not pretended to — it is there for the prompt and for you.
   const [scene, setScene] = useState({ noMaster: false, note: "" });
   const [picked, setPicked] = useState("c1");
+  const [copied, setCopied] = useState(null);
   const svgRef = useRef(null);
   const drag = useRef(null);
 
@@ -130,9 +132,30 @@ export default function StagingBoard() {
 
   const sel = cams.find((c) => c.id === picked) ?? null;
   const selSlot = slots.find((s) => s.id === picked) ?? null;
-  const selRead = sel
-    ? readStage({ x: sel.x, y: sel.y, rotation: bearing(sel, { x: sel.aimX, y: sel.aimY }) }, actors)
+  const selCamera = sel
+    ? { x: sel.x, y: sel.y, rotation: bearing(sel, { x: sel.aimX, y: sel.aimY }) }
     : null;
+  const selPrompt = selCamera
+    ? promptFor(selCamera, actors, {
+        intent: sel.intent,
+        favors: sel.intentFavors,
+        height: sel.height,
+        note: scene.note,
+      })
+    : null;
+
+  async function copyPrompt() {
+    if (!selPrompt) return;
+    try {
+      await navigator.clipboard.writeText(selPrompt);
+      setCopied("copied");
+    } catch {
+      // Clipboard access is refused outside a secure context, and silently
+      // doing nothing would read as a broken button.
+      setCopied("select it and copy by hand");
+    }
+    setTimeout(() => setCopied(null), 1800);
+  }
 
   // --- dragging ----------------------------------------------------------
   function toStage(evt) {
@@ -369,7 +392,19 @@ export default function StagingBoard() {
                 </label>
               )}
 
-              {selRead && <div className="sb-read" style={{ marginTop: 10 }}>{describeStage(selRead)}</div>}
+              {selPrompt && (
+                <>
+                  <div className="sb-cap" style={{ marginTop: 14 }}>The prompt this gives you</div>
+                  <div className="sb-prompt">{selPrompt}</div>
+                  <button className="sb-btn" type="button" onClick={copyPrompt} style={{ marginTop: 8 }}>
+                    {copied ?? "copy prompt"}
+                  </button>
+                  <div className="sb-hint">
+                    Frame position and eyeline are spelled out because a model inherits
+                    neither &mdash; left unsaid, it picks them again on every take.
+                  </div>
+                </>
+              )}
             </div>
           )}
 
