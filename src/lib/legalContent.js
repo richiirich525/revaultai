@@ -7,17 +7,50 @@ export const LEGAL_CONTENT = {
     title: "Terms of Service",
     updated: "October 2026",
     body: `
-      <h2>1. Acceptance of Terms</h2>
-      <p>By accessing or using RevaultAI, you agree to be bound by these Terms of Service. If you do not agree, do not use the platform. RevaultAI is operated by RevaultAI LLC.</p>
-      <h2>2. Platform Use</h2>
-      <p>RevaultAI is a platform for sharing AI-generated creative content. You must be at least 18 years old to create an account or make purchases. You are responsible for all activity under your account.</p>
-      <h2>3. Content Submissions</h2>
-      <p>By submitting content to RevaultAI, you represent that you own it or hold all rights necessary to share it, and that it does not infringe the copyright, trademark, privacy or publicity rights of anyone else. You grant RevaultAI a non-exclusive license to host, display and promote it on the platform. You retain ownership of your original prompts and creative work.</p>
-      <h2>4. Premium Purchases</h2>
-      <p>Premium purchases are processed via Stripe. All sales are subject to our Refund Policy. RevaultAI reserves the right to revoke access to content that violates these terms.</p>
-      <h2>5. Prohibited Content</h2>
-      <p>You may not submit content that is illegal, harmful, deceptive, or violates the rights of others. RevaultAI reserves the right to remove any content and terminate any account at its discretion.</p>
-      <h2>6. Copyright and DMCA</h2>
+      <h2>1. Who we are, and what these terms cover</h2>
+      <p>RevaultAI is operated by RevaultAI LLC, a limited liability company with a principal place of business at 10800 S Main St, Apt 210, Los Angeles, CA 90061. In these terms, &ldquo;RevaultAI&rdquo;, &ldquo;we&rdquo; and &ldquo;us&rdquo; mean RevaultAI LLC, and &ldquo;you&rdquo; means the person using the platform.</p>
+      <p>These terms are a binding agreement covering your use of revaultai.com and everything on it. By creating an account or using the platform, you agree to them. If you do not agree, do not use RevaultAI. Our <a href="/privacy" style="color: var(--accent);">Privacy Policy</a>, <a href="/refunds" style="color: var(--accent);">Refund Policy</a>, <a href="/ai-disclaimer" style="color: var(--accent);">AI Content Disclaimer</a> and <a href="/dmca" style="color: var(--accent);">DMCA Policy</a> form part of these terms.</p>
+
+      <h2>2. Eligibility</h2>
+      <p>You must be at least 18 years old to create an account, generate anything, or make a purchase. By using RevaultAI you confirm that you are 18 or older and able to enter into this agreement. If you are using the platform for a company, you confirm you have authority to bind it.</p>
+
+      <h2>3. Your account</h2>
+      <p>You are responsible for your credentials and for everything done under your account. Use an email address you control, keep your password private, and tell us at <a href="mailto:rich@revaultai.com" style="color: var(--accent);">rich@revaultai.com</a> if you think someone else has access. We may decline to create, or may close, an account we reasonably believe is being used to break these terms or the law.</p>
+
+      <h2>4. Credits and payment</h2>
+      <p>Generation on RevaultAI is paid for with credits. Credits are a prepaid balance that lets you run generation jobs. They are not currency, carry no cash value, earn no interest, and cannot be transferred between accounts.</p>
+      <p>Payments are processed by Stripe. We never see or store your full card number. Prices are in U.S. dollars and exclude any tax we are required to collect.</p>
+      <p>Credits are spent when a job is submitted to the model provider that runs it. Because we are charged at that moment, a job that completes has consumed its credits whether or not you like the result. Our <a href="/refunds" style="color: var(--accent);">Refund Policy</a> sets out the cases where credits come back anyway, the most important being a job that fails on our side or the provider&rsquo;s.</p>
+      <p>We may change prices or the credit cost of a generation. A change applies to purchases made after it takes effect and never retroactively revalues credits you have already bought.</p>
+
+      <h2>5. Acceptable use</h2>
+      <p>You keep whatever rights you already hold in material you upload, and you are responsible for holding them in the first place. Do not upload anything you do not have permission to use.</p>
+      <p>You may not use RevaultAI to:</p>
+      <p>
+        &mdash; generate or publish sexual content involving minors, or content that sexualizes a real person without their consent;<br>
+        &mdash; create a likeness of a real person in order to deceive, or present synthetic footage of a real person as something they actually did or said;<br>
+        &mdash; infringe anyone&rsquo;s copyright, trademark, publicity or privacy rights;<br>
+        &mdash; generate content promoting violence, terrorism or illegal activity;<br>
+        &mdash; scrape, mirror, resell or redistribute the gallery or any other part of the platform without our written permission;<br>
+        &mdash; work around credit metering, rate limits or any other technical restriction;<br>
+        &mdash; probe, scan or attack our infrastructure or that of the providers we route to.
+      </p>
+      <p>You must also follow the usage policies of the model providers your jobs run on. Those are listed in our <a href="/privacy" style="color: var(--accent);">Privacy Policy</a> and they apply to your use of them through us.</p>
+
+      <h2>6. Your work, and the gallery</h2>
+      <p>You own, or hold whatever rights the relevant provider&rsquo;s terms grant you in, the output of your own generation jobs, subject to those terms and to the limits of copyright law as it applies to AI-generated material. Our <a href="/ai-disclaimer" style="color: var(--accent);">AI Content Disclaimer</a> explains why that last point is not straightforward.</p>
+      <p>If you submit a film to the gallery, you grant RevaultAI a non-exclusive, worldwide, royalty-free license to host, stream, transcode, thumbnail, display and promote that film on the platform and in our marketing for the platform. You keep ownership. You can ask us to take a film down at any time by emailing <a href="mailto:rich@revaultai.com" style="color: var(--accent);">rich@revaultai.com</a>, and we will remove it from the gallery within a reasonable period; cached copies and promotional material already distributed may persist longer.</p>
+      <p>Being able to submit does not entitle you to be published. RevaultAI is curated, and we may decline, unpublish or reorder anything consistent with these terms.</p>
+      <p>The platform itself &mdash; the software, the design, the name and logo, and the arrangement of the gallery &mdash; belongs to RevaultAI LLC. These terms give you no license to it beyond using the platform as intended.</p>
+
+      <h2>7. Creator earnings and payouts</h2>
+      <p>Every film on RevaultAI streams free. Selling is optional. If you mark a film as premium, viewers gain the option to buy a full-quality download, and the following applies.</p>
+      <p>You set your own price. You keep <strong>80&#37; of net revenue</strong> on every sale, where net means the sale amount after payment-processing fees charged by Stripe; RevaultAI retains the remaining 20&#37;. Tips, commission and licensing arrangements made through the Support, Hire Me and licensing links on your profile go directly between you and the viewer, and we take nothing from those.</p>
+      <p>You are an independent seller, not our employee, partner or agent. You are responsible for your own taxes, and we may be required to collect tax information from you and to report payments to tax authorities.</p>
+      <p>We pay creators their share of completed sales to the payment details they give us. RevaultAI is new and payout volume is still small, so we currently arrange the method and timing with each creator directly and confirm it in writing after a first sale. If we move to a fixed payout schedule we will give creators at least 30 days&rsquo; notice.</p>
+      <p>If a buyer charges back, or if we refund a sale under our <a href="/refunds" style="color: var(--accent);">Refund Policy</a>, the corresponding amount is deducted from your balance or from future payments. We may hold a payment while we investigate a credible claim that what you sold infringes someone&rsquo;s rights or breaks these terms, and reverse it if the claim holds up.</p>
+
+      <h2>8. Copyright and DMCA</h2>
       <p>RevaultAI responds to notices of claimed copyright infringement under the Digital Millennium Copyright Act and terminates the accounts of repeat infringers. RevaultAI LLC has registered a designated copyright agent with the United States Copyright Office:</p>
       <p>
         Richard Garland, DMCA Agent<br>
@@ -28,12 +61,42 @@ export const LEGAL_CONTENT = {
         Email: <a href="mailto:dmca@revaultai.com" style="color: var(--accent);">dmca@revaultai.com</a>
       </p>
       <p>The full requirements for a takedown notice and for a counter-notice are set out in our <a href="/dmca" style="color: var(--accent);">DMCA Policy</a>. Notices sent to any address other than the one above may not reach the agent and may not be effective.</p>
-      <h2>7. Disclaimers</h2>
-      <p>RevaultAI is provided "as is" without warranties of any kind. We are not liable for any damages arising from your use of the platform.</p>
-      <h2>8. Changes to Terms</h2>
-      <p>We may update these terms at any time. Continued use of RevaultAI after changes constitutes acceptance of the new terms.</p>
-      <h2>9. Contact</h2>
-      <p>For questions about these terms, contact us at rich@revaultai.com. For copyright notices, use the agent address in section 6.</p>
+
+      <h2>9. Services we depend on</h2>
+      <p>RevaultAI is a layer over services we do not control: generation model providers, video hosting, payment processing and email delivery. When one of them is down, slow, changes a model, raises its prices or changes its terms, that affects what we can offer. We will do what we reasonably can, and we do not guarantee the continued availability of any specific model or feature.</p>
+
+      <h2>10. Changes to the platform</h2>
+      <p>We are a small, actively developed product. We add, change and remove features, and we may discontinue a feature, a model, or the whole platform. If we discontinue RevaultAI entirely we will give you reasonable notice and refund unused credits as described in our <a href="/refunds" style="color: var(--accent);">Refund Policy</a>.</p>
+
+      <h2>11. Suspension and termination</h2>
+      <p>You can stop using RevaultAI at any time and ask us to delete your account by emailing <a href="mailto:rich@revaultai.com" style="color: var(--accent);">rich@revaultai.com</a>. Our <a href="/privacy" style="color: var(--accent);">Privacy Policy</a> explains what happens to your data.</p>
+      <p>We may suspend or close your account if you break these terms, if we are required to by law, or if your use creates a security or legal risk to us or to other people using the platform. Except where immediate action is needed &mdash; fraud, a credible legal threat, an active security problem, or content that has to come down at once &mdash; we will tell you what the problem is and give you a reasonable chance to respond first.</p>
+      <p>If we close your account for breaking these terms we may keep unused credits. If we close it for any other reason, or you close it yourself in good standing, we will refund unused credits under our Refund Policy. Sections 6 (as to licenses already granted), 7 (as to amounts already owed), 12, 13, 14, 15 and 17 survive termination.</p>
+
+      <h2>12. Disclaimers</h2>
+      <p>RevaultAI is provided &ldquo;as is&rdquo; and &ldquo;as available&rdquo;. To the fullest extent permitted by law we disclaim all warranties, express or implied, including implied warranties of merchantability, fitness for a particular purpose, title and non-infringement.</p>
+      <p>We do not warrant that the platform will be uninterrupted, secure or error-free; that generation output will be accurate, original, usable for your purpose or free of third-party rights; or that any particular model will remain available. Some jurisdictions do not allow certain warranties to be excluded, so parts of this section may not apply to you.</p>
+
+      <h2>13. Limitation of liability</h2>
+      <p>To the fullest extent permitted by law, neither we nor our officers, members, employees or suppliers are liable for indirect, incidental, special, consequential, exemplary or punitive damages, or for lost profits, lost revenue, lost data or loss of goodwill, even if we were told such damages were possible.</p>
+      <p>Our total liability to you for all claims relating to the platform is limited to the greater of the amount you paid us in the twelve months before the event giving rise to the claim, or one hundred U.S. dollars. These limits apply regardless of the legal theory and even if a limited remedy fails of its essential purpose. Some jurisdictions do not allow some of these limitations, so parts of this section may not apply to you.</p>
+
+      <h2>14. Indemnity</h2>
+      <p>You agree to indemnify, defend and hold harmless RevaultAI LLC and its officers, members and employees from any claim, demand, loss, liability or expense, including reasonable attorneys&rsquo; fees, arising out of material you upload or generate, content you submit to the gallery or sell as a creator, your breach of these terms, or your violation of any law or of anyone&rsquo;s rights.</p>
+
+      <h2>15. Governing law and disputes</h2>
+      <p>These terms are governed by the laws of the State of California, without regard to its conflict-of-laws rules.</p>
+      <p>Before filing anything, email <a href="mailto:rich@revaultai.com" style="color: var(--accent);">rich@revaultai.com</a> describing the dispute and what you want, and we will try to resolve it within 30 days. Most problems end here.</p>
+      <p>If we cannot resolve it, you and RevaultAI LLC agree to the exclusive jurisdiction of the state and federal courts located in Los Angeles County, California, and each of us consents to venue there. Either of us may still bring a qualifying individual claim in small-claims court, and either of us may ask a court for an injunction to stop infringement or misuse of intellectual property or confidential information.</p>
+
+      <h2>16. Changes to these terms</h2>
+      <p>We may update these terms. When a change is material we will update the date at the top of this page and, if you have an account, tell you by email or in the app before it takes effect. Using RevaultAI after a change takes effect means you accept the updated terms. If you do not, stop using the platform and ask for a refund of unused credits.</p>
+
+      <h2>17. General</h2>
+      <p>These terms, with the policies they incorporate, are the entire agreement between you and RevaultAI LLC about the platform. If any provision is unenforceable it is limited or removed to the minimum extent necessary and the rest stays in force. Our failure to enforce a provision is not a waiver of it. You may not assign these terms without our consent; we may assign them to a successor in a merger, acquisition or sale of assets. Nothing here creates a partnership, joint venture, employment or agency relationship. Notices to you may go to the email address on your account.</p>
+
+      <h2>18. Contact</h2>
+      <p>Questions about these terms: <a href="mailto:rich@revaultai.com" style="color: var(--accent);">rich@revaultai.com</a>. Copyright notices must go to the agent address in section 8.</p>
     `
   },
   privacy: {
@@ -104,16 +167,32 @@ export const LEGAL_CONTENT = {
   },
   refunds: {
     title: "Refund Policy",
-    updated: "May 2025",
+    updated: "October 2026",
     body: `
-      <h2>Digital Content Policy</h2>
-      <p>All purchases on RevaultAI are for digital content (AI-generated prompts and creative works). Due to the nature of digital goods, all sales are final once the content has been accessed.</p>
-      <h2>Eligible Refunds</h2>
-      <p>We will issue a full refund if: the content was not delivered due to a technical error on our end, or the content significantly differs from what was described.</p>
-      <h2>How to Request a Refund</h2>
-      <p>Contact us at rich@revaultai.com within 7 days of purchase with your order details. We review all requests within 3 business days.</p>
+      <h2>The short version</h2>
+      <p>If a generation fails, the credits come back. If you bought credits by mistake and have not spent any, email us within 7 days and we will refund the purchase. If a generation ran and you simply do not like the result, we cannot refund it, because the cost was already incurred on our side.</p>
+
+      <h2>Why generation credits work this way</h2>
+      <p>When you submit a generation job we immediately pay a model provider to run it. That money is gone whether the output is brilliant or useless. This is why credits spent on a completed job are not refundable &mdash; not as a matter of preference, but because there is nothing left to return. Nothing in this policy limits any right you have under California or other applicable consumer law.</p>
+
+      <h2>Credits we return automatically</h2>
+      <p>Credits go back to your balance, without you asking, when a job fails with an error on our side or the provider&rsquo;s, when a job is submitted but never returns output, or when a bug charges you twice for the same job. If an automatic return has not appeared within 24 hours, email <a href="mailto:rich@revaultai.com" style="color: var(--accent);">rich@revaultai.com</a> with roughly when you ran the job and we will correct it by hand.</p>
+
+      <h2>Purchases we refund to your card</h2>
+      <p>Email <a href="mailto:rich@revaultai.com" style="color: var(--accent);">rich@revaultai.com</a> and we will refund the purchase price to your original payment method if you bought credits within the last 7 days and have not spent any of them, if you were charged twice for the same credit pack, if you were charged after closing your account, or if we discontinue the platform or close your account for a reason other than you breaking our <a href="/terms" style="color: var(--accent);">Terms of Service</a> while you still hold unused credits. Partially used purchases may be refunded pro rata for the unused portion at our discretion within that same 7-day window.</p>
+      <p>Card refunds are issued through Stripe and usually reach your statement within 5 to 10 business days, depending on your bank.</p>
+
+      <h2>What we do not refund</h2>
+      <p>Credits spent on a job that completed, including one whose output you consider poor, off-prompt or unusable. Credits spent on a job canceled after it had already been submitted to the provider. Credit purchases older than 7 days where credits have been spent. Accounts closed for breaking our Terms of Service. Dissatisfaction with a provider&rsquo;s output limits, watermarks or policy refusals, which we do not control.</p>
+
+      <h2>Films bought from a creator</h2>
+      <p>If you bought a premium film and it is materially not what was described, or it does not play at all, email <a href="mailto:rich@revaultai.com" style="color: var(--accent);">rich@revaultai.com</a> within 7 days of purchase with your order details. If we agree, we refund you and deduct the amount from the creator&rsquo;s balance. A refund never exceeds the price you paid.</p>
+
       <h2>Chargebacks</h2>
-      <p>Filing a chargeback without contacting us first may result in account suspension. We encourage you to reach out directly — we want to make things right.</p>
+      <p>If you dispute a charge with your bank instead of contacting us, we may suspend your account while the dispute is open. We would rather hear from you first &mdash; most of what people charge back is something we would simply have refunded.</p>
+
+      <h2>How to reach us</h2>
+      <p>Email <a href="mailto:rich@revaultai.com" style="color: var(--accent);">rich@revaultai.com</a> from the address on your account and, if it concerns a specific job or order, tell us roughly when it happened. We aim to reply within two business days.</p>
     `
   },
   dmca: {
@@ -165,18 +244,35 @@ export const LEGAL_CONTENT = {
   },
   "ai-disclaimer": {
     title: "AI Content Disclaimer",
-    updated: "May 2025",
+    updated: "October 2026",
     body: `
-      <h2>Nature of Content</h2>
-      <p>All content on RevaultAI is generated using artificial intelligence tools including but not limited to Sora, Runway, MidJourney, Kling, and Stable Diffusion. This content is synthetic and does not depict real events, real people, or factual information unless explicitly stated.</p>
-      <h2>No Endorsement</h2>
-      <p>The presence of AI-generated content on RevaultAI does not constitute endorsement of any particular AI tool, company, or viewpoint.</p>
-      <h2>Prompt Ownership</h2>
-      <p>Creators retain ownership of their original prompts. The AI-generated outputs may be subject to the terms of the respective AI platforms used to create them.</p>
-      <h2>Accuracy and Reliability</h2>
-      <p>AI-generated content may contain inaccuracies, artifacts, or unintended outputs. RevaultAI does not guarantee the accuracy or appropriateness of any AI-generated content.</p>
-      <h2>Responsible Use</h2>
-      <p>Users are expected to use AI tools responsibly and in accordance with each platform's terms of service. Content that depicts real individuals without consent, or that is harmful or deceptive, is prohibited on RevaultAI.</p>
+      <h2>Everything here is AI-generated</h2>
+      <p>RevaultAI is a gallery of films made with generative AI. Every film was produced, in whole or in substantial part, by AI models. None of it is documentary footage and none of it is a record of something that happened. If something resembles a real event, a real place or a real person, treat it as fiction unless the creator says otherwise.</p>
+
+      <h2>The models we run</h2>
+      <p>Generation happens on third-party models reached through fal.ai &mdash; currently Google Veo 3.1 and Kling for video, ByteDance Seedream and Nano Banana for images &mdash; plus World Labs Marble for generated sets, and Anthropic&rsquo;s Claude models for the writing and planning tools. This list changes as models ship and as we add or drop providers. Our planning tools can also write prompts aimed at models we do not run, such as Runway, Wan, Hailuo and Seedance, which you would run elsewhere. The full list of processors is in our <a href="/privacy" style="color: var(--accent);">Privacy Policy</a>.</p>
+
+      <h2>We do not control what the models produce</h2>
+      <p>We pass your prompt to a provider and return what comes back. We cannot guarantee that output will be accurate, original, consistent with your prompt, free of artifacts, or free of resemblance to existing work or to real people. Models can and do produce content that is wrong, strange, or unintentionally similar to something that already exists. The same prompt may give different output on different runs, and providers change their models without notice, which changes what the same prompt produces.</p>
+
+      <h2>Ownership and copyright are unsettled</h2>
+      <p>Copyright in purely AI-generated material is unsettled in the United States and elsewhere. The U.S. Copyright Office has taken the position that material generated without sufficient human authorship is not registrable. What that means for any particular film depends on how much human direction, editing and arrangement went into it.</p>
+      <p>We make no representation about whether you own, or can register copyright in, the output of a generation job. Your rights in output are also governed by the terms of the provider that produced it. If ownership matters for your use &mdash; commercial release, licensing, festival submission &mdash; get advice specific to your situation.</p>
+
+      <h2>Likeness, names and real people</h2>
+      <p>Do not use RevaultAI to create a recognizable likeness of a real person without their consent, and do not present AI-generated footage of a real person as something they actually did or said. Rights of publicity and privacy apply to synthetic media, and in California they are enforced. Our <a href="/terms" style="color: var(--accent);">Terms of Service</a> prohibit this and we remove content that breaks the rule.</p>
+
+      <h2>No endorsement</h2>
+      <p>A model being available on RevaultAI is not an endorsement of that model, the company behind it, or anything made with it. Curation reflects our judgment about films, not about tools.</p>
+
+      <h2>Content advisories</h2>
+      <p>Films in the gallery are curated but may contain unsettling imagery, stylized violence or mature themes. Where a creator has flagged content we surface that flag. Curation is human judgment, not certification.</p>
+
+      <h2>If something here infringes your work</h2>
+      <p>We respond to copyright complaints under the DMCA. Our <a href="/dmca" style="color: var(--accent);">DMCA Policy</a> explains how to send a notice, names our designated agent, and describes the counter-notice process.</p>
+
+      <h2>Disclosure when you publish elsewhere</h2>
+      <p>If you publish a film made here to a platform that requires AI-disclosure labeling &mdash; several major ones now do &mdash; applying that label is your responsibility. We do not apply it for you and we do not embed provenance metadata in downloads at this time.</p>
     `
   },
 };
