@@ -47,7 +47,7 @@ export const LEGAL_CONTENT = {
       <p>Every film on RevaultAI streams free. Selling is optional. If you mark a film as premium, viewers gain the option to buy a full-quality download, and the following applies.</p>
       <p>You set your own price. You keep <strong>80&#37; of net revenue</strong> on every sale, where net means the sale amount after payment-processing fees charged by Stripe; RevaultAI retains the remaining 20&#37;. Tips, commission and licensing arrangements made through the Support, Hire Me and licensing links on your profile go directly between you and the viewer, and we take nothing from those.</p>
       <p>You are an independent seller, not our employee, partner or agent. You are responsible for your own taxes, and we may be required to collect tax information from you and to report payments to tax authorities.</p>
-      <p>We pay creators their share of completed sales to the payment details they give us. RevaultAI is new and payout volume is still small, so we currently arrange the method and timing with each creator directly and confirm it in writing after a first sale. If we move to a fixed payout schedule we will give creators at least 30 days&rsquo; notice.</p>
+      <p>We pay creators their share of completed sales to the payment details they give us. RevaultAI is new and payout volume is still small, so we currently arrange the method and timing with each creator directly and confirm it in writing after a first sale. If we move to a fixed payout schedule we will give creators at least 30 days&rsquo; notice. What we do with the payment details you give us, and how long we keep them, is set out in our <a href="/privacy" style="color: var(--accent);">Privacy Policy</a>.</p>
       <p>If a buyer charges back, or if we refund a sale under our <a href="/refunds" style="color: var(--accent);">Refund Policy</a>, the corresponding amount is deducted from your balance or from future payments. We may hold a payment while we investigate a credible claim that what you sold infringes someone&rsquo;s rights or breaks these terms, and reverse it if the claim holds up.</p>
 
       <h2>8. Copyright and DMCA</h2>
@@ -111,6 +111,7 @@ export const LEGAL_CONTENT = {
       <p><strong>Submissions.</strong> The films, images and production notes you submit, along with the title, credits and model information you supply.</p>
       <p><strong>Creation inputs.</strong> When you use the creation tools, we process what you give them: prompts, scene text, reference images, blocking and camera settings, and photographs you upload to generate a set.</p>
       <p><strong>Purchase and credit records.</strong> What you bought or sold, when, and for how much. Card details are handled entirely by Stripe and never reach our servers.</p>
+      <p><strong>Payout details.</strong> If you sell work, whatever we need in order to pay you: the payout method you choose and the account details for it, together with any tax or identity information we are required to collect before paying you. We use these to pay you and to meet our tax record-keeping obligations, and for nothing else. We do not share them with other users.</p>
       <p><strong>Usage events.</strong> A small number of explicitly recorded product events, such as a sign-up, a submission, a purchase or a generation. We do not use automatic click or scroll capture, we do not record pageviews, and visitors who are not signed in are not given a profile.</p>
       <p><strong>Server logs.</strong> Standard request logs kept by our hosting provider, including IP address, user agent and timestamps. These are used for security, abuse prevention and debugging.</p>
       <h2>3. What We Do With It</h2>
@@ -136,18 +137,19 @@ export const LEGAL_CONTENT = {
         <li><strong>Supabase</strong> — database and authentication</li>
         <li><strong>Cloudflare R2</strong> — file and video storage</li>
         <li><strong>Mux</strong> — video processing and streaming</li>
-        <li><strong>Stripe</strong> — payments and creator payouts</li>
+        <li><strong>Stripe</strong> — payments, and creator payouts where a payout is made through Stripe</li>
         <li><strong>Resend</strong> — transactional email</li>
         <li><strong>PostHog</strong> — product analytics</li>
         <li><strong>Vercel</strong> — hosting and server logs</li>
         <li><strong>fal.ai, Anthropic and World Labs</strong> — AI processing, as described in section 5</li>
       </ul>
       <h2>7. Payments</h2>
-      <p>All payments are processed by Stripe. RevaultAI never receives or stores your card number, expiry date or security code. We keep a record of the transaction itself: what was bought, when, and the amount. Creator payouts are also handled through Stripe, which collects the tax and identity information it is legally required to collect before paying anyone.</p>
+      <p>All payments are processed by Stripe. RevaultAI never receives or stores your card number, expiry date or security code. We keep a record of the transaction itself: what was bought, when, and the amount.</p>
+      <p>Creator payouts work differently, and the honest answer is that they are in transition. Where a payout is made through Stripe, Stripe collects the tax and identity information it is required to collect before paying anyone, and the creator&rsquo;s full account details never reach us. Where a payout is arranged directly instead &mdash; which, as our <a href="/terms" style="color: var(--accent);">Terms of Service</a> explains, is how we currently handle them while volume is small &mdash; the creator gives us the payment details themselves, and we hold them only to send the payment and to keep the records tax law requires. We will update this section as payouts move onto Stripe.</p>
       <h2>8. Cookies and Local Storage</h2>
       <p>We use cookies and browser local storage to keep you signed in and to remember interface preferences. We use no advertising cookies and no cross-site trackers. Analytics are limited to the explicit product events described in section 2. Clearing your browser storage will sign you out but will not delete your account.</p>
       <h2>9. How Long We Keep Things</h2>
-      <p>Your account data is kept until you delete your account. Published films remain in the gallery until you remove them or delete your account. Transaction records are kept as long as we are required to keep them for tax and accounting purposes, even after an account is closed. Server logs are kept on a short rolling window by our hosting provider.</p>
+      <p>Your account data is kept until you delete your account. Published films remain in the gallery until you remove them or delete your account. Transaction records and payout details are kept as long as we are required to keep them for tax and accounting purposes, even after an account is closed. Server logs are kept on a short rolling window by our hosting provider.</p>
       <h2>10. Deleting Your Account</h2>
       <p>You can delete your account yourself from your settings page. Doing so removes your profile, your submissions, your follows, your purchase history, your stored video and image files, and your login. It cannot be undone.</p>
       <p>There is one exception. If you have published premium work that someone has already paid for, automatic deletion is blocked, because buyers keep permanent access to what they bought. Write to rich@revaultai.com and we will work through it with you.</p>
