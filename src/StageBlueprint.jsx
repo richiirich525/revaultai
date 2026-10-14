@@ -1,6 +1,6 @@
 import { planShapes } from "./lib/setGeometry.js";
 import { useEffect, useRef, useState } from "react";
-import { STAGE, readStage, describeStage, axisFor, sideOfAxis, bearing, eyelinesFor, eyelineProblems } from "./lib/stageGeometry.js";
+import { STAGE, readStage, describeStage, axisFor, bearing, eyelinesFor, eyelineProblems } from "./lib/stageGeometry.js";
 
 /*
   StageBlueprint — RevaultAI

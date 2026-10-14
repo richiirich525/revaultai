@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, lazy, Suspense } from "react";
 import StageBlueprint from "./StageBlueprint.jsx";
-import { readStage, describeStage } from "./lib/stageGeometry.js";
+import { readStage } from "./lib/stageGeometry.js";
 import { stateAt, setKey, removeKey, keyTimes, newRehearsal, addCamera } from "./lib/rehearsal.js";
 import { motionState, defaultBody, BODIES } from "./lib/performers.js";
 import { buildShootPrompt, buildShootSpec, buildCoverage } from "./lib/shootPrompt.js";
@@ -579,7 +579,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
               {onCover && camReads.filter((x) => x.read.subject).length > 1 && c.id === camReads.find((x) => x.read.subject)?.id && (
                 <span style={{ display: "inline-flex", flexDirection: "column", gap: 3, marginTop: 8 }}>
                   <button className="rs-btn" style={{ borderColor: "var(--accent)", color: "var(--accent)" }}
-                    onClick={(e) => { e.stopPropagation(); onCover(buildCoverage(r), r.setId || r.setName ? plateRef.current?.() : null); }}>
+                    onClick={(e) => { e.stopPropagation(); onCover(buildCoverage(r)); }}>
                     Cover the scene — all {camReads.filter((x) => x.read.subject).length} angles →
                   </button>
                   {/* Nothing is charged here, but the scene's real cost should be

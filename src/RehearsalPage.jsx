@@ -54,25 +54,9 @@ export default function RehearsalPage({ user, activeProject, notify, onSignInCli
   // The angle becomes a Shot Spec, not just a prompt: it carries the blocking,
   // start and end states, eyelines and beats into the Debugger, Live Set
   // Memory and the cross-model compiler.
-  async function uploadPlate(dataUrl) {
-    try {
-      const blob = await (await fetch(dataUrl)).blob();
-      const { data: sess } = await supabase.auth.getSession();
-      const r = await fetch("/api/get-upload-url", {
-        method: "POST",
-        headers: { Authorization: "Bearer " + sess?.session?.access_token, "Content-Type": "application/json" },
-        body: JSON.stringify({ fileType: "image/jpeg" }),
-      });
-      const j = await r.json().catch(() => ({}));
-      if (!r.ok || !j.uploadUrl) return null;
-      const put = await fetch(j.uploadUrl, { method: "PUT", headers: { "Content-Type": "image/jpeg" }, body: blob });
-      return put.ok ? j.videoPublicUrl : null;
-    } catch { return null; }
-  }
-
   // One press turns the blocking into a shot list: a slot per angle, so the
   // board on /projects tracks the scene until every setup has a keeper.
-  async function onCover(shots, plate) {
+  async function onCover(shots) {
     if (!user?.id) { notify?.("Sign in to save coverage."); return; }
     if (!activeProject?.id) { notify?.("Choose a project first — coverage is saved against one."); return; }
     if (!shots.length) { notify?.("No camera is framing anyone yet."); return; }
@@ -117,8 +101,10 @@ export default function RehearsalPage({ user, activeProject, notify, onSignInCli
       spec: s.spec,
     })));
 
-    const plates = (shots[0]?.spec?.subjects?.locations?.length ? rows.length * 2 : 0);
-    notify?.(`${rows.length} setups saved to ${activeProject.name}${plates ? ` — ${plates} credits of location plates to come` : ""}. Fill them from the board on Projects.`);
+    // Covering a scene saves setups, not location plates: a plate is made one
+    // shot at a time through PlateApproval on the shoot path, where the creator
+    // sees it and pays for it. Promising plates here would be promising nothing.
+    notify?.(`${rows.length} setups saved to ${activeProject.name}. Fill them from the board on Projects.`);
     setPage?.("projects");
   }
 
