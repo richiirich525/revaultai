@@ -25,7 +25,15 @@ import AutopsyPage from "./AutopsyPage.jsx";
 import TakesPage from "./TakesPage.jsx";
 import RehearsalPage from "./RehearsalPage.jsx";
 import { getSessionToken } from "./lib/session.js";
+import { avatarInitial } from "./lib/avatar.js";
+import { youtubeThumb } from "./lib/videoLinks.js";
 import AdminPage from "./AdminPage.jsx";
+import CreationCard from "./CreationCard.jsx";
+import CreatorAvatar from "./CreatorAvatar.jsx";
+import CreatorsPage from "./CreatorsPage.jsx";
+import DiscoveredStrip from "./DiscoveredStrip.jsx";
+import FollowFeedPage from "./FollowFeedPage.jsx";
+import SpotlightSection from "./SpotlightSection.jsx";
 import AboutPage from "./AboutPage.jsx";
 import ContactPage from "./ContactPage.jsx";
 import EmailConfirmedPage from "./EmailConfirmedPage.jsx";
@@ -60,7 +68,6 @@ import {
 import {
   fetchProfile,
   fetchProfileByUsername,
-  fetchCreators,
   upsertProfile,
   defaultProfile,
   fetchCreatorStats,
@@ -72,7 +79,6 @@ import {
   uploadAvatar,
 } from "./lib/profiles.js";
 
-import { fetchFollowingFeed } from "./lib/db.js";
 import FoundingCreatorsPage from "./FoundingCreatorsPage.jsx";
 
 const CATEGORIES = ["Abstract","Action","Animation","Comedy","Creative Experiments","Crime","Documentary","Films","Drama","Horror","Images","Music","News","Noir","Prompts","Romance","Sci-Fi/Fantasy","Short Films","Sports","Thriller","Western","Workflows"];
@@ -385,18 +391,6 @@ const CSS = `
   }
 `;
 
-function avatarInitial(name, email) {
-  if (name && name.trim()) return name.trim()[0].toUpperCase();
-  if (email) return email[0].toUpperCase();
-  return "?";
-}
-
-function CreatorAvatar({ src, name, email, size = 64, className = "" }) {
-  const [failed, setFailed] = useState(false);
-  const style = { width: size, height: size, borderRadius: "50%", flexShrink: 0, objectFit: "cover" };
-  if (src && !failed) return <img src={src} alt={name ?? "avatar"} className={className} style={style} onError={() => setFailed(true)} />;
-  return <div className={className || "avatar-fallback"} style={{ ...style, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--accent-dim)", border: "2px solid var(--border)", fontFamily: "'Syne', sans-serif", fontSize: size * 0.36, fontWeight: 700, color: "var(--accent)" }}>{avatarInitial(name, email)}</div>;
-}
 
 function AuthModal({ onClose, notify }) {
   const [tab, setTab] = useState("signin");
@@ -592,9 +586,6 @@ function normalizeContactUrl(raw) {
   if (parsed.protocol === "mailto:") return { ok: true, url: parsed.href };
   if (parsed.protocol !== "https:") return { ok: false, error: "Link must start with https:// (or be an email address)." };
   return { ok: true, url: parsed.href };
-}
-function youtubeThumb(id, res = "maxresdefault") {
-  return `https://i.ytimg.com/vi/${id}/${res}.jpg`;
 }
 function parseVimeoUrl(raw) {
   const v = (raw ?? "").trim();
@@ -1051,111 +1042,6 @@ function SettingsPage({ user, profile, setProfile, notify, setPage, setCreatorUs
         </div>
       </div>
     </div>
-  );
-}
-
-function CreationCard({ creation, onClick }) {
-  const isPending = creation.premium_status === "Pending";
-  const videoRef = useRef(null); const hasPreview = !!creation.preview_video;
-  function handleMouseEnter() {
-  if (videoRef.current) { videoRef.current.currentTime = 0; videoRef.current.play().catch(() => {}); }
-  const gif = document.querySelector(`[data-id="${creation.id}"] .preview-gif`);
-  if (gif) gif.style.opacity = "1";
-}
-function handleMouseLeave() {
-  if (videoRef.current) { videoRef.current.pause(); videoRef.current.currentTime = 0; }
-  const gif = document.querySelector(`[data-id="${creation.id}"] .preview-gif`);
-  if (gif) gif.style.opacity = "0";
-}
-  return (
-    <div className="creation-card" data-id={creation.id} onClick={() => onClick(creation.id)} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-      <div className="creation-thumb">
-        <img
-          src={creation.youtube_id ? youtubeThumb(creation.youtube_id) : (creation.thumbnail_image || creation.hero_image)}
-          alt={creation.title}
-          onError={(e) => {
-            if (creation.youtube_id && !e.target.dataset.fellBack) {
-              e.target.dataset.fellBack = "1";
-              e.target.src = youtubeThumb(creation.youtube_id, "hqdefault");
-            }
-          }}
-        />
-        {hasPreview && (
-  creation.preview_video.includes("image.mux.com") || creation.preview_video.includes("stream.mux.com")
-    ? <img src={creation.preview_video} alt="preview" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0, transition: "opacity 0.4s ease", pointerEvents: "none" }} className="preview-gif" />
-    : null
-)}
-        {(hasPreview || !!creation.video_url || !!creation.youtube_id || !!creation.vimeo_id) && <div className="video-indicator">&#9654; Film</div>}
-        <div className="creation-badge">{isPending ? <Badge type="review" /> : creation.is_premium ? <Badge type="Premium" /> : <Badge type="Open" />}</div>
-        <div className="creation-info"><div className="creation-info-title">{creation.title}</div><div className="creation-info-creator">by {creation.creator.display_name}</div></div>
-      </div>
-    </div>
-  );
-}
-
-function SpotlightSection({ creations, onView }) {
-  const items = creations.filter((c) => c.spotlight && c.premium_status !== "Pending" && c._fromDb);
-  if (items.length === 0) return null;
-  return (
-    <div className="spotlight-section-wrap">
-      <div className="spotlight-section-header"><div className="section-label">Spotlight</div><div className="section-sublabel">Handpicked creations from exceptional artists.</div></div>
-      <div className="spotlight-grid">
-        {items.map((item) => (
-          <div key={item.id} className="spotlight-card" onClick={() => onView(item.id)}>
-            <img src={item.youtube_id ? youtubeThumb(item.youtube_id) : item.hero_image} alt={item.title} />
-            <div className="spotlight-overlay" />
-            <div className="spotlight-info"><div className="spotlight-cat">{item.category}</div><div className="spotlight-title">{item.title}</div><div className="spotlight-creator">by {item.creator.display_name}</div></div>
-          </div>
-        ))}
-      </div>
-      <span className="spotlight-section-viewall" onClick={() => onView(items[0]?.id)}>View All &rarr;</span>
-    </div>
-  );
-}
-
-function DiscoveredStrip({ setPage }) {
-  const [films, setFilms] = useState([]);
-  useEffect(() => {
-    let canceled = false;
-    (async () => {
-      const { data } = await supabase
-        .from("discovered_films")
-        .select("id, title, youtube_id, director_name")
-        .order("sort_order", { ascending: true })
-        .order("created_at", { ascending: false })
-        .limit(4);
-      if (!canceled) setFilms(data ?? []);
-    })();
-    return () => { canceled = true; };
-  }, []);
-
-  if (films.length === 0) return null;
-
-  return (
-    <section className="section">
-      <div className="section-header"><div><div className="section-label" style={{ cursor: "pointer" }} onClick={() => setPage("discovered")}>Discovered</div><div className="section-sublabel">Exceptional AI films from around the web.</div></div><span className="section-link" onClick={() => setPage("discovered")}>View All &rarr;</span></div>
-      <div className="creation-grid">
-        {films.map((f) => (
-          <div key={f.id} className="creation-card" onClick={() => setPage("discovered")} style={{ cursor: "pointer" }}>
-            <div className="creation-thumb" style={{ position: "relative", overflow: "hidden" }}>
-              <img
-                src={`https://i.ytimg.com/vi/${f.youtube_id}/maxresdefault.jpg`}
-                alt={f.title}
-                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                onError={(e) => { if (!e.target.dataset.fellBack) { e.target.dataset.fellBack = "1"; e.target.src = `https://i.ytimg.com/vi/${f.youtube_id}/hqdefault.jpg`; } }}
-              />
-              <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <span style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(14,15,20,0.7)", border: "1px solid rgba(255,255,255,0.25)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text)", fontSize: 15, paddingLeft: 3 }}>&#9654;</span>
-              </div>
-            </div>
-            <div style={{ padding: "14px 16px" }}>
-              <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 14, fontWeight: 700, color: "var(--text)", marginBottom: 4 }}>{f.title}</div>
-              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--muted)", letterSpacing: "0.06em" }}>Directed by {f.director_name}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
   );
 }
 
@@ -2181,132 +2067,6 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
                 )}
               </div>
             ))}
-          </div>
-        )}
-      </section>
-    </div>
-  );
-}
-
-function FollowFeedPage({ user, setPage, setDetailId, setCreatorUser }) {
-  const [feed, setFeed] = useState([]);
-  const [suggested, setSuggested] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!user?.id) { setLoading(false); return; }
-    let canceled = false;
-    setLoading(true);
-    (async () => {
-      const { data } = await fetchFollowingFeed(user.id);
-      if (canceled) return;
-      const items = data ?? [];
-      setFeed(items);
-      if (items.length === 0) {
-        const { data: creators } = await fetchCreators();
-        if (!canceled) setSuggested((creators ?? []).slice(0, 6));
-      }
-      setLoading(false);
-    })();
-    return () => { canceled = true; };
-  }, [user?.id]);
-
-  function goDetail(id) { setDetailId(id); setPage("detail"); }
-
-  return (
-    <div className="page">
-      <div className="page-hdr"><div className="page-hdr-eyebrow">Your Feed</div><div className="page-hdr-title">Following</div><div className="page-hdr-sub">The latest work from creators you follow.</div></div>
-      <section className="section">
-        {!user ? (
-          <div className="empty-state"><div className="empty-text">Sign in to see your feed.</div></div>
-        ) : loading ? (
-          <div className="empty-state"><div className="empty-text">Loading your feed...</div></div>
-        ) : feed.length > 0 ? (
-          <div className="creation-grid">{feed.map((c) => <CreationCard key={c.id} creation={c} onClick={goDetail} />)}</div>
-        ) : (
-          <div>
-            <div className="empty-state"><div className="empty-text">Follow creators to build your personalized feed.</div></div>
-            {suggested.length > 0 && (
-              <div style={{ marginTop: 8 }}>
-                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: "0.14em", color: "var(--muted)", textTransform: "uppercase", marginBottom: 16, textAlign: "center" }}>Suggested Creators</div>
-                <div className="creator-grid">
-                  {suggested.map((c) => (
-                    <div key={c.id} className="creator-card" onClick={() => { setCreatorUser(c.username); setPage("profile"); }}>
-                      <CreatorAvatar src={c.avatar_url} name={c.display_name} size={64} className="creator-avatar" />
-                      <div className="creator-name">{c.display_name || c.username}</div>
-                      <div className="creator-handle">@{c.username}</div>
-                      {c.bio ? <div className="creator-bio">{c.bio}</div> : null}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </section>
-    </div>
-  );
-}
-
-function CreatorsPage({ setPage, setCreatorUser, creations }) {
-  const [creators, setCreators] = useState([]); const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    async function load() {
-      const { data, error } = await fetchCreators();
-      if (error) console.warn("[RevaultAI] Could not load creators:", error.message);
-      setCreators(data ?? []);
-      setLoading(false);
-    }
-    load();
-  }, []);
-
-  const byCreator = {};
-  for (const c of creations ?? []) {
-    if (c.premium_status === "Pending" || c.premium_status === "Rejected") continue;
-    if (!c.user_id) continue;
-    (byCreator[c.user_id] = byCreator[c.user_id] || []).push(c);
-  }
-
-  function thumbFor(c) {
-    if (c.youtube_id) return youtubeThumb(c.youtube_id, "hqdefault");
-    return c.thumbnail_image || c.hero_image;
-  }
-
-  return (
-    <div className="page">
-      <div className="page-hdr"><div className="page-hdr-eyebrow">Community</div><div className="page-hdr-title">Creators</div><div className="page-hdr-sub">Meet the people shaping AI-native creative work.</div></div>
-      <section className="section">
-        {loading ? <div className="empty-state"><div className="empty-text">Loading creators...</div></div> : creators.length === 0 ? <div className="empty-state"><div className="empty-text">No creators yet.</div></div> : (
-          <div className="creator-grid">
-            {creators.map((c) => {
-              const works = (byCreator[c.id] ?? []).slice(0, 3);
-              const total = (byCreator[c.id] ?? []).length;
-              return (
-                <div key={c.id} className="creator-card" onClick={() => { setCreatorUser(c.username); setPage("profile"); }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 14 }}>
-                    <CreatorAvatar src={c.avatar_url} name={c.display_name} size={52} />
-                    <div style={{ minWidth: 0 }}>
-                      <div className="creator-name" style={{ fontSize: 20, marginBottom: 2 }}>{c.display_name || c.username}</div>
-                      <div className="creator-handle" style={{ marginBottom: 0 }}>@{c.username}</div>
-                    </div>
-                  </div>
-                  {c.founding_creator && <div className="creator-badges"><Badge type="Founding" /></div>}
-                  {c.bio ? <div className="creator-bio" style={{ marginBottom: 14 }}>{c.bio}</div> : null}
-                  {works.length > 0 && (
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 3, marginBottom: 12 }}>
-                      {works.map((w) => (
-                        <div key={w.id} style={{ aspectRatio: "16/10", overflow: "hidden", borderRadius: 2, background: "var(--bg3)" }}>
-                          <img src={thumbFor(w)} alt={w.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: "brightness(0.85)" }} />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--muted)" }}>
-                    {total > 0 ? `${total} creation${total !== 1 ? "s" : ""}` : "No published work yet"}
-                  </div>
-                </div>
-              );
-            })}
           </div>
         )}
       </section>
