@@ -297,9 +297,22 @@ function auditPlan(slots) {
     const right = sided.filter((s) => s.side === -1);
 
     if (left.length && right.length) {
-      const minority = left.length <= right.length ? left : right;
-      const majority = left.length <= right.length ? right : left;
-      const anchor = majority[0];
+      // Which side is the reference? A master establishes the geography of the
+      // scene, so everything else conforms to it. Failing that, the side with
+      // more setups. Failing that, the side that was blocked first.
+      const score = (group) => [
+        group.some((s) => /wide|master|establish/i.test(`${s.row.shot_size || ""} ${s.row.slug || ""}`)) ? 1 : 0,
+        group.length,
+        -Math.min(...group.map((s) => s.row.sort ?? 0)),
+      ];
+      const [sa, sb] = [score(left), score(right)];
+      const leftAnchors = sa[0] !== sb[0] ? sa[0] > sb[0]
+        : sa[1] !== sb[1] ? sa[1] > sb[1]
+        : sa[2] >= sb[2];
+      const majority = leftAnchors ? left : right;
+      const minority = leftAnchors ? right : left;
+      const even = majority.length === minority.length;
+      const anchor = majority.find((s) => /wide|master|establish/i.test(`${s.row.shot_size || ""} ${s.row.slug || ""}`)) ?? majority[0];
 
       for (const s of minority) {
         // Name the actor whose screen side actually flips — that is the thing
@@ -309,7 +322,7 @@ function auditPlan(slots) {
           const here = screenSide(s.camera, a);
           const there = screenSide(anchor.camera, a);
           if (here !== there && here !== "center" && there !== "center") {
-            flips.push(`${a.name} sits ${there} in ${anchor.name} but ${here} here`);
+            flips.push(`${a.name} sits ${there} in "${anchor.name}" but ${here} here`);
           }
         }
         out.push({
@@ -318,9 +331,11 @@ function auditPlan(slots) {
           title: `"${s.name}" crosses the line`,
           detail:
             `The axis runs between ${axis.a.name} and ${axis.b.name}. ` +
-            `${majority.length} of the ${setups.length} setups in ${planName} sit on one side of it; this one sits on the other. ` +
-            (flips.length ? flips.join(". ") + "." : "Cutting to it reverses screen direction."),
-          fix: `Move the camera to the same side as ${anchor.name}, reframe it as a neutral shot straight down the axis, or earn the cross with a move the audience can follow.`,
+            (even
+              ? `This setup and "${anchor.name}" sit on opposite sides of it. `
+              : `${majority.length} of the ${setups.length} setups sit on one side of it; this one sits on the other. `) +
+            (flips.length ? flips.join(". ") + "." : "Cutting between them reverses screen direction."),
+          fix: `Move the camera to the same side as "${anchor.name}", reframe it as a neutral shot straight down the axis, or earn the cross with a move the audience can follow.`,
           action: "rehearsal",
         });
       }
@@ -371,7 +386,7 @@ function auditPlan(slots) {
     out.push({
       kind: "warning",
       area: "coverage",
-      title: `No wide shot in ${planName}`,
+      title: `No wide shot in "${planName}"`,
       detail: `${setups.length === 2 ? "Both setups are" : `All ${setups.length} setups are`} medium or tighter. Nothing establishes where anyone is standing, so every cut asks the audience to work it out from faces alone.`,
       fix: "Add a master from the side of the axis the rest of the coverage sits on.",
       action: "rehearsal",
@@ -385,8 +400,8 @@ function auditPlan(slots) {
     out.push({
       kind: "warning",
       area: "coverage",
-      title: `Every setup favors ${favored[0]}`,
-      detail: `${other ? other.name : "The other character"} appears only in whatever happens to be behind ${favored[0]}. In the edit this locks the scene into one point of view.`,
+      title: `Nothing covers ${other ? other.name : "the other character"}`,
+      detail: `Every setup that favors anyone favors ${favored[0]}. ${other ? other.name : "The other character"} appears only in whatever happens to be behind them. In the edit this locks the scene into one point of view.`,
       fix: `Add a single or an over-the-shoulder on ${other ? other.name : "the other character"}, on the same side of the axis.`,
       action: "rehearsal",
     });
@@ -398,7 +413,7 @@ function auditPlan(slots) {
       kind: "ok",
       area: "screen direction",
       title: `${setups.length} setups hold the same side of the line`,
-      detail: `The axis between ${axis.a.name} and ${axis.b.name} is intact across every setup in ${planName}. These will cut together.`,
+      detail: `The axis between ${axis.a.name} and ${axis.b.name} is intact across every setup in "${planName}". These will cut together.`,
       fix: "",
     });
   }
