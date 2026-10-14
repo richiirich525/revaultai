@@ -10,9 +10,6 @@ import Comments from "./Comments.jsx";
 import AiVideoGeneratorPage from "./AiVideoGeneratorPage.jsx";
 import HomeFeatures from "./HomeFeatures.jsx";
 import BacklotSection from "./BacklotSection.jsx";
-import { ABOUT_BACKLOT, splitBold } from "./lib/backlotCopy.js";
-import { LEGAL_CONTENT } from "./lib/legalContent.js";
-import { FAQS } from "./lib/faqContent.js";
 import DiscoveredPage from "./DiscoveredPage.jsx";
 import { PromptIndexPage, PromptModelPage, PromptGenrePage } from "./PromptPages.jsx";
 import SearchPage from "./SearchPage.jsx";
@@ -27,7 +24,18 @@ import BlockingPage from "./BlockingPage.jsx";
 import AutopsyPage from "./AutopsyPage.jsx";
 import TakesPage from "./TakesPage.jsx";
 import RehearsalPage from "./RehearsalPage.jsx";
+import { getSessionToken } from "./lib/session.js";
 import AdminPage from "./AdminPage.jsx";
+import AboutPage from "./AboutPage.jsx";
+import ContactPage from "./ContactPage.jsx";
+import EmailConfirmedPage from "./EmailConfirmedPage.jsx";
+import FAQPage from "./FAQPage.jsx";
+import GuidelinesPage from "./GuidelinesPage.jsx";
+import LegalPage from "./LegalPage.jsx";
+import Notification from "./Notification.jsx";
+import PremiumFilmsPage from "./PremiumFilmsPage.jsx";
+import PurchaseSuccessPage from "./PurchaseSuccessPage.jsx";
+import SetPasswordPage from "./SetPasswordPage.jsx";
 import Badge from "./Badge.jsx";
 import LotPage from "./LotPage.jsx";
 import FinishPage from "./FinishPage.jsx";
@@ -388,11 +396,6 @@ function CreatorAvatar({ src, name, email, size = 64, className = "" }) {
   const style = { width: size, height: size, borderRadius: "50%", flexShrink: 0, objectFit: "cover" };
   if (src && !failed) return <img src={src} alt={name ?? "avatar"} className={className} style={style} onError={() => setFailed(true)} />;
   return <div className={className || "avatar-fallback"} style={{ ...style, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--accent-dim)", border: "2px solid var(--border)", fontFamily: "'Syne', sans-serif", fontSize: size * 0.36, fontWeight: 700, color: "var(--accent)" }}>{avatarInitial(name, email)}</div>;
-}
-
-function Notification({ msg, onClose }) {
-  useEffect(() => { const t = setTimeout(onClose, 3400); return () => clearTimeout(t); }, [onClose]);
-  return <div className="notif">&#10022; {msg}</div>;
 }
 
 function AuthModal({ onClose, notify }) {
@@ -2993,351 +2996,6 @@ const { data: saved, error } = await insertCreation(newCreation, user, profile);
   );
 }
 
-function SetPasswordPage({ notify, setPage }) {
-  const [password, setPassword] = useState(""); const [confirmPassword, setConfirmPassword] = useState(""); const [loading, setLoading] = useState(false); const [error, setError] = useState(null);
-  async function handleSubmit(e) { e.preventDefault(); setError(null); if (password !== confirmPassword) { setError("Passwords do not match."); return; } if (password.length < 6) { setError("Minimum 6 characters."); return; } setLoading(true); const { error: err } = await supabase.auth.updateUser({ password }); setLoading(false); if (err) { setError(err.message); return; } notify("Password updated."); setPage("home"); }
-  return (
-    <div className="page"><div className="page-hdr"><div className="page-hdr-title">Set New Password</div></div><section className="section"><div style={{ maxWidth: 480 }}><form onSubmit={handleSubmit}><div className="form-group"><label className="form-label">New Password</label><input className="form-input" type="password" placeholder="Min. 6 characters" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} autoFocus /></div><div className="form-group"><label className="form-label">Confirm Password</label><input className="form-input" type="password" placeholder="Re-enter your password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required minLength={6} /></div>{error && <div className="auth-error">{error}</div>}<button className="btn-primary" type="submit" disabled={loading}>{loading ? "Updating..." : "Update Password"}</button></form></div></section></div>
-  );
-}
-
-function EmailConfirmedPage({ setPage }) {
-  return <div className="page"><div className="empty-state" style={{ paddingTop: 120 }}><div className="empty-text" style={{ color: "var(--text)", fontSize: 18, marginBottom: 12 }}>Email confirmed.</div><div className="empty-text" style={{ marginBottom: 32 }}>Your account is now active.</div><button className="btn-primary" onClick={() => setPage("home")}>Back to Home</button></div></div>;
-}
-function PurchaseSuccessPage({ setPage, setDetailId, creations }) {
-  const params = new URLSearchParams(window.location.search);
-  const sessionId = params.get("session_id");
-  const [title, setTitle] = useState(null);
-  const [creationId, setCreationId] = useState(null);
-
-  useEffect(() => {
-    async function load() {
-      if (!sessionId) return;
-      try {
-        const res = await fetch("/api/verify-session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ session_id: sessionId }),
-        });
-        const json = await res.json();
-        if (json.creation_id) {
-          setCreationId(json.creation_id);
-          const creation = creations.find((c) => c.id === json.creation_id);
-          if (creation) setTitle(creation.title);
-        }
-      } catch {}
-    }
-    load();
-  }, [sessionId]);
-
-  return (
-    <div className="page">
-      <div style={{ maxWidth: 560, margin: "0 auto", padding: "120px 48px 80px", textAlign: "center" }}>
-        <div style={{ fontSize: 48, marginBottom: 24 }}>&#10003;</div>
-        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 36, fontWeight: 300, color: "var(--text)", marginBottom: 12 }}>
-          Purchase confirmed.
-        </div>
-        {title && (
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: "var(--accent)", marginBottom: 8, letterSpacing: "0.08em" }}>
-            {title}
-          </div>
-        )}
-        <div style={{ fontSize: 14, color: "var(--muted)", marginBottom: 40, lineHeight: 1.7 }}>
-          The full prompt{title ? ` for "${title}"` : ""} is now unlocked. You can access it any time from the archive.
-        </div>
-        <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
-          {creationId && (
-            <button className="btn-primary" onClick={() => { setDetailId(creationId); setPage("detail"); }}>
-              View Unlocked Creation
-            </button>
-          )}
-          <button className="btn-ghost" onClick={() => setPage("explore")}>
-            Back to Archive
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-function LegalPage({ setPage, page }) {
-  const content = LEGAL_CONTENT;
-
-  const c = content[page];
-  if (!c) return null;
-
-  return (
-    <div className="page">
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "80px 48px" }}>
-        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.2em", color: "var(--accent)", textTransform: "uppercase", marginBottom: 12, cursor: "pointer" }} onClick={() => setPage("home")}>
-          &larr; RevaultAI
-        </div>
-        <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 48, fontWeight: 300, color: "var(--text)", marginBottom: 8 }}>{c.title}</h1>
-        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--muted)", letterSpacing: "0.1em", marginBottom: 48 }}>Last updated: {c.updated}</div>
-        <div
-          style={{ color: "var(--muted)", lineHeight: 1.8, fontSize: 14 }}
-          dangerouslySetInnerHTML={{ __html: c.body.replace(/<h2>/g, '<h2 style="font-family: \'Syne\', sans-serif; font-size: 14px; font-weight: 600; color: var(--text); text-transform: uppercase; letter-spacing: 0.1em; margin: 32px 0 12px;">').replace(/<ul>/g, '<ul style="padding-left: 24px; margin: 12px 0;">').replace(/<li>/g, '<li style="margin-bottom: 8px;">').replace(/<p>/g, '<p style="margin-bottom: 16px;">') }}
-        />
-      </div>
-    </div>
-  );
-}
-async function getSessionToken() {
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
-  if (!token) throw new Error("Your session has expired. Please sign in again.");
-  return token;
-}
-function FAQPage({ setPage }) {
-    const faqs = FAQS;
-
-  const [open, setOpen] = useState(null);
-
-  return (
-    <div className="page">
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "80px 48px" }}>
-        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.2em", color: "var(--accent)", textTransform: "uppercase", marginBottom: 12, cursor: "pointer" }} onClick={() => setPage("home")}>
-          &larr; RevaultAI
-        </div>
-        <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 48, fontWeight: 300, color: "var(--text)", marginBottom: 8 }}>
-          Frequently Asked Questions
-        </h1>
-        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", letterSpacing: "0.08em", marginBottom: 56 }}>
-          Everything you need to know about RevaultAI.
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          {faqs.map((faq, i) => (
-            <div key={i} style={{ borderTop: "1px solid var(--border)", padding: "24px 0" }}>
-              <div
-                onClick={() => setOpen(open === i ? null : i)}
-                style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", cursor: "pointer", gap: 24 }}
-              >
-                <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 15, fontWeight: 600, color: "var(--text)", lineHeight: 1.4 }}>
-                  {faq.q}
-                </div>
-                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 16, color: "var(--accent)", flexShrink: 0, marginTop: 2 }}>
-                  {open === i ? "−" : "+"}
-                </div>
-              </div>
-              {open === i && (
-                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 1.8, marginTop: 16, letterSpacing: "0.02em" }}>
-                  {faq.a}
-                </div>
-              )}
-            </div>
-          ))}
-          <div style={{ borderTop: "1px solid var(--border)" }} />
-        </div>
-      </div>
-    </div>
-  );
-}
-function ContactPage({ setPage }) {
-  const contacts = [
-    { category: "General Support", description: "Questions about your account, purchases, or how the platform works.", email: "rich@revaultai.com", response: "We respond within 48 hours." },
-    { category: "Creator Inquiries", description: "Questions about submitting work, prompt pricing, or becoming a featured creator.", email: "rich@revaultai.com", response: "We respond within 48 hours." },
-    { category: "Copyright and DMCA", description: "To report infringing content or file a DMCA takedown notice. This reaches our registered copyright agent.", email: "dmca@revaultai.com", response: "We respond within 24 hours." },
-    { category: "Business and Partnerships", description: "Licensing inquiries, brand partnerships, or press requests.", email: "rich@revaultai.com", response: "We respond within 5 business days." },
-  ];
-  return (
-    <div className="page">
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "80px 48px" }}>
-        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.2em", color: "var(--accent)", textTransform: "uppercase", marginBottom: 12, cursor: "pointer" }} onClick={() => setPage("home")}>← RevaultAI</div>
-        <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 48, fontWeight: 300, color: "var(--text)", marginBottom: 8 }}>Contact</h1>
-        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", letterSpacing: "0.08em", marginBottom: 56 }}>We are a small team. We read every message.</div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          {contacts.map((c, i) => (
-            <div key={i} style={{ borderTop: "1px solid var(--border)", padding: "32px 0" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 24, flexWrap: "wrap" }}>
-                <div style={{ flex: 1, minWidth: 240 }}>
-                  <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 14, fontWeight: 700, color: "var(--text)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>{c.category}</div>
-                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 1.7, marginBottom: 12 }}>{c.description}</div>
-                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--muted)", letterSpacing: "0.08em" }}>{c.response}</div>
-                </div>
-                <a href={"mailto:" + c.email} style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--accent)", letterSpacing: "0.1em", textDecoration: "none", border: "1px solid var(--accent)", padding: "10px 20px", borderRadius: 4, whiteSpace: "nowrap", alignSelf: "flex-start" }}>{c.email}</a>
-              </div>
-            </div>
-          ))}
-          <div style={{ borderTop: "1px solid var(--border)" }} />
-        </div>
-        <div style={{ marginTop: 64, padding: "32px", background: "var(--surface)", borderRadius: 8, border: "1px solid var(--border)" }}>
-          <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 12, fontWeight: 700, color: "var(--text)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>Before You Write</div>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", lineHeight: 1.8 }}>Many questions are answered in our <span style={{ color: "var(--accent)", cursor: "pointer" }} onClick={() => setPage("faq")}>FAQ</span>. For purchase issues please include your order email and the creation title. For DMCA notices please review our <span style={{ color: "var(--accent)", cursor: "pointer" }} onClick={() => setPage("dmca")}>DMCA Policy</span> before writing.</div>
-        </div>
-      </div>
-    </div>
-  );
-}
-function GuidelinesPage({ setPage }) {
-  return (
-    <div className="page">
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "80px 48px" }}>
-        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.2em", color: "var(--accent)", textTransform: "uppercase", marginBottom: 12, cursor: "pointer" }} onClick={() => setPage("home")}>← RevaultAI</div>
-        <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 48, fontWeight: 300, color: "var(--text)", marginBottom: 8 }}>Submission Guidelines</h1>
-        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", letterSpacing: "0.08em", marginBottom: 56 }}>What we accept. What we reject. How to get featured.</div>
-
-        <div style={{ borderTop: "1px solid var(--border)", padding: "32px 0" }}>
-          <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 700, color: "var(--text)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 20 }}>Accepted Content</div>
-          {["AI films and short films", "AI animations", "AI music visuals", "Experimental AI cinema", "AI-generated narrative works"].map((item, i) => (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-              <div style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--accent)", flexShrink: 0 }} />
-              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)" }}>{item}</div>
-            </div>
-          ))}
-        </div>
-
-        <div style={{ borderTop: "1px solid var(--border)", padding: "32px 0" }}>
-          <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 700, color: "var(--text)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 20 }}>Quality Requirements</div>
-          {[
-            ["Clear title", "Your title should describe the work — not just 'Untitled' or 'Test'."],
-            ["Meaningful production note", "Tell us how the work was made. For a single generation, that's usually the prompt itself. For a multi-shot film, a workflow description, model choices, or the key creative decisions is exactly right. There's no word count — we're looking for something another filmmaker could learn from."],
-            ["Original work", "You must own or have rights to the content you submit. AI-generated content must be your original creative work."],
-            ["High-quality video", "Minimum 1080p. No watermarks, no platform logos, no TikTok borders. No slideshows of static images — content must have motion."],
-            ["Cinematic first frame", "Mux generates your thumbnail from frame 0. Make it count. No black frames or title cards at the start."],
-          ].map(([title, desc], i) => (
-            <div key={i} style={{ marginBottom: 24 }}>
-              <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 12, fontWeight: 600, color: "var(--text)", marginBottom: 6 }}>{title}</div>
-              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", lineHeight: 1.7 }}>{desc}</div>
-            </div>
-          ))}
-        </div>
-
-        <div style={{ borderTop: "1px solid var(--border)", padding: "32px 0" }}>
-          <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 700, color: "var(--text)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 20 }}>Not Allowed</div>
-          {["Spam or duplicate submissions", "Stolen or plagiarized content", "Hate speech or discriminatory content", "Illegal content of any kind", "Low-effort uploads with vague or missing prompts", "Content depicting real people without consent", "Political content or misinformation"].map((item, i) => (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-              <div style={{ width: 4, height: 4, borderRadius: "50%", background: "#F87171", flexShrink: 0 }} />
-              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)" }}>{item}</div>
-            </div>
-          ))}
-        </div>
-
-        <div style={{ borderTop: "1px solid var(--border)", padding: "32px 0" }}>
-          <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 700, color: "var(--text)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 20 }}>Submission Types</div>
-          {[
-            ["Open Submissions", "Free to unlock. Your prompt is publicly visible. Great for building your audience and showcasing your range."],
-            ["Premium Submissions", "Priced at $4.99. Your full prompt is locked behind a purchase. Buyers receive permanent access. You earn visibility and credibility on a premium platform."],
-            ["Spotlight Eligibility", "Spotlight is hand-picked by the RevaultAI team. To be considered, your work must be approved, have a complete profile with bio and avatar, and represent exceptional quality. Spotlight rotates weekly."],
-          ].map(([title, desc], i) => (
-            <div key={i} style={{ marginBottom: 28 }}>
-              <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 12, fontWeight: 600, color: "var(--accent)", marginBottom: 8 }}>{title}</div>
-              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", lineHeight: 1.7 }}>{desc}</div>
-            </div>
-          ))}
-        </div>
-
-        <div style={{ borderTop: "1px solid var(--border)", paddingTop: 32 }}>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", lineHeight: 1.8 }}>
-            All submissions are reviewed within 48 hours. Questions? <span style={{ color: "var(--accent)", cursor: "pointer" }} onClick={() => setPage("contact")}>Contact us.</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-function PremiumFilmsPage({ setPage }) {
-  return (
-    <div className="page">
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "80px 48px" }}>
-        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.2em", color: "var(--accent)", textTransform: "uppercase", marginBottom: 12, cursor: "pointer" }} onClick={() => setPage("home")}>← RevaultAI</div>
-        <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 48, fontWeight: 300, color: "var(--text)", marginBottom: 8 }}>Premium Films</h1>
-        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", letterSpacing: "0.08em", marginBottom: 56 }}>Every film plays free. Owning one supports the creator.</div>
-
-        <div style={{ borderTop: "1px solid var(--border)", padding: "32px 0" }}>
-          <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 700, color: "var(--text)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 16 }}>How It Works</div>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 1.9 }}>Everything in the RevaultAI gallery streams free, in full — no paywall, no locked previews. Every film is also published with its production note — how the work was made, in the creator's own words. For some that's the full prompt; for a multi-shot film it might be the workflow, the model choices, or the decisions that shaped it. Either way it stays open for anyone to learn from. When a creator marks a film as premium, you have the option to buy it: a full-quality download to own, and a direct way to support the person who made it.</div>
-        </div>
-
-        <div style={{ borderTop: "1px solid var(--border)", padding: "32px 0" }}>
-          <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 700, color: "var(--text)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 20 }}>Why Buy a Film You Can Watch Free?</div>
-          {[
-            ["Own the work", "A full-quality download of the finished film — yours to keep, on or off the platform."],
-            ["Support the craft", "AI filmmaking is real creative labor: hours of iteration, direction, and taste. Buying a film pays the person behind it directly."],
-            ["Back the culture", "Creators keep the overwhelming share of every sale. Collecting work here keeps independent AI film open — not locked behind paywalls."],
-          ].map(([title, desc], i) => (
-            <div key={i} style={{ marginBottom: 24 }}>
-              <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 12, fontWeight: 600, color: "var(--text)", marginBottom: 6 }}>{title}</div>
-              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", lineHeight: 1.7 }}>{desc}</div>
-            </div>
-          ))}
-        </div>
-
-        <div style={{ borderTop: "1px solid var(--border)", padding: "32px 0" }}>
-          <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 700, color: "var(--text)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 20 }}>What Buyers Receive</div>
-          {["A full-quality download of the finished film", "Permanent access — re-download any time from your account", "The satisfaction of directly supporting the creator", "The complete production note remains open to everyone"].map((item, i) => (
-            <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 12 }}>
-              <div style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--accent)", flexShrink: 0, marginTop: 6 }} />
-              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>{item}</div>
-            </div>
-          ))}
-        </div>
-
-                <div style={{ borderTop: "1px solid var(--border)", padding: "32px 0" }}>
-          <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 700, color: "var(--text)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 20 }}>For Creators: Selling Is Optional</div>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 1.9 }}>You never have to sell anything. Most films in the gallery are free, and you can showcase your work here indefinitely without offering a single purchase. Premium is a switch you flip if and when you want it — and if you do, you keep 80% of net revenue on every sale.</div>
-        </div>
-        
-        <div style={{ borderTop: "1px solid var(--border)", padding: "32px 0" }}>
-          <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 700, color: "var(--text)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 20 }}>Ownership and Usage</div>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 1.9, marginBottom: 16 }}>Buying a film grants you a personal-use copy of the work. Creators retain full ownership and copyright of their films. Reselling or redistributing purchased films is not permitted. For commercial licensing, use the License This link on the film's page to arrange it with the creator directly.</div>
-        </div>
-
-        <div style={{ borderTop: "1px solid var(--border)", padding: "32px 0" }}>
-          <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 700, color: "var(--text)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 16 }}>Refund Policy</div>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 1.9 }}>All purchases are final once the film has been downloaded. If you experienced a technical issue that prevented delivery, contact us within 7 days and we will make it right. See our full <span style={{ color: "var(--accent)", cursor: "pointer" }} onClick={() => setPage("refunds")}>Refund Policy.</span></div>
-        </div>
-
-        <div style={{ borderTop: "1px solid var(--border)", paddingTop: 40 }}>
-          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 300, color: "var(--text)", marginBottom: 20, lineHeight: 1.4 }}>Find a film worth owning.</div>
-          <button className="btn-primary" onClick={() => setPage("explore")}>Browse the Gallery</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-function AboutPage({ setPage }) {
-  return (
-    <div className="page">
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "80px 48px" }}>
-        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.2em", color: "var(--accent)", textTransform: "uppercase", marginBottom: 12, cursor: "pointer" }} onClick={() => setPage("home")}>← RevaultAI</div>
-
-        <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 56, fontWeight: 300, color: "var(--text)", marginBottom: 56, lineHeight: 1.1 }}>{ABOUT_BACKLOT.heading}</h1>
-
-        <div style={{ borderTop: "1px solid var(--border)", padding: "40px 0" }}>
-          {ABOUT_BACKLOT.intro.map((p, i, all) => (
-            <div key={i} style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 2, marginBottom: i < all.length - 1 ? 24 : 0 }}>{p}</div>
-          ))}
-        </div>
-
-        <div style={{ borderTop: "1px solid var(--border)", padding: "40px 0" }}>
-          {ABOUT_BACKLOT.stations.map((s, i, all) => (
-            <div key={s.lead} style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 2, marginBottom: i < all.length - 1 ? 24 : 0 }}>
-              <strong style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, color: "var(--text)" }}>{s.lead}</strong> {s.body}
-            </div>
-          ))}
-        </div>
-
-        {ABOUT_BACKLOT.sections.map((sec) => (
-          <div key={sec.title} style={{ borderTop: "1px solid var(--border)", padding: "40px 0" }}>
-            <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 700, color: "var(--text)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 20 }}>{sec.title}</div>
-            {sec.paragraphs.map((p, i, all) => (
-              <div key={i} style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", lineHeight: 2, marginBottom: i < all.length - 1 ? 24 : 0 }}>
-                {splitBold(p).map((part, j) => (j % 2 ? <strong key={j} style={{ color: "var(--text)" }}>{part}</strong> : part))}
-              </div>
-            ))}
-          </div>
-        ))}
-
-        <div style={{ borderTop: "1px solid var(--border)", paddingTop: 48 }}>
-          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, fontWeight: 300, color: "var(--text)", marginBottom: 32, lineHeight: 1.4 }}>{ABOUT_BACKLOT.closing}</div>
-          <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-            <button className="btn-primary" onClick={() => setPage("explore")}>Explore the Archive</button>
-            <button className="btn-ghost" onClick={() => setPage("guidelines")}>Submit Your Work</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 function PromptBuilderPage({ setPage, user, onSignInClick, activeProject, setGenPrefill }) {
   const [idea, setIdea] = useState("");
   const [model, setModel] = useState("veo");
