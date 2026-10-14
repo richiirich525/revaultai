@@ -105,7 +105,7 @@ export default async function handler(req, res) {
       // Published films only — never expose pending or rejected work to search engines.
       const { data: creations } = await supabase
         .from("creations")
-        .select("id, created_at, premium_status")
+        .select("id, user_id, created_at, premium_status")
         .not("premium_status", "in", '("Pending","Rejected")')
         .order("created_at", { ascending: false })
         .limit(5000);
@@ -122,14 +122,27 @@ export default async function handler(req, res) {
       // Creator profiles
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("username")
+        .select("id, username, created_at")
         .not("username", "is", null)
         .limit(5000);
 
+      // A creator page changes when they publish, not when they signed up —
+      // so date it by their most recent published film, falling back to the
+      // join date for a creator who has not published yet.
+      const latestByUser = {};
+      for (const c of creations ?? []) {
+        if (!c.user_id || !c.created_at) continue;
+        if (!latestByUser[c.user_id] || c.created_at > latestByUser[c.user_id]) {
+          latestByUser[c.user_id] = c.created_at;
+        }
+      }
+
       for (const p of profiles ?? []) {
         if (!listableHandle(p.username)) continue;
+        const when = latestByUser[p.id] ?? p.created_at ?? null;
         entries.push(urlEntry({
           loc: `${SITE}/creator/${encodeURIComponent(p.username)}`,
+          lastmod: when ? new Date(when).toISOString().slice(0, 10) : null,
           changefreq: "weekly",
           priority: "0.6",
         }));

@@ -18,4 +18,11 @@ export default defineConfig([
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
   },
+  {
+    // Serverless functions and build scripts run in Node, not the browser.
+    // Without this every `process` and `Buffer` reads as an undefined global
+    // and buries the findings that actually matter.
+    files: ['api/**/*.js', 'scripts/**/*.js'],
+    languageOptions: { globals: globals.node },
+  },
 ])

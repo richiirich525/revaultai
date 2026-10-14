@@ -281,7 +281,6 @@ ${scene.trim()}`;
           strength: strength || "balanced",
           aspect_ratio: aspectRatio || null,
           project_id: typeof projectId === "string" ? projectId : null,
-          project_id: typeof projectId === "string" ? projectId : null,
           title: typeof built.title === "string" ? built.title.slice(0, 200) : null,
           shot_count: built.shots.length,
           breakdown: built,

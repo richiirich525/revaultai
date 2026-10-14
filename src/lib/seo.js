@@ -65,7 +65,7 @@ export const PAGES = {
       "Showcase your AI films, build a creator profile, sell premium work, and keep 80% of net revenue. Join the RevaultAI creator community.",
   },
     discovered: {
-    title: "Discovered — Exceptional AI Films From Around the Web | RevaultAI",
+    title: "Discovered — Exceptional AI Films From the Web | RevaultAI",
     description:
       "A hand-picked exhibition of remarkable AI-generated films from across the web, credited to their directors and streaming from their own channels.",
   },
@@ -80,8 +80,8 @@ export const PAGES = {
       "We are selecting a small founding cohort of AI filmmakers. Top placement, 80% of net revenue, and a permanent founding-creator badge.",
   },
   "prompt-builder": {
-    title: "Video Prompt Builder — Free AI Video Prompt Generator | RevaultAI",
-    description: "Turn a rough idea into a structured video prompt for Veo, Sora, Kling, Runway, Wan, Hailuo and Seedance. Free, no account needed.",
+    title: "Video Prompt Builder — Free AI Prompt Generator | RevaultAI",
+    description: "Turn a rough idea into a structured video prompt for Veo, Kling, Runway, Wan, Hailuo or Seedance. Free, no account needed.",
   },
   prompts: {
     title: "AI Video Prompts — Free Copy-and-Paste Prompt Directory",
@@ -93,12 +93,12 @@ export const PAGES = {
     description: "Paste the prompt behind a disappointing generation and find out what in the wording broke it — with a revised prompt built to hold. Free, no account.",
   },
   tools: {
-    title: "AI Filmmaking Tools — Free Shot Lists, Prompts & Checks | RevaultAI",
-    description: "Fifteen tools for planning, writing, checking and making an AI film. Scene breakdowns, coverage, blocking, continuity checks and more — most free, no account.",
+    title: "AI Filmmaking Tools — Free Shot Lists & Prompts | RevaultAI",
+    description: "Twenty-two tools for planning, writing and checking an AI film. Scene breakdowns, coverage, blocking, continuity checks and more — most free, no account.",
   },
   rehearsal: {
-    title: "Rehearsal Studio — Block Your AI Film Before Generating | RevaultAI",
-    description: "Block a scene over time: move performers and cameras across a timeline, compare angles on an identical performance, and see shot size and eyelines update live. Free.",
+    title: "Rehearsal Studio — Blocking Before You Generate | RevaultAI",
+    description: "Block a scene over time: move performers and cameras across a timeline, compare angles on one performance, and see shot size and eyelines update live.",
   },
   blocking: {
     title: "Blocking & Performance Director — Free Tool | RevaultAI",
@@ -110,14 +110,14 @@ export const PAGES = {
   },
   coverage: {
     title: "Coverage Planner — What Your Scene Needs to Cut | RevaultAI",
-    description: "Plan the shots an editor actually needs: master, singles, over-the-shoulders, reactions, inserts — plus what's missing and what it costs you. Free, no account.",
+    description: "Plan the shots an editor needs: master, singles, over-the-shoulders, reactions, inserts — plus what's missing and what it costs you. Free, no account.",
   },
   "shot-director": {
     title: "Shot Director — Three Ways to Shoot Any Moment | RevaultAI",
-    description: "Describe a dramatic beat and get three directorial approaches: shot size, lens, camera move, lighting, blocking and a full prompt for each. Free, no account.",
+    description: "Describe a beat and get three directorial approaches: shot size, lens, camera move, lighting, blocking and a full prompt for each. Free, no account.",
   },
   "continuity-check": {
-    title: "AI Video Continuity Checker — Free Shot List Review | RevaultAI",
+    title: "AI Video Continuity Checker — Shot List Review | RevaultAI",
     description: "Paste your shot prompts and get a script supervisor's read: characters described two ways, wardrobe drift, unmotivated lighting. Free, no account.",
   },
   "which-model": {
