@@ -7,6 +7,7 @@ import VaultRefPicker from "./VaultRefPicker.jsx";
 import { refsToSend } from "./VaultRefPicker.jsx";
 import { fetchProfile } from "./lib/profiles.js";
 import { getSessionToken } from "./lib/session.js";
+import { GEN_MODELS } from "./lib/genModels.js";
 import { supabase } from "./lib/supabase.js";
 import { URL_FRESH_MS, signGenerationUrls } from "./lib/videoUrls.js";
 
@@ -16,15 +17,6 @@ import { URL_FRESH_MS, signGenerationUrls } from "./lib/videoUrls.js";
 */
 
 export default function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setProfile, genPrefill, setGenPrefill, setApPrefill, activeProject }) {
-  const GEN_MODELS = [
-    { key: "wan-2.6", label: "Wan 2.6 — Fast", costPerSecond: 1, durations: [5, 10, 15], ratios: ["16:9", "9:16", "1:1"] },
-    { key: "kling-3.0", label: "Kling 3.0 — Cinematic", costPerSecond: 2, durations: [5, 10], ratios: ["16:9", "9:16", "1:1"], ratioFromImage: true },
-    { key: "seedance-2.0-480", label: "Seedance 2.0 — Draft (480p)", costPerSecond: 3, durations: [5, 10, 15], ratios: ["16:9", "9:16", "1:1", "21:9"] },
-    { key: "seedance-2.0", label: "Seedance 2.0 — Flagship (720p)", costPerSecond: 6, durations: [5, 10, 15], ratios: ["16:9", "9:16", "1:1", "21:9"] },
-    { key: "seedance-2.5-480", label: "Seedance 2.5 — Draft (480p, up to 30s)", costPerSecond: 6, durations: [5, 10, 15, 30], ratios: ["16:9", "9:16", "1:1", "21:9"] },
-    { key: "seedance-2.5", label: "Seedance 2.5 — Flagship (720p, up to 30s)", costPerSecond: 12, durations: [5, 10, 15, 30], ratios: ["16:9", "9:16", "1:1", "21:9"] },
-    { key: "veo-3.1", label: "Veo 3.1 — Native Audio", costPerSecond: 4, durations: [4, 6, 8], ratios: ["16:9", "9:16"] },
-  ];
  const IMAGE_MODELS = [
     { key: "seedream-5.0", label: "Seedream 5.0 — Fast", credits: 1 },
     { key: "nano-banana-2", label: "Nano Banana 2 — Consistent characters", credits: 2 },
