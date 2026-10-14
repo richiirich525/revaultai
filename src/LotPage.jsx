@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./lib/supabase.js";
 import CoveragePlan from "./CoveragePlan.jsx";
+import StagingBoard from "./StagingBoard.jsx";
 import ScriptSupervisor from "./ScriptSupervisor.jsx";
 import { geometricCount } from "./lib/stageGeometry.js";
 
@@ -109,6 +110,11 @@ export default function LotPage({ user, activeProject, setPage, notify, onSignIn
           shot. Generation solved the camera. These are the departments around it.
         </p>
       </div>
+
+      <div className="lot-rule" />
+
+      <div className="lot-sec">Block it and see</div>
+      <StagingBoard />
 
       <div className="lot-rule" />
 

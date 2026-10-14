@@ -60,12 +60,23 @@ export function screenSide(camera, actor) {
   return off < 0 ? "camera-left" : "camera-right";
 }
 
-// Is the actor inside the frame at all? Horizontal FOV widens as the lens
-// shortens, which is why this depends on subject distance.
+// Half the horizontal field of view, in degrees, at a given subject distance.
+// Wider as the lens shortens, which is why it follows distance rather than a
+// stated focal length. Exported so anything that DRAWS the cone uses the same
+// numbers the in-frame test judges by — two tables would drift, and a cone
+// that disagreed with its own verdict would be worse than no cone.
+export function halfFovFor(d) {
+  if (d < 12) return 12;
+  if (d < 18) return 19;
+  if (d < 28) return 24;
+  if (d < 42) return 27;
+  if (d < 62) return 33;
+  return 37;
+}
+
+// Is the actor inside the frame at all?
 export function inFrame(camera, actor) {
-  const d = dist(camera, actor);
-  const halfFov = d < 12 ? 12 : d < 18 ? 19 : d < 28 ? 24 : d < 42 ? 27 : d < 62 ? 33 : 37;
-  return Math.abs(screenOffset(camera, actor)) <= halfFov;
+  return Math.abs(screenOffset(camera, actor)) <= halfFovFor(dist(camera, actor));
 }
 
 // Which way an actor is turned relative to the camera: head-on, three-quarter,
