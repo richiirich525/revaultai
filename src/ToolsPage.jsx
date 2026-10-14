@@ -49,9 +49,17 @@ export default function ToolsPage({ setPage, user, onSignInClick }) {
   const all = JOBS.flatMap((j) => j.tools);
   const freeCount = all.filter((t) => t.access === "free").length;
 
-  function open(page, access) {
+  function open(page, access, anchor) {
     if (access === "account" && !user) { onSignInClick?.(); return; }
     setPage(page);
+    if (!anchor) return;
+    // A tool that lives inside another screen needs that screen to mount
+    // before its anchor exists — two frames is enough for React to commit.
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() =>
+        document.getElementById(anchor)?.scrollIntoView({ behavior: "smooth", block: "start" })
+      )
+    );
   }
   const accessOf = (page) => all.find((t) => t.page === page)?.access;
   const jump = (id) => document.getElementById("job-" + id)?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -92,7 +100,7 @@ export default function ToolsPage({ setPage, user, onSignInClick }) {
               <div className="tl-job-name">{j.name}</div>
               <div className="tl-job-when">{j.when}</div>
               {j.tools.map((t) => (
-                <div className="tl-tool" key={t.name} onClick={() => open(t.page, t.access)}>
+                <div className="tl-tool" key={t.name} onClick={() => open(t.page, t.access, t.anchor)}>
                   <div>
                     <div className="tl-name">{t.name}</div>
                     <span className={"tl-tag " + t.access}>{ACCESS_LABEL[t.access]}</span>

@@ -93,7 +93,7 @@ export const JOBS = [
       { name: "Take Debugger", page: "takes", access: "account", inMenu: false, where: "Built into every take",
         give: "A take that isn't what you planned", get: "What was asked for, what appeared, when — and a repaired prompt",
         blurb: "Samples frames across the finished clip and reads them against the shot's plan and your Vault reference photos — faces, wardrobe, props, camera, action. Each miss comes with a likely cause and a fix, plus a revised prompt that keeps the shot the same." },
-      { name: "Polish", page: "generate", access: "credits",
+      { name: "Polish", page: "generate", access: "credits", anchor: "your-clips", where: "Built into every clip you've generated",
         give: "A clip you've made", get: "Upscaled, extended, or lip-synced",
         blurb: "Upscale to 1080p or 4K, extend a clip past the length cap, and re-sync dialogue — all on a clip you already have." },
     ],

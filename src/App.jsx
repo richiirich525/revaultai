@@ -2069,7 +2069,7 @@ function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setPro
           </div>
         )}
         {gens.length > 0 && (
-          <div className="gen-list">
+          <div className="gen-list" id="your-clips">
             {gens.map((g) => (
               <div key={g.id} className="gen-item">
                 <div className="gen-item-prompt">{g.prompt}</div>
@@ -2734,7 +2734,7 @@ const purchaseLoading = creation.is_premium && !purchasesLoaded; const priceLabe
               : purchaseLoading
                 ? <div className="unlock-area"><span className="unlock-label" style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--muted)", letterSpacing: "0.1em" }}>Checking purchase status...</span></div>
                 : <div className="unlock-area"><span className="unlock-label">Own this film &mdash; full-quality download, and you support the creator directly.</span><button className="btn-unlock-restrained" onClick={handleBuy} disabled={checkingOut} style={{ opacity: checkingOut ? 0.6 : 1 }}>
-  {checkingOut ? "Opening checkout..." : "Buy Film \u2014 " + priceLabel}
+  {checkingOut ? "Opening checkout..." : "Buy Film — " + priceLabel}
 </button></div>
           )}</>}
         </div>
@@ -2796,6 +2796,48 @@ function AdminPage({ creations, setCreations, notify }) {
     track(wasSpotlit ? "spotlight_removed" : "spotlight_added", { creation_id: id });
   }
   const eligible = creations.filter((c) => c._fromDb && c.premium_status !== "Pending" && c.premium_status !== "Rejected");
+  // --- Trusted creators --------------------------------------------------
+  // auto_approve lets a creator's premium submissions go live instead of
+  // queueing for review. Written through a server route on purpose: RLS only
+  // lets somebody write their own profile row, which is how it should stay.
+  const [creators, setCreators] = useState([]);
+  const [trustBusy, setTrustBusy] = useState(null);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, username, display_name, auto_approve, founding_creator")
+        .not("username", "is", null)
+        .order("username", { ascending: true });
+      if (alive) setCreators(data ?? []);
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  async function toggleAutoApprove(c) {
+    setTrustBusy(c.id);
+    try {
+      const session = await supabase.auth.getSession();
+      const token = session.data.session?.access_token ?? "";
+      const r = await fetch("/api/set-auto-approve", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: c.id, autoApprove: !c.auto_approve }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) { notify(j.error || "Could not change that."); setTrustBusy(null); return; }
+      setCreators((prev) => prev.map((x) => (x.id === c.id ? { ...x, auto_approve: j.profile.auto_approve } : x)));
+      notify(j.profile.auto_approve
+        ? `@${c.username} is trusted — premium films go live immediately.`
+        : `@${c.username} goes back through review.`);
+    } catch {
+      notify("Could not reach the server.");
+    }
+    setTrustBusy(null);
+  }
+
   return (
     <div className="page">
       <div className="page-hdr"><div className="page-hdr-eyebrow">Internal</div><div className="page-hdr-title">Admin</div></div>
@@ -2804,6 +2846,13 @@ function AdminPage({ creations, setCreations, notify }) {
           <div className="section-label">Pending Review</div>
           {pending.length === 0 ? <div style={{ color: "var(--muted)", fontSize: 13, padding: "24px 0", fontFamily: "'DM Mono', monospace" }}>No pending submissions.</div> : (
             <table className="admin-table"><thead><tr><th>Title</th><th>Creator</th><th>Category</th><th>Actions</th></tr></thead><tbody>{pending.map((c) => (<tr key={c.id}><td style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18 }}>{c.title}</td><td style={{ color: "var(--muted)" }}>{c.creator.display_name}</td><td style={{ color: "var(--muted)", fontFamily: "'DM Mono', monospace", fontSize: 11 }}>{c.category}</td><td><button className="btn-approve" onClick={() => approve(c.id)}>Approve</button><button className="btn-reject" onClick={() => reject(c.id)}>Reject</button></td></tr>))}</tbody></table>
+          )}
+        </div>
+        <div style={{ marginBottom: 64 }}>
+          <div className="section-label">Trusted Creators</div>
+          <p style={{ color: "var(--muted)", fontSize: 11, marginBottom: 24, fontFamily: "'DM Mono', monospace", letterSpacing: "0.1em" }}>{creators.filter((c) => c.auto_approve).length}/{creators.length} skip the review queue</p>
+          {creators.length === 0 ? <div style={{ color: "var(--muted)", fontSize: 13, padding: "24px 0", fontFamily: "'DM Mono', monospace" }}>No creators yet.</div> : (
+            <table className="admin-table"><thead><tr><th>Creator</th><th>Handle</th><th>Founding</th><th>Premium submissions</th></tr></thead><tbody>{creators.map((c) => (<tr key={c.id}><td style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18 }}>{c.display_name || c.username}</td><td style={{ color: "var(--muted)", fontFamily: "'DM Mono', monospace", fontSize: 11 }}>@{c.username}</td><td style={{ color: "var(--muted)", fontFamily: "'DM Mono', monospace", fontSize: 11 }}>{c.founding_creator ? "Yes" : "—"}</td><td><div className={"spotlight-toggle" + (c.auto_approve ? " active" : "")} style={{ opacity: trustBusy === c.id ? 0.5 : 1 }} onClick={() => { if (!trustBusy) toggleAutoApprove(c); }}><div className="spotlight-dot" />{c.auto_approve ? "Go live immediately" : "Wait for review"}</div></td></tr>))}</tbody></table>
           )}
         </div>
         <div>

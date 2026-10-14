@@ -57,6 +57,9 @@ const MODELS = {
     creditsPerSecond: 4,
     durationParam: { 4: '4s', 6: '6s', 8: '8s' },
     aspectRatios: ['16:9', '9:16'],
+    // fal defaults generate_audio to true, and native audio is the reason to
+    // pick Veo — stated here so a change to their default can't silence it.
+    extraInput: { generate_audio: true },
   },
 };
 
