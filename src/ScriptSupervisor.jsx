@@ -82,7 +82,9 @@ export default function ScriptSupervisor({ project, user, setPage, notify }) {
   const blocked = geometricCount(data.slots ?? []);
   const withState = data.specs.filter((s) => s.spec?.action?.startState || s.spec?.action?.endState).length;
 
-  if (data.specs.length === 0) return null;
+  // Show the panel when there is anything to say — specs to read, or enough
+  // blocked setups to audit screen direction across.
+  if (data.specs.length === 0 && blocked < 2) return null;
 
   return (
     <div className="ss">
