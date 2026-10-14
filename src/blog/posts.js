@@ -4,6 +4,122 @@
 
 export const POSTS = [
   {
+    slug: "180-degree-rule-ai-video",
+    title: "The 180-Degree Line, and Why AI Video Breaks It",
+    seoTitle: "The 180-Degree Rule in AI Video: Screen Direction",
+    description: "Why AI video breaks the 180-degree rule by default, how to state screen direction in a prompt, and how to check a scene before you spend credits on it.",
+    date: "2026-10-14",
+    author: "Richard Garland",
+    category: "Guides",
+    readingTime: "8 min",
+    faq: [
+      ["What is the 180-degree rule in AI video?", "It's the continuity rule that keeps your camera on one side of an imaginary line drawn through the two subjects of a scene. Staying on that side keeps each character in a consistent position on screen, so cuts feel coherent. Crossing it flips their positions and makes the scene feel disjointed. It matters more in AI video than live action, because each shot is generated independently with no memory of where the camera stood for the last one."],
+      ["Why do my AI video shots not cut together?", "The most common cause is screen direction. If you did not state frame position and eyeline in each prompt, the model chose independently for each shot, so there is a good chance one of them faces the wrong way. The second most common cause is mismatched reverse pairs: two shots on the right side of the line will still refuse to cut if one is an 85mm and the other a 24mm, or if the camera heights differ."],
+      ["How do I specify screen direction in a video prompt?", "State both halves: where the person sits in frame and which way they look. 'Medium close-up of Mara, positioned frame-left, looking off toward frame-right' and then the reverse as its mirror, 'Vance, positioned frame-right, looking off toward frame-left.' For movement, name the direction of travel and keep it the same in every shot of that journey."],
+    ],
+    content: `
+<p>Two people are talking. You cut from one to the other, and suddenly they're both looking the same way, as if addressing someone standing off to the side. Nobody in the audience says "that camera crossed the axis." They just feel the scene come loose.</p>
+
+<p>That's the 180-degree line, and it's the oldest rule in continuity editing. It's also the rule AI video breaks more often than any other, for a reason that has nothing to do with the models being bad at their job.</p>
+
+<h2>What the line actually is</h2>
+
+<p>Draw an imaginary line through the two people in your scene. Keep the camera on one side of it for every shot, and their positions on screen stay consistent: she's always frame-left looking right, he's always frame-right looking left. The audience builds a map of the room without being told, and every cut confirms it.</p>
+
+<p>Step across that line for one shot and the map inverts. She's now frame-right. His eyeline points the same direction hers did. The cut reads as two people in different rooms, or as one of them having silently swapped places.</p>
+
+<p>It applies to anything with direction, not just conversation. A car driving screen-right keeps driving screen-right until you show it turn. A character walking toward a door walks the same way in every shot of that journey. Cross the line and your car appears to reverse, your character appears to double back.</p>
+
+<h2>Why AI video breaks it by default</h2>
+
+<p>Here's the part that matters, and it's specific to generated footage.</p>
+
+<p>On a set, the camera is <em>physically somewhere</em>. To cross the line you have to pick the camera up, walk it around the actors, and put it down on the other side &mdash; and somebody whose entire job is continuity will stop you. Screen direction is inherited from physics. You get it right by default and have to work to get it wrong.</p>
+
+<p>In AI video, every shot is generated from nothing. The model has no memory of where the camera stood for the previous shot, because there was no camera and there was no previous shot. Each clip is an independent act of imagination that happens to be about the same characters. <strong>Screen direction isn't inherited from anything. If you don't state it, the model picks one, and it picks independently every time.</strong></p>
+
+<p>So the odds are roughly a coin flip per shot. Generate a wide, a single on her, and a single on him without specifying direction, and there's a decent chance at least one of them faces the wrong way. That's not the model failing. It's the model being asked a question you never answered.</p>
+
+<p>Which means the 180-degree rule is <em>more</em> important in AI filmmaking than on a set, not less. The thing that used to be automatic is now the thing you have to carry yourself.</p>
+
+<h2>What it looks like when it goes wrong</h2>
+
+<p>You'll rarely spot it as "the axis broke." You'll notice symptoms:</p>
+
+<ul>
+  <li><strong>The conversation feels like two monologues.</strong> Both characters look the same way, so neither appears to be addressing the other.</li>
+  <li><strong>A character seems to have moved</strong> between cuts without walking anywhere.</li>
+  <li><strong>The edit feels choppy and you blame the pacing.</strong> You shorten the shots, which makes it worse, because the problem was never rhythm.</li>
+  <li><strong>Something is wrong and you can't name it,</strong> so you regenerate shots at random hoping one of them fixes the feeling.</li>
+</ul>
+
+<p>That last one is expensive. People burn a lot of credits re-rolling a shot that was fine, because the problem was the relationship between two shots rather than anything inside either one.</p>
+
+<h2>How to state screen direction in a prompt</h2>
+
+<p>Say where the person is in frame and which way they face. Both halves, every shot.</p>
+
+<p>Not this:</p>
+
+<p><em>"Medium close-up of Mara, tense, listening."</em></p>
+
+<p>This:</p>
+
+<p><em>"Medium close-up of Mara, positioned frame-left, looking off toward frame-right. Tense, listening."</em></p>
+
+<p>Then the reverse on the other character has to be the mirror of that:</p>
+
+<p><em>"Medium close-up of Vance, positioned frame-right, looking off toward frame-left."</em></p>
+
+<p>She looks right, he looks left, and they appear to be looking at each other. Get those two the same way around and the scene falls apart no matter how good either shot is.</p>
+
+<p>For movement, say the direction of travel and keep it: <em>"walking left to right across frame"</em> stays left to right in every shot of that walk.</p>
+
+<h2>Let the master be the anchor</h2>
+
+<p>When you're deciding which shot is "right," the answer is almost always the wide.</p>
+
+<p>The master establishes the geography &mdash; it's the shot that tells the audience where everyone is. Every closer shot should conform to it. If your over-the-shoulder disagrees with your master, move the over-the-shoulder, not the master.</p>
+
+<p>This sounds obvious and gets reversed all the time, because the close-up is usually the shot you care about more, so it's the one you defend. Shoot the wide first, decide your side of the line from it, and treat it as the authority for everything that follows.</p>
+
+<h2>Matching reverses is a separate problem</h2>
+
+<p>Two shots can both sit on the correct side of the line and still refuse to cut together, because a reverse pair has to match in more than direction.</p>
+
+<p><strong>Focal length.</strong> An 85mm single on her against a 24mm single on him won't feel like two halves of the same conversation. The compression is different, so the faces sit in space differently and the backgrounds fall away at different rates. Pick one lens for the pair.</p>
+
+<p><strong>Camera height.</strong> If one reverse is at eye level and the other is slightly above, you've accidentally made a statement about who has power in the scene. Sometimes that's exactly what you want. If you didn't choose it, it's noise.</p>
+
+<p><strong>Distance.</strong> In AI video this one does most of the work, because shot size and apparent lens both follow from how far back the camera stands. Reverses that are the same distance from their subject tend to match. Reverses at different distances rarely do.</p>
+
+<h2>When crossing the line is fine</h2>
+
+<p>It's a rule with legitimate exits, and knowing them is the difference between breaking it and using it.</p>
+
+<ul>
+  <li><strong>A neutral shot.</strong> A camera sitting directly on the axis &mdash; looking straight down the line between the two characters &mdash; belongs to neither side. Cut to it, then cut out to the other side, and the audience follows.</li>
+  <li><strong>A visible move.</strong> If the camera travels across the line while recording, the audience watches it happen and re-maps the room. In AI video this means generating a shot that actually contains the move, not cutting to the far side and hoping.</li>
+  <li><strong>A cutaway.</strong> Go to a prop, a hand, a window, then come back on the new side. The interruption resets the map.</li>
+  <li><strong>You mean it.</strong> Disorientation is a legitimate effect. A character losing their grip, a fight going wrong, a nightmare &mdash; crossing the line on purpose makes the audience feel unmoored, which is sometimes the point. The difference is intent.</li>
+</ul>
+
+<h2>Check it before you generate, not after</h2>
+
+<p>This is the part worth changing about your process. Screen direction is cheap to fix before you've spent anything and expensive afterwards, because the fix is regenerating shots.</p>
+
+<p>Sketch the scene from above &mdash; two dots for your characters, a line between them, and a mark for each camera position. Every camera on one side of that line. It takes a minute on paper and it catches the error while the error is still free.</p>
+
+<p>If you'd rather not draw it yourself, RevaultAI's <a href="/lot">Lot Supervisor</a> has a staging board that does exactly this: drag your performers and cameras on an overhead plan and it marks any camera that crosses, naming which performer flips sides and in which shot. It also checks your reverse pairs for mismatched lenses and heights, and tells you when a scene has no wide shot to anchor it. No account, no credits.</p>
+
+<p>The broader habit is the one from <a href="/blog/block-a-scene-before-you-generate">blocking a scene before you generate it</a>: decide where everything is first, then write prompts that describe that arrangement. The 180-degree line is the single most valuable thing that falls out of doing it in that order.</p>
+
+<h2>The short version</h2>
+
+<p>Pick a side of the line. State frame position and eyeline direction in every prompt. Let the wide shot be the authority. Match your reverses on lens, height and distance. Cross deliberately or not at all &mdash; and check the plan before you spend credits, because the audience will feel the error even when they can't name it.</p>
+`,
+  },
+  {
     slug: "ai-video-dialogue-and-sound",
     title: "How to Get Usable Dialogue and Sound Out of AI Video",
     seoTitle: "AI Video With Sound: Getting Dialogue and Audio That Works",
