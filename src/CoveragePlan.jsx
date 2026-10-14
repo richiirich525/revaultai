@@ -12,6 +12,9 @@ import { STAGE, planGeometry } from "./lib/stageGeometry.js";
 
 const HOLD = "#4ADE80";
 const CROSS = "#F87171";
+// A crossing the director marked deliberate. The drawing has to agree with
+// the findings, and the findings call this a choice rather than a break.
+const MEANT = "#E5B769";
 const PAD = 9;
 
 const styles = `
@@ -84,13 +87,14 @@ export default function CoveragePlan({ slots = [] }) {
   if (!plans.length) return null;
 
   const plan = plans[Math.min(active, plans.length - 1)];
-  const { setups, axis, anchor, crossingIds, planName, reference } = plan.geo;
+  const { setups, axis, anchor, crossingIds, deliberateIds, planName, reference } = plan.geo;
   const ends = axis ? axisEnds(axis) : null;
   const actors = reference?.actors ?? [];
   const aim = axis
     ? { x: (axis.a.x + axis.b.x) / 2, y: (axis.a.y + axis.b.y) / 2 }
     : { x: STAGE / 2, y: STAGE / 2 };
-  const crossed = setups.filter((s) => crossingIds.has(s.row.id));
+  const crossed = setups.filter((s) => crossingIds.has(s.row.id) && !deliberateIds.has(s.row.id));
+  const meant = setups.filter((s) => deliberateIds.has(s.row.id));
   // With no crossing there is no anchor, but the side every camera shares is
   // still worth shading — it is the half of the room the scene is shot from.
   const anchorSide = anchor ? anchor.side : (setups.find((s) => s.side !== 0)?.side ?? 0);
@@ -149,7 +153,8 @@ export default function CoveragePlan({ slots = [] }) {
             <line
               key={"l" + s.row.id}
               x1={s.camera.x} y1={s.camera.y} x2={aim.x} y2={aim.y}
-              stroke={crossingIds.has(s.row.id) ? "rgba(248,113,113,0.4)" : "rgba(255,255,255,0.13)"}
+              stroke={deliberateIds.has(s.row.id) ? "rgba(229,183,105,0.4)"
+                : crossingIds.has(s.row.id) ? "rgba(248,113,113,0.4)" : "rgba(255,255,255,0.13)"}
               strokeWidth="0.4"
             />
           ))}
@@ -169,7 +174,8 @@ export default function CoveragePlan({ slots = [] }) {
 
           {/* Cameras */}
           {setups.map((s) => {
-            const bad = crossingIds.has(s.row.id);
+            const onPurpose = deliberateIds.has(s.row.id);
+            const bad = crossingIds.has(s.row.id) && !onPurpose;
             const isAnchor = anchor && s.row.id === anchor.row.id;
             const below = s.camera.y > 62;
             return (
@@ -177,11 +183,11 @@ export default function CoveragePlan({ slots = [] }) {
                 {isAnchor && (
                   <circle cx={s.camera.x} cy={s.camera.y} r="4.2" fill="none" stroke={HOLD} strokeWidth="0.5" opacity="0.5" />
                 )}
-                <circle cx={s.camera.x} cy={s.camera.y} r="2.3" fill={bad ? CROSS : HOLD} />
+                <circle cx={s.camera.x} cy={s.camera.y} r="2.3" fill={bad ? CROSS : onPurpose ? MEANT : HOLD} />
                 <text
                   x={clamp(s.camera.x, 14, STAGE - 14)}
                   y={below ? s.camera.y - 4.6 : s.camera.y + 7}
-                  fill={bad ? CROSS : "var(--muted)"}
+                  fill={bad ? CROSS : onPurpose ? MEANT : "var(--muted)"}
                   fontSize="3.7" fontFamily="monospace" textAnchor="middle"
                 >
                   {short(s.name, 22)}
@@ -203,13 +209,14 @@ export default function CoveragePlan({ slots = [] }) {
             </span>
           </>
         )}
-        {axis && crossed.length === 0 && setups.length > 1 && " · all on one side"}
+        {axis && crossingIds.size === 0 && setups.length > 1 && " · all on one side"}
         {anchor && <> · measured against <b>{short(anchor.name, 28)}</b></>}
       </div>
 
       <div className="lp-legend">
         <span><i className="lp-dot" style={{ background: HOLD }} />holds the line</span>
         {crossed.length > 0 && <span><i className="lp-dot" style={{ background: CROSS }} />crosses</span>}
+        {meant.length > 0 && <span><i className="lp-dot" style={{ background: MEANT }} />crosses on purpose</span>}
         <span><i className="lp-dot" style={{ background: "var(--text)" }} />performer</span>
         {anchor && <span><i className="lp-dot" style={{ background: "transparent", border: `1px solid ${HOLD}` }} />reference</span>}
       </div>

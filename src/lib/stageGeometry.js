@@ -283,9 +283,86 @@ function slotLabel(slot, i) {
   return slot.slug || `Setup ${i + 1}`;
 }
 
-// Does this setup read as the shot that establishes the geography?
-const isMaster = (s) =>
-  /wide|master|establish/i.test(`${s.row.shot_size || ""} ${s.row.slug || ""}`);
+/*
+  Declared intent.
+
+  Everything above reads geometry: where a camera stands, how far from whom,
+  which side of the line. Geometry is honest, but it is not purpose. A wide
+  shot on a long lens and an extreme wide sit at the same distance. A
+  deliberate two-shot and a sloppy single look identical from overhead. Only
+  the person blocking the scene knows which was meant.
+
+  So purpose is declared rather than inferred, and the audit's job changes:
+  instead of judging geometry against a rulebook, it checks geometry against
+  what the director said they were doing. A setup that declares nothing falls
+  back to the old label-sniffing, because plans blocked before this existed
+  still have to read.
+*/
+export const INTENTS = {
+  master:   { label: "Master",            needsSubject: false, carriesDirection: true  },
+  two_shot: { label: "Two-shot",          needsSubject: false, carriesDirection: true  },
+  single:   { label: "Single",            needsSubject: true,  carriesDirection: true  },
+  ots:      { label: "Over-the-shoulder", needsSubject: true,  carriesDirection: true  },
+  neutral:  { label: "Neutral",           needsSubject: false, carriesDirection: false },
+  insert:   { label: "Insert",            needsSubject: false, carriesDirection: false },
+};
+
+export function intentOf(slot) {
+  const v = typeof slot?.intent === "string" ? slot.intent.trim() : "";
+  return INTENTS[v] ? v : null;
+}
+
+/*
+  Who the setup is on. A declared subject beats the one geometry guessed —
+  and a setup that declares an intent taking NO subject is on nobody, even
+  though geometry can always name whoever stands nearest. That matters: left
+  to the fallback, a master "favors" its closest performer and gets compared
+  against a single as if the two were a reverse pair, which they are not.
+*/
+export function favorsOf(slot) {
+  const i = intentOf(slot);
+  if (i != null) return INTENTS[i].needsSubject ? (slot.intent_favors || slot.favors || null) : null;
+  return slot?.favors || null;
+}
+
+/*
+  Does this setup take part in the screen-direction judgment at all?
+
+  A neutral shot looks down the axis and so belongs to neither side by
+  definition. An insert of a hand on a doorknob carries no screen direction
+  there is anything to break. Counting either as a crossing is how the tool
+  ends up flagging a shot the director chose on purpose.
+*/
+function carriesDirection(s) {
+  const i = intentOf(s.row);
+  return i == null ? true : INTENTS[i].carriesDirection;
+}
+
+const isDeliberate = (s) => s.row.deliberate_cross === true;
+
+// Perpendicular distance from a point to the line of action.
+export function distToAxis(axis, p) {
+  if (!axis) return null;
+  const dx = axis.b.x - axis.a.x;
+  const dy = axis.b.y - axis.a.y;
+  const len = Math.hypot(dx, dy) || 1;
+  return Math.abs(dx * (p.y - axis.a.y) - dy * (p.x - axis.a.x)) / len;
+}
+
+// Inside this band, a camera reads as sitting on the line rather than beside it.
+const ON_AXIS = 6;
+
+/*
+  Does this setup establish the geography? A declared master is one; a setup
+  that declares something else is NOT one even if its label says "wide",
+  because the declaration is the whole point. Undeclared setups fall back to
+  reading their own labels.
+*/
+const isMaster = (s) => {
+  const i = intentOf(s.row);
+  if (i != null) return i === "master";
+  return /wide|master|establish/i.test(`${s.row.shot_size || ""} ${s.row.slug || ""}`);
+};
 
 /*
   Everything the written findings and the drawn plan have to agree on: which
@@ -316,9 +393,12 @@ export function planGeometry(slots = []) {
   let crossing = [];
   let even = false;
 
+  // Only the setups that carry screen direction can cross it.
+  const directional = setups.filter(carriesDirection);
+
   if (axis) {
-    const left = setups.filter((s) => s.side === 1);
-    const right = setups.filter((s) => s.side === -1);
+    const left = directional.filter((s) => s.side === 1);
+    const right = directional.filter((s) => s.side === -1);
     if (left.length && right.length) {
       // Which side is the reference? A master establishes the geography of the
       // scene, so everything else conforms to it. Failing that, the side with
@@ -341,12 +421,16 @@ export function planGeometry(slots = []) {
 
   return {
     setups,
+    directional,
     planName,
     reference,
     axis,
     anchor,
     crossing,
     crossingIds: new Set(crossing.map((s) => s.row.id)),
+    // A cross the director marked as intended. Still a cross — the board
+    // still draws it — but not the same finding.
+    deliberateIds: new Set(crossing.filter(isDeliberate).map((s) => s.row.id)),
     even,
   };
 }
@@ -354,14 +438,26 @@ export function planGeometry(slots = []) {
 // One plan — one scene's worth of setups.
 function auditPlan(slots) {
   const out = [];
-  const { setups, planName, reference, axis, anchor, crossing, even } = planGeometry(slots);
+  const { setups, directional, planName, reference, axis, anchor, crossing, even } = planGeometry(slots);
 
   if (setups.length < 2) return out;
 
   // --- Screen direction across setups ------------------------------------
   if (axis && crossing.length) {
     {
-      const holding = setups.length - crossing.length;
+      const holding = directional.length - crossing.length;
+
+      /*
+        Is there anything in the plan the audience can re-map the room on? A
+        neutral shot down the axis does it, and so does a cutaway. Without
+        one, a cross still lands as a mistake on screen no matter what was
+        intended — so a deliberate cross with no reset is worth saying out
+        loud rather than waving through.
+      */
+      const reset = setups.find((x) => {
+        const i = intentOf(x.row);
+        return i === "neutral" || i === "insert";
+      });
 
       for (const s of crossing) {
         // Name the actor whose screen side actually flips — that is the thing
@@ -374,17 +470,138 @@ function auditPlan(slots) {
             flips.push(`${a.name} sits ${there} in "${anchor.name}" but ${here} here`);
           }
         }
+
+        const where =
+          `The axis runs between ${axis.a.name} and ${axis.b.name}. ` +
+          (even
+            ? `This setup and "${anchor.name}" sit on opposite sides of it. `
+            : `${holding} of the ${directional.length} setups that carry screen direction sit on one side of it; this one sits on the other. `);
+
+        // Declared deliberate: no longer an error, a choice — and the only
+        // question left is whether the choice is earned.
+        if (isDeliberate(s)) {
+          out.push(reset ? {
+            kind: "note",
+            area: "screen direction",
+            title: `"${s.name}" crosses the line on purpose`,
+            detail: where + (flips.length ? flips.join(". ") + ". " : "") +
+              `Marked deliberate, and "${reset.name}" gives the audience somewhere to re-map the room, so the cross is earned.`,
+            fix: "",
+          } : {
+            kind: "warning",
+            area: "screen direction",
+            title: `"${s.name}" crosses on purpose with nothing to reset on`,
+            detail: where + (flips.length ? flips.join(". ") + ". " : "") +
+              "Marked deliberate, but nothing in this plan lets the audience re-map the room. A cross with no neutral shot and no cutaway beside it reads as an error rather than an effect, however it was meant.",
+            fix: "Add a neutral shot straight down the axis, or a cutaway to go out on, next to this setup.",
+            action: "rehearsal",
+          });
+          continue;
+        }
+
         out.push({
           kind: "break",
           area: "screen direction",
           title: `"${s.name}" crosses the line`,
-          detail:
-            `The axis runs between ${axis.a.name} and ${axis.b.name}. ` +
-            (even
-              ? `This setup and "${anchor.name}" sit on opposite sides of it. `
-              : `${holding} of the ${setups.length} setups sit on one side of it; this one sits on the other. `) +
+          detail: where +
             (flips.length ? flips.join(". ") + "." : "Cutting between them reverses screen direction."),
-          fix: `Move the camera to the same side as "${anchor.name}", reframe it as a neutral shot straight down the axis, or earn the cross with a move the audience can follow.`,
+          fix: `Move the camera to the same side as "${anchor.name}", reframe it as a neutral shot straight down the axis, or mark the cross deliberate if you meant it.`,
+          action: "rehearsal",
+        });
+      }
+    }
+  }
+
+  /*
+    Does each setup do what it says it does?
+
+    These findings only exist because purpose is declared. Without a stated
+    intent there is nothing to disagree with — the geometry is simply whatever
+    it is, and the tool can only describe it back. With one, the useful
+    question becomes available: you said this was a two-shot, is it?
+  */
+  for (const s of setups) {
+    const declared = intentOf(s.row);
+    if (declared == null) continue;
+
+    const inShot = s.actors.filter((a) => inFrame(s.camera, a));
+    const outShot = s.actors.filter((a) => !inFrame(s.camera, a));
+    const named = favorsOf(s.row);
+    const subject = named ? s.actors.find((a) => a.name === named) : null;
+
+    // A master that cannot show the room is not a master, and everything
+    // else in the plan is conforming to it.
+    if (declared === "master" && s.actors.length) {
+      const near = Math.min(...s.actors.map((a) => dist(s.camera, a)));
+      const size = shotSizeFor(near);
+      if (!/wide/i.test(size)) {
+        out.push({
+          kind: "warning",
+          area: "intent",
+          title: `"${s.name}" is marked the master but frames as ${size.toLowerCase()}`,
+          detail: `A master establishes where everyone is standing, and from this distance it cannot — ${outShot.length ? outShot.map((a) => a.name).join(" and ") + " " + (outShot.length === 1 ? "is" : "are") + " outside the frame" : "the room around the performers is not in it"}. The rest of the coverage is conforming to a shot that does not establish anything.`,
+          fix: "Pull the camera back until the whole playing area is in frame, or mark a different setup as the master.",
+          action: "rehearsal",
+        });
+      }
+    }
+
+    if (declared === "two_shot" && s.actors.length >= 2 && inShot.length < 2) {
+      out.push({
+        kind: "warning",
+        area: "intent",
+        title: `"${s.name}" is marked a two-shot but ${inShot.length === 1 ? "only " + inShot[0].name + " is in frame" : "nobody is in frame"}`,
+        detail: `${outShot.map((a) => a.name).join(" and ")} ${outShot.length === 1 ? "falls" : "fall"} outside the frame at this distance and angle. What comes back will be a single however the prompt is worded, because the prompt cannot put someone in a frame the camera is not pointed at.`,
+        fix: "Widen out, or swing the camera until both performers sit inside the frame.",
+        action: "rehearsal",
+      });
+    }
+
+    if ((declared === "single" || declared === "ots") && subject && !inFrame(s.camera, subject)) {
+      out.push({
+        kind: "break",
+        area: "intent",
+        title: `"${s.name}" is marked ${declared === "ots" ? "an over-the-shoulder" : "a single"} on ${named}, who is not in frame`,
+        detail: `The camera is pointed somewhere else. ${inShot.length ? "What is actually in frame is " + inShot.map((a) => a.name).join(" and ") + "." : "Nothing is in frame at all."}`,
+        fix: `Aim the camera at ${named}, or change what this setup is for.`,
+        action: "rehearsal",
+      });
+    }
+
+    if (declared === "single" && subject && inFrame(s.camera, subject) && inShot.length > 1) {
+      const others = inShot.filter((a) => a.name !== named);
+      out.push({
+        kind: "warning",
+        area: "intent",
+        title: `"${s.name}" is marked a single but ${others.map((a) => a.name).join(" and ")} ${others.length === 1 ? "is" : "are"} in it too`,
+        detail: "A single is one person in frame. With somebody else in it this is a two-shot or an over-the-shoulder, and it will cut like one — which matters most against its reverse, where a single and a two-shot do not pair.",
+        fix: `Tighten or reangle until only ${named} is in frame, or mark this setup as what it actually is.`,
+        action: "rehearsal",
+      });
+    }
+
+    if (declared === "ots" && !overTheShoulder(s.camera, s.actors)) {
+      out.push({
+        kind: "warning",
+        area: "intent",
+        title: `"${s.name}" is marked over-the-shoulder with nobody in the foreground`,
+        detail: "An over-the-shoulder needs one performer between the camera and the subject. From here the line to the subject is clear, so there is no shoulder in the frame and it will generate as a plain single.",
+        fix: "Move the camera behind the other performer, close to the line between the two of them.",
+        action: "rehearsal",
+      });
+    }
+
+    // A neutral shot is the thing that lets you cross legitimately. If it is
+    // not actually on the line it cannot do that job.
+    if (declared === "neutral" && axis) {
+      const off = distToAxis(axis, s.camera);
+      if (off != null && off > ON_AXIS) {
+        out.push({
+          kind: "warning",
+          area: "intent",
+          title: `"${s.name}" is marked neutral but does not sit on the line`,
+          detail: `A neutral shot looks straight down the axis, which is why it belongs to neither side and why you can cut out of it onto either one. This camera stands well off the line, so it reads as a side like any other — and cannot be the shot a cross is earned on.`,
+          fix: `Move it onto the line between ${axis.a.name} and ${axis.b.name}.`,
           action: "rehearsal",
         });
       }
@@ -392,11 +609,11 @@ function auditPlan(slots) {
   }
 
   // --- Reverse pairs that won't cut --------------------------------------
-  const favoring = setups.filter((s) => s.row.favors);
+  const favoring = setups.filter((s) => favorsOf(s.row));
   const seen = new Set();
   for (const a of favoring) {
     for (const b of favoring) {
-      if (a.row.id === b.row.id || a.row.favors === b.row.favors) continue;
+      if (a.row.id === b.row.id || favorsOf(a.row) === favorsOf(b.row)) continue;
       const key = [a.row.id, b.row.id].sort().join("|");
       if (seen.has(key)) continue;
       seen.add(key);
@@ -421,7 +638,7 @@ function auditPlan(slots) {
           kind: "warning",
           area: "reverse pair",
           title: `Camera height changes between "${a.name}" and "${b.name}"`,
-          detail: `${ha} against ${hb}. Across a reverse pair that reads as a power shift between ${a.row.favors} and ${b.row.favors}, whether or not you meant one.`,
+          detail: `${ha} against ${hb}. Across a reverse pair that reads as a power shift between ${favorsOf(a.row)} and ${favorsOf(b.row)}, whether or not you meant one.`,
           fix: "Match the heights unless the shift is deliberate.",
           action: "rehearsal",
         });
@@ -430,21 +647,33 @@ function auditPlan(slots) {
   }
 
   // --- Nothing grounding the space ---------------------------------------
-  const hasWide = setups.some((s) => /wide/i.test(String(s.row.shot_size || "")));
-  if (!hasWide) {
+  // An insert is tight because that is what an insert is — it should not
+  // count against the scene for lacking width. And a scene with no master by
+  // design is a legitimate choice, so the director says so once and is not
+  // told about it again.
+  const byDesign = (slots ?? []).some((r) => r.no_master_by_design === true);
+  const continuity = setups.filter((s) => intentOf(s.row) !== "insert");
+  const hasWide = continuity.some((s) =>
+    intentOf(s.row) === "master" || /wide/i.test(String(s.row.shot_size || "")));
+
+  if (!hasWide && !byDesign && continuity.length >= 2) {
     out.push({
       kind: "warning",
       area: "coverage",
       title: `No wide shot in "${planName}"`,
-      detail: `${setups.length === 2 ? "Both setups are" : `All ${setups.length} setups are`} medium or tighter. Nothing establishes where anyone is standing, so every cut asks the audience to work it out from faces alone.`,
-      fix: "Add a master from the side of the axis the rest of the coverage sits on.",
+      detail: `${continuity.length === 2 ? "Both setups are" : `All ${continuity.length} setups are`} medium or tighter. Nothing establishes where anyone is standing, so every cut asks the audience to work it out from faces alone.`,
+      fix: "Add a master from the side of the axis the rest of the coverage sits on, or mark the scene as having no master by design.",
       action: "rehearsal",
     });
   }
 
   // --- One-sided coverage -------------------------------------------------
-  const favored = [...new Set(setups.map((s) => s.row.favors).filter(Boolean))];
-  if (favored.length === 1 && reference && reference.actors.length > 1) {
+  const favored = [...new Set(setups.map((s) => favorsOf(s.row)).filter(Boolean))];
+  const coversEveryone = setups.some((s) => {
+    const i = intentOf(s.row);
+    return i === "master" || i === "two_shot";
+  });
+  if (favored.length === 1 && !coversEveryone && reference && reference.actors.length > 1) {
     const other = reference.actors.find((a) => a.name !== favored[0]);
     out.push({
       kind: "warning",
@@ -457,12 +686,12 @@ function auditPlan(slots) {
   }
 
   // --- What's holding -----------------------------------------------------
-  if (axis && !out.some((f) => f.kind === "break")) {
+  if (axis && crossing.length === 0 && directional.length >= 2) {
     out.push({
       kind: "ok",
       area: "screen direction",
-      title: `${setups.length} setups hold the same side of the line`,
-      detail: `The axis between ${axis.a.name} and ${axis.b.name} is intact across every setup in "${planName}". These will cut together.`,
+      title: `All ${directional.length} setups hold the same side of the line`,
+      detail: `The axis between ${axis.a.name} and ${axis.b.name} is intact across every setup in "${planName}" that carries screen direction. These will cut together.`,
       fix: "",
     });
   }
@@ -482,7 +711,7 @@ export function auditSetups(slots = []) {
     byPlan.get(k).push(s);
   }
 
-  const order = { break: 0, warning: 1, ok: 2 };
+  const order = { break: 0, warning: 1, note: 2, ok: 3 };
   const all = [];
   for (const group of byPlan.values()) all.push(...auditPlan(group));
   return all.sort((a, b) => (order[a.kind] ?? 1) - (order[b.kind] ?? 1)).slice(0, 10);

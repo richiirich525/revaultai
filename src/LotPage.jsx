@@ -85,7 +85,7 @@ export default function LotPage({ user, activeProject, setPage, notify, onSignIn
     (async () => {
       const { data } = await supabase
         .from("coverage_slots")
-        .select("id, plan_id, plan_label, slug, shot_size, sort, camera_x, camera_y, camera_rotation, lens_mm, camera_height, favors, actors")
+        .select("id, plan_id, plan_label, slug, shot_size, sort, camera_x, camera_y, camera_rotation, lens_mm, camera_height, favors, actors, intent, intent_favors, deliberate_cross, no_master_by_design")
         .eq("project_id", activeProject.id);
       if (alive) setLoaded({ projectId: activeProject.id, rows: data ?? [] });
     })();

@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import {
-  STAGE, planGeometry, auditSetups, halfFovFor, shotSizeFor, lensFor,
+  STAGE, INTENTS, planGeometry, auditSetups, halfFovFor, shotSizeFor, lensFor,
   bearing, dist, readStage, describeStage,
 } from "./lib/stageGeometry.js";
 
@@ -13,13 +13,21 @@ import {
   two functions that judge saved coverage — so what the board shows and what
   the Script Supervisor says can never disagree.
 
-  Shot size and lens are derived from how far a camera stands, not typed in.
-  That is the honest version: matching your reverses means matching your
-  distances, and the board shows you that rather than letting you declare it.
+  Shot size and lens are still derived from how far a camera stands — that
+  part is honest and stays. What the geometry cannot know is PURPOSE. A wide
+  on a long lens and an extreme wide are the same distance out; a deliberate
+  two-shot and a sloppy single look identical from above.
+
+  So each setup also says what it is for, and the findings compare the two.
+  That turns "this is a close-up" — which only tells you what you already did
+  — into "you marked this a two-shot and only one of them is in frame", and it
+  stops the board calling a crossing you chose on purpose a mistake.
 */
 
 const HOLD = "#4ADE80";
 const CROSS = "#F87171";
+// A crossing the director marked deliberate. Still a crossing, not an error.
+const MEANT = "#E5B769";
 const PAD = 10;
 const ACTOR_COLORS = ["#E8E6F0", "#C9A6FF", "#7FD4C1", "#E5B769"];
 
@@ -47,11 +55,18 @@ const styles = `
   .sb-row { display: flex; justify-content: space-between; gap: 10px; font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); padding: 3px 0; }
   .sb-row b { color: var(--text); font-weight: 400; }
   .sb-sel { background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 3px; padding: 3px 6px; font-family: 'DM Mono', monospace; font-size: 10px; }
+  .sb-cap { font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: 0.18em; color: var(--accent); text-transform: uppercase; margin-bottom: 7px; }
+  .sb-chk { display: flex; align-items: flex-start; gap: 7px; font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); line-height: 1.6; padding: 5px 0; cursor: pointer; }
+  .sb-chk input { accent-color: var(--accent); cursor: pointer; margin-top: 2px; flex: none; }
+  .sb-note { width: 100%; box-sizing: border-box; margin-top: 7px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 3px; padding: 6px 7px; font-family: 'DM Mono', monospace; font-size: 10px; line-height: 1.65; resize: vertical; min-height: 46px; }
+  .sb-note:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .sb-hint { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); line-height: 1.65; margin-top: 6px; opacity: 0.8; }
 `;
 
 const KIND = {
   break:   { color: CROSS, label: "Broken" },
-  warning: { color: "#E5B769", label: "Worth checking" },
+  warning: { color: MEANT, label: "Worth checking" },
+  note:    { color: MEANT, label: "On purpose" },
   ok:      { color: HOLD, label: "Holding" },
 };
 
@@ -66,9 +81,17 @@ export default function StagingBoard() {
     { id: "a2", name: "Vance", x: 60, y: 50, facing: 270 },
   ]);
   const [cams, setCams] = useState([
-    { id: "c1", name: "A-cam", x: 50, y: 84, aimX: 50, aimY: 50, height: "eye level" },
-    { id: "c2", name: "B-cam", x: 72, y: 70, aimX: 50, aimY: 50, height: "eye level" },
+    { id: "c1", name: "A-cam", x: 50, y: 84, aimX: 50, aimY: 50, height: "eye level",
+      intent: "master", intentFavors: "", deliberate: false },
+    // Positioned so the declaration is true on arrival: from here Vance is in
+    // frame and Mara is not. A board that opens by warning about its own
+    // starting state teaches you to ignore it.
+    { id: "c2", name: "B-cam", x: 70, y: 66, aimX: 60, aimY: 50, height: "eye level",
+      intent: "single", intentFavors: "Vance", deliberate: false },
   ]);
+  // Scene-level intent. The flag changes what the audit says; the note does
+  // not, and is not pretended to — it is there for the prompt and for you.
+  const [scene, setScene] = useState({ noMaster: false, note: "" });
   const [picked, setPicked] = useState("c1");
   const svgRef = useRef(null);
   const drag = useRef(null);
@@ -88,17 +111,22 @@ export default function StagingBoard() {
       shot_size: shotSizeFor(d),
       lens_mm: parseFloat(lensFor(d)),
       camera_height: c.height,
+      // Derived: who happens to be nearest. Declared: who it is actually on.
       favors: subject?.name ?? null,
+      intent: c.intent || null,
+      intent_favors: c.intent && INTENTS[c.intent]?.needsSubject ? (c.intentFavors || null) : null,
+      deliberate_cross: !!c.deliberate,
+      no_master_by_design: scene.noMaster,
       camera_x: c.x,
       camera_y: c.y,
       camera_rotation: bearing(c, { x: c.aimX, y: c.aimY }),
       actors: actors.map((a) => ({ name: a.name, x: a.x, y: a.y, facing: a.facing })),
     };
-  }), [cams, actors]);
+  }), [cams, actors, scene.noMaster]);
 
   const geo = useMemo(() => planGeometry(slots), [slots]);
   const findings = useMemo(() => auditSetups(slots), [slots]);
-  const { axis, anchor, crossingIds } = geo;
+  const { axis, anchor, crossingIds, deliberateIds } = geo;
 
   const sel = cams.find((c) => c.id === picked) ?? null;
   const selSlot = slots.find((s) => s.id === picked) ?? null;
@@ -175,6 +203,7 @@ export default function StagingBoard() {
   const addCam = () => setCams((p) => [...p, {
     id: nextId("c"), name: `Cam ${String.fromCharCode(65 + p.length)}`,
     x: 30 + p.length * 8, y: 78, aimX: 50, aimY: 50, height: "eye level",
+    intent: "", intentFavors: "", deliberate: false,
   }]);
   const addActor = () => setActors((p) => [...p, {
     id: nextId("a"), name: `Performer ${p.length + 1}`,
@@ -187,7 +216,8 @@ export default function StagingBoard() {
       <div className="sb-label">Staging board</div>
       <div className="sb-lede">
         Drag a performer, a camera, or the small dot a camera is aimed at. Shot size and lens
-        follow the distance, so matching your reverses means standing them the same distance away.
+        follow the distance. Then say what each setup is <em>for</em>, and the board checks the one
+        against the other instead of guessing which you meant.
       </div>
 
       <div className="sb-grid">
@@ -210,7 +240,10 @@ export default function StagingBoard() {
               <g clipPath="url(#sb-clip)">
                 {anchorSide !== 0 && <polygon points={halfPlane(anchorSide)} fill="rgba(123,63,228,0.08)" />}
                 {crossingIds.size > 0 && anchorSide !== 0 && (
-                  <polygon points={halfPlane(-anchorSide)} fill="rgba(248,113,113,0.08)" />
+                  <polygon points={halfPlane(-anchorSide)}
+                           fill={crossingIds.size > deliberateIds.size
+                             ? "rgba(248,113,113,0.08)"
+                             : "rgba(229,183,105,0.08)"} />
                 )}
                 <line x1={axisEnds.x1} y1={axisEnds.y1} x2={axisEnds.x2} y2={axisEnds.y2}
                       stroke="var(--accent)" strokeWidth="0.7" strokeDasharray="3 2" />
@@ -220,9 +253,12 @@ export default function StagingBoard() {
             {/* Lens cones, under everything */}
             <g clipPath="url(#sb-clip)">
               {cams.map((c) => {
-                const bad = crossingIds.has(c.id);
+                const meant = deliberateIds.has(c.id);
+                const bad = crossingIds.has(c.id) && !meant;
                 return <path key={"f" + c.id} d={cone(c).d}
-                             fill={bad ? "rgba(248,113,113,0.10)" : "rgba(255,255,255,0.055)"}
+                             fill={bad ? "rgba(248,113,113,0.10)"
+                                 : meant ? "rgba(229,183,105,0.10)"
+                                 : "rgba(255,255,255,0.055)"}
                              stroke="none" />;
               })}
             </g>
@@ -239,9 +275,10 @@ export default function StagingBoard() {
 
             {/* Cameras */}
             {cams.map((c) => {
-              const bad = crossingIds.has(c.id);
+              const meant = deliberateIds.has(c.id);
+              const bad = crossingIds.has(c.id) && !meant;
               const isAnchor = anchor && anchor.row.id === c.id;
-              const col = bad ? CROSS : HOLD;
+              const col = bad ? CROSS : meant ? MEANT : HOLD;
               return (
                 <g key={c.id}>
                   <line x1={c.x} y1={c.y} x2={c.aimX} y2={c.aimY}
@@ -256,7 +293,7 @@ export default function StagingBoard() {
                     {picked === c.id && <circle cx={c.x} cy={c.y} r="6.4" fill="none" stroke="var(--accent)" strokeWidth="0.5" />}
                     <circle cx={c.x} cy={c.y} r="2.6" fill={col} />
                     <circle cx={c.x} cy={c.y} r="7" fill="transparent" />
-                    <text x={c.x} y={c.y > 62 ? c.y - 5.2 : c.y + 7.8} fill={bad ? CROSS : "var(--muted)"}
+                    <text x={c.x} y={c.y > 62 ? c.y - 5.2 : c.y + 7.8} fill={bad ? CROSS : meant ? MEANT : "var(--muted)"}
                           fontSize="3.7" fontFamily="monospace" textAnchor="middle">{c.name}</text>
                   </g>
                 </g>
@@ -279,9 +316,10 @@ export default function StagingBoard() {
 
           {sel && selSlot && (
             <div className="sb-insp">
+              <div className="sb-cap">What the geometry gives you</div>
               <div className="sb-row"><span>{sel.name}</span><b>{selSlot.shot_size}</b></div>
               <div className="sb-row"><span>lens</span><b>{selSlot.lens_mm}mm</b></div>
-              <div className="sb-row"><span>on</span><b>{selSlot.favors ?? "no one"}</b></div>
+              <div className="sb-row"><span>nearest</span><b>{selSlot.favors ?? "no one"}</b></div>
               <div className="sb-row">
                 <span>height</span>
                 <select className="sb-sel" value={sel.height}
@@ -289,9 +327,70 @@ export default function StagingBoard() {
                   {HEIGHTS.map((hh) => <option key={hh} value={hh}>{hh}</option>)}
                 </select>
               </div>
-              {selRead && <div className="sb-read" style={{ marginTop: 8 }}>{describeStage(selRead)}</div>}
+
+              <div className="sb-cap" style={{ marginTop: 14 }}>What you meant by it</div>
+              <div className="sb-row">
+                <span>this shot is</span>
+                <select className="sb-sel" value={sel.intent || ""}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setCams((p) => p.map((c) => {
+                            if (c.id !== sel.id) return c;
+                            // Pre-fill the subject with whoever is nearest, so a
+                            // declaration that needs one is never left half-made.
+                            const needs = v && INTENTS[v]?.needsSubject;
+                            return { ...c, intent: v,
+                                     intentFavors: needs ? (c.intentFavors || selSlot.favors || "") : "" };
+                          }));
+                        }}>
+                  <option value="">not saying — read the geometry</option>
+                  {Object.entries(INTENTS).map(([k, v]) => (
+                    <option key={k} value={k}>{v.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {sel.intent && INTENTS[sel.intent]?.needsSubject && (
+                <div className="sb-row">
+                  <span>on</span>
+                  <select className="sb-sel" value={sel.intentFavors || ""}
+                          onChange={(e) => setCams((p) => p.map((c) => (c.id === sel.id ? { ...c, intentFavors: e.target.value } : c)))}>
+                    <option value="">pick someone</option>
+                    {actors.map((a) => <option key={a.id} value={a.name}>{a.name}</option>)}
+                  </select>
+                </div>
+              )}
+
+              {crossingIds.has(sel.id) && (
+                <label className="sb-chk">
+                  <input type="checkbox" checked={!!sel.deliberate}
+                         onChange={(e) => setCams((p) => p.map((c) => (c.id === sel.id ? { ...c, deliberate: e.target.checked } : c)))} />
+                  I crossed the line on purpose
+                </label>
+              )}
+
+              {selRead && <div className="sb-read" style={{ marginTop: 10 }}>{describeStage(selRead)}</div>}
             </div>
           )}
+
+          <div className="sb-insp">
+            <div className="sb-cap">The scene</div>
+            <label className="sb-chk">
+              <input type="checkbox" checked={scene.noMaster}
+                     onChange={(e) => setScene((v) => ({ ...v, noMaster: e.target.checked }))} />
+              No master by design
+            </label>
+            <textarea
+              className="sb-note"
+              value={scene.note}
+              placeholder="What are you going for in this scene?"
+              onChange={(e) => setScene((v) => ({ ...v, note: e.target.value }))}
+            />
+            <div className="sb-hint">
+              The note is yours and goes into the prompts. Nothing is checked against it &mdash;
+              only the box above changes what the board says.
+            </div>
+          </div>
 
           <div>
             {findings.length === 0 ? (

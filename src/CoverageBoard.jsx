@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./lib/supabase.js";
+import { INTENTS } from "./lib/stageGeometry.js";
 import { getSessionToken } from "./lib/session.js";
 import { GEN_MODELS, DEFAULT_MODEL, modelOf, snapDuration, costOf } from "./lib/genModels.js";
 
@@ -95,6 +96,19 @@ export default function CoverageBoard({ project, user, setPage, setGenPrefill, n
     const { error } = await supabase.from("coverage_slots").update({ manual_status: value }).eq("id", slot.id);
     if (error) { notify?.("Couldn't update: " + error.message); return; }
     setSlots((l) => l.map((x) => (x.id === slot.id ? { ...x, manual_status: value } : x)));
+  }
+
+  /*
+    What a setup is FOR, said out loud rather than guessed from its distance.
+    The staging audit reads this: a declared master becomes the shot the rest
+    of the coverage is judged against, an insert stops counting as a crossing,
+    and a declared two-shot that only frames one person becomes a finding
+    instead of passing silently.
+  */
+  async function setIntent(slot, patch) {
+    const { error } = await supabase.from("coverage_slots").update(patch).eq("id", slot.id);
+    if (error) { notify?.("Couldn't save that: " + error.message); return; }
+    setSlots((l) => l.map((x) => (x.id === slot.id ? { ...x, ...patch } : x)));
   }
 
   async function removePlan(planId, label) {
@@ -296,6 +310,47 @@ export default function CoverageBoard({ project, user, setPage, setGenPrefill, n
                       {tries > 0 && ` · ${tries} attempt${tries === 1 ? "" : "s"}`}
                       {s.shot_size && ` · ${s.shot_size}`}
                       {s.duration_seconds && ` · ${s.duration_seconds}s`}
+                    </div>
+                    <div className="cb-meta" style={{ display: "flex", flexWrap: "wrap", gap: "6px 10px", alignItems: "center", marginTop: 4 }}>
+                      <span>this shot is</span>
+                      <select
+                        className="cb-pick"
+                        style={{ padding: "2px 5px", fontSize: 9 }}
+                        value={s.intent || ""}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          const needs = v && INTENTS[v]?.needsSubject;
+                          setIntent(s, { intent: v || null, intent_favors: needs ? (s.intent_favors || s.favors || null) : null });
+                        }}
+                        aria-label={"What " + s.slug + " is for"}
+                      >
+                        <option value="">not saying</option>
+                        {Object.entries(INTENTS).map(([key, v]) => (
+                          <option key={key} value={key}>{v.label}</option>
+                        ))}
+                      </select>
+                      {s.intent && INTENTS[s.intent]?.needsSubject && (
+                        <input
+                          className="cb-pick"
+                          style={{ padding: "2px 5px", fontSize: 9, width: 92 }}
+                          type="text"
+                          value={s.intent_favors || ""}
+                          placeholder="on whom"
+                          onChange={(e) => setSlots((l) => l.map((x) => (x.id === s.id ? { ...x, intent_favors: e.target.value } : x)))}
+                          onBlur={(e) => setIntent(s, { intent_favors: e.target.value.trim() || null })}
+                          aria-label={"Who " + s.slug + " is on"}
+                        />
+                      )}
+                      <label style={{ display: "inline-flex", alignItems: "center", gap: 5, cursor: "pointer" }}>
+                        <input
+                          type="checkbox"
+                          className="cb-check"
+                          style={{ marginTop: 0 }}
+                          checked={!!s.deliberate_cross}
+                          onChange={(e) => setIntent(s, { deliberate_cross: e.target.checked })}
+                        />
+                        crosses on purpose
+                      </label>
                     </div>
                     {s.purpose && st !== "covered" && <div className="cb-meta">{s.purpose}</div>}
                   </div>
