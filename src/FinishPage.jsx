@@ -109,6 +109,26 @@ export default function FinishPage({ user, activeProject, setPage, notify, onSig
   const [progress, setProgress] = useState("");
   const [loading, setLoading] = useState(true);
   const [cut, setCut] = useState(null);
+  const [cutId, setCutId] = useState(null);
+
+  /*
+    An edited cut is written back to the row it came from. Keeping it in page
+    state alone would mean reordering three shots, closing the tab, and getting
+    the editor's original ordering back — the same "cannot fix one decision"
+    problem the buttons exist to solve.
+
+    The screen updates first and the write follows. A failed save says so
+    rather than silently reverting under someone's hands.
+  */
+  async function saveCut(next) {
+    setCut(next);
+    if (!cutId) {
+      notify?.("Reordered here, but this cut has no saved row to update \u2014 assemble again to keep changes.");
+      return;
+    }
+    const { error } = await supabase.from("finish_cuts").update({ cut: next }).eq("id", cutId);
+    if (error) notify?.("Changed here, but couldn't save it: " + error.message);
+  }
   const [assembling, setAssembling] = useState(false);
 
   // Returns a link signed right now, and throws the reason if it can't.
@@ -135,8 +155,9 @@ export default function FinishPage({ user, activeProject, setPage, notify, onSig
       if (logline) setScene((cur) => cur || logline);
       setLoading(false);
       for (const one of list) signUrl(one);
-      const { data: c } = await supabase.from("finish_cuts").select("cut").eq("project_id", activeProject.id).order("created_at", { ascending: false }).limit(1);
+      const { data: c } = await supabase.from("finish_cuts").select("id, cut").eq("project_id", activeProject.id).order("created_at", { ascending: false }).limit(1);
       setCut(c?.[0]?.cut ?? null);
+      setCutId(c?.[0]?.id ?? null);
     })();
   }, [user?.id, activeProject?.id]);
 
@@ -190,7 +211,7 @@ export default function FinishPage({ user, activeProject, setPage, notify, onSig
       });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) notify?.(j.error || "Couldn't assemble the cut.");
-      else setCut(j.cut);
+      else { setCut(j.cut); setCutId(j.cutId ?? null); }
     } catch {
       notify?.("Couldn't assemble the cut.");
     }
@@ -309,7 +330,7 @@ export default function FinishPage({ user, activeProject, setPage, notify, onSig
           {cut?.shots?.length > 0 && <CutPreview shots={cut.shots} urls={urls} />}
           {cut && <FinishRender cut={cut} urls={urls} title={activeProject?.name} />}
           {cut && <FinishExport cut={cut} urls={urls} gens={gens} title={activeProject?.name} scene={scene} />}
-          {cut && <FinishCut cut={cut} gens={gens} urls={urls} notify={notify} />}
+          {cut && <FinishCut cut={cut} gens={gens} urls={urls} notify={notify} onChange={saveCut} />}
         </div>
       </section>
     </div>

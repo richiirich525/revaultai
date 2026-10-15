@@ -146,16 +146,23 @@ export default async function handler(req, res) {
       ranAt: new Date().toISOString(),
     };
 
-    const { error: insErr } = await supabase.from("finish_cuts").insert({
-      user_id: user.id,
-      project_id: projectId,
-      scene: str(scene, 1200),
-      target_length: target,
-      cut,
-    });
+    // The id comes back so the page can save edits to THIS cut. Without it a
+    // reorder has nowhere to persist and the editor's original ordering
+    // returns on the next visit.
+    const { data: inserted, error: insErr } = await supabase
+      .from("finish_cuts")
+      .insert({
+        user_id: user.id,
+        project_id: projectId,
+        scene: str(scene, 1200),
+        target_length: target,
+        cut,
+      })
+      .select("id")
+      .maybeSingle();
     if (insErr) console.error("finish_cuts insert failed:", insErr);
 
-    return res.status(200).json({ cut });
+    return res.status(200).json({ cut, cutId: inserted?.id ?? null });
   } catch (error) {
     console.error("finish-assemble failed:", error);
     return res.status(500).json({ error: "Something went wrong assembling the cut." });
