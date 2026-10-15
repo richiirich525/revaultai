@@ -69,6 +69,39 @@ function injectJsonLd(html, obj) {
   return html.replace("</head>", `    ${tag}\n  </head>`);
 }
 
+/*
+  The There's An AI For That badge, exactly as TAAFT supplied it.
+
+  Three constraints, and they pull against each other on a single-page app:
+
+    1. It has to be in the homepage's static HTML, so their crawler sees it
+       without running JavaScript.
+    2. It must NOT be shared across every page. Our source index.html is the
+       shell for all 148 routes, so putting it there would do precisely what
+       they asked us not to.
+    3. React clears #root on mount, so anything injected in there vanishes the
+       moment the app hydrates and no visitor ever sees it.
+
+  So it goes into the home route's own prerendered file only, placed after
+  #root where hydration cannot reach it. App.jsx hides it on client-side
+  navigation away from home, because a node outside the React tree is never
+  unmounted and would otherwise ride along to every page the visitor opens.
+
+  Left verbatim on purpose — not escaped, not reformatted, not given the
+  loading or alt attributes it arguably wants. TAAFT asked for this exact
+  markup and a directory listing is not the place to be clever.
+*/
+const TAAFT_BADGE =
+  '<a href="https://theresanaiforthat.com/ai/revaultai/?ref=featured&v=12605891" target="_blank" rel="nofollow"><img width="300" src="https://media.theresanaiforthat.com/featured-on-taaft.png?width=600"></a>';
+
+function injectTaaftBadge(html) {
+  const block =
+    '<div id="taaft-badge" style="background:#0E0F14;padding:34px 16px 44px;text-align:center">' +
+    TAAFT_BADGE +
+    '</div>';
+  return html.replace("</body>", "  " + block + "\n</body>");
+}
+
 // Static body content. React clears #root on mount, so this is a crawler-facing
 // and no-JS fallback that matches the rendered page.
 function injectBody(html, inner) {
@@ -421,6 +454,8 @@ for (const [slug, meta] of Object.entries(PAGES)) {
   html = setRobots(html, !NOINDEX.has(slug));
   for (const schema of schemasFor(slug, meta, url)) html = injectJsonLd(html, schema);
   html = injectBody(html, bodyFor(slug, meta));
+  // The homepage, and only the homepage.
+  if (slug === "home") html = injectTaaftBadge(html);
   writeRoute(routePath, html);
   count++;
 }

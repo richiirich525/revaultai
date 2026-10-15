@@ -80,22 +80,6 @@ export default function HomePage({ creations, setPage, setDetailId, user, onSign
         </svg>
       </a>
     </span>
-    <a
-      className="footer-copy"
-      href="https://theresanaiforthat.com/ai/revaultai/?ref=social-icon&v=12605891"
-      target="_blank"
-      rel="nofollow noopener"
-      aria-label="RevaultAI featured on There's An AI For That"
-      title="Featured on There's An AI For That"
-      style={{ display: "inline-flex", alignItems: "center" }}
-    >
-      <img
-        src="https://media.theresanaiforthat.com/social/icon_full.svg"
-        alt="Featured on There's An AI For That"
-        loading="lazy"
-        style={{ height: 28, width: "auto", display: "block" }}
-      />
-    </a>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("about")}>About</span><span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("blog")}>Journal</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("ai-video-generator")}>AI Video Generator</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("become-creator")}>Become a Creator</span>

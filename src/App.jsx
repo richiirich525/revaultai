@@ -70,6 +70,19 @@ const [page, setPageState]        = useState("home");
   useEffect(() => {
     if (page !== "submit" && genSubmission) setGenSubmission(null);
   }, [page]);
+
+  /*
+    The TAAFT badge is prerendered into the homepage's static HTML, after
+    #root, so their crawler can read it without running any JavaScript and so
+    hydration does not wipe it. Living outside the React tree means React also
+    never unmounts it — left alone it would follow the visitor to every page
+    they click through to, which is the one thing TAAFT asked us to avoid. So
+    the app that owns the routing is the thing that hides it.
+  */
+  useEffect(() => {
+    const badge = document.getElementById("taaft-badge");
+    if (badge) badge.style.display = page === "home" ? "" : "none";
+  }, [page]);
   const [creatorUser, setCreatorUserState] = useState(null);
 
   // ---- URL routing ----
