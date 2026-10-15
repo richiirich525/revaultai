@@ -1,5 +1,21 @@
 import { supabase } from "./supabase.js";
 
+/*
+  A NOTE PAID FOR IN PRODUCTION.
+
+  These selects once also asked for the Connect columns (stripe_account_id and
+  friends). Nothing ever read them from here — the payout panel gets its state
+  from /api/connect-status, which talks to Stripe — but naming them made the
+  WHOLE profile read fail wherever those columns did not exist yet.
+
+  A failed profile read leaves profile null, and a null profile rendered as a
+  balance of zero. Every signed-in person saw "0 credits" while the server,
+  which is the only thing that actually decides, went on letting them generate.
+
+  So: nothing optional belongs in this select. If a feature needs a column,
+  it reads that column itself.
+*/
+
 // ---------------------------------------------------------------------------
 // Single profile
 // ---------------------------------------------------------------------------
@@ -7,7 +23,7 @@ import { supabase } from "./supabase.js";
 export async function fetchProfile(userId) {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, username, display_name, bio, avatar_url, tip_url, hire_url, tool_links, social_links, pinned_creation_ids, created_at, auto_approve, founding_creator, credits, stripe_account_id, stripe_country, stripe_payouts_enabled, stripe_details_submitted")
+    .select("id, username, display_name, bio, avatar_url, tip_url, hire_url, tool_links, social_links, pinned_creation_ids, created_at, auto_approve, founding_creator, credits")
     .eq("id", userId)
     .maybeSingle();
 
@@ -36,7 +52,7 @@ export async function upsertProfile(user, profile) {
   const { data, error } = await supabase
     .from("profiles")
     .upsert(row, { onConflict: "id" })
-    .select("id, username, display_name, bio, avatar_url, tip_url, hire_url, tool_links, social_links, pinned_creation_ids, created_at, auto_approve, founding_creator, credits, stripe_account_id, stripe_country, stripe_payouts_enabled, stripe_details_submitted")
+    .select("id, username, display_name, bio, avatar_url, tip_url, hire_url, tool_links, social_links, pinned_creation_ids, created_at, auto_approve, founding_creator, credits")
     .maybeSingle();
 
   return {

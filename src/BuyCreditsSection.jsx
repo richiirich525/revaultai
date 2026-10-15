@@ -32,7 +32,19 @@ export default function BuyCreditsSection({ user, profile, notify }) {
   return (
     <div className="credits-section">
       <h3>Credits</h3>
-      <p>Balance: <strong>{profile?.credits ?? 0}</strong> credits</p>
+      {/*
+        An unknown balance is not a zero balance. When the profile could not be
+        read, `?? 0` said "you have no credits" to somebody who had plenty —
+        and because the client's own check skips a non-number, generation still
+        worked, which is exactly how the bug stayed hidden.
+      */}
+      <p>Balance: <strong>{typeof profile?.credits === "number" ? profile.credits : "\u2014"}</strong>{" "}
+        {typeof profile?.credits === "number" ? "credits" : (
+          <span style={{ fontSize: 11, opacity: 0.8 }}>
+            couldn&rsquo;t read your balance just now &mdash; reload, and if it persists write to rich@revaultai.com
+          </span>
+        )}
+      </p>
       <div className="credits-packs">
         {CREDIT_PACKS.map((pack) => (
           <button

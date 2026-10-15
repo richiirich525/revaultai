@@ -204,7 +204,13 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
 
   async function loadOrCreateProfile(u) {
     const { data, error } = await fetchProfile(u.id);
-    if (error) { console.warn("[RevaultAI] Profile fetch error:", error.message); return; }
+    // Returning here leaves profile null, which every balance in the app then
+    // renders as zero. Say so instead of looking like an empty account.
+    if (error) {
+      console.warn("[RevaultAI] Profile fetch error:", error.message);
+      notify("Couldn't load your profile just now. Your balance may read wrong until you reload.");
+      return;
+    }
     if (data) { setProfile(data); }
     else { const def = defaultProfile(u); const { data: created, error: upsertErr } = await upsertProfile(u, def); if (upsertErr) { console.warn("[RevaultAI] Could not create profile:", upsertErr.message); setProfile({ id: u.id, ...def }); } else { setProfile(created); } }
   }
