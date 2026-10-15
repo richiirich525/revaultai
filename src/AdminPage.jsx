@@ -164,13 +164,55 @@ export default function AdminPage({ creations, setCreations, notify }) {
   // lets somebody write their own profile row, which is how it should stay.
   const [creators, setCreators] = useState([]);
   const [trustBusy, setTrustBusy] = useState(null);
+  const [granting, setGranting] = useState(null);
+
+  /*
+    Grant credits, and say what the balance became.
+
+    The reason this reports the new number rather than a bare "done": a
+    reviewer was granted 600 credits three times because nothing ever
+    confirmed the first two had landed. A confirmation that does not include
+    the resulting balance is the same as no confirmation.
+  */
+  async function grantCredits(creator) {
+    const typed = window.prompt(
+      `Credits for ${creator.display_name || creator.username}?\n\n` +
+      `They currently have ${creator.credits ?? 0}. A negative number takes credits back.`,
+      "600"
+    );
+    if (typed === null) return;
+    const amount = parseInt(typed, 10);
+    if (!Number.isInteger(amount) || amount === 0) {
+      notify("That wasn't a number of credits.");
+      return;
+    }
+    const reason = window.prompt("What for? (recorded with the grant)", "manual_grant");
+    if (reason === null) return;
+
+    setGranting(creator.id);
+    try {
+      const token = await getSessionToken();
+      const res = await fetch("/api/grant-credits", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+        body: JSON.stringify({ userId: creator.id, amount, reason }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || "The grant failed.");
+      notify(body.summary);
+      setCreators((list) => list.map((c) => (c.id === creator.id ? { ...c, credits: body.after } : c)));
+    } catch (err) {
+      notify("Couldn't grant credits: " + err.message);
+    }
+    setGranting(null);
+  }
 
   useEffect(() => {
     let alive = true;
     (async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("id, username, display_name, auto_approve, founding_creator")
+        .select("id, username, display_name, auto_approve, founding_creator, credits")
         .not("username", "is", null)
         .order("username", { ascending: true });
       if (alive) setCreators(data ?? []);
@@ -214,7 +256,33 @@ export default function AdminPage({ creations, setCreations, notify }) {
           <div className="section-label">Trusted Creators</div>
           <p style={{ color: "var(--muted)", fontSize: 11, marginBottom: 24, fontFamily: "'DM Mono', monospace", letterSpacing: "0.1em" }}>{creators.filter((c) => c.auto_approve).length}/{creators.length} skip the review queue</p>
           {creators.length === 0 ? <div style={{ color: "var(--muted)", fontSize: 13, padding: "24px 0", fontFamily: "'DM Mono', monospace" }}>No creators yet.</div> : (
-            <table className="admin-table"><thead><tr><th>Creator</th><th>Handle</th><th>Founding</th><th>Premium submissions</th></tr></thead><tbody>{creators.map((c) => (<tr key={c.id}><td style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18 }}>{c.display_name || c.username}</td><td style={{ color: "var(--muted)", fontFamily: "'DM Mono', monospace", fontSize: 11 }}>@{c.username}</td><td style={{ color: "var(--muted)", fontFamily: "'DM Mono', monospace", fontSize: 11 }}>{c.founding_creator ? "Yes" : "—"}</td><td><div className={"spotlight-toggle" + (c.auto_approve ? " active" : "")} style={{ opacity: trustBusy === c.id ? 0.5 : 1 }} onClick={() => { if (!trustBusy) toggleAutoApprove(c); }}><div className="spotlight-dot" />{c.auto_approve ? "Go live immediately" : "Wait for review"}</div></td></tr>))}</tbody></table>
+            <table className="admin-table">
+              <thead><tr><th>Creator</th><th>Handle</th><th>Credits</th><th>Premium submissions</th></tr></thead>
+              <tbody>{creators.map((c) => (
+                <tr key={c.id}>
+                  <td style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18 }}>
+                    {c.display_name || c.username}
+                    {c.founding_creator && (
+                      <span style={{ color: "var(--muted)", fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: "0.12em", marginLeft: 8, textTransform: "uppercase" }}>founding</span>
+                    )}
+                  </td>
+                  <td style={{ color: "var(--muted)", fontFamily: "'DM Mono', monospace", fontSize: 11 }}>@{c.username}</td>
+                  <td style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, whiteSpace: "nowrap" }}>
+                    <span style={{ color: "var(--text)" }}>{typeof c.credits === "number" ? c.credits : "—"}</span>
+                    <button
+                      className="btn-ghost"
+                      type="button"
+                      onClick={() => grantCredits(c)}
+                      disabled={granting !== null}
+                      style={{ marginLeft: 10, padding: "3px 9px", fontSize: 9, opacity: granting !== null ? 0.6 : 1 }}
+                    >
+                      {granting === c.id ? "..." : "grant"}
+                    </button>
+                  </td>
+                  <td><div className={"spotlight-toggle" + (c.auto_approve ? " active" : "")} style={{ opacity: trustBusy === c.id ? 0.5 : 1 }} onClick={() => { if (!trustBusy) toggleAutoApprove(c); }}><div className="spotlight-dot" />{c.auto_approve ? "Go live immediately" : "Wait for review"}</div></td>
+                </tr>
+              ))}</tbody>
+            </table>
           )}
         </div>
         <div style={{ marginBottom: 64 }}>
