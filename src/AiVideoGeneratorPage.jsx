@@ -6,6 +6,7 @@
 */
 
 import { GEN_MODELS, GEN_TOOLS } from "./lib/generatorCatalog.js";
+import { CREDIT_PACKS, priceLabel } from "./lib/creditPacks.js";
 
 export default function AiVideoGeneratorPage({ setPage, user, onSignInClick }) {
   const MODELS = GEN_MODELS;
@@ -117,8 +118,12 @@ export default function AiVideoGeneratorPage({ setPage, user, onSignInClick }) {
             flagship models cost more. If a generation fails, the credits come straight back.
           </p>
           <div className="avg-price">
-            <div><b>50 credits</b><span>Starter &middot; $5</span></div>
-            <div><b>200 credits</b><span>Creator &middot; $15</span></div>
+            {CREDIT_PACKS.map((pack) => (
+              <div key={pack.key}>
+                <b>{pack.credits} credits</b>
+                <span>{pack.label} &middot; {priceLabel(pack)}</span>
+              </div>
+            ))}
           </div>
         </section>
 

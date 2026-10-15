@@ -82,6 +82,7 @@ export default function HomePage({ creations, setPage, setDetailId, user, onSign
     </span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("about")}>About</span><span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("blog")}>Journal</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("ai-video-generator")}>AI Video Generator</span>
+    <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("pricing")}>Pricing</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("become-creator")}>Become a Creator</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("terms")}>Terms</span>
     <span className="footer-copy" style={{ cursor: "pointer" }} onClick={() => setPage("privacy")}>Privacy</span>

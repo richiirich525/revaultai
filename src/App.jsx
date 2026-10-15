@@ -45,6 +45,7 @@ import PremiumFilmsPage from "./PremiumFilmsPage.jsx";
 import PurchaseSuccessPage from "./PurchaseSuccessPage.jsx";
 import SetPasswordPage from "./SetPasswordPage.jsx";
 import LotPage from "./LotPage.jsx";
+import PricingPage from "./PricingPage.jsx";
 import FinishPage from "./FinishPage.jsx";
 import SpecsPage from "./SpecsPage.jsx";
 import ProjectsPage from "./ProjectsPage.jsx";
@@ -88,7 +89,7 @@ const [page, setPageState]        = useState("home");
   // ---- URL routing ----
   const detailIdRef = useRef(null);
   const creatorUserRef = useRef(null);
-  const KNOWN_PAGES = ["home","explore","creators","feed","generate","settings","admin","submit","set-password","email-confirmed","terms","faq","contact","guidelines","premium-films","about","become-creator","privacy","refunds","dmca","ai-disclaimer","purchase-success","founding-creators","blog","ai-video-generator","prompt-builder","prompts","search","scene-breakdown","which-model","vault","continuity-check","shot-director","coverage","frame-planner","blocking","autopsy","takes","projects","tools","specs","rehearsal","finish","lot"];
+  const KNOWN_PAGES = ["home","explore","creators","feed","generate","settings","admin","submit","set-password","email-confirmed","terms","faq","contact","guidelines","premium-films","about","become-creator","privacy","refunds","dmca","ai-disclaimer","purchase-success","founding-creators","blog","ai-video-generator","prompt-builder","prompts","search","scene-breakdown","which-model","vault","continuity-check","shot-director","coverage","frame-planner","blocking","autopsy","takes","projects","tools","specs","rehearsal","finish","lot","pricing"];
 
   function setDetailId(id) { detailIdRef.current = id; setDetailIdState(id); }
   const blogSlugRef = useRef(null);
@@ -307,6 +308,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       case "projects": return <ProjectsPage setGenPrefill={setGenPrefill} setApPrefill={setApPrefill} user={user} onSignInClick={() => setAuthOpen(true)} setPage={setPage} notify={notify} activeProject={activeProject} setActiveProject={setActiveProject} />;
       case "finish": return <FinishPage user={user} activeProject={activeProject} setPage={setPage} notify={notify} onSignInClick={() => setAuthOpen(true)} />;
       case "lot": return <LotPage user={user} activeProject={activeProject} setPage={setPage} notify={notify} onSignInClick={() => setAuthOpen(true)} />;
+      case "pricing": return <PricingPage user={user} setPage={setPage} notify={notify} onSignInClick={() => setAuthOpen(true)} />;
       case "rehearsal": return <RehearsalPage setGenPrefill={setGenPrefill} setPage={setPage} user={user} activeProject={activeProject} notify={notify} onSignInClick={() => setAuthOpen(true)} />;
       case "specs": return <SpecsPage user={user} onSignInClick={() => setAuthOpen(true)} setPage={setPage} notify={notify} setGenPrefill={setGenPrefill} activeProject={activeProject} />;
       case "takes": return <TakesPage setGenPrefill={setGenPrefill} activeProject={activeProject} user={user} onSignInClick={() => setAuthOpen(true)} setPage={setPage} notify={notify} />;

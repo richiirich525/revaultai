@@ -27,6 +27,7 @@ const STATIC_PAGES = [
   ["/frame-planner", "0.9", "monthly"],
   ["/tools", "0.9", "weekly"],
   ["/lot", "0.9", "weekly"],
+  ["/pricing", "0.8", "monthly"],
   ["/blocking", "0.9", "monthly"],
   ["/rehearsal", "0.9", "monthly"],
   ["/autopsy", "0.9", "monthly"],

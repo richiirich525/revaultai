@@ -9,7 +9,7 @@
   without changing it there is a bug.
 
   Not to be confused with GEN_MODELS in lib/generatorCatalog.js, which is the
-  prose описание catalog for the marketing page and carries no prices.
+  prose catalog for the marketing page and carries no prices.
 */
 
 export const GEN_MODELS = [

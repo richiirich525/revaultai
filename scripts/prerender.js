@@ -28,6 +28,10 @@ const { FAQS } = await import(path.join(ROOT, "src/lib/faqContent.js"));
 const { GEN_MODELS, GEN_TOOLS } = await import(path.join(ROOT, "src/lib/generatorCatalog.js"));
 const { JOBS, ACCESS_LABEL } = await import(path.join(ROOT, "src/lib/toolCatalog.js"));
 const { PAGE_SUMMARIES } = await import(path.join(ROOT, "src/lib/pageSummaries.js"));
+const { CREDIT_PACKS, bestValuePack, perCreditLabel, priceLabel, savingVsStarter } =
+  await import(path.join(ROOT, "src/lib/creditPacks.js"));
+const { GEN_MODELS: PRICED_MODELS, costOf, snapDuration } =
+  await import(path.join(ROOT, "src/lib/genModels.js"));
 
 const template = fs.readFileSync(path.join(DIST, "index.html"), "utf8");
 
@@ -358,6 +362,7 @@ function bodyFor(slug, meta) {
 
   if (slug === "home") return h1 + lede + homeBacklotHtml() + toolsIndexBody() + TAGLINE;
   if (slug === "faq") return h1 + lede + faqBody() + TAGLINE;
+  if (slug === "pricing") return h1 + lede + pricingBody() + TAGLINE;
   if (slug === "ai-video-generator") return h1 + lede + generatorBody() + TAGLINE;
   if (slug === TOOL_INDEX) return h1 + lede + toolsIndexBody() + TAGLINE;
   if (slug in LEGAL_CONTENT) return h1 + legalBody(slug) + TAGLINE;
@@ -366,6 +371,46 @@ function bodyFor(slug, meta) {
   const tool = toolBody(slug);
   if (tool) return h1 + lede + tool + TAGLINE;
   return h1 + lede + TAGLINE;
+}
+
+/*
+  The pricing page, as static HTML.
+
+  Read from lib/creditPacks.js and lib/genModels.js rather than written out,
+  because a hardcoded price in the prerenderer is exactly the drift this whole
+  change exists to remove — and it would be the copy Google indexes.
+*/
+function pricingBody() {
+  const best = bestValuePack();
+
+  const packs = CREDIT_PACKS.map((p) => {
+    const saving = savingVsStarter(p);
+    return `<li><strong>${esc(p.label)} — ${p.credits} credits, ${esc(priceLabel(p))}</strong>` +
+      ` (${esc(perCreditLabel(p))}${saving > 0 ? `, ${saving}% cheaper per credit than Starter` : ""})` +
+      `${p.key === best.key ? " — best value" : ""}</li>`;
+  }).join("");
+
+  const models = PRICED_MODELS.map((m) => {
+    const secs = snapDuration(m.key, 5);
+    return `<li>${esc(m.label)} — ${m.costPerSecond} ${m.costPerSecond === 1 ? "credit" : "credits"}` +
+      ` per second, ${costOf(m.key, secs)} credits for ${secs} seconds</li>`;
+  }).join("");
+
+  return `<section><h2>Credit packs</h2><ul>${packs}</ul>` +
+    `<p>One-time purchase, charged through Stripe. There is no subscription. Credits are` +
+    ` deducted per second of output, and if a generation fails the credits come straight back.</p></section>` +
+    `<section><h2>What it costs to generate</h2>` +
+    `<p>Faster models cost less per second; flagship models cost more.</p><ul>${models}</ul></section>` +
+    `<section><h2>Free</h2><p>Credits buy generation. The planning does not cost anything:` +
+    ` scene breakdowns, shot direction, coverage planning, continuity checks, and the` +
+    ` <a href="/lot">Lot Supervisor</a> staging board, which needs no account at all.` +
+    ` Watching films in the gallery is free.</p>` +
+    `<p><a href="/tools">See the tools</a> · <a href="/lot">Open the Lot</a></p></section>` +
+    `<section><h2>If you sell</h2><p>Every film streams free and selling a full-quality` +
+    ` download is optional. You set the price and keep 80% of net revenue — what is left after` +
+    ` Stripe's processing fee. Tips and commissions arranged through your profile links go` +
+    ` directly to you. See the <a href="/terms">Terms of Service</a> and the` +
+    ` <a href="/refunds">Refund Policy</a>.</p></section>`;
 }
 
 function schemasFor(slug, meta, url) {

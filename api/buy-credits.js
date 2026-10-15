@@ -1,10 +1,10 @@
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
 // Server-side pack definitions — the client only sends a pack name,
 // never a price or credit amount, so it can't be tampered with.
-const CREDIT_PACKS = {
+// Exported so api/verify-packs.js can diff it against the table the browser
+// displays, and against the amounts Stripe will actually charge.
+export const CREDIT_PACKS = {
   starter: {
     priceId: 'price_1ThLEpQOsoMQrPgCnV1owEAo', // $5
     credits: 50,
@@ -25,6 +25,11 @@ export default async function handler(req, res) {
   }
 
   try {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      console.error('buy-credits: STRIPE_SECRET_KEY is not set');
+      return res.status(500).json({ error: 'Checkout is not configured.' });
+    }
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
     const { pack, userId } = req.body;
 
     const selected = CREDIT_PACKS[pack];

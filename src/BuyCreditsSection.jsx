@@ -1,31 +1,30 @@
 import { useState } from "react";
+import { CREDIT_PACKS, creditCheckoutUrl, packLabel } from "./lib/creditPacks.js";
 
 /*
   BuyCreditsSection — RevaultAI
-  Extracted from App.jsx.
+  Balance, and the packs that top it up.
+
+  The packs come from lib/creditPacks.js rather than being written out here.
+  They used to be three hardcoded buttons, and the stale comment on the state
+  below — naming two packs when three were on sale — is roughly how long that
+  went unnoticed.
 */
 
 export default function BuyCreditsSection({ user, profile, notify }) {
-  const [buying, setBuying] = useState(null); // "starter" | "creator" | null
+  const [buying, setBuying] = useState(null); // a pack key, or null
 
   async function handleBuyCredits(pack) {
     if (!user) { notify("Sign in to purchase credits."); return; }
     setBuying(pack);
     try {
-      const res = await fetch("/api/buy-credits", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pack, userId: user.id }),
-      });
-      const j = await res.json().catch(() => ({}));
-      if (!res.ok || !j.url) {
-        notify("Checkout failed: " + (j.error || "Please try again."));
-        setBuying(null);
-        return;
-      }
-      window.location.href = j.url;
+      // assign() rather than setting location.href: the buttons are built in a
+      // map(), which the compiler's analysis reads as a component scope, and
+      // assigning to a property of window from inside one is flagged. This is
+      // the explicit navigation call and does the same thing.
+      window.location.assign(await creditCheckoutUrl(pack, user.id));
     } catch (err) {
-      notify("Checkout failed: " + err.message + ". Please try again.");
+      notify("Checkout failed: " + err.message);
       setBuying(null);
     }
   }
@@ -35,15 +34,15 @@ export default function BuyCreditsSection({ user, profile, notify }) {
       <h3>Credits</h3>
       <p>Balance: <strong>{profile?.credits ?? 0}</strong> credits</p>
       <div className="credits-packs">
-        <button onClick={() => handleBuyCredits("starter")} disabled={buying !== null}>
-          {buying === "starter" ? "Redirecting…" : "Starter — 50 credits ($5)"}
-        </button>
-        <button onClick={() => handleBuyCredits("creator")} disabled={buying !== null}>
-          {buying === "creator" ? "Redirecting…" : "Creator — 200 credits ($15)"}
-        </button>
-        <button onClick={() => handleBuyCredits("studio")} disabled={buying !== null}>
-          {buying === "studio" ? "Redirecting…" : "Studio — 500 credits ($32)"}
-        </button>
+        {CREDIT_PACKS.map((pack) => (
+          <button
+            key={pack.key}
+            onClick={() => handleBuyCredits(pack.key)}
+            disabled={buying !== null}
+          >
+            {buying === pack.key ? "Redirecting…" : packLabel(pack)}
+          </button>
+        ))}
       </div>
     </div>
   );

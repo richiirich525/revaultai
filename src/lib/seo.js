@@ -96,6 +96,11 @@ export const PAGES = {
     title: "AI Filmmaking Tools — Free Shot Lists & Prompts | RevaultAI",
     description: "Twenty-two tools for planning, writing and checking an AI film. Scene breakdowns, coverage, blocking, continuity checks and more — most free, no account.",
   },
+  pricing: {
+    title: "Pricing — Credits for AI Video Generation | RevaultAI",
+    // Price interpolated so this is not the one place a figure is typed twice.
+    description: `Buy credits once, spend them per second of output. Three packs from ${priceLabel(CREDIT_PACKS[0])}, no subscription, and the planning tools are free. Creators keep 80%.`,
+  },
   lot: {
     title: "Lot Supervisor — Staging, Coverage, Continuity | RevaultAI",
     description: "The departments a film needs beyond the camera: block a scene, plan the coverage an editor needs, and catch a reverse that crosses the 180-degree line.",
@@ -144,6 +149,7 @@ export const PAGES = {
   },
 };
 
+import { CREDIT_PACKS, priceLabel } from "./creditPacks.js";
 import { MODELS } from "../prompts/models.js";
 
 // Prompt-directory model pages, built from the MODELS data so adding a model
