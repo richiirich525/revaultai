@@ -114,7 +114,13 @@ export default function LotPage({ user, activeProject, setPage, notify, onSignIn
       <div className="lot-rule" />
 
       <div className="lot-sec">Block it and see</div>
-      <StagingBoard />
+      <StagingBoard
+        user={user}
+        activeProject={activeProject}
+        notify={notify}
+        setPage={setPage}
+        onSignInClick={onSignInClick}
+      />
 
       <div className="lot-rule" />
 

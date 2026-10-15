@@ -210,6 +210,20 @@ const FRAME_SIDE = {
 const hyphenate = (dir) => dir.replace("toward frame left", "toward frame-left")
                               .replace("toward frame right", "toward frame-right");
 
+/*
+  promptFor returns a sentence saying why, rather than a prompt, when the
+  blocking cannot support what was asked for. Those are good to read and bad
+  to generate from, so they are named here and callers that PERSIST a prompt
+  can tell them apart from one.
+*/
+const NO_SUBJECT =
+  "The camera isn't pointing at anyone. Turn it toward a performer before writing a prompt.";
+
+export function promptIsUsable(text) {
+  if (!text) return false;
+  return text !== NO_SUBJECT && !/^Marked (a single|an over-the-shoulder) on /.test(text);
+}
+
 export function promptFor(camera, actors, declared = {}) {
   const cast = actors ?? [];
   const read = readStage(camera, cast);
@@ -226,7 +240,7 @@ export function promptFor(camera, actors, declared = {}) {
   // A shot of nobody cannot be prompted — except an insert or a neutral,
   // which are about the space rather than a face.
   if (!spatial && (!subjectActor || !visible.length)) {
-    return "The camera isn't pointing at anyone. Turn it toward a performer before writing a prompt.";
+    return NO_SUBJECT;
   }
 
   /*

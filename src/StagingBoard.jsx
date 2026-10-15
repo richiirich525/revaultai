@@ -1,7 +1,8 @@
 import { useMemo, useRef, useState } from "react";
+import SaveCoverageSlots from "./SaveCoverageSlots.jsx";
 import {
   STAGE, INTENTS, planGeometry, auditSetups, halfFovFor, shotSizeFor, lensFor,
-  bearing, dist, promptFor,
+  bearing, dist, promptFor, promptIsUsable,
 } from "./lib/stageGeometry.js";
 
 /*
@@ -76,7 +77,18 @@ const HEIGHTS = ["floor level", "low", "eye level", "above eye level", "high abo
 let seq = 0;
 const nextId = (p) => `${p}-${++seq}`;
 
-export default function StagingBoard() {
+/*
+  A label that tells two saves of the same scene apart, since saving twice
+  makes two plans rather than editing the first.
+*/
+function planLabel() {
+  const now = new Date();
+  return "Staging board \u2014 " + now.toLocaleString(undefined, {
+    month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
+  });
+}
+
+export default function StagingBoard({ user, activeProject, notify, setPage, onSignInClick }) {
   const [actors, setActors] = useState([
     { id: "a1", name: "Mara", x: 40, y: 50, facing: 90 },
     { id: "a2", name: "Vance", x: 60, y: 50, facing: 270 },
@@ -155,6 +167,64 @@ export default function StagingBoard() {
       setCopied("select it and copy by hand");
     }
     setTimeout(() => setCopied(null), 1800);
+  }
+
+  /*
+    The board, as coverage slots.
+
+    Same shape the Rehearsal Studio writes, so a scene blocked here and a scene
+    blocked there are indistinguishable to the audit that reads them back — and
+    the prompt goes in too, which is what makes a saved board useful rather
+    than merely safe: every setup lands on the coverage board as a generation
+    job with frame position and eyeline already stated.
+  */
+  function buildRows() {
+    return cams.map((c, i) => {
+      const slot = slots[i];
+      const camera = { x: c.x, y: c.y, rotation: bearing(c, { x: c.aimX, y: c.aimY }) };
+      const declared = slot.intent ? INTENTS[slot.intent] : null;
+      return {
+        slug: String(c.name || `Setup ${i + 1}`).slice(0, 120),
+        purpose: String(
+          (declared ? declared.label + (slot.intent_favors ? " on " + slot.intent_favors : "") : slot.shot_size)
+          + ", blocked on the staging board"
+          + (scene.note ? ". " + scene.note : "")
+        ).slice(0, 400),
+        shot_size: String(slot.shot_size || "").slice(0, 60),
+        camera: String(slot.lens_mm + "mm, " + c.height).slice(0, 200),
+        duration_seconds: null,
+        // A master is what the rest of the coverage conforms to, so it is the
+        // one you cannot skip. An insert is the one you can.
+        priority: slot.intent === "master" ? "essential"
+          : slot.intent === "insert" ? "optional"
+          : "recommended",
+        // A refusal reads well on screen and generates nothing useful, so a
+        // setup whose blocking cannot support its declaration is saved with
+        // no prompt rather than with a sentence pretending to be one.
+        prompt: (() => {
+          const p = promptFor(camera, actors, {
+            intent: c.intent,
+            favors: c.intentFavors,
+            height: c.height,
+            note: scene.note,
+          });
+          return promptIsUsable(p) ? String(p).slice(0, 2000) : "";
+        })(),
+        model_key: null,
+        sort: i,
+        camera_x: c.x,
+        camera_y: c.y,
+        camera_rotation: camera.rotation,
+        lens_mm: slot.lens_mm,
+        camera_height: c.height,
+        favors: slot.intent_favors ?? slot.favors,
+        actors: actors.map((a) => ({ name: a.name, x: a.x, y: a.y, facing: a.facing })),
+        intent: slot.intent,
+        intent_favors: slot.intent_favors,
+        deliberate_cross: slot.deliberate_cross,
+        no_master_by_design: scene.noMaster,
+      };
+    });
   }
 
   // --- dragging ----------------------------------------------------------
@@ -441,6 +511,21 @@ export default function StagingBoard() {
               );
             })}
           </div>
+
+          <SaveCoverageSlots
+            buildRows={buildRows}
+            count={cams.length}
+            label={planLabel()}
+            blurb={user && activeProject
+              ? `Keep this scene in ${activeProject.name}. Every camera becomes a coverage slot carrying its blocking, what you declared it was for, and the prompt above \u2014 ready to generate without restating the staging.`
+              : "Nothing here is saved. Sign in and this scene becomes coverage slots in a project, each one carrying its blocking and its prompt."}
+            savedBlurb="Each setup carries its prompt, so it can be filled straight from the board."
+            user={user}
+            activeProject={activeProject}
+            notify={notify}
+            setPage={setPage}
+            onSignInClick={onSignInClick}
+          />
         </div>
       </div>
     </div>
