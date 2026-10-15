@@ -32,6 +32,7 @@ export default function AdminPage({ creations, setCreations, notify }) {
   const [checkResult, setCheckResult] = useState({});
   const [due, setDue] = useState(null);
   const [dueBusy, setDueBusy] = useState(false);
+  const [sending, setSending] = useState(null);
 
   /*
     What is owed, and why anything owed is not yet payable. This only ever
@@ -50,6 +51,42 @@ export default function AdminPage({ creations, setCreations, notify }) {
       setDue({ error: err.message });
     }
     setDueBusy(false);
+  }
+
+  /*
+    Sending names the SALES, never an amount — the server re-derives every
+    figure and re-checks every sale before it transfers, so nothing here can
+    decide what somebody gets paid.
+  */
+  async function sendPayout(creatorRow) {
+    const total = money(creatorRow.owed_cents);
+    const who = creatorRow.creator ?? "this creator";
+    if (!window.confirm(
+      `Send ${total} to ${who}?\n\n` +
+      `${creatorRow.sales.length} sale${creatorRow.sales.length === 1 ? "" : "s"}: ` +
+      creatorRow.sales.map((x) => x.film).join(", ") + "\n\n" +
+      "This moves real money out of your Stripe balance and cannot be undone from here."
+    )) return;
+
+    setSending(creatorRow.creator_id);
+    try {
+      const token = await getSessionToken();
+      const res = await fetch("/api/payouts-send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+        body: JSON.stringify({ sessions: creatorRow.sales.map((x) => x.session) }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || "The payout run failed.");
+      const parts = [body.summary];
+      if (body.sent?.length) parts.push(money(body.total_cents) + " sent.");
+      for (const s of body.skipped ?? []) parts.push(`${s.film}: ${s.reason}`);
+      notify?.(parts.join(" "));
+    } catch (err) {
+      notify?.("Payout failed: " + err.message);
+    }
+    setSending(null);
+    loadDue();
   }
 
   async function runCheck(route) {
@@ -183,7 +220,7 @@ export default function AdminPage({ creations, setCreations, notify }) {
         <div style={{ marginBottom: 64 }}>
           <div className="section-label">Payouts</div>
           <p style={{ color: "var(--muted)", fontSize: 11, marginBottom: 20, fontFamily: "'DM Mono', monospace", letterSpacing: "0.1em" }}>
-            Creators keep 80&#37; of net, held 7 days against chargebacks. Reading only &mdash; nothing is sent from here.
+            Creators keep 80&#37; of net, held 7 days against chargebacks. Sending moves real money and asks first.
           </p>
 
           <button className="btn-ghost" type="button" onClick={loadDue} disabled={dueBusy} style={{ opacity: dueBusy ? 0.6 : 1 }}>
@@ -210,7 +247,7 @@ export default function AdminPage({ creations, setCreations, notify }) {
                 </div>
               ) : (
                 <table className="admin-table">
-                  <thead><tr><th>Creator</th><th>Sales</th><th>Owed</th><th>Stripe account</th></tr></thead>
+                  <thead><tr><th>Creator</th><th>Sales</th><th>Owed</th><th>Send</th></tr></thead>
                   <tbody>
                     {due.creators.map((c) => (
                       <tr key={c.creator_id}>
@@ -219,7 +256,17 @@ export default function AdminPage({ creations, setCreations, notify }) {
                           {c.sales.map((x) => x.film).join(", ")}
                         </td>
                         <td style={{ color: "#4ADE80", fontFamily: "'DM Mono', monospace", fontSize: 12 }}>{money(c.owed_cents)}</td>
-                        <td style={{ color: "var(--muted)", fontFamily: "'DM Mono', monospace", fontSize: 10 }}>{c.stripe_account_id}</td>
+                        <td>
+                          <button
+                            className="btn-primary"
+                            type="button"
+                            onClick={() => sendPayout(c)}
+                            disabled={sending !== null}
+                            style={{ opacity: sending !== null ? 0.6 : 1, whiteSpace: "nowrap" }}
+                          >
+                            {sending === c.creator_id ? "Sending..." : `Send ${money(c.owed_cents)}`}
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -240,6 +287,11 @@ export default function AdminPage({ creations, setCreations, notify }) {
                       <span style={{ color: "var(--muted)" }}>
                         {x.owed_cents != null && <span style={{ marginRight: 12 }}>{money(x.owed_cents)}</span>}
                         <span style={{ color: "#E5B769" }}>{x.blocked}</span>
+                        {x.last_attempt === "failed" && x.last_error && (
+                          <span style={{ color: "var(--muted)", marginLeft: 10, opacity: 0.8 }}>
+                            (last try: {x.last_error})
+                          </span>
+                        )}
                       </span>
                     </div>
                   ))}

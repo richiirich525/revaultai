@@ -66,15 +66,19 @@ export default async function handler(req, res) {
     // Sales already paid out, so nothing is counted twice. The table may not
     // exist yet; that is not an error worth failing the whole report over.
     let paidSessions = new Set();
+    let payoutState = new Map();
     const { data: paid, error: payErr } = await supabase
       .from("payouts")
-      .select("stripe_session_id, status");
+      .select("stripe_session_id, status, error, stripe_transfer_id");
     if (payErr) {
       console.warn("payouts-due: payouts table unreadable:", payErr.message);
     } else {
-      paidSessions = new Set((paid ?? [])
-        .filter((r) => r.status === "paid" || r.status === "pending")
-        .map((r) => r.stripe_session_id));
+      // Only a PAID payout takes a sale off the list. A row left 'pending' by
+      // a crashed run, or 'failed' while the platform balance settles, has to
+      // come back as payable — the send route reuses those rows rather than
+      // creating a second one, and Stripe's idempotency key is the backstop.
+      paidSessions = new Set((paid ?? []).filter((r) => r.status === "paid").map((r) => r.stripe_session_id));
+      payoutState = new Map((paid ?? []).map((r) => [r.stripe_session_id, r]));
     }
 
     // Where a fee was never recorded, read it from Stripe rather than falling
@@ -125,6 +129,9 @@ export default async function handler(req, res) {
         hold_clears: holdClearsAt(p.created_at)?.toISOString() ?? null,
         already_paid: paidSessions.has(p.stripe_session_id),
         owed_cents: net == null ? null : creatorCents(net),
+        // A previous attempt, when there was one, so a retry explains itself.
+        last_attempt: payoutState.get(p.stripe_session_id)?.status ?? null,
+        last_error: payoutState.get(p.stripe_session_id)?.error ?? null,
       };
 
       const why = blockedReason(sale, now);
