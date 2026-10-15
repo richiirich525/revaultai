@@ -2,15 +2,53 @@ import { useEffect, useState } from "react";
 import { supabase } from "./lib/supabase.js";
 import { fetchCreations, updateCreationStatus, updateCreationSpotlight } from "./lib/db.js";
 import { track } from "./lib/analytics.js";
+import { getSessionToken } from "./lib/session.js";
 import Badge from "./Badge.jsx";
 
 /*
   AdminPage — RevaultAI
-  The review queue, trusted-creator switches and spotlight control. Extracted
-  from App.jsx, which had grown past four thousand lines.
+  The review queue, trusted-creator switches, spotlight control, and the
+  consistency checks. Extracted from App.jsx, which had grown past four
+  thousand lines.
 */
 
+/*
+  The admin-only diagnostics. Both existed as API routes with no way to reach
+  them, which meant neither had ever been run: the only route to them was
+  pasting a session token into curl, and a check that costs that much friction
+  is a check nobody performs. A button is the difference between a safeguard
+  and a good intention.
+*/
+const CHECKS = [
+  ["verify-packs", "Credit packs",
+   "Do the packs we advertise match what the server grants and what Stripe charges?"],
+  ["verify-models", "Model ids",
+   "Does every fal model id this codebase references still resolve?"],
+];
+
 export default function AdminPage({ creations, setCreations, notify }) {
+  const [checking, setChecking] = useState(null);
+  const [checkResult, setCheckResult] = useState({});
+
+  async function runCheck(route) {
+    setChecking(route);
+    try {
+      const token = await getSessionToken();
+      const res = await fetch("/api/" + route, {
+        headers: { Authorization: "Bearer " + token },
+      });
+      const body = await res.json().catch(() => ({}));
+      setCheckResult((prev) => ({
+        ...prev,
+        [route]: res.ok
+          ? { ok: (body.problems ?? body.missing ?? 0) === 0, text: body.summary || "No summary returned." }
+          : { ok: false, text: body.error || "The check could not run." },
+      }));
+    } catch (err) {
+      setCheckResult((prev) => ({ ...prev, [route]: { ok: false, text: err.message } }));
+    }
+    setChecking(null);
+  }
   const pending = creations.filter((c) => c._fromDb && c.premium_status === "Pending"); const spotlightCount = creations.filter((c) => c._fromDb && c.spotlight).length;
   async function approve(id) {
   const item = creations.find((c) => c.id === id);
@@ -119,6 +157,37 @@ export default function AdminPage({ creations, setCreations, notify }) {
           {creators.length === 0 ? <div style={{ color: "var(--muted)", fontSize: 13, padding: "24px 0", fontFamily: "'DM Mono', monospace" }}>No creators yet.</div> : (
             <table className="admin-table"><thead><tr><th>Creator</th><th>Handle</th><th>Founding</th><th>Premium submissions</th></tr></thead><tbody>{creators.map((c) => (<tr key={c.id}><td style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18 }}>{c.display_name || c.username}</td><td style={{ color: "var(--muted)", fontFamily: "'DM Mono', monospace", fontSize: 11 }}>@{c.username}</td><td style={{ color: "var(--muted)", fontFamily: "'DM Mono', monospace", fontSize: 11 }}>{c.founding_creator ? "Yes" : "—"}</td><td><div className={"spotlight-toggle" + (c.auto_approve ? " active" : "")} style={{ opacity: trustBusy === c.id ? 0.5 : 1 }} onClick={() => { if (!trustBusy) toggleAutoApprove(c); }}><div className="spotlight-dot" />{c.auto_approve ? "Go live immediately" : "Wait for review"}</div></td></tr>))}</tbody></table>
           )}
+        </div>
+        <div style={{ marginBottom: 64 }}>
+          <div className="section-label">Checks</div>
+          <p style={{ color: "var(--muted)", fontSize: 11, marginBottom: 24, fontFamily: "'DM Mono', monospace", letterSpacing: "0.1em" }}>
+            Read-only. Nothing is charged and nothing is changed.
+          </p>
+          {CHECKS.map(([route, name, blurb]) => {
+            const r = checkResult[route];
+            return (
+              <div key={route} style={{ borderTop: "1px solid var(--border)", padding: "20px 0", display: "flex", justifyContent: "space-between", gap: 20, flexWrap: "wrap", alignItems: "flex-start" }}>
+                <div style={{ flex: 1, minWidth: 260 }}>
+                  <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 700, color: "var(--text)", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>{name}</div>
+                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", lineHeight: 1.7 }}>{blurb}</div>
+                  {r && (
+                    <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, lineHeight: 1.75, marginTop: 10, color: r.ok ? "#4ADE80" : "#E5B769" }}>
+                      {r.text}
+                    </div>
+                  )}
+                </div>
+                <button
+                  className="btn-ghost"
+                  type="button"
+                  onClick={() => runCheck(route)}
+                  disabled={checking !== null}
+                  style={{ opacity: checking !== null ? 0.6 : 1, whiteSpace: "nowrap" }}
+                >
+                  {checking === route ? "Checking..." : "Run"}
+                </button>
+              </div>
+            );
+          })}
         </div>
         <div>
           <div className="section-label">Spotlight Control</div>
