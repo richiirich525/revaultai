@@ -3,6 +3,7 @@ import { supabase } from "./lib/supabase.js";
 import { fetchCreations, updateCreationStatus, updateCreationSpotlight } from "./lib/db.js";
 import { track } from "./lib/analytics.js";
 import { getSessionToken } from "./lib/session.js";
+import { money } from "./lib/payouts.js";
 import Badge from "./Badge.jsx";
 
 /*
@@ -29,6 +30,27 @@ const CHECKS = [
 export default function AdminPage({ creations, setCreations, notify }) {
   const [checking, setChecking] = useState(null);
   const [checkResult, setCheckResult] = useState({});
+  const [due, setDue] = useState(null);
+  const [dueBusy, setDueBusy] = useState(false);
+
+  /*
+    What is owed, and why anything owed is not yet payable. This only ever
+    reads: the route creates no transfer and marks nothing paid, so the
+    arithmetic can be checked against real sales before money moves.
+  */
+  async function loadDue() {
+    setDueBusy(true);
+    try {
+      const token = await getSessionToken();
+      const res = await fetch("/api/payouts-due", { headers: { Authorization: "Bearer " + token } });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || "Could not work out what is owed.");
+      setDue(body);
+    } catch (err) {
+      setDue({ error: err.message });
+    }
+    setDueBusy(false);
+  }
 
   async function runCheck(route) {
     setChecking(route);
@@ -158,6 +180,79 @@ export default function AdminPage({ creations, setCreations, notify }) {
             <table className="admin-table"><thead><tr><th>Creator</th><th>Handle</th><th>Founding</th><th>Premium submissions</th></tr></thead><tbody>{creators.map((c) => (<tr key={c.id}><td style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18 }}>{c.display_name || c.username}</td><td style={{ color: "var(--muted)", fontFamily: "'DM Mono', monospace", fontSize: 11 }}>@{c.username}</td><td style={{ color: "var(--muted)", fontFamily: "'DM Mono', monospace", fontSize: 11 }}>{c.founding_creator ? "Yes" : "—"}</td><td><div className={"spotlight-toggle" + (c.auto_approve ? " active" : "")} style={{ opacity: trustBusy === c.id ? 0.5 : 1 }} onClick={() => { if (!trustBusy) toggleAutoApprove(c); }}><div className="spotlight-dot" />{c.auto_approve ? "Go live immediately" : "Wait for review"}</div></td></tr>))}</tbody></table>
           )}
         </div>
+        <div style={{ marginBottom: 64 }}>
+          <div className="section-label">Payouts</div>
+          <p style={{ color: "var(--muted)", fontSize: 11, marginBottom: 20, fontFamily: "'DM Mono', monospace", letterSpacing: "0.1em" }}>
+            Creators keep 80&#37; of net, held 7 days against chargebacks. Reading only &mdash; nothing is sent from here.
+          </p>
+
+          <button className="btn-ghost" type="button" onClick={loadDue} disabled={dueBusy} style={{ opacity: dueBusy ? 0.6 : 1 }}>
+            {dueBusy ? "Working it out..." : due ? "Recalculate" : "What is owed?"}
+          </button>
+
+          {due?.error && (
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "#E5B769", marginTop: 14 }}>{due.error}</div>
+          )}
+
+          {due && !due.error && (
+            <div style={{ marginTop: 20 }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "10px 28px", fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", marginBottom: 18 }}>
+                <span>Ready <b style={{ color: "#4ADE80", fontWeight: 400 }}>{money(due.totals.ready_cents)}</b></span>
+                <span>In the 7-day hold <b style={{ color: "var(--text)", fontWeight: 400 }}>{money(due.totals.held_cents)}</b></span>
+                <span>Blocked <b style={{ color: "#E5B769", fontWeight: 400 }}>{money(due.totals.blocked_cents)}</b></span>
+                <span>{due.sales} sale{due.sales === 1 ? "" : "s"} examined</span>
+                {due.recovered_nets > 0 && <span>{due.recovered_nets} net{due.recovered_nets === 1 ? "" : "s"} read from Stripe</span>}
+              </div>
+
+              {due.creators.length === 0 ? (
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--muted)", padding: "10px 0" }}>
+                  {due.summary}
+                </div>
+              ) : (
+                <table className="admin-table">
+                  <thead><tr><th>Creator</th><th>Sales</th><th>Owed</th><th>Stripe account</th></tr></thead>
+                  <tbody>
+                    {due.creators.map((c) => (
+                      <tr key={c.creator_id}>
+                        <td style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18 }}>{c.creator ?? "(unknown)"}</td>
+                        <td style={{ color: "var(--muted)", fontFamily: "'DM Mono', monospace", fontSize: 11 }}>
+                          {c.sales.map((x) => x.film).join(", ")}
+                        </td>
+                        <td style={{ color: "#4ADE80", fontFamily: "'DM Mono', monospace", fontSize: 12 }}>{money(c.owed_cents)}</td>
+                        <td style={{ color: "var(--muted)", fontFamily: "'DM Mono', monospace", fontSize: 10 }}>{c.stripe_account_id}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+
+              {due.unpayable.length > 0 && (
+                <div style={{ marginTop: 26 }}>
+                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.16em", color: "var(--muted)", textTransform: "uppercase", marginBottom: 10 }}>
+                    Not payable yet
+                  </div>
+                  {due.unpayable.map((x) => (
+                    <div key={x.session} style={{ borderTop: "1px solid var(--border)", padding: "10px 0", display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap", fontFamily: "'DM Mono', monospace", fontSize: 11 }}>
+                      <span style={{ color: "var(--text)" }}>
+                        {x.film}
+                        {x.creator && <span style={{ color: "var(--muted)" }}> &middot; {x.creator}</span>}
+                      </span>
+                      <span style={{ color: "var(--muted)" }}>
+                        {x.owed_cents != null && <span style={{ marginRight: 12 }}>{money(x.owed_cents)}</span>}
+                        <span style={{ color: "#E5B769" }}>{x.blocked}</span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--muted)", lineHeight: 1.7, marginTop: 18, opacity: 0.8 }}>
+                {due.note}
+              </div>
+            </div>
+          )}
+        </div>
+
         <div style={{ marginBottom: 64 }}>
           <div className="section-label">Checks</div>
           <p style={{ color: "var(--muted)", fontSize: 11, marginBottom: 24, fontFamily: "'DM Mono', monospace", letterSpacing: "0.1em" }}>
