@@ -5,6 +5,7 @@ import { stateAt, setKey, removeKey, keyTimes, newRehearsal, addCamera } from ".
 import { motionState, defaultBody, BODIES } from "./lib/performers.js";
 import { ACTION_CATEGORIES, searchActions, actionLabel, actionPose } from "./lib/actions.js";
 import { CAMERA_MOVES, MOVE_CATEGORIES, moveKeys } from "./lib/cameraMoves.js";
+import { walkThroughs } from "./lib/stageCollision.js";
 import { buildShootPrompt, buildShootSpec, buildCoverage } from "./lib/shootPrompt.js";
 import { SETS, EXTERIORS, getSet, pieceSize } from "./lib/setCatalog.js";
 import { LIGHT_PRESETS, defaultLight } from "./lib/lighting.js";
@@ -64,6 +65,7 @@ const styles = `
   .rs-act-item b { display: block; font-size: 10px; font-weight: 500; color: var(--text); letter-spacing: 0.04em; }
   .rs-act-item span { display: block; font-size: 9px; color: var(--muted); margin-top: 3px; }
   .rs-act-none { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); padding: 14px 2px; }
+  .rs-through { font-family: 'DM Mono', monospace; font-size: 10px; color: #E5B769; line-height: 1.8; margin: 2px 0 10px; }
   .rs-cam-n { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--text); }
   .rs-cam-s { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 3px; }
   .rs-input { background: var(--bg); border: 1px solid var(--border); border-radius: 3px; padding: 6px 9px; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text); }
@@ -168,6 +170,9 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
   const now = stateAt(r, t);
   const nowRead = readStage(now.camera, now.actors);
   const activeCam = r.cameras.find((c) => c.id === r.activeCamera);
+  // Two legal marks with something solid between them: nothing stops you
+  // setting those, and the walk between them goes straight through it.
+  const throughs = walkThroughs(r, room);
 
   // A drag on the plan becomes keyframes — but only for whoever actually moved.
   function onStageChange(next) {
@@ -618,6 +623,17 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
 
       <div className="rs-panel">
         <div className="rs-label">Performers at {t.toFixed(1)}s</div>
+        {throughs.length > 0 && (
+          <div className="rs-through">
+            {throughs.slice(0, 4).map((w, i) => (
+              <div key={i}>
+                {w.name} walks through {w.label} between {w.from.toFixed(1)}s and {w.to.toFixed(1)}s —
+                add a mark partway to carry them around it.
+              </div>
+            ))}
+            {throughs.length > 4 && <div>…and {throughs.length - 4} more.</div>}
+          </div>
+        )}
         {now.actors.map((a, i) => (
           <div key={a.id}>
             <div className="rs-row" style={{ padding: "5px 0" }}>

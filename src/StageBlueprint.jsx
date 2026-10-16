@@ -1,4 +1,5 @@
 import { planShapes } from "./lib/setGeometry.js";
+import { resolveMove, PERSON_RADIUS, CAMERA_RADIUS } from "./lib/stageCollision.js";
 import { useEffect, useRef, useState } from "react";
 import { STAGE, readStage, describeStage, axisFor, bearing, eyelinesFor, eyelineProblems } from "./lib/stageGeometry.js";
 
@@ -56,13 +57,20 @@ export default function StageBlueprint({ camera, actors, onChange, baselineSide,
     const p = toStage(evt);
     if (!p) return;
     if (drag.kind === "camera") {
-      onChange({ camera: { ...camera, ...p }, actors });
+      // Walls are not an obstacle to a camera — taking one out to shoot into
+      // the room is how sets are built. Furniture still is.
+      const q = resolveMove(set, camera, p, { radius: CAMERA_RADIUS, walls: false });
+      onChange({ camera: { ...camera, ...q }, actors });
     } else if (drag.kind === "rotate") {
       onChange({ camera: { ...camera, rotation: Math.round(bearing(camera, p)) }, actors });
     } else if (drag.kind === "actorMove") {
-      onChange({ camera, actors: actors.map((a) => (a.id === drag.id ? { ...a, ...p } : a)) });
+      const cur = actors.find((a) => a.id === drag.id);
+      const q = cur ? resolveMove(set, cur, p, { radius: PERSON_RADIUS }) : p;
+      onChange({ camera, actors: actors.map((a) => (a.id === drag.id ? { ...a, ...q } : a)) });
     } else if (drag.kind === "extra" && onExtrasChange) {
-      onExtrasChange((extras ?? []).map((e) => (e.id === drag.id ? { ...e, ...p } : e)));
+      const cur = (extras ?? []).find((e) => e.id === drag.id);
+      const q = cur ? resolveMove(set, cur, p, { radius: PERSON_RADIUS }) : p;
+      onExtrasChange((extras ?? []).map((e) => (e.id === drag.id ? { ...e, ...q } : e)));
     } else if (drag.kind === "pieceMove" && onSetChange) {
       onSetChange(drag.id, { x: Math.round(((p.x - 50) / 5) * 100) / 100, z: Math.round(((p.y - 50) / 5) * 100) / 100 });
     } else if (drag.kind === "pieceTurn" && onSetChange) {

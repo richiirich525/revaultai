@@ -29,7 +29,7 @@ export function planShapes(set) {
     }),
     props: (set.props ?? []).map((p) => {
       const s = pieceSize(p);
-      return rect(p.x, p.z, s.w, s.d, { id: p.id, label: p.label, tall: s.h > 1.4 });
+      return rect(p.x, p.z, s.w, s.d, { id: p.id, label: p.label, tall: s.h > 1.4, raised: p.y != null });
     }),
   };
 }
