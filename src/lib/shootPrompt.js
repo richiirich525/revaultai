@@ -39,15 +39,33 @@ function cameraMove(c0, c1, subj0, subj1) {
   const d1 = subj1 ? m(c1, subj1) : null;
   const closing = d0 != null && d1 != null ? d0 - d1 : 0;
 
-  if (travel < 0.25 && turn < 6) return "The camera is locked off.";
-  if (travel < 0.25) return `The camera pans ${delta(c0.rotation ?? 0, c1.rotation ?? 0) > 0 ? "right" : "left"} across ${Math.round(turn)} degrees.`;
+  const dH = (c1.height ?? c0.height ?? 0) - (c0.height ?? 0);
+  const dL = (c1.lens ?? c0.lens ?? 0) - (c0.lens ?? 0);
+  const crane = Math.abs(dH) > 0.15
+    ? `The camera ${dH > 0 ? "cranes up" : "descends"} about ${Math.abs(dH).toFixed(1)} meters as the shot plays.`
+    : "";
+  const zoom = Math.abs(dL) > 2
+    ? `The lens ${dL > 0 ? "tightens" : "widens"} from ${Math.round(c0.lens)}mm to ${Math.round(c1.lens)}mm — the camera itself stays put.`
+    : "";
+  const extra = [crane, zoom].filter(Boolean).join(" ");
+
+  if (travel < 0.25 && turn < 6) return extra || "The camera is locked off.";
+  const base = (txt) => (extra ? `${txt} ${extra}` : txt);
+  if (travel < 0.25) return base(`The camera pans ${delta(c0.rotation ?? 0, c1.rotation ?? 0) > 0 ? "right" : "left"} across ${Math.round(turn)} degrees.`);
   if (Math.abs(closing) > 0.6 * travel) {
-    return closing > 0
+    return base(closing > 0
       ? `The camera pushes in about ${closing.toFixed(1)} meters, tightening as it goes.`
-      : `The camera pulls back about ${Math.abs(closing).toFixed(1)} meters, opening the frame out.`;
+      : `The camera pulls back about ${Math.abs(closing).toFixed(1)} meters, opening the frame out.`);
   }
-  if (turn > 15) return `The camera arcs around the subject, traveling about ${travel.toFixed(1)} meters.`;
-  return `The camera tracks about ${travel.toFixed(1)} meters, holding the subject as it moves.`;
+  // An arc is a camera that travels while staying the same distance from the
+  // subject. Turn angle alone misreads it: a camera that starts off-axis
+  // re-aims by a different amount on each side of the subject.
+  // A truck holds its distance too, so the arc also has to re-aim: the camera
+  // turns to keep the subject framed as it goes around them.
+  const orbiting = d0 != null && d1 != null && travel > 0.5
+    && Math.abs(closing) < 0.25 * travel && turn > 8;
+  if (orbiting || turn > 15) return base(`The camera arcs around the subject, traveling about ${travel.toFixed(1)} meters.`);
+  return base(`The camera tracks about ${travel.toFixed(1)} meters, holding the subject as it moves.`);
 }
 
 function movementOf(a0, a1, c0, c1, name) {
@@ -120,9 +138,10 @@ export function buildShootPrompt(r, cameraId) {
   // where the director has overridden them.
   const cam = (rehearsal.cameras ?? []).find((c) => c.id === rehearsal.activeCamera);
   let framing = describeStage(read0);
-  if (cam?.lens) framing = framing.replace(/\b\d+\s*mm\b/i, `${cam.lens}mm`);
+  const lens0 = s0.camera.lens ?? cam?.lens ?? null;
+  if (lens0) framing = framing.replace(/\b\d+\s*mm\b/i, `${Math.round(lens0)}mm`);
   lines.push(framing);
-  const h = cam?.height ?? 1.55;
+  const h = s0.camera.height ?? cam?.height ?? 1.55;
   if (h <= 0.5) lines.push("Camera on the floor, looking up — a very low angle.");
   else if (h <= 1.0) lines.push("Camera low, below eye level, looking slightly up.");
   else if (h >= 3.0) lines.push("Camera high above the scene, looking down.");
@@ -233,11 +252,11 @@ export function buildShootSpec(r, cameraId) {
     },
     camera: {
       shotSize: read1.shotSize && read1.shotSize !== read0.shotSize ? `${read0.shotSize} to ${read1.shotSize}` : read0.shotSize || "",
-      lens: (rehearsal.cameras ?? []).find((c) => c.id === rehearsal.activeCamera)?.lens
-        ? `${(rehearsal.cameras ?? []).find((c) => c.id === rehearsal.activeCamera).lens}mm`
+      lens: (s0.camera.lens ?? (rehearsal.cameras ?? []).find((c) => c.id === rehearsal.activeCamera)?.lens)
+        ? `${Math.round(s0.camera.lens ?? (rehearsal.cameras ?? []).find((c) => c.id === rehearsal.activeCamera).lens)}mm`
         : read0.lens || "",
       height: (() => {
-        const hh = (rehearsal.cameras ?? []).find((c) => c.id === rehearsal.activeCamera)?.height ?? 1.55;
+        const hh = s0.camera.height ?? (rehearsal.cameras ?? []).find((c) => c.id === rehearsal.activeCamera)?.height ?? 1.55;
         return hh <= 0.5 ? "floor level" : hh <= 1.0 ? "low" : hh >= 3.0 ? "high above" : hh >= 2.0 ? "above eye level" : "eye level";
       })(),
       movement: cameraMove(s0.camera, s1.camera,

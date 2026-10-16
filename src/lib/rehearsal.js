@@ -34,7 +34,10 @@ function sampleTrack(keys, t, linear = [], angular = []) {
     if (t < a.t || t > b.t) continue;
     const u = b.t === a.t ? 0 : ease((t - a.t) / (b.t - a.t));
     const out = { t };
-    for (const f of linear) out[f] = lerp(a[f] ?? 0, b[f] ?? 0, u);
+    for (const f of linear) {
+      if (a[f] == null && b[f] == null) continue;
+      out[f] = lerp(a[f] ?? b[f], b[f] ?? a[f], u);
+    }
     for (const f of angular) out[f] = lerpAngle(a[f] ?? 0, b[f] ?? 0, u);
     out.pose = u < 0.5 ? a.pose : b.pose;
     out.action = a.action ?? null;
@@ -54,11 +57,16 @@ export function stateAt(r, t) {
     };
   });
   const cam = (r.cameras ?? []).find((c) => c.id === r.activeCamera) ?? r.cameras?.[0];
-  const cs = sampleTrack(cam?.keys, t, ["x", "y"], ["rotation"]);
+  // Height and lens are keyed only by a crane or a zoom. Left unkeyed they
+  // sample as null and the camera's own settings stand.
+  const cs = sampleTrack(cam?.keys, t, ["x", "y", "height", "lens"], ["rotation"]);
   return {
     t,
     actors,
-    camera: { x: cs?.x ?? 50, y: cs?.y ?? 80, rotation: cs?.rotation ?? 0 },
+    camera: {
+      x: cs?.x ?? 50, y: cs?.y ?? 80, rotation: cs?.rotation ?? 0,
+      height: cs?.height ?? null, lens: cs?.lens ?? null,
+    },
   };
 }
 

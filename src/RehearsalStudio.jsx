@@ -4,6 +4,7 @@ import { readStage } from "./lib/stageGeometry.js";
 import { stateAt, setKey, removeKey, keyTimes, newRehearsal, addCamera } from "./lib/rehearsal.js";
 import { motionState, defaultBody, BODIES } from "./lib/performers.js";
 import { ACTION_CATEGORIES, searchActions, actionLabel, actionPose } from "./lib/actions.js";
+import { CAMERA_MOVES, MOVE_CATEGORIES, moveKeys } from "./lib/cameraMoves.js";
 import { buildShootPrompt, buildShootSpec, buildCoverage } from "./lib/shootPrompt.js";
 import { SETS, EXTERIORS, getSet, pieceSize } from "./lib/setCatalog.js";
 import { LIGHT_PRESETS, defaultLight } from "./lib/lighting.js";
@@ -80,6 +81,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
   const [actFor, setActFor] = useState(null);
   const [actQuery, setActQuery] = useState("");
   const [actCat, setActCat] = useState(null);
+  const [moveOpen, setMoveOpen] = useState(false);
   const [genSet, setGenSet] = useState(null);
   const [genFit, setGenFit] = useState(null);
   const [pendingShot, setPendingShot] = useState(null);
@@ -270,6 +272,43 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
     });
   }
 
+  // A move is written as two marks on the active camera and nothing more, so
+  // it can be nudged, re-timed or half-deleted afterwards like any other.
+  // It runs from the playhead to the end — or the whole shot, if you're
+  // already standing at the end of it.
+  function applyMove(moveId) {
+    const cam = r.cameras.find((c) => c.id === r.activeCamera);
+    if (!cam) return;
+    const from = t >= r.duration - 0.5 ? 0 : t;
+    const start = stateAt({ ...r, activeCamera: cam.id }, from).camera;
+    const read = readStage(start, stateAt(r, from).actors);
+    const subj = stateAt(r, from).actors.find((a) => a.name === read.subject) ?? null;
+    const base = { height: start.height ?? cam.height ?? 1.55, lens: start.lens ?? cam.lens ?? 35 };
+
+    const built = moveKeys(moveId, { start, subject: subj, base, from, to: r.duration });
+    if (!built) {
+      const m = CAMERA_MOVES.find((x) => x.id === moveId);
+      notify?.(m?.needsSubject
+        ? "Point that camera at someone first — an arc needs somebody to circle."
+        : "That move has nowhere to go from here.");
+      return;
+    }
+
+    setR((prev) => ({
+      ...prev,
+      cameras: prev.cameras.map((c) => {
+        if (c.id !== prev.activeCamera) return c;
+        // Clearing what came after keeps a second move from fighting the first.
+        const kept = (c.keys ?? []).filter((k) => k.t < from - 0.2);
+        const keys = [...kept, built.first, ...(built.last ? [built.last] : [])];
+        return { ...c, keys: keys.sort((a, b) => a.t - b.t) };
+      }),
+    }));
+    setMoveOpen(false);
+    const label = CAMERA_MOVES.find((x) => x.id === moveId)?.label ?? "Move";
+    notify?.(`${label} on ${cam.name}, ${from.toFixed(1)}s to ${r.duration}s. Press play to watch it.`);
+  }
+
   function clearKeyHere() {
     setR((prev) => ({
       ...prev,
@@ -341,8 +380,8 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
               light={r.light ?? defaultLight()}
               hiddenPieces={r.hiddenPieces ?? []}
               extras={r.extras ?? []}
-              height={r.cameras.find((c) => c.id === r.activeCamera)?.height ?? null}
-              lensMmOverride={r.cameras.find((c) => c.id === r.activeCamera)?.lens ?? null}
+              height={now.camera.height ?? r.cameras.find((c) => c.id === r.activeCamera)?.height ?? null}
+              lensMmOverride={now.camera.lens ?? r.cameras.find((c) => c.id === r.activeCamera)?.lens ?? null}
               genSet={genSet}
               plateRef={plateRef}
               setScale={r.setScale}
@@ -655,8 +694,39 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
       <div className="rs-panel">
         <div className="rs-row" style={{ justifyContent: "space-between", marginBottom: 10 }}>
           <div className="rs-label" style={{ marginBottom: 0 }}>Cameras — same performance, different angle</div>
-          {r.cameras.length < 4 && <button className="rs-btn" onClick={() => setR((p) => addCamera(p, now.camera))}>+ Camera</button>}
+          <div className="rs-row">
+            <button className={"rs-btn" + (moveOpen ? " on" : "")} onClick={() => setMoveOpen((v) => !v)}>Move this camera</button>
+            {r.cameras.length < 4 && <button className="rs-btn" onClick={() => setR((p) => addCamera(p, now.camera))}>+ Camera</button>}
+          </div>
         </div>
+
+        {moveOpen && (
+          <div className="rs-act" style={{ marginBottom: 12 }}>
+            <div className="rs-body" style={{ fontSize: 10, marginBottom: 2 }}>
+              Runs on {activeCam?.name ?? "the selected camera"} from {(t >= r.duration - 0.5 ? 0 : t).toFixed(1)}s to {r.duration}s.
+              It writes two marks, so you can drag either one afterwards.
+            </div>
+            {MOVE_CATEGORIES.map((cat) => (
+              <div key={cat} style={{ marginTop: 10 }}>
+                <div className="rs-label" style={{ marginBottom: 6 }}>{cat}</div>
+                <div className="rs-act-grid" style={{ maxHeight: "none" }}>
+                  {CAMERA_MOVES.filter((m) => m.cat === cat).map((m) => (
+                    <button
+                      key={m.id}
+                      className="rs-act-item"
+                      disabled={m.needsSubject && !nowRead.subject}
+                      style={m.needsSubject && !nowRead.subject ? { opacity: 0.4, cursor: "not-allowed" } : undefined}
+                      onClick={() => applyMove(m.id)}
+                    >
+                      <b>{m.label}</b>
+                      <span>{m.needsSubject && !nowRead.subject ? "Needs someone in frame" : m.note}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
         <div className="rs-cams">
           {camReads.map((c) => (
             <div key={c.id} className={"rs-cam" + (c.id === r.activeCamera ? " on" : "")} onClick={() => setR((p) => ({ ...p, activeCamera: c.id }))}>
