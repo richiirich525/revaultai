@@ -66,6 +66,16 @@ const styles = `
   .rs-act-item span { display: block; font-size: 9px; color: var(--muted); margin-top: 3px; }
   .rs-act-none { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); padding: 14px 2px; }
   .rs-through { font-family: 'DM Mono', monospace; font-size: 10px; color: #E5B769; line-height: 1.8; margin: 2px 0 10px; }
+  .rs-stage { position: fixed; inset: 0; z-index: 90; background: #0b0c10; display: flex; flex-direction: column; }
+  .rs-stage-view { flex: 1; min-height: 0; position: relative; }
+  .rs-stage-plan { position: absolute; left: 18px; bottom: 18px; width: 300px; max-width: 42vw; z-index: 2;
+    background: rgba(14,15,20,0.92); border: 1px solid var(--border); border-radius: 8px; padding: 8px;
+    backdrop-filter: blur(6px); max-height: 56vh; overflow-y: auto; }
+  .rs-stage-bar { border-top: 1px solid var(--border); background: var(--surface); padding: 10px 18px;
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .rs-stage-top { position: absolute; top: 14px; right: 18px; z-index: 3; display: flex; gap: 8px; }
+  .rs-stage-track { flex: 1; min-width: 160px; accent-color: var(--accent); }
+  @media (max-width: 760px) { .rs-stage-plan { width: auto; left: 10px; right: 10px; max-width: none; max-height: 38vh; } }
   .rs-cam-n { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--text); }
   .rs-cam-s { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 3px; }
   .rs-input { background: var(--bg); border: 1px solid var(--border); border-radius: 3px; padding: 6px 9px; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text); }
@@ -84,6 +94,10 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
   const [actQuery, setActQuery] = useState("");
   const [actCat, setActCat] = useState(null);
   const [moveOpen, setMoveOpen] = useState(false);
+  // The whole lot, full bleed — the plan rides on top of it rather than
+  // beside it, so the room is the thing you're looking at.
+  const [stage, setStage] = useState(false);
+  const [planOpen, setPlanOpen] = useState(true);
   const [genSet, setGenSet] = useState(null);
   const [genFit, setGenFit] = useState(null);
   const [pendingShot, setPendingShot] = useState(null);
@@ -329,6 +343,16 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
     setBeatText("");
   }
 
+  useEffect(() => {
+    if (!stage) return;
+    const onKey = (e) => { if (e.key === "Escape") setStage(false); };
+    window.addEventListener("keydown", onKey);
+    // Nothing behind should scroll while the stage is up.
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = prev; };
+  }, [stage]);
+
   const ticks = keyTimes(r);
   const hereHasKey = ticks.some((k) => Math.abs(k - t) < 0.2);
 
@@ -337,6 +361,118 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
     const s = stateAt({ ...r, activeCamera: c.id }, t);
     return { id: c.id, name: c.name, read: readStage(s.camera, s.actors) };
   });
+
+  const planProps = {
+    camera: now.camera, actors: now.actors, onChange: onStageChange, set: room, extent: genFit,
+    extras: r.extras ?? [],
+    onExtrasChange: (next) => setR((p) => ({ ...p, extras: next })),
+    selectedPiece: selPiece,
+    onSelectPiece: setSelPiece,
+    onSetChange: r.setCustom ? (id, change) => setR((p) => ({
+      ...p,
+      setCustom: {
+        ...p.setCustom,
+        walls: (p.setCustom.walls ?? []).map((w) => (w.id === id ? { ...w, ...change } : w)),
+        props: (p.setCustom.props ?? []).map((q) => (q.id === id ? { ...q, ...change } : q)),
+      },
+    })) : null,
+  };
+  const viewProps = {
+    state: motionState(r, t),
+    lens: nowRead.lens,
+    subject: nowRead.subject,
+    aspect: r.aspect ?? "16:9",
+    setId: genId ? null : r.setId ?? null,
+    setData: room,
+    light: r.light ?? defaultLight(),
+    hiddenPieces: r.hiddenPieces ?? [],
+    extras: r.extras ?? [],
+    height: now.camera.height ?? r.cameras.find((c) => c.id === r.activeCamera)?.height ?? null,
+    lensMmOverride: now.camera.lens ?? r.cameras.find((c) => c.id === r.activeCamera)?.lens ?? null,
+    genSet: genSet,
+    plateRef: plateRef,
+    setScale: r.setScale,
+    setGround: r.setGround,
+    onSetError: (m) => notify?.("Couldn't show that set — " + m),
+    onSetFit: (fit) => {
+                setGenFit(fit);
+                // Start the camera inside the room rather than behind it.
+                setR((p) => {
+                  const cam = p.cameras.find((c) => c.id === p.activeCamera);
+                  const first = cam?.keys?.[0];
+                  if (!first) return p;
+                  // Stand the camera just inside the back of the room, looking in.
+                  const y = 50 + Math.max(1.2, Math.min(fit.maxZ - 0.6, 3.2)) * 5;
+                  const x = 50 + Math.max(fit.minX + 0.4, Math.min(fit.maxX - 0.4, 0)) * 5;
+                  const inRoom = first.y < 50 + (fit.maxZ + 0.4) * 5 && first.y > 50 + (fit.minZ - 0.4) * 5;
+                  if (inRoom) return p;
+                  return { ...p, cameras: p.cameras.map((c) => c.id !== p.activeCamera ? c
+                    : { ...c, keys: c.keys.map((k, i) => (i === 0 ? { ...k, x, y, rotation: 0 } : k)) }) };
+                });
+              },
+    title: `${activeCam?.name ?? "Camera"}${nowRead.shotSize ? " · " + nowRead.shotSize : ""}`,
+  };
+
+  if (stage) {
+    return (
+      <div className="rs-stage">
+        <style>{styles}</style>
+
+        <div className="rs-stage-view">
+          <div className="rs-stage-top">
+            <button className={"rs-btn" + (planOpen ? " on" : "")} onClick={() => setPlanOpen((v) => !v)}>
+              {planOpen ? "Hide plan" : "Show plan"}
+            </button>
+            <button className="rs-btn" onClick={() => setStage(false)}>Leave the stage  ·  esc</button>
+          </div>
+
+          <Suspense fallback={<div className="rs-body" style={{ padding: 20 }}>Loading the camera view…</div>}>
+            <CameraView {...viewProps} fill />
+          </Suspense>
+
+          {planOpen && (
+            <div className="rs-stage-plan">
+              <StageBlueprint {...planProps} />
+            </div>
+          )}
+        </div>
+
+        <div className="rs-stage-bar">
+          <button className="rs-btn" onClick={() => { setT(0); setPlaying(false); }}>⏮</button>
+          <button className="rs-btn on" onClick={() => { if (t >= r.duration) setT(0); setPlaying((p) => !p); }}>
+            {playing ? "Pause" : "Play"}
+          </button>
+          <span className="rs-time">{t.toFixed(1)}s</span>
+          <input type="range" className="rs-stage-track" min={0} max={r.duration} step={0.1}
+            value={t} onChange={(e) => { setPlaying(false); setT(Number(e.target.value)); }} />
+          {camReads.map((c) => (
+            <button key={c.id} className={"rs-btn" + (c.id === r.activeCamera ? " on" : "")}
+              onClick={() => setR((p) => ({ ...p, activeCamera: c.id }))}>
+              {c.name}
+            </button>
+          ))}
+          {nowRead.subject && (setGenPrefill || onShoot) && (
+            <button className="rs-btn" style={{ borderColor: "var(--accent)", color: "var(--accent)" }}
+              onClick={() => shoot(r.activeCamera)}>Shoot this angle →</button>
+          )}
+        </div>
+
+        {pendingShot && (
+          <PlateApproval
+            pending={pendingShot}
+            activeProject={activeProject}
+            notify={notify}
+            onCancel={() => setPendingShot(null)}
+            onUse={(url) => {
+              const q = pendingShot;
+              setPendingShot(null);
+              onShoot({ ...q.out, spec: q.spec, setName: q.setName, plateUrl: url });
+            }}
+          />
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="rs">
@@ -355,61 +491,17 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
             {DURATIONS.map((d) => (
               <button key={d} className={"rs-btn" + (r.duration === d ? " on" : "")} onClick={() => { setR((p) => ({ ...p, duration: d })); if (t > d) setT(d); }}>{d}s</button>
             ))}
+            <button className="rs-btn" style={{ borderColor: "var(--accent)", color: "var(--accent)", marginLeft: 6 }}
+              onClick={() => setStage(true)}>Open the stage →</button>
           </div>
         </div>
       </div>
 
       <div className="rs-views">
-        <StageBlueprint camera={now.camera} actors={now.actors} onChange={onStageChange} set={room} extent={genFit}
-          extras={r.extras ?? []}
-          onExtrasChange={(next) => setR((p) => ({ ...p, extras: next }))}
-          selectedPiece={selPiece}
-          onSelectPiece={setSelPiece}
-          onSetChange={r.setCustom ? (id, change) => setR((p) => ({
-            ...p,
-            setCustom: {
-              ...p.setCustom,
-              walls: (p.setCustom.walls ?? []).map((w) => (w.id === id ? { ...w, ...change } : w)),
-              props: (p.setCustom.props ?? []).map((q) => (q.id === id ? { ...q, ...change } : q)),
-            },
-          })) : null} />
+        <StageBlueprint {...planProps} />
         <div>
           <Suspense fallback={<div className="rs-body" style={{ padding: 20 }}>Loading the camera view…</div>}>
-            <CameraView
-              state={motionState(r, t)}
-              lens={nowRead.lens}
-              subject={nowRead.subject}
-              aspect={r.aspect ?? "16:9"}
-              setId={genId ? null : r.setId ?? null}
-              setData={room}
-              light={r.light ?? defaultLight()}
-              hiddenPieces={r.hiddenPieces ?? []}
-              extras={r.extras ?? []}
-              height={now.camera.height ?? r.cameras.find((c) => c.id === r.activeCamera)?.height ?? null}
-              lensMmOverride={now.camera.lens ?? r.cameras.find((c) => c.id === r.activeCamera)?.lens ?? null}
-              genSet={genSet}
-              plateRef={plateRef}
-              setScale={r.setScale}
-              setGround={r.setGround}
-              onSetError={(m) => notify?.("Couldn't show that set — " + m)}
-              onSetFit={(fit) => {
-                setGenFit(fit);
-                // Start the camera inside the room rather than behind it.
-                setR((p) => {
-                  const cam = p.cameras.find((c) => c.id === p.activeCamera);
-                  const first = cam?.keys?.[0];
-                  if (!first) return p;
-                  // Stand the camera just inside the back of the room, looking in.
-                  const y = 50 + Math.max(1.2, Math.min(fit.maxZ - 0.6, 3.2)) * 5;
-                  const x = 50 + Math.max(fit.minX + 0.4, Math.min(fit.maxX - 0.4, 0)) * 5;
-                  const inRoom = first.y < 50 + (fit.maxZ + 0.4) * 5 && first.y > 50 + (fit.minZ - 0.4) * 5;
-                  if (inRoom) return p;
-                  return { ...p, cameras: p.cameras.map((c) => c.id !== p.activeCamera ? c
-                    : { ...c, keys: c.keys.map((k, i) => (i === 0 ? { ...k, x, y, rotation: 0 } : k)) }) };
-                });
-              }}
-              title={`${activeCam?.name ?? "Camera"}${nowRead.shotSize ? " · " + nowRead.shotSize : ""}`}
-            />
+            <CameraView {...viewProps} />
           </Suspense>
           <div className="rs-row" style={{ marginTop: 10 }}>
             <span className="rs-body" style={{ fontSize: 10 }}>Set</span>

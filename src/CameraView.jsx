@@ -280,7 +280,7 @@ function drivePerformer(m, a, t, realDt) {
   m.rotation.y = yawFromBearing(u.yaw);
 }
 
-export default function CameraView({ state, lens, subject, aspect = "16:9", title, setId, genSet, setScale, setGround, onSetError, onSetFit, plateRef, setData, light, height, lensMmOverride, extras, hiddenPieces }) {
+export default function CameraView({ state, lens, subject, aspect = "16:9", title, setId, genSet, setScale, setGround, onSetError, onSetFit, plateRef, setData, light, height, lensMmOverride, extras, hiddenPieces, fill = false }) {
   const box = useRef(null);
   const three = useRef(null);
   const lastFrame = useRef(0);
@@ -652,8 +652,12 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
   const ratio = ASPECTS[aspect] ?? ASPECTS["16:9"];
 
   return (
-    <div style={{ border: "1px solid var(--border)", borderRadius: 8, padding: 10, background: "var(--bg)" }}>
-      <div style={{ position: "relative", width: "100%", aspectRatio: ratio.css, maxHeight: "70vh", margin: "0 auto", overflow: "hidden", borderRadius: 4, background: "#0e0f14" }}>
+    <div style={fill
+      ? { height: "100%", width: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "#0e0f14" }
+      : { border: "1px solid var(--border)", borderRadius: 8, padding: 10, background: "var(--bg)" }}>
+      <div style={fill
+        ? { position: "relative", height: "100%", width: "auto", maxWidth: "100%", maxHeight: "100%", aspectRatio: ratio.css, overflow: "hidden", background: "#0e0f14" }
+        : { position: "relative", width: "100%", aspectRatio: ratio.css, maxHeight: "70vh", margin: "0 auto", overflow: "hidden", borderRadius: 4, background: "#0e0f14" }}>
         <div ref={box} style={{ position: "absolute", inset: 0 }} />
         {failed && (
           <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", padding: 20, textAlign: "center" }}>
