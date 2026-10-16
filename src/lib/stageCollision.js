@@ -32,10 +32,23 @@ export function blockers(set, { walls = true } = {}) {
     }
   }
   for (const p of plan.props ?? []) {
-    if (p.raised) continue;
+    if (p.raised || isGround(p)) continue;
     out.push({ ...p, label: p.label || "the furniture", kind: "prop" });
   }
   return out;
+}
+
+/*
+  Ground, not obstacle. A road, a pavement, a low platform and a rug are all
+  pieces of set with a footprint on the plan, and all of them are things you
+  walk on. Height alone doesn't separate them from furniture — a shopfront's
+  road slab stands 0.64m — but a thing you walk on is always far wider than
+  it is tall, and a thing you walk around is not.
+*/
+export function isGround(p) {
+  if (p.h == null) return false;
+  if (p.h <= 0.15) return true;                    // mats, markings, rugs
+  return p.h < 0.7 && p.h < 0.25 * (p.mw ?? p.h);  // slabs, kerbs, platforms
 }
 
 const hits = (p, r, pad) =>

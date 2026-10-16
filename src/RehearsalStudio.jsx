@@ -66,7 +66,7 @@ const styles = `
   .rs-act-item span { display: block; font-size: 9px; color: var(--muted); margin-top: 3px; }
   .rs-act-none { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); padding: 14px 2px; }
   .rs-through { font-family: 'DM Mono', monospace; font-size: 10px; color: #E5B769; line-height: 1.8; margin: 2px 0 10px; }
-  .rs-stage { position: fixed; inset: 0; z-index: 90; background: #0b0c10; display: flex; flex-direction: column; }
+  .rs-stage { position: fixed; inset: 0; z-index: 150; background: #0b0c10; display: flex; flex-direction: column; }
   .rs-stage-view { flex: 1; min-height: 0; position: relative; }
   .rs-stage-plan { position: absolute; left: 18px; bottom: 18px; width: 300px; max-width: 42vw; z-index: 2;
     background: rgba(14,15,20,0.92); border: 1px solid var(--border); border-radius: 8px; padding: 8px;
