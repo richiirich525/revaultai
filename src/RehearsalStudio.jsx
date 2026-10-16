@@ -116,6 +116,8 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
   // the same keyframe a drag on the plan would. Refs rather than state —
   // these change every frame and nothing renders off them.
   const [walk, setWalk] = useState(false);
+  // Looking at the cameras rather than through one of them.
+  const [freeView, setFreeView] = useState(false);
   const held = useRef(new Set());
   const look = useRef(null);
   const [genSet, setGenSet] = useState(null);
@@ -519,6 +521,17 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
       },
     })) : null,
   };
+  const rigList = r.cameras.map((c) => {
+    const cs = stateAt({ ...r, activeCamera: c.id }, t).camera;
+    return {
+      id: c.id, name: c.name,
+      x: cs.x, y: cs.y, rotation: cs.rotation,
+      height: cs.height ?? c.height ?? null,
+      lens: cs.lens ?? c.lens ?? null,
+      active: c.id === r.activeCamera,
+    };
+  });
+
   const viewProps = {
     state: motionState(r, t),
     lens: nowRead.lens,
@@ -553,6 +566,8 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
                 });
               },
     title: `${activeCam?.name ?? "Camera"}${nowRead.shotSize ? " · " + nowRead.shotSize : ""}`,
+    rigs: rigList,
+    onPickCamera: (id) => setR((p) => ({ ...p, activeCamera: id })),
   };
 
   if (stage) {
@@ -580,11 +595,19 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
         >
           <div className="rs-stage-top">
             <button
-              className={"rs-btn" + (walk ? " on" : "")}
-              onClick={() => { setWalk((v) => !v); setPlaying(false); }}
+              className={"rs-btn" + (freeView ? " on" : "")}
+              onClick={() => { setFreeView((v) => !v); setWalk(false); }}
             >
-              {walk ? "Stop walking" : "Walk the camera"}
+              {freeView ? `Look through ${activeCam?.name ?? "the camera"}` : "See the cameras"}
             </button>
+            {!freeView && (
+              <button
+                className={"rs-btn" + (walk ? " on" : "")}
+                onClick={() => { setWalk((v) => !v); setPlaying(false); }}
+              >
+                {walk ? "Stop walking" : "Walk the camera"}
+              </button>
+            )}
             {walk && <button className="rs-btn" onClick={aimAtSubject}>Face the subject  ·  r</button>}
             {walk && <button className="rs-btn" onClick={resetCamera}>Reset view</button>}
             <button className={"rs-btn" + (planOpen ? " on" : "")} onClick={() => setPlanOpen((v) => !v)}>
@@ -593,7 +616,16 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
             <button className="rs-btn rs-stage-exit" onClick={() => setStage(false)}>← Back to the studio  ·  esc</button>
           </div>
 
-          {walk && (
+          {freeView && (
+            <div className="rs-walk-hint">
+              Drag to walk around the set · scroll to come closer · click a camera to make it the one you shoot.
+              {r.cameras.length === 1
+                ? " You have one camera — add more in the panel below to compare angles."
+                : ` ${r.cameras.length} cameras on this scene.`}
+            </div>
+          )}
+
+          {walk && !freeView && (
             <div className="rs-walk-hint">
               W A S D to move · Q E down and up · shift to hurry · drag to look · R to face the subject.
               You are flying {activeCam?.name ?? "the camera"} — everything lands as a mark at {t.toFixed(1)}s.
@@ -601,7 +633,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
           )}
 
           <Suspense fallback={<div className="rs-body" style={{ padding: 20 }}>Loading the camera view…</div>}>
-            <CameraView {...viewProps} fill />
+            <CameraView {...viewProps} fill free={freeView} />
           </Suspense>
 
           {planOpen && (

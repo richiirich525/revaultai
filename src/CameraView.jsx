@@ -22,6 +22,54 @@ import { traceRoom, roomExtent, nearestSurface } from "./lib/setMeasure.js";
 
 const PERFORMER_HEIGHT = 1.75; // meters
 
+/*
+  A camera drawn as a thing in the room rather than a hole you look through.
+  Body, lens barrel and the frustum it actually covers, so standing back from
+  the set you can read your coverage the way you would walking a floor: that
+  one is tight on her, that one is wide and sees the door.
+*/
+function makeRig() {
+  const g = new THREE.Group();
+  const shell = new THREE.MeshStandardMaterial({ color: 0x8b89a0, roughness: 0.55, metalness: 0.25 });
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.19, 0.4), shell);
+  body.position.y = 0;
+  g.add(body);
+  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.09, 0.22, 16), shell);
+  barrel.rotation.x = Math.PI / 2;
+  barrel.position.set(0, 0, -0.3);
+  g.add(barrel);
+  // A stub of a stand, so it reads as standing on the floor not floating.
+  const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1, 8), shell);
+  leg.position.y = -0.5;
+  g.add(leg);
+
+  const lines = new THREE.LineSegments(
+    new THREE.BufferGeometry(),
+    new THREE.LineBasicMaterial({ color: 0x7b3fe4, transparent: true, opacity: 0.75 })
+  );
+  g.add(lines);
+  g.userData = { body, barrel, leg, lines, shell };
+  return g;
+}
+
+// The cone the lens actually sees, as far as the next wall or six meters.
+function frustumPoints(lensMillimeters, aspectRatio, reach = 3.2) {
+  const vf = (verticalFov(lensMillimeters, aspectRatio) * Math.PI) / 180;
+  const hh = Math.tan(vf / 2) * reach;
+  const hw = hh * aspectRatio;
+  const z = -reach;   // the camera looks down local -Z
+  const far = [
+    [-hw, hh, z], [hw, hh, z], [hw, -hh, z], [-hw, -hh, z],
+  ];
+  const pts = [];
+  for (const c of far) { pts.push(0, 0, 0, ...c); }
+  for (let i = 0; i < 4; i++) {
+    const a = far[i], b = far[(i + 1) % 4];
+    pts.push(...a, ...b);
+  }
+  return new Float32Array(pts);
+}
+
 // ---- Characters load once per visit and are shared by every view ----
 let assetsPromise = null;
 
@@ -280,13 +328,21 @@ function drivePerformer(m, a, t, realDt) {
   m.rotation.y = yawFromBearing(u.yaw);
 }
 
-export default function CameraView({ state, lens, subject, aspect = "16:9", title, setId, genSet, setScale, setGround, onSetError, onSetFit, plateRef, setData, light, height, lensMmOverride, extras, hiddenPieces, fill = false }) {
+export default function CameraView({ state, lens, subject, aspect = "16:9", title, setId, genSet, setScale, setGround, onSetError, onSetFit, plateRef, setData, light, height, lensMmOverride, extras, hiddenPieces, fill = false, free = false, rigs = null, onPickCamera }) {
   const box = useRef(null);
   const three = useRef(null);
   const lastFrame = useRef(0);
   const [failed, setFailed] = useState(false);
   const [outsideSet, setOutsideSet] = useState(false);
   const [wildWall, setWildWall] = useState(false);
+  // Where the free view is standing. Kept in a ref: it changes on every
+  // pointer move and nothing in the markup reads it.
+  const orbit = useRef({ yaw: 0.6, pitch: 0.42, dist: 9, tx: 0, ty: 1.2, tz: 0 });
+  // The studio hands a fresh picker down on every render. Held behind a ref so
+  // the orbit listeners are attached once and a re-render mid-drag can't
+  // tear them off under the pointer.
+  const pick = useRef(null);
+  useEffect(() => { pick.current = onPickCamera ?? null; });
   const [nearWall, setNearWall] = useState(false);
   const outsideRef = useRef(false);
   const hiddenRef = useRef([]);
@@ -339,7 +395,7 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
     scene.add(grid);
 
     const camera = new THREE.PerspectiveCamera(35, 16 / 9, 0.05, 60);
-    three.current = { renderer, scene, camera, actors: new Map(), floor, grid, set: null, setId: null };
+    three.current = { renderer, scene, camera, actors: new Map(), floor, grid, set: null, setId: null, rigs: new Map(), applyView: null };
 
     const resize = () => {
       const w = el.clientWidth, h = el.clientHeight;
@@ -589,6 +645,39 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
       if (!seen.has(id)) { m.userData.mixer?.stopAllAction(); scene.remove(m); actors.delete(id); }
     }
 
+    // ---- the cameras, as objects standing in the room ----------------------
+    {
+      const want = new Map((rigs ?? []).map((k) => [k.id, k]));
+      for (const [id, g] of T.rigs) {
+        if (!want.has(id)) { scene.remove(g); T.rigs.delete(id); }
+      }
+      for (const [id, k] of want) {
+        // You never see the camera you are looking through.
+        const hide = !free && k.active;
+        let g = T.rigs.get(id);
+        if (!g) { g = makeRig(); scene.add(g); T.rigs.set(id, g); }
+        g.visible = !hide;
+        if (hide) continue;
+        const w = toWorld(k.x, k.y);
+        const h = Number(k.height) > 0 ? Number(k.height) : EYE_HEIGHT;
+        g.position.set(w.x, h, w.z);
+        g.rotation.y = yawFromBearing(k.rotation ?? 0);
+        const u = g.userData;
+        u.body.material.color.setHex(k.active ? 0x7b3fe4 : 0x8b89a0);
+        u.lines.material.color.setHex(k.active ? 0x7b3fe4 : 0x5a5b68);
+        u.lines.material.opacity = k.active ? 0.85 : 0.45;
+        u.leg.scale.y = Math.max(0.05, h);
+        u.leg.position.y = -h / 2;
+        const mm = Number(k.lens) > 0 ? Number(k.lens) : lensMm(lens);
+        u.lines.geometry.setAttribute("position",
+          new THREE.BufferAttribute(frustumPoints(mm, (ASPECTS[aspect] ?? ASPECTS["16:9"]).value, 3.2), 3));
+        u.lines.geometry.attributes.position.needsUpdate = true;
+        u.lines.geometry.computeBoundingSphere();
+        u.body.userData.camId = id;
+        u.barrel.userData.camId = id;
+      }
+    }
+
     const c = toWorld(state.camera.x, state.camera.y);
     const eye = Number(height) > 0 ? Number(height) : EYE_HEIGHT;
     camera.position.set(c.x, eye, c.z);
@@ -603,10 +692,34 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
       targetY = HEAD_HEIGHT - poseDrop(subj.pose) - 0.05;
     }
     // Aim at the subject's chest, so a low camera looks up and a high one down.
-    camera.lookAt(c.x + d.x * dist, Math.abs(eye - EYE_HEIGHT) > 0.2 ? 1.15 : targetY, c.z + d.z * dist);
-    camera.fov = verticalFov(Number(lensMmOverride) > 0 ? Number(lensMmOverride) : lensMm(lens), camera.aspect || 16 / 9);
-    camera.updateProjectionMatrix();
-    renderer.render(scene, camera);
+    T.applyView = () => {
+      if (free) {
+        // Standing back from the set, looking at it.
+        const o = orbit.current;
+        const cp = Math.cos(o.pitch);
+        camera.position.set(
+          o.tx + o.dist * cp * Math.sin(o.yaw),
+          o.ty + o.dist * Math.sin(o.pitch),
+          o.tz + o.dist * cp * Math.cos(o.yaw),
+        );
+        camera.lookAt(o.tx, o.ty, o.tz);
+        camera.fov = 42;
+      } else {
+        camera.position.set(c.x, eye, c.z);
+        camera.lookAt(c.x + d.x * dist, Math.abs(eye - EYE_HEIGHT) > 0.2 ? 1.15 : targetY, c.z + d.z * dist);
+        camera.fov = verticalFov(Number(lensMmOverride) > 0 ? Number(lensMmOverride) : lensMm(lens), camera.aspect || 16 / 9);
+      }
+      camera.updateProjectionMatrix();
+      renderer.render(scene, camera);
+    };
+    // The free view looks at whoever the scene is about, so switching to it
+    // lands on the action rather than on empty floor.
+    if (free) {
+      const o = orbit.current;
+      const look = subj ? toWorld(subj.x, subj.y) : { x: 0, z: 0 };
+      o.tx = look.x; o.tz = look.z;
+    }
+    T.applyView();
 
     // Splats are sorted for the camera a moment after each frame is drawn, and
     // the file itself arrives late — so a generated set needs frames to keep
@@ -649,13 +762,73 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
     return () => { if (plateRef) plateRef.current = null; };
   }, [plateRef]);
 
+  useEffect(() => {
+    const el = box.current;
+    if (!el || !free) return;
+    let drag = null;
+
+    const down = (e) => {
+      // A click that doesn't travel is a pick, not an orbit.
+      drag = { x: e.clientX, y: e.clientY, moved: 0 };
+      el.setPointerCapture?.(e.pointerId);
+    };
+    const move = (e) => {
+      if (!drag) return;
+      const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+      drag.x = e.clientX; drag.y = e.clientY;
+      drag.moved += Math.abs(dx) + Math.abs(dy);
+      const o = orbit.current;
+      o.yaw -= dx * 0.006;
+      o.pitch = Math.max(-0.2, Math.min(1.45, o.pitch + dy * 0.005));
+      three.current?.applyView?.();
+    };
+    const up = (e) => {
+      const wasDrag = drag && drag.moved > 5;
+      drag = null;
+      if (wasDrag || !pick.current) return;
+      const T = three.current;
+      if (!T) return;
+      const r = el.getBoundingClientRect();
+      const ndc = new THREE.Vector2(
+        ((e.clientX - r.left) / r.width) * 2 - 1,
+        -((e.clientY - r.top) / r.height) * 2 + 1,
+      );
+      const ray = new THREE.Raycaster();
+      ray.setFromCamera(ndc, T.camera);
+      const bodies = [];
+      for (const g of T.rigs.values()) if (g.visible) bodies.push(g.userData.body, g.userData.barrel);
+      const hit = ray.intersectObjects(bodies, false)[0];
+      if (hit?.object?.userData?.camId) pick.current(hit.object.userData.camId);
+    };
+    const wheel = (e) => {
+      e.preventDefault();
+      const o = orbit.current;
+      o.dist = Math.max(1.8, Math.min(40, o.dist * (1 + e.deltaY * 0.0012)));
+      three.current?.applyView?.();
+    };
+
+    el.addEventListener("pointerdown", down);
+    el.addEventListener("pointermove", move);
+    el.addEventListener("pointerup", up);
+    el.addEventListener("pointercancel", () => { drag = null; });
+    el.addEventListener("wheel", wheel, { passive: false });
+    return () => {
+      el.removeEventListener("pointerdown", down);
+      el.removeEventListener("pointermove", move);
+      el.removeEventListener("pointerup", up);
+      el.removeEventListener("wheel", wheel);
+    };
+  }, [free]);
+
   const ratio = ASPECTS[aspect] ?? ASPECTS["16:9"];
 
   return (
     <div style={fill
       ? { height: "100%", width: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "#0e0f14" }
       : { border: "1px solid var(--border)", borderRadius: 8, padding: 10, background: "var(--bg)" }}>
-      <div style={fill
+      <div style={fill && free
+        ? { position: "relative", height: "100%", width: "100%", overflow: "hidden", background: "#0e0f14", cursor: "grab" }
+        : fill
         ? { position: "relative", height: "100%", width: "auto", maxWidth: "100%", maxHeight: "100%", aspectRatio: ratio.css, overflow: "hidden", background: "#0e0f14" }
         : { position: "relative", width: "100%", aspectRatio: ratio.css, maxHeight: "70vh", margin: "0 auto", overflow: "hidden", borderRadius: 4, background: "#0e0f14" }}>
         <div ref={box} style={{ position: "absolute", inset: 0 }} />
