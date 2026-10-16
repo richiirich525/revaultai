@@ -15,6 +15,7 @@ import { blankSpec, mergeSpec } from "./filmSpec.js";
 import { activeRoom } from "./setEdit.js";
 import { describeLight, lightSpec } from "./lighting.js";
 import { setSentence, toStage } from "./setGeometry.js";
+import { actionPhrase } from "./actions.js";
 
 const UNITS_PER_METRE = 5;
 
@@ -66,6 +67,18 @@ function movementOf(a0, a1, c0, c1, name) {
     bits.push(bits.length ? `and ${verb}` : `${name} ${verb}`);
   }
   return bits.join(", ");
+}
+
+// What each performer is directed to be doing, start and end of the shot.
+function doingOf(s0Actors, s1Actors) {
+  return (s0Actors ?? []).map((a, i) => {
+    const end = s1Actors?.[i] ?? a;
+    const p0 = actionPhrase(a.action);
+    const p1 = actionPhrase(end.action);
+    if (p0 && p1 && p0 !== p1) return `${a.name} ${p0}, then ${p1}`;
+    const only = p1 || p0;
+    return only ? `${a.name} ${only}` : null;
+  }).filter(Boolean);
 }
 
 export function buildShootPrompt(r, cameraId) {
@@ -127,6 +140,10 @@ export function buildShootPrompt(r, cameraId) {
     .filter(Boolean);
   if (moves.length) lines.push(moves.join(". ") + ".");
 
+  // What they're doing while they do it — the direction, not the blocking.
+  const doing = doingOf(s0.actors, s1.actors);
+  if (doing.length) lines.push(doing.join(". ") + ".");
+
   // Background performers: a scene reads as a place when there are people in
   // it who aren't the scene. They're described as a crowd, never named.
   const extras = (rehearsal.extras ?? []).length;
@@ -173,7 +190,8 @@ export function buildShootPrompt(r, cameraId) {
 function stateSentence(camera, actors) {
   const parts = (actors ?? []).map((a) => {
     const pose = a.pose === "sit" ? "seated" : a.pose === "crouch" ? "crouched" : "standing";
-    return `${a.name} ${side(camera, a)}, ${pose}`;
+    const act = actionPhrase(a.action);
+    return `${a.name} ${side(camera, a)}, ${pose}${act ? `, ${act}` : ""}`;
   });
   return parts.join("; ") + ".";
 }
@@ -228,7 +246,7 @@ export function buildShootSpec(r, cameraId) {
       // Kept so the blocking can be reopened on the plan later.
       layout: {
         camera: { x: s0.camera.x, y: s0.camera.y, rotation: s0.camera.rotation },
-        actors: s0.actors.map((a) => ({ name: a.name, x: a.x, y: a.y, facing: a.facing, pose: a.pose })),
+        actors: s0.actors.map((a) => ({ name: a.name, x: a.x, y: a.y, facing: a.facing, pose: a.pose, action: a.action ?? null })),
       },
     },
     composition: {
@@ -238,7 +256,12 @@ export function buildShootSpec(r, cameraId) {
     },
     lighting: rehearsal.light ? lightSpec(rehearsal.light, s0.camera.rotation) : undefined,
     timing: { durationSeconds: duration, aspectRatio: mapAspect(rehearsal.aspect) },
-    performance: { notes: beats.map((b) => `${b.t.toFixed(1)}s: ${b.label.trim()}`).join(". ") },
+    performance: {
+      notes: [
+        doingOf(s0.actors, s1.actors).join(". "),
+        beats.map((b) => `${b.t.toFixed(1)}s: ${b.label.trim()}`).join(". "),
+      ].filter(Boolean).join(". "),
+    },
     model: { compiledPrompt: built.prompt },
   });
 }

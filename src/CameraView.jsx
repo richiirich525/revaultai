@@ -8,6 +8,7 @@ import {
   POSE_LEG_SCALE, poseDrop, EYE_HEIGHT, HEAD_HEIGHT, LEG_HEIGHT, ASPECTS,
 } from "./lib/stage3d.js";
 import { chooseClip, clipTimeFor, MOVING } from "./lib/performers.js";
+import { actionLoops } from "./lib/actions.js";
 import { getSet, MODEL_PATH, filesFor, pieceInfo } from "./lib/setCatalog.js";
 import { getPreset } from "./lib/lighting.js";
 import { traceRoom, roomExtent, nearestSurface } from "./lib/setMeasure.js";
@@ -245,7 +246,7 @@ function approachAngle(from, to, k) {
 
 function drivePerformer(m, a, t, realDt) {
   const u = m.userData;
-  const wanted = chooseClip(a.pose, a.speed ?? 0);
+  const wanted = chooseClip(a.pose, a.speed ?? 0, a.action);
   const target = u.clips[wanted] ? wanted : u.clips.Idle_Loop ? "Idle_Loop" : null;
   if (!target) return;
 
@@ -266,7 +267,10 @@ function drivePerformer(m, a, t, realDt) {
     const w = name === target ? w0 + (1 - w0) * k : w0 * (1 - k);
     u.weights[name] = w;
     act.setEffectiveWeight(w);
-    act.time = clipTimeFor(name, act.getClip().duration, t, a.travel ?? 0);
+    // Only the clip being blended toward can be the one-shot; whatever is
+    // fading out keeps running the way it already was.
+    const once = name === target && !actionLoops(a.action) && !(a.speed >= MOVING);
+    act.time = clipTimeFor(name, act.getClip().duration, t, a.travel ?? 0, a.since, !once);
   }
   u.mixer.update(0);
 

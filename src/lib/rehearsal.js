@@ -37,6 +37,7 @@ function sampleTrack(keys, t, linear = [], angular = []) {
     for (const f of linear) out[f] = lerp(a[f] ?? 0, b[f] ?? 0, u);
     for (const f of angular) out[f] = lerpAngle(a[f] ?? 0, b[f] ?? 0, u);
     out.pose = u < 0.5 ? a.pose : b.pose;
+    out.action = a.action ?? null;
     return out;
   }
   return { ...k[k.length - 1] };
@@ -49,6 +50,7 @@ export function stateAt(r, t) {
     return {
       id: a.id, name: a.name, color: a.color,
       x: s?.x ?? 50, y: s?.y ?? 50, facing: s?.facing ?? 0, pose: s?.pose ?? "stand",
+      action: s?.action ?? null,
     };
   });
   const cam = (r.cameras ?? []).find((c) => c.id === r.activeCamera) ?? r.cameras?.[0];

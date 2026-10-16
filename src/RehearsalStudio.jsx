@@ -3,6 +3,7 @@ import StageBlueprint from "./StageBlueprint.jsx";
 import { readStage } from "./lib/stageGeometry.js";
 import { stateAt, setKey, removeKey, keyTimes, newRehearsal, addCamera } from "./lib/rehearsal.js";
 import { motionState, defaultBody, BODIES } from "./lib/performers.js";
+import { ACTION_CATEGORIES, searchActions, actionLabel, actionPose } from "./lib/actions.js";
 import { buildShootPrompt, buildShootSpec, buildCoverage } from "./lib/shootPrompt.js";
 import { SETS, EXTERIORS, getSet, pieceSize } from "./lib/setCatalog.js";
 import { LIGHT_PRESETS, defaultLight } from "./lib/lighting.js";
@@ -53,6 +54,15 @@ const styles = `
   .rs-cams { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
   .rs-cam { border: 1px solid var(--border); border-radius: 5px; padding: 10px 12px; cursor: pointer; background: var(--bg); }
   .rs-cam.on { border-color: var(--accent); }
+  .rs-act { border: 1px solid var(--border); border-radius: 6px; padding: 12px 14px; margin: 8px 0 4px; background: var(--bg); }
+  .rs-act-cats { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0; }
+  .rs-act-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; max-height: 240px; overflow-y: auto; }
+  .rs-act-item { text-align: left; background: none; border: 1px solid var(--border); border-radius: 4px; padding: 8px 10px; cursor: pointer; font-family: 'DM Mono', monospace; }
+  .rs-act-item:hover { border-color: var(--muted); }
+  .rs-act-item.on { border-color: var(--accent); }
+  .rs-act-item b { display: block; font-size: 10px; font-weight: 500; color: var(--text); letter-spacing: 0.04em; }
+  .rs-act-item span { display: block; font-size: 9px; color: var(--muted); margin-top: 3px; }
+  .rs-act-none { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); padding: 14px 2px; }
   .rs-cam-n { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--text); }
   .rs-cam-s { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 3px; }
   .rs-input { background: var(--bg); border: 1px solid var(--border); border-radius: 3px; padding: 6px 9px; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text); }
@@ -66,6 +76,10 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
   const [t, setT] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [beatText, setBeatText] = useState("");
+  // Which performer's action picker is open, and how it's filtered.
+  const [actFor, setActFor] = useState(null);
+  const [actQuery, setActQuery] = useState("");
+  const [actCat, setActCat] = useState(null);
   const [genSet, setGenSet] = useState(null);
   const [genFit, setGenFit] = useState(null);
   const [pendingShot, setPendingShot] = useState(null);
@@ -163,7 +177,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
       const actors = prev.actors.map((a, i) => {
         const n = next.actors[i]; const c = cur.actors[i];
         if (!n || !c || !moved(n, c)) return a;
-        return setKey(a, t, { x: n.x, y: n.y, facing: n.facing, pose: c.pose });
+        return setKey(a, t, { x: n.x, y: n.y, facing: n.facing, pose: c.pose, action: c.action ?? null });
       });
 
       let cameras = prev.cameras;
@@ -235,7 +249,23 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
     setR((prev) => {
       const s = stateAt(prev, t).actors[actorIndex];
       const actors = [...prev.actors];
-      actors[actorIndex] = setKey(actors[actorIndex], t, { x: s.x, y: s.y, facing: s.facing, pose });
+      actors[actorIndex] = setKey(actors[actorIndex], t, { x: s.x, y: s.y, facing: s.facing, pose, action: s.action ?? null });
+      return { ...prev, actors };
+    });
+  }
+
+  // A direction, written at the playhead like any other mark. Where the action
+  // only makes sense in one posture — driving, kneeling to work — the body
+  // follows it rather than leaving the performer standing in a car seat.
+  function setAction(actorIndex, actionId) {
+    setR((prev) => {
+      const s = stateAt(prev, t).actors[actorIndex];
+      const actors = [...prev.actors];
+      actors[actorIndex] = setKey(actors[actorIndex], t, {
+        x: s.x, y: s.y, facing: s.facing,
+        pose: actionPose(actionId) ?? s.pose,
+        action: actionId,
+      });
       return { ...prev, actors };
     });
   }
@@ -550,17 +580,74 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
       <div className="rs-panel">
         <div className="rs-label">Performers at {t.toFixed(1)}s</div>
         {now.actors.map((a, i) => (
-          <div key={a.id} className="rs-row" style={{ padding: "5px 0" }}>
-            <span style={{ width: 10, height: 10, borderRadius: "50%", background: a.color, display: "inline-block" }} />
-            <span className="rs-body" style={{ color: "var(--text)", minWidth: 90 }}>{a.name}</span>
-            {["stand", "sit", "crouch"].map((p) => (
-              <button key={p} className={"rs-btn" + (a.pose === p ? " on" : "")} onClick={() => setPose(i, p)}>{p}</button>
-            ))}
-            <span className="rs-body" style={{ fontSize: 10, marginLeft: 10 }}>as</span>
-            {BODIES.map((b) => {
-              const cur = r.actors[i]?.body ?? defaultBody(i);
-              return <button key={b} className={"rs-btn" + (cur === b ? " on" : "")} onClick={() => setR((p) => ({ ...p, actors: p.actors.map((x, j) => (j === i ? { ...x, body: b } : x)) }))}>{b}</button>;
-            })}
+          <div key={a.id}>
+            <div className="rs-row" style={{ padding: "5px 0" }}>
+              <span style={{ width: 10, height: 10, borderRadius: "50%", background: a.color, display: "inline-block" }} />
+              <span className="rs-body" style={{ color: "var(--text)", minWidth: 90 }}>{a.name}</span>
+              {["stand", "sit", "crouch"].map((p) => (
+                <button key={p} className={"rs-btn" + (a.pose === p ? " on" : "")} onClick={() => setPose(i, p)}>{p}</button>
+              ))}
+              {/* What they're doing, as opposed to where they are. It lands in
+                  the prompt, so the direction survives into the generation. */}
+              <button
+                className={"rs-btn" + (a.action ? " on" : "")}
+                onClick={() => { setActFor(actFor === i ? null : i); setActQuery(""); setActCat(null); }}
+              >
+                {a.action ? actionLabel(a.action) : "+ action"}
+              </button>
+              {a.action && (
+                <button className="rs-btn" title="Back to no direction" onClick={() => setAction(i, null)}>clear</button>
+              )}
+              <span className="rs-body" style={{ fontSize: 10, marginLeft: 10 }}>as</span>
+              {BODIES.map((b) => {
+                const cur = r.actors[i]?.body ?? defaultBody(i);
+                return <button key={b} className={"rs-btn" + (cur === b ? " on" : "")} onClick={() => setR((p) => ({ ...p, actors: p.actors.map((x, j) => (j === i ? { ...x, body: b } : x)) }))}>{b}</button>;
+              })}
+            </div>
+
+            {actFor === i && (
+              <div className="rs-act">
+                <div className="rs-row">
+                  <input
+                    className="rs-input"
+                    value={actQuery}
+                    autoFocus
+                    onChange={(e) => setActQuery(e.target.value)}
+                    placeholder={`What is ${a.name} doing at ${t.toFixed(1)}s?`}
+                    style={{ flex: 1, minWidth: 200 }}
+                  />
+                  <button className="rs-btn" onClick={() => setActFor(null)}>close</button>
+                </div>
+
+                <div className="rs-act-cats">
+                  <button className={"rs-btn" + (actCat === null ? " on" : "")} onClick={() => setActCat(null)}>all</button>
+                  {ACTION_CATEGORIES.map((c) => (
+                    <button key={c} className={"rs-btn" + (actCat === c ? " on" : "")} onClick={() => setActCat(actCat === c ? null : c)}>{c}</button>
+                  ))}
+                </div>
+
+                <div className="rs-act-grid">
+                  {searchActions(actQuery, actCat).map((act) => (
+                    <button
+                      key={act.id}
+                      className={"rs-act-item" + (a.action === act.id ? " on" : "")}
+                      onClick={() => { setAction(i, act.id); setActFor(null); }}
+                    >
+                      <b>{act.label}</b>
+                      <span>{act.cat}{act.pose ? ` · ${act.pose}` : ""}{act.travel ? " · while moving" : ""}</span>
+                    </button>
+                  ))}
+                </div>
+                {searchActions(actQuery, actCat).length === 0 && (
+                  <div className="rs-act-none">Nothing matches that. Try a different word, or clear the category.</div>
+                )}
+
+                <div className="rs-body" style={{ fontSize: 10, marginTop: 10, opacity: 0.8 }}>
+                  Set at {t.toFixed(1)}s and held until you change it. A one-off — a punch, sitting down —
+                  plays once from here. Anything on the spot pauses while they walk and resumes at the mark.
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>

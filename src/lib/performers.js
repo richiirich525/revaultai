@@ -6,6 +6,7 @@
   exactly the same step every time.
 */
 import { stateAt } from "./rehearsal.js";
+import { getAction } from "./actions.js";
 
 const UNITS_PER_METRE = 5;
 
@@ -24,13 +25,26 @@ export const CLIPS = {
 // How fast each traveling clip moves, in meters per second. The animation is
 // advanced by distance covered rather than time passed, so a performer's feet
 // keep pace with the ground instead of skating. Tune these if feet slide.
-export const CLIP_SPEED = { Walk_Loop: 1.4, Jog_Fwd_Loop: 3.2, Crouch_Fwd_Loop: 0.9 };
+export const CLIP_SPEED = {
+  Walk_Loop: 1.4, Jog_Fwd_Loop: 3.2, Crouch_Fwd_Loop: 0.9,
+  Walk_Formal_Loop: 1.2, Sprint_Loop: 5.5, Swim_Fwd_Loop: 1.0,
+};
 
 export const MOVING = 0.15;   // m/s — below this, they're standing still
 export const JOG = 2.3;       // m/s — above this, they break into a jog
 
-export function chooseClip(pose, speed) {
-  if (speed >= MOVING) {
+// A directed action beats the inferred one, with one exception: an acting
+// beat played on the spot can't also be a walk cycle, so while a performer is
+// travelling, locomotion wins and the beat resumes when they reach the mark.
+// Gait actions are the other way round — they exist to replace the walk.
+export function chooseClip(pose, speed, action) {
+  const moving = speed >= MOVING;
+  const a = getAction(action);
+  if (a) {
+    if (a.travel) { if (moving) return a.clip; }
+    else if (!moving) return a.clip;
+  }
+  if (moving) {
     if (pose === "crouch") return CLIPS.crouchWalk;
     return speed >= JOG ? CLIPS.jog : CLIPS.walk;
   }
@@ -39,8 +53,11 @@ export function chooseClip(pose, speed) {
   return CLIPS.idle;
 }
 
-export function clipTimeFor(name, duration, t, travel) {
+// A one-shot — a punch, a reload, sitting down — plays once from the mark it
+// was set on and holds its last frame, rather than looping like a walk cycle.
+export function clipTimeFor(name, duration, t, travel, since = null, loop = true) {
   if (!duration) return 0;
+  if (loop === false) return Math.max(0, Math.min(since ?? t, duration - 0.001));
   const natural = CLIP_SPEED[name];
   const time = natural ? travel / natural : t;
   return ((time % duration) + duration) % duration;
@@ -67,7 +84,10 @@ export function motionState(r, t) {
       const heading = speed > 0.01 ? ((Math.atan2(dx, -dy) * 180) / Math.PI + 360) % 360 : null;
       const k = lastKeyAtOrBefore(r.actors[i]?.keys, t);
       const travel = k ? Math.hypot(a.x - k.x, a.y - k.y) / UNITS_PER_METRE : 0;
-      return { ...a, speed, heading, travel, body: r.actors[i]?.body ?? defaultBody(i) };
+      // How long this performer has been on the current mark — a one-shot
+      // action is played from here, so scrubbing back replays it identically.
+      const since = k ? Math.max(0, t - k.t) : t;
+      return { ...a, speed, heading, travel, since, body: r.actors[i]?.body ?? defaultBody(i) };
     }),
   };
 }
