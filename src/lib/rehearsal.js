@@ -93,7 +93,12 @@ export function keyTimes(r) {
   return [...s].sort((a, b) => a - b);
 }
 
-const COLORS = ["#7B3FE4", "#E5B769", "#4ADE80", "#5BA8C2", "#F87171"];
+const COLORS = ["#7B3FE4", "#E5B769", "#4ADE80", "#5BA8C2", "#F87171", "#C49A3C"];
+
+// Date.now() is not unique inside a tick: two things added in the same
+// millisecond get the same id, and then removing one of them removes both.
+let seq = 0;
+const uid = (p) => p + Date.now().toString(36) + (seq++).toString(36);
 
 // Start a rehearsal — from a Blocking layout if there is one, blank otherwise.
 export function newRehearsal({ layout, title } = {}) {
@@ -117,13 +122,42 @@ export function newRehearsal({ layout, title } = {}) {
   };
 }
 
+// Two performers is where a rehearsal starts, not where it stops: the engine
+// never cared how many there were, and until now nothing could add a third.
+// Six is the ceiling only because past that a scene is a crowd, and a crowd
+// is what background performers are for.
+export const MAX_ACTORS = 6;
+
+export function addActor(r) {
+  const n = (r.actors ?? []).length;
+  if (n >= MAX_ACTORS) return r;
+  // Along the same line as the others, far enough not to land on anyone.
+  const x = Math.max(8, Math.min(92, 38 + n * 13));
+  return {
+    ...r,
+    actors: [...(r.actors ?? []), {
+      id: uid("a"),
+      name: String.fromCharCode(65 + n),
+      color: COLORS[n % COLORS.length],
+      keys: [{ t: 0, x, y: 42, facing: 180, pose: "stand" }],
+    }],
+  };
+}
+
+// A scene needs somebody in it, so the last one stays.
+export function removeActor(r, id) {
+  const actors = (r.actors ?? []).filter((a) => a.id !== id);
+  if (!actors.length) return r;
+  return { ...r, actors };
+}
+
 // A second camera on the same action — the "compare three angles" move.
 // It copies nothing from the actors: their performance stays identical.
 export function addCamera(r, from) {
   const n = (r.cameras ?? []).length;
   const src = from ?? stateAt(r, 0).camera;
   const cam = {
-    id: "c" + Date.now().toString(36),
+    id: uid("c"),
     name: String.fromCharCode(65 + n) + "-cam",
     keys: [{ t: 0, x: Math.min(95, src.x + 18), y: src.y, rotation: src.rotation }],
   };

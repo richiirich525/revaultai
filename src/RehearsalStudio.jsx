@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, lazy, Suspense } from "react";
 import StageBlueprint from "./StageBlueprint.jsx";
 import { readStage } from "./lib/stageGeometry.js";
-import { stateAt, setKey, removeKey, keyTimes, newRehearsal, addCamera } from "./lib/rehearsal.js";
+import { stateAt, setKey, removeKey, keyTimes, newRehearsal, addCamera, addActor, removeActor, MAX_ACTORS } from "./lib/rehearsal.js";
 import { motionState, defaultBody, BODIES } from "./lib/performers.js";
 import { ACTION_CATEGORIES, searchActions, actionLabel, actionPose } from "./lib/actions.js";
 import { CAMERA_MOVES, MOVE_CATEGORIES, moveKeys } from "./lib/cameraMoves.js";
@@ -920,7 +920,12 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
       </div>
 
       <div className="rs-panel">
-        <div className="rs-label">Performers at {t.toFixed(1)}s</div>
+        <div className="rs-row" style={{ justifyContent: "space-between", marginBottom: 6 }}>
+          <div className="rs-label" style={{ marginBottom: 0 }}>Performers at {t.toFixed(1)}s</div>
+          {r.actors.length < MAX_ACTORS && (
+            <button className="rs-btn" onClick={() => setR((p) => addActor(p))}>+ Performer</button>
+          )}
+        </div>
         {throughs.length > 0 && (
           <div className="rs-through">
             {throughs.slice(0, 4).map((w, i) => (
@@ -936,7 +941,15 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
           <div key={a.id}>
             <div className="rs-row" style={{ padding: "5px 0" }}>
               <span style={{ width: 10, height: 10, borderRadius: "50%", background: a.color, display: "inline-block" }} />
-              <span className="rs-body" style={{ color: "var(--text)", minWidth: 90 }}>{a.name}</span>
+              <input
+                className="rs-input"
+                value={a.name}
+                onChange={(e) => setR((p) => ({
+                  ...p,
+                  actors: p.actors.map((x, j) => (j === i ? { ...x, name: e.target.value.slice(0, 24) } : x)),
+                }))}
+                style={{ width: 96, padding: "4px 7px", fontSize: 10 }}
+              />
               {["stand", "sit", "crouch"].map((p) => (
                 <button key={p} className={"rs-btn" + (a.pose === p ? " on" : "")} onClick={() => setPose(i, p)}>{p}</button>
               ))}
@@ -956,6 +969,13 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
                 const cur = r.actors[i]?.body ?? defaultBody(i);
                 return <button key={b} className={"rs-btn" + (cur === b ? " on" : "")} onClick={() => setR((p) => ({ ...p, actors: p.actors.map((x, j) => (j === i ? { ...x, body: b } : x)) }))}>{b}</button>;
               })}
+              {r.actors.length > 1 && (
+                <button className="rs-btn" title={`Take ${a.name} out of the scene`}
+                  style={{ marginLeft: "auto" }}
+                  onClick={() => { if (actFor === i) setActFor(null); setR((p) => removeActor(p, a.id)); }}>
+                  remove
+                </button>
+              )}
             </div>
 
             {actFor === i && (

@@ -21,7 +21,7 @@ const styles = `
   .bp-hint { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); line-height: 1.7; margin-top: 10px; opacity: 0.75; }
 `;
 
-const COLORS = ["#7B3FE4", "#E5B769", "#4ADE80", "#5BA8C2"];
+const COLORS = ["#7B3FE4", "#E5B769", "#4ADE80", "#5BA8C2", "#F87171", "#C49A3C"];
 
 export default function StageBlueprint({ camera, actors, onChange, baselineSide, set, extent, onSetChange, selectedPiece, onSelectPiece, extras, onExtrasChange }) {
   const svgRef = useRef(null);
