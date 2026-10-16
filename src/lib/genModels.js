@@ -20,6 +20,12 @@ export const GEN_MODELS = [
   { key: "seedance-2.5-480", label: "Seedance 2.5 — Draft (480p, up to 30s)", costPerSecond: 6, durations: [5, 10, 15, 30], ratios: ["16:9", "9:16", "1:1", "21:9"] },
   { key: "seedance-2.5", label: "Seedance 2.5 — Flagship (720p, up to 30s)", costPerSecond: 12, durations: [5, 10, 15, 30], ratios: ["16:9", "9:16", "1:1", "21:9"] },
   { key: "veo-3.1", label: "Veo 3.1 — Native Audio", costPerSecond: 4, durations: [4, 6, 8], ratios: ["16:9", "9:16"] },
+  // MiniMax H3 Max. Twelve references, and the only model here that will open
+  // on an exact first frame without dropping them — so a chained shot keeps
+  // its faces. Four extra aspect ratios, 4:3 and 3:4 among them.
+  { key: "minimax-h3-480", label: "MiniMax H3 Max — Draft (480p)", costPerSecond: 1, durations: [5, 10, 15], ratios: ["21:9", "16:9", "4:3", "1:1", "3:4", "9:16"], ratioFromImage: true },
+  { key: "minimax-h3", label: "MiniMax H3 Max — Standard (768p)", costPerSecond: 2, durations: [5, 10, 15], ratios: ["21:9", "16:9", "4:3", "1:1", "3:4", "9:16"], ratioFromImage: true },
+  { key: "minimax-h3-1080", label: "MiniMax H3 Max — Flagship (1080p)", costPerSecond: 3, durations: [5, 10, 15], ratios: ["21:9", "16:9", "4:3", "1:1", "3:4", "9:16"], ratioFromImage: true },
 ];
 
 export const DEFAULT_MODEL = "wan-2.6";

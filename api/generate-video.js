@@ -51,6 +51,42 @@ const MODELS = {
     durationParam: { 5: '5', 10: '10', 15: '15', 30: '30' },
     extraInput: { resolution: '480p', generate_audio: true },
   },
+  // MiniMax H3 Max. Three tiers off one model: the resolution is the only
+  // difference, and at fal's $0.05/s it is the cheapest reference-capable
+  // model in the catalog by a wide margin.
+  //
+  // prompt_expansion_mode is pinned to 'disabled' on every tier and is not a
+  // creator-facing option. fal's default rewrites the prompt before it reaches
+  // the model, which would quietly undo the framing, eyelines, declared intent
+  // and Vault wording this whole platform exists to put there.
+  'minimax-h3-480': {
+    falId: 'fal-ai/minimax/h3-max/text-to-video',       // VERIFY on fal
+    imageFalId: 'fal-ai/minimax/h3-max/image-to-video',  // VERIFY on fal
+    creditsPerSecond: 1,
+    durationParam: { 5: 5, 10: 10, 15: 15 },             // a float, not an enum
+    aspectRatios: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'],
+    aspectIgnoredWithImage: true,   // the canvas follows the first frame
+    extraInput: { resolution: '480P', prompt_expansion_mode: 'disabled' },
+  },
+  'minimax-h3': {
+    falId: 'fal-ai/minimax/h3-max/text-to-video',       // VERIFY on fal
+    imageFalId: 'fal-ai/minimax/h3-max/image-to-video',  // VERIFY on fal
+    creditsPerSecond: 2,
+    durationParam: { 5: 5, 10: 10, 15: 15 },
+    aspectRatios: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'],
+    aspectIgnoredWithImage: true,
+    extraInput: { resolution: '768P', prompt_expansion_mode: 'disabled' },
+  },
+  'minimax-h3-1080': {
+    falId: 'fal-ai/minimax/h3-max/text-to-video',       // VERIFY on fal
+    imageFalId: 'fal-ai/minimax/h3-max/image-to-video',  // VERIFY on fal
+    creditsPerSecond: 3,
+    durationParam: { 5: 5, 10: 10, 15: 15 },
+    aspectRatios: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'],
+    aspectIgnoredWithImage: true,
+    // 1080P is a latent refinement of a native 768P render, not a native one.
+    extraInput: { resolution: '1080P', prompt_expansion_mode: 'disabled' },
+  },
   'veo-3.1': {
     falId: 'fal-ai/veo3.1/fast/text-to-video',
     imageFalId: 'fal-ai/veo3.1/fast/image-to-video',   // VERIFY on fal
@@ -76,6 +112,13 @@ const REF_MODELS = {
   'seedance-2.5-480': { falId: 'bytedance/seedance-2.5/reference-to-video', named: true, maxRefs: 12, bracketRefs: true },
   'veo-3.1': { falId: 'fal-ai/veo3.1/fast/reference-to-video', named: false, seconds: 8, maxRefs: 3 },
   'kling-3.0': { falId: 'fal-ai/kling-video/o3/standard/reference-to-video', named: true, mode: 'elements', extra: { generate_audio: true }, maxRefs: 4 },
+  // MiniMax names references "Image 1" in plain words, puts them in
+  // reference_image_urls rather than image_urls, and — alone in this table —
+  // will hold a reference set AND open on an exact first frame. Everywhere
+  // else those two are alternatives, so chaining a shot costs you the faces.
+  'minimax-h3-480': { falId: 'fal-ai/minimax/h3-max/reference-to-video', named: true, plainRefs: true, refsParam: 'reference_image_urls', startFrameWithRefs: true, maxRefs: 12 },
+  'minimax-h3':     { falId: 'fal-ai/minimax/h3-max/reference-to-video', named: true, plainRefs: true, refsParam: 'reference_image_urls', startFrameWithRefs: true, maxRefs: 12 },
+  'minimax-h3-1080':{ falId: 'fal-ai/minimax/h3-max/reference-to-video', named: true, plainRefs: true, refsParam: 'reference_image_urls', startFrameWithRefs: true, maxRefs: 12 },
 };
 
 export default async function handler(req, res) {
@@ -136,10 +179,13 @@ export default async function handler(req, res) {
     // Keep a slot for the location plate when one is coming, so a scene with
     // several characters doesn't quietly lose its room.
     const refModel = REF_MODELS[model];
-    const refCap = Math.max(1, (refModel?.maxRefs ?? 3) - (typeof locationUrl === "string" && !imageUrl ? 1 : 0));
+    // Opening on an exact frame used to mean losing the reference set. On a
+    // model that takes both, a chained shot keeps its faces.
+    const refsAllowed = !!refModel && (!imageUrl || !!refModel.startFrameWithRefs);
+    const refCap = Math.max(1, (refModel?.maxRefs ?? 3) - (refsAllowed && typeof locationUrl === "string" ? 1 : 0));
     const wantedRefs = Array.isArray(vaultRefIds) ? vaultRefIds.filter((x) => typeof x === "string").slice(0, refCap) : [];
     const refs = [];
-    if (refModel && wantedRefs.length && !imageUrl) {
+    if (refsAllowed && wantedRefs.length) {
       if (refModel.seconds && seconds !== refModel.seconds) {
         return res.status(400).json({ error: `With reference photos, this model makes ${refModel.seconds}-second clips.` });
       }
@@ -171,7 +217,7 @@ export default async function handler(req, res) {
     // room rather than one rebuilt from words each time.
     // The set plate goes to fal's own storage: a private R2 link is one fal
     // can't fetch, which is what a 422 from the model actually means.
-    if (refModel && !imageUrl && typeof locationUrl === "string" && /^https:\/\//.test(locationUrl)) {
+    if (refsAllowed && typeof locationUrl === "string" && /^https:\/\//.test(locationUrl)) {
       try {
         const plateUrl = locationUrl;
         if (plateUrl) {
@@ -193,9 +239,12 @@ export default async function handler(req, res) {
     // Seedance reads references by name; Veo just takes the images.
     const refPrompt = refs.length && refModel.named
       ? `${prompt.trim()}\n\n${refs.map((r, i) => {
-          // Seedance 2.5 indexes references as [Image1]; 2.0 and Kling use @.
+          // Seedance 2.5 indexes references as [Image1]; 2.0 and Kling use @;
+          // MiniMax wants them in plain words, as "Image 1".
           const label = refModel.mode === "elements" ? "Element" : "Image";
-          const token = refModel.bracketRefs ? `[${label}${i + 1}]` : `@${label}${i + 1}`;
+          const token = refModel.plainRefs ? `${label} ${i + 1}`
+            : refModel.bracketRefs ? `[${label}${i + 1}]`
+            : `@${label}${i + 1}`;
           return `${token} is ${r.name}${r.kind === "location" ? ", the location" : r.kind === "prop" ? ", a prop" : ""}.`;
         }).join(" ")}`
       : prompt.trim();
@@ -287,7 +336,9 @@ export default async function handler(req, res) {
           duration: selected.durationParam[seconds],
           ...(imageUrl && selected.aspectIgnoredWithImage ? {} : { aspect_ratio: ratio }),
           ...(imageUrl ? { image_url: imageUrl } : {}),
-          ...(refs.length && refModel.mode !== "elements" ? { image_urls: refs.map((r) => r.url) } : {}),
+          ...(refs.length && refModel.mode !== "elements"
+            ? { [refModel.refsParam || "image_urls"]: refs.map((r) => r.url) }
+            : {}),
           ...(refs.length && refModel.mode === "elements" ? { elements: refs.map((r) => ({ frontal_image_url: r.urls[0], reference_image_urls: r.urls.length > 1 ? r.urls.slice(1) : [r.urls[0]] })) } : {}),
           ...(refs.length && refModel.extra ? refModel.extra : {}),
           ...(selected.extraInput || {}),
