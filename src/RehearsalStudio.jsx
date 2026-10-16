@@ -73,7 +73,18 @@ const styles = `
     backdrop-filter: blur(6px); max-height: 56vh; overflow-y: auto; }
   .rs-stage-bar { border-top: 1px solid var(--border); background: var(--surface); padding: 10px 18px;
     display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-  .rs-stage-top { position: absolute; top: 14px; right: 18px; z-index: 3; display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+  .rs-stage-top { position: absolute; top: 14px; right: 18px; z-index: 6; display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+  /* The panel button is dark grey on a 6%-white border — fine on a surface,
+     invisible over the picture. Floating controls get their own contrast. */
+  .rs-stage-top .rs-btn {
+    background: rgba(10,11,16,0.86); color: rgba(255,255,255,0.86);
+    border-color: rgba(255,255,255,0.28); backdrop-filter: blur(6px);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.45);
+  }
+  .rs-stage-top .rs-btn:hover { color: #fff; border-color: rgba(255,255,255,0.6); background: rgba(10,11,16,0.95); }
+  .rs-stage-top .rs-btn.on { color: #fff; border-color: var(--accent); background: rgba(123,63,228,0.35); }
+  .rs-stage-exit { color: #fff !important; border-color: var(--accent) !important; background: rgba(123,63,228,0.55) !important; font-weight: 500; }
+  .rs-stage-exit:hover { background: var(--accent) !important; }
   .rs-walk-hint { position: absolute; top: 14px; left: 18px; z-index: 3; max-width: 340px;
     font-family: 'DM Mono', monospace; font-size: 9px; line-height: 1.8; color: rgba(255,255,255,0.72);
     background: rgba(14,15,20,0.78); border: 1px solid var(--border); border-radius: 6px; padding: 8px 11px; pointer-events: none; }
@@ -579,7 +590,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
             <button className={"rs-btn" + (planOpen ? " on" : "")} onClick={() => setPlanOpen((v) => !v)}>
               {planOpen ? "Hide plan" : "Show plan"}
             </button>
-            <button className="rs-btn" onClick={() => setStage(false)}>Leave the stage  ·  esc</button>
+            <button className="rs-btn rs-stage-exit" onClick={() => setStage(false)}>← Back to the studio  ·  esc</button>
           </div>
 
           {walk && (
