@@ -5,7 +5,7 @@ import { stateAt, setKey, removeKey, keyTimes, newRehearsal, addCamera } from ".
 import { motionState, defaultBody, BODIES } from "./lib/performers.js";
 import { ACTION_CATEGORIES, searchActions, actionLabel, actionPose } from "./lib/actions.js";
 import { CAMERA_MOVES, MOVE_CATEGORIES, moveKeys } from "./lib/cameraMoves.js";
-import { walkThroughs } from "./lib/stageCollision.js";
+import { walkThroughs, resolveMove, CAMERA_RADIUS } from "./lib/stageCollision.js";
 import { buildShootPrompt, buildShootSpec, buildCoverage } from "./lib/shootPrompt.js";
 import { SETS, EXTERIORS, getSet, pieceSize } from "./lib/setCatalog.js";
 import { LIGHT_PRESETS, defaultLight } from "./lib/lighting.js";
@@ -73,7 +73,10 @@ const styles = `
     backdrop-filter: blur(6px); max-height: 56vh; overflow-y: auto; }
   .rs-stage-bar { border-top: 1px solid var(--border); background: var(--surface); padding: 10px 18px;
     display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-  .rs-stage-top { position: absolute; top: 14px; right: 18px; z-index: 3; display: flex; gap: 8px; }
+  .rs-stage-top { position: absolute; top: 14px; right: 18px; z-index: 3; display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+  .rs-walk-hint { position: absolute; top: 14px; left: 18px; z-index: 3; max-width: 340px;
+    font-family: 'DM Mono', monospace; font-size: 9px; line-height: 1.8; color: rgba(255,255,255,0.72);
+    background: rgba(14,15,20,0.78); border: 1px solid var(--border); border-radius: 6px; padding: 8px 11px; pointer-events: none; }
   .rs-stage-track { flex: 1; min-width: 160px; accent-color: var(--accent); }
   @media (max-width: 760px) { .rs-stage-plan { width: auto; left: 10px; right: 10px; max-width: none; max-height: 38vh; } }
   .rs-cam-n { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--text); }
@@ -98,6 +101,12 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
   // beside it, so the room is the thing you're looking at.
   const [stage, setStage] = useState(false);
   const [planOpen, setPlanOpen] = useState(true);
+  // Walking the camera: held keys drive it, a drag turns it, and both write
+  // the same keyframe a drag on the plan would. Refs rather than state —
+  // these change every frame and nothing renders off them.
+  const [walk, setWalk] = useState(false);
+  const held = useRef(new Set());
+  const look = useRef(null);
   const [genSet, setGenSet] = useState(null);
   const [genFit, setGenFit] = useState(null);
   const [pendingShot, setPendingShot] = useState(null);
@@ -328,6 +337,81 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
     notify?.(`${label} on ${cam.name}, ${from.toFixed(1)}s to ${r.duration}s. Press play to watch it.`);
   }
 
+  // One place every walk input lands, so a key, a drag and a reset all write
+  // the camera the same way.
+  function nudgeCamera(fn) {
+    setR((prev) => {
+      const cam = prev.cameras.find((c) => c.id === prev.activeCamera);
+      if (!cam) return prev;
+      const at = stateAt(prev, t).camera;
+      const next = fn({
+        x: at.x, y: at.y, rotation: at.rotation,
+        height: at.height ?? cam.height ?? 1.55,
+      });
+      if (!next) return prev;
+      // Furniture stops a camera; walls do not. Same rule as the plan.
+      const safe = resolveMove(room, { x: at.x, y: at.y }, { x: next.x, y: next.y },
+        { radius: CAMERA_RADIUS, walls: false });
+      return {
+        ...prev,
+        cameras: prev.cameras.map((c) => (c.id !== prev.activeCamera ? c : setKey(c, t, {
+          x: safe.x, y: safe.y,
+          rotation: (next.rotation + 360) % 360,
+          height: next.height,
+          lens: at.lens ?? cam.lens ?? null,
+        }))),
+      };
+    });
+  }
+
+  function driveCamera({ fwd = 0, side = 0, rise = 0 }) {
+    nudgeCamera((cur) => {
+      const a = (cur.rotation * Math.PI) / 180;
+      // Bearing 0 looks up the plan, so forward is (sin, -cos).
+      const f = { x: Math.sin(a), y: -Math.cos(a) };
+      const g = { x: Math.cos(a), y: Math.sin(a) };
+      return {
+        x: cur.x + f.x * fwd + g.x * side,
+        y: cur.y + f.y * fwd + g.y * side,
+        rotation: cur.rotation,
+        height: Math.max(0.2, Math.min(6, cur.height + rise)),
+      };
+    });
+  }
+
+  function turnCamera(dDeg) {
+    nudgeCamera((cur) => ({ ...cur, rotation: cur.rotation + dDeg }));
+  }
+
+  // Lost in the room: point the camera back at whoever the scene is about.
+  function aimAtSubject() {
+    const s = stateAt(r, t);
+    const read = readStage(s.camera, s.actors);
+    const subj = s.actors.find((a) => a.name === read.subject) ?? s.actors[0];
+    if (!subj) { notify?.("Nobody on the stage to look at yet."); return; }
+    nudgeCamera((cur) => ({
+      ...cur,
+      rotation: (Math.atan2(subj.x - cur.x, -(subj.y - cur.y)) * 180) / Math.PI,
+    }));
+  }
+
+  // Back to where this camera started the shot.
+  function resetCamera() {
+    setR((prev) => {
+      const cam = prev.cameras.find((c) => c.id === prev.activeCamera);
+      const first = cam?.keys?.[0];
+      if (!first) return prev;
+      return {
+        ...prev,
+        cameras: prev.cameras.map((c) => (c.id !== prev.activeCamera ? c : setKey(c, t, {
+          x: first.x, y: first.y, rotation: first.rotation,
+          height: first.height ?? null, lens: first.lens ?? null,
+        }))),
+      };
+    });
+    notify?.("Camera back where the shot starts.");
+  }
+
   function clearKeyHere() {
     setR((prev) => ({
       ...prev,
@@ -352,6 +436,53 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
     document.body.style.overflow = "hidden";
     return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = prev; };
   }, [stage]);
+
+  /*
+    Driving the shot camera, not a separate scouting one. Looking through the
+    lens and adjusting is how an angle actually gets found, and the camera you
+    are flying had better be the camera that shoots. Every change lands as a
+    keyframe at the playhead, exactly as dragging on the plan does.
+  */
+  useEffect(() => {
+    if (!stage || !walk) { held.current.clear(); return; }
+    const MOVE = 9;        // stage units a second — a brisk walk
+    const RISE = 1.1;      // meters a second
+    const KEYS = new Set(["w", "a", "s", "d", "q", "e", "shift", "r"]);
+    const keysHeld = held.current;
+
+    const down = (ev) => {
+      const k = ev.key.toLowerCase();
+      if (!KEYS.has(k)) return;
+      ev.preventDefault();
+      if (k === "r") { aimAtSubject(); return; }
+      keysHeld.add(k);
+    };
+    const up = (ev) => keysHeld.delete(ev.key.toLowerCase());
+
+    let raf = 0, last = null;
+    const step = (now) => {
+      const dt = last == null ? 0 : Math.min(0.05, (now - last) / 1000);
+      last = now;
+      const h = keysHeld;
+      const fwd = (h.has("w") ? 1 : 0) - (h.has("s") ? 1 : 0);
+      const side = (h.has("d") ? 1 : 0) - (h.has("a") ? 1 : 0);
+      const rise = (h.has("e") ? 1 : 0) - (h.has("q") ? 1 : 0);
+      if (dt > 0 && (fwd || side || rise)) {
+        const fast = h.has("shift") ? 2.1 : 1;
+        driveCamera({ fwd: fwd * MOVE * fast * dt, side: side * MOVE * fast * dt, rise: rise * RISE * fast * dt });
+      }
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    window.addEventListener("keydown", down);
+    window.addEventListener("keyup", up);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("keydown", down);
+      window.removeEventListener("keyup", up);
+      keysHeld.clear();
+    };
+  }, [stage, walk, t, r.duration]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const ticks = keyTimes(r);
   const hereHasKey = ticks.some((k) => Math.abs(k - t) < 0.2);
@@ -418,13 +549,45 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
       <div className="rs-stage">
         <style>{styles}</style>
 
-        <div className="rs-stage-view">
+        <div
+          className="rs-stage-view"
+          style={walk ? { cursor: "grab" } : undefined}
+          onPointerDown={(e) => {
+            if (!walk || e.target.closest(".rs-stage-plan, .rs-stage-top")) return;
+            look.current = { x: e.clientX };
+            e.currentTarget.setPointerCapture?.(e.pointerId);
+          }}
+          onPointerMove={(e) => {
+            if (!walk || !look.current) return;
+            const dx = e.clientX - look.current.x;
+            if (!dx) return;
+            look.current = { x: e.clientX };
+            turnCamera(dx * 0.22);
+          }}
+          onPointerUp={() => { look.current = null; }}
+          onPointerCancel={() => { look.current = null; }}
+        >
           <div className="rs-stage-top">
+            <button
+              className={"rs-btn" + (walk ? " on" : "")}
+              onClick={() => { setWalk((v) => !v); setPlaying(false); }}
+            >
+              {walk ? "Stop walking" : "Walk the camera"}
+            </button>
+            {walk && <button className="rs-btn" onClick={aimAtSubject}>Face the subject  ·  r</button>}
+            {walk && <button className="rs-btn" onClick={resetCamera}>Reset view</button>}
             <button className={"rs-btn" + (planOpen ? " on" : "")} onClick={() => setPlanOpen((v) => !v)}>
               {planOpen ? "Hide plan" : "Show plan"}
             </button>
             <button className="rs-btn" onClick={() => setStage(false)}>Leave the stage  ·  esc</button>
           </div>
+
+          {walk && (
+            <div className="rs-walk-hint">
+              W A S D to move · Q E down and up · shift to hurry · drag to look · R to face the subject.
+              You are flying {activeCam?.name ?? "the camera"} — everything lands as a mark at {t.toFixed(1)}s.
+            </div>
+          )}
 
           <Suspense fallback={<div className="rs-body" style={{ padding: 20 }}>Loading the camera view…</div>}>
             <CameraView {...viewProps} fill />

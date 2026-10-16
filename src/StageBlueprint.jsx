@@ -26,6 +26,38 @@ const COLORS = ["#7B3FE4", "#E5B769", "#4ADE80", "#5BA8C2"];
 export default function StageBlueprint({ camera, actors, onChange, baselineSide, set, extent, onSetChange, selectedPiece, onSelectPiece, extras, onExtrasChange }) {
   const svgRef = useRef(null);
   const [drag, setDrag] = useState(null);   // { kind: "camera"|"actor"|"rotate", id }
+  const [fit, setFit] = useState(true);
+
+  /*
+    A 6 x 4 meter kitchen is 30 x 20 units adrift in a 100 x 100 stage, which
+    reads as a doll's house in the corner of an empty field. Fitting the view
+    to whatever is actually in the scene — the room, everyone in it, and the
+    camera, which may legitimately be outside the room — makes the plan worth
+    looking at. The box stays square so nothing is stretched.
+  */
+  const view = (() => {
+    const whole = { x: 0, y: 0, size: STAGE };
+    if (!fit) return whole;
+    const pts = [...(actors ?? []), ...(extras ?? []), camera].filter(Boolean);
+    const plan = set ? planShapes(set) : null;
+    if (!plan?.floor && pts.length === 0) return whole;
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    const grow = (x, y) => { minX = Math.min(minX, x); maxX = Math.max(maxX, x); minY = Math.min(minY, y); maxY = Math.max(maxY, y); };
+    if (plan?.floor) { grow(plan.floor.x, plan.floor.y); grow(plan.floor.x + plan.floor.w, plan.floor.y + plan.floor.h); }
+    if (extent) { grow(50 + extent.minX * 5, 50 + extent.minZ * 5); grow(50 + extent.maxX * 5, 50 + extent.maxZ * 5); }
+    for (const p of pts) grow(p.x, p.y);
+    if (!Number.isFinite(minX)) return whole;
+    const pad = 7;
+    minX -= pad; minY -= pad; maxX += pad; maxY += pad;
+    const size = Math.min(STAGE, Math.max(maxX - minX, maxY - minY, 26));
+    // Center the square on what we found, then keep it over the stage.
+    const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+    return {
+      x: Math.max(0, Math.min(STAGE - size, cx - size / 2)),
+      y: Math.max(0, Math.min(STAGE - size, cy - size / 2)),
+      size,
+    };
+  })();
 
   const read = readStage(camera, actors);
   const eyelines = eyelinesFor(camera, actors);
@@ -41,8 +73,8 @@ export default function StageBlueprint({ camera, actors, onChange, baselineSide,
     const px = (evt.clientX - r.left) / r.width;
     const py = (evt.clientY - r.top) / r.height;
     return {
-      x: Math.max(3, Math.min(STAGE - 3, px * STAGE)),
-      y: Math.max(3, Math.min(STAGE - 3, py * STAGE)),
+      x: Math.max(3, Math.min(STAGE - 3, view.x + px * view.size)),
+      y: Math.max(3, Math.min(STAGE - 3, view.y + py * view.size)),
     };
   }
 
@@ -125,7 +157,7 @@ export default function StageBlueprint({ camera, actors, onChange, baselineSide,
       <style>{styles}</style>
       <svg
         ref={svgRef}
-        viewBox={`0 0 ${STAGE} ${STAGE}`}
+        viewBox={`${view.x} ${view.y} ${view.size} ${view.size}`}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
       >
@@ -134,7 +166,7 @@ export default function StageBlueprint({ camera, actors, onChange, baselineSide,
             <path d="M 10 0 L 0 0 0 10" fill="none" stroke="var(--border)" strokeWidth="0.3" />
           </pattern>
         </defs>
-        <rect width={STAGE} height={STAGE} fill="url(#bpgrid)" />
+        <rect x={-STAGE} y={-STAGE} width={STAGE * 3} height={STAGE * 3} fill="url(#bpgrid)" />
 
         {/* A generated set's reconstructed area — beyond this the edges fray */}
         {extent && (
@@ -265,6 +297,14 @@ export default function StageBlueprint({ camera, actors, onChange, baselineSide,
           );
         })()}
       </svg>
+
+      {(set || extent) && (
+        <div className="bp-row">
+          <button className="bp-btn" onClick={() => setFit((v) => !v)} style={fit ? { color: "var(--accent)", borderColor: "var(--accent)" } : undefined}>
+            {fit ? "Fit to set" : "Whole stage"}
+          </button>
+        </div>
+      )}
 
       <div className="bp-read">{describeStage(read)}</div>
 
