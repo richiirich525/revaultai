@@ -17,7 +17,13 @@ const SUPPORT = {
   "veo-3.1": "veo",
   "kling-3.0": "kling",
   "wan-2.6": "no",
+  "minimax-h3": "minimax", "minimax-h3-480": "minimax", "minimax-h3-1080": "minimax",
 };
+
+// The models that will hold a reference set AND open on an exact first frame.
+// Everywhere else the two are alternatives and the frame wins, which is why
+// references are dropped below rather than sent and ignored.
+const KEEPS_REFS_WITH_FRAME = new Set(["minimax-h3", "minimax-h3-480", "minimax-h3-1080"]);
 // The ceiling the picker will ever allow; the real limit is per model below.
 const MAX_REFS = 12;
 
@@ -27,16 +33,21 @@ const MODEL_MAX = {
   "seedance-2.5": 11, "seedance-2.5-480": 11,
   "seedance-2.0": 8, "seedance-2.0-480": 8,
   "kling-3.0": 3, "veo-3.1": 2,
+  "minimax-h3": 11, "minimax-h3-480": 11, "minimax-h3-1080": 11,
 };
 const capFor = (m) => MODEL_MAX[m] ?? 3;
 
 export function refSupport(model) { return SUPPORT[model] ?? "no"; }
 
-// What actually gets sent: nothing when a start frame is attached or the
-// model can't use photos. The selection itself survives a model switch.
+// What actually gets sent: nothing when the model can't use photos, and
+// nothing when a start frame is attached unless the model can carry both.
+// The selection itself survives a model switch.
+const keepsRefsWithFrame = (model) => KEEPS_REFS_WITH_FRAME.has(model);
+
 export function refsToSend(model, imageUrl, ids) {
   const s = refSupport(model);
-  if (imageUrl || !["yes", "veo", "kling"].includes(s)) return [];
+  if (!["yes", "veo", "kling", "minimax"].includes(s)) return [];
+  if (imageUrl && !keepsRefsWithFrame(model)) return [];
   return (ids ?? []).slice(0, MAX_REFS);
 }
 
@@ -53,7 +64,8 @@ export default function VaultRefPicker({ model, prompt, imageUrl, duration, setD
   const [thumbs, setThumbs] = useState({});
   const touched = useRef(false);
   const support = refSupport(model);
-  const usable = ["yes", "veo", "kling"].includes(support) && !imageUrl;
+  const usable = ["yes", "veo", "kling", "minimax"].includes(support)
+    && (!imageUrl || keepsRefsWithFrame(model));
 
   useEffect(() => {
     (async () => {
@@ -118,8 +130,12 @@ export default function VaultRefPicker({ model, prompt, imageUrl, duration, setD
   }
 
   const chosen = value ?? [];
-  const note = imageUrl
+  const note = imageUrl && !keepsRefsWithFrame(model)
     ? "You're starting from a frame, so reference photos are skipped for this generation."
+    : support === "minimax"
+      ? (imageUrl
+        ? `Opening on your frame and holding these at the same time — up to ${capFor(model)}. The only model here that does both.`
+        : `Up to ${capFor(model)}, and they survive a start frame. Chosen from the names in your prompt — tap to change.`)
     : support === "no"
       ? "Wan can't use reference photos. Switch to Seedance, Veo or Kling to lock appearance."
       : support === "kling"

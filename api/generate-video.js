@@ -60,8 +60,8 @@ const MODELS = {
   // the model, which would quietly undo the framing, eyelines, declared intent
   // and Vault wording this whole platform exists to put there.
   'minimax-h3-480': {
-    falId: 'fal-ai/minimax/h3-max/text-to-video',       // VERIFY on fal
-    imageFalId: 'fal-ai/minimax/h3-max/image-to-video',  // VERIFY on fal
+    falId: 'minimax/h3-max/text-to-video',
+    imageFalId: 'minimax/h3-max/image-to-video',
     creditsPerSecond: 1,
     durationParam: { 5: 5, 10: 10, 15: 15 },             // a float, not an enum
     aspectRatios: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'],
@@ -69,8 +69,8 @@ const MODELS = {
     extraInput: { resolution: '480P', prompt_expansion_mode: 'disabled' },
   },
   'minimax-h3': {
-    falId: 'fal-ai/minimax/h3-max/text-to-video',       // VERIFY on fal
-    imageFalId: 'fal-ai/minimax/h3-max/image-to-video',  // VERIFY on fal
+    falId: 'minimax/h3-max/text-to-video',
+    imageFalId: 'minimax/h3-max/image-to-video',
     creditsPerSecond: 2,
     durationParam: { 5: 5, 10: 10, 15: 15 },
     aspectRatios: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'],
@@ -78,8 +78,8 @@ const MODELS = {
     extraInput: { resolution: '768P', prompt_expansion_mode: 'disabled' },
   },
   'minimax-h3-1080': {
-    falId: 'fal-ai/minimax/h3-max/text-to-video',       // VERIFY on fal
-    imageFalId: 'fal-ai/minimax/h3-max/image-to-video',  // VERIFY on fal
+    falId: 'minimax/h3-max/text-to-video',
+    imageFalId: 'minimax/h3-max/image-to-video',
     creditsPerSecond: 3,
     durationParam: { 5: 5, 10: 10, 15: 15 },
     aspectRatios: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'],
@@ -116,9 +116,9 @@ const REF_MODELS = {
   // reference_image_urls rather than image_urls, and — alone in this table —
   // will hold a reference set AND open on an exact first frame. Everywhere
   // else those two are alternatives, so chaining a shot costs you the faces.
-  'minimax-h3-480': { falId: 'fal-ai/minimax/h3-max/reference-to-video', named: true, plainRefs: true, refsParam: 'reference_image_urls', startFrameWithRefs: true, maxRefs: 12 },
-  'minimax-h3':     { falId: 'fal-ai/minimax/h3-max/reference-to-video', named: true, plainRefs: true, refsParam: 'reference_image_urls', startFrameWithRefs: true, maxRefs: 12 },
-  'minimax-h3-1080':{ falId: 'fal-ai/minimax/h3-max/reference-to-video', named: true, plainRefs: true, refsParam: 'reference_image_urls', startFrameWithRefs: true, maxRefs: 12 },
+  'minimax-h3-480': { falId: 'minimax/h3-max/reference-to-video', named: true, plainRefs: true, refsParam: 'reference_image_urls', startFrameWithRefs: true, maxRefs: 12 },
+  'minimax-h3':     { falId: 'minimax/h3-max/reference-to-video', named: true, plainRefs: true, refsParam: 'reference_image_urls', startFrameWithRefs: true, maxRefs: 12 },
+  'minimax-h3-1080':{ falId: 'minimax/h3-max/reference-to-video', named: true, plainRefs: true, refsParam: 'reference_image_urls', startFrameWithRefs: true, maxRefs: 12 },
 };
 
 export default async function handler(req, res) {
