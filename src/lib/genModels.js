@@ -12,20 +12,24 @@
   prose catalog for the marketing page and carries no prices.
 */
 
+// Named for what each one does, not for where it sits in a ranking. Thirty
+// seconds in a single take is the thing Seedance 2.5 has that nothing else
+// here does, so that is what it is called; "flagship" was a claim about rank
+// that stopped being true the moment a cheaper model did more.
 export const GEN_MODELS = [
   { key: "wan-2.6", label: "Wan 2.6 — Fast", costPerSecond: 1, durations: [5, 10, 15], ratios: ["16:9", "9:16", "1:1"] },
   { key: "kling-3.0", label: "Kling 3.0 — Cinematic", costPerSecond: 2, durations: [5, 10], ratios: ["16:9", "9:16", "1:1"], ratioFromImage: true },
   { key: "seedance-2.0-480", label: "Seedance 2.0 — Draft (480p)", costPerSecond: 3, durations: [5, 10, 15], ratios: ["16:9", "9:16", "1:1", "21:9"] },
-  { key: "seedance-2.0", label: "Seedance 2.0 — Flagship (720p)", costPerSecond: 6, durations: [5, 10, 15], ratios: ["16:9", "9:16", "1:1", "21:9"] },
-  { key: "seedance-2.5-480", label: "Seedance 2.5 — Draft (480p, up to 30s)", costPerSecond: 6, durations: [5, 10, 15, 30], ratios: ["16:9", "9:16", "1:1", "21:9"] },
-  { key: "seedance-2.5", label: "Seedance 2.5 — Flagship (720p, up to 30s)", costPerSecond: 12, durations: [5, 10, 15, 30], ratios: ["16:9", "9:16", "1:1", "21:9"] },
+  { key: "seedance-2.0", label: "Seedance 2.0 — 720p", costPerSecond: 6, durations: [5, 10, 15], ratios: ["16:9", "9:16", "1:1", "21:9"] },
+  { key: "seedance-2.5-480", label: "Seedance 2.5 — Long take, draft (480p, up to 30s)", costPerSecond: 6, durations: [5, 10, 15, 30], ratios: ["16:9", "9:16", "1:1", "21:9"] },
+  { key: "seedance-2.5", label: "Seedance 2.5 — Long take (720p, up to 30s)", costPerSecond: 12, durations: [5, 10, 15, 30], ratios: ["16:9", "9:16", "1:1", "21:9"] },
   { key: "veo-3.1", label: "Veo 3.1 — Native Audio", costPerSecond: 4, durations: [4, 6, 8], ratios: ["16:9", "9:16"] },
   // MiniMax H3 Max. Twelve references, and the only model here that will open
   // on an exact first frame without dropping them — so a chained shot keeps
   // its faces. Four extra aspect ratios, 4:3 and 3:4 among them.
   { key: "minimax-h3-480", label: "MiniMax H3 Max — Draft (480p)", costPerSecond: 1, durations: [5, 10, 15], ratios: ["21:9", "16:9", "4:3", "1:1", "3:4", "9:16"], ratioFromImage: true },
   { key: "minimax-h3", label: "MiniMax H3 Max — Standard (768p)", costPerSecond: 2, durations: [5, 10, 15], ratios: ["21:9", "16:9", "4:3", "1:1", "3:4", "9:16"], ratioFromImage: true },
-  { key: "minimax-h3-1080", label: "MiniMax H3 Max — Flagship (1080p)", costPerSecond: 3, durations: [5, 10, 15], ratios: ["21:9", "16:9", "4:3", "1:1", "3:4", "9:16"], ratioFromImage: true },
+  { key: "minimax-h3-1080", label: "MiniMax H3 Max — 1080p", costPerSecond: 3, durations: [5, 10, 15], ratios: ["21:9", "16:9", "4:3", "1:1", "3:4", "9:16"], ratioFromImage: true },
 ];
 
 export const DEFAULT_MODEL = "wan-2.6";
