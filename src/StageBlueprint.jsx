@@ -8,25 +8,46 @@ import { STAGE, readStage, describeStage, axisFor, bearing, eyelinesFor, eyeline
   An overhead staging diagram you can drag. The geometry drives the
   filmmaking language, not the other way round: move the camera closer and the
   shot size changes; cross the 180-degree line and the diagram says so.
+
+  Everything on it is grabbable directly: the body of a performer moves them,
+  the ring on their eyeline turns them, and the same goes for a camera. Hit
+  areas are measured in screen pixels rather than stage units, so the plan is
+  as easy to hit squeezed into the stage panel as it is full width.
 */
 
 const styles = `
-  .bp { border: 1px solid var(--border); border-radius: 8px; background: var(--bg); padding: 14px; }
-  .bp svg { width: 100%; height: auto; display: block; touch-action: none; user-select: none; }
-  .bp-read { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text); line-height: 1.85; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
-  .bp-warn { font-family: 'DM Mono', monospace; font-size: 10px; color: #E5B769; line-height: 1.75; margin-top: 8px; }
+  .bp { border: 1px solid var(--border); border-radius: 8px; background: var(--bg); padding: 14px; user-select: none; -webkit-user-select: none; }
+  .bp svg { width: 100%; height: auto; display: block; touch-action: none; user-select: none; -webkit-user-select: none; }
+  .bp-read { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text); line-height: 1.8; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .bp-warn { font-family: 'DM Mono', monospace; font-size: 11px; color: #F0C97A; line-height: 1.7; margin-top: 8px; }
   .bp-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
-  .bp-btn { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 3px; padding: 6px 12px; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; }
+  .bp-btn { background: none; border: 1px solid var(--border); color: var(--text); border-radius: 3px; padding: 6px 12px; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; }
   .bp-btn:hover { color: var(--text); border-color: var(--muted); }
-  .bp-hint { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); line-height: 1.7; margin-top: 10px; opacity: 0.75; }
+  .bp-hint { font-family: 'DM Mono', monospace; font-size: 11px; color: #9B98A8; line-height: 1.7; margin-top: 10px; }
 `;
 
 const COLORS = ["#7B3FE4", "#E5B769", "#4ADE80", "#5BA8C2", "#F87171", "#C49A3C"];
 
-export default function StageBlueprint({ camera, actors, onChange, baselineSide, set, extent, onSetChange, selectedPiece, onSelectPiece, extras, onExtrasChange }) {
+export default function StageBlueprint({ camera, actors, onChange, baselineSide, set, extent, onSetChange, selectedPiece, onSelectPiece, extras, onExtrasChange, selectedActor, onSelectActor }) {
   const svgRef = useRef(null);
-  const [drag, setDrag] = useState(null);   // { kind: "camera"|"actor"|"rotate", id }
+  const [drag, setDrag] = useState(null);   // { kind: "camera"|"actorMove"|"rotate"|..., id }
+  const [hover, setHover] = useState(null); // same shape, for the highlight
   const [fit, setFit] = useState(true);
+  // How wide the diagram is actually drawn, so a hit area can be a real
+  // finger-sized target rather than a number of stage units that means one
+  // thing full width and another in a 300px panel.
+  const [widthPx, setWidthPx] = useState(460);
+
+  useEffect(() => {
+    const el = svgRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver((entries) => {
+      const w = entries[0]?.contentRect?.width;
+      if (w > 0) setWidthPx(w);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   /*
     A 6 x 4 meter kitchen is 30 x 20 units adrift in a 100 x 100 stage, which
@@ -59,6 +80,15 @@ export default function StageBlueprint({ camera, actors, onChange, baselineSide,
     };
   })();
 
+  // Stage units per rendered pixel. A 44px touch target is this times 22.
+  const unit = view.size / Math.max(1, widthPx);
+  // Hit radius: at least `px` pixels across, never big enough to swallow the
+  // neighbouring handle, which is why each caller passes its own ceiling.
+  const hitR = (px, cap) => Math.min(cap, Math.max(px * unit, 2));
+  // Keep a label inside the drawn window so it never clips at an edge.
+  const clampX = (x) => Math.max(view.x + 5, Math.min(view.x + view.size - 5, x));
+  const clampY = (y) => Math.max(view.y + 3.5, Math.min(view.y + view.size - 1.5, y));
+
   const read = readStage(camera, actors);
   const eyelines = eyelinesFor(camera, actors);
   const eyeProblems = eyelineProblems(camera, actors);
@@ -80,9 +110,23 @@ export default function StageBlueprint({ camera, actors, onChange, baselineSide,
 
   function onPointerDown(kind, id, evt) {
     evt.preventDefault();
+    evt.stopPropagation();
     evt.currentTarget.setPointerCapture?.(evt.pointerId);
     setDrag({ kind, id });
+    if ((kind === "actorMove" || kind === "actorFace") && onSelectActor) onSelectActor(id);
   }
+
+  // Grab on hover, grabbing while held — the standard pair, so a target that
+  // can be picked up says so before it is.
+  function grabStyle(kind, id) {
+    const held = drag && drag.kind === kind && drag.id === id;
+    return { cursor: held ? "grabbing" : "grab", touchAction: "none" };
+  }
+  const isHover = (kind, id) => !drag && hover?.kind === kind && hover.id === id;
+  const hoverProps = (kind, id) => ({
+    onPointerEnter: () => setHover({ kind, id }),
+    onPointerLeave: () => setHover((h) => (h?.kind === kind && h.id === id ? null : h)),
+  });
 
   function onPointerMove(evt) {
     if (!drag) return;
@@ -160,6 +204,7 @@ export default function StageBlueprint({ camera, actors, onChange, baselineSide,
         viewBox={`${view.x} ${view.y} ${view.size} ${view.size}`}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
+        style={drag ? { cursor: "grabbing" } : undefined}
       >
         <defs>
           <pattern id="bpgrid" width="10" height="10" patternUnits="userSpaceOnUse">
@@ -184,21 +229,24 @@ export default function StageBlueprint({ camera, actors, onChange, baselineSide,
               {plan.props.map((p) => {
                 const live = !!onSetChange;
                 const chosen = selectedPiece === p.id;
+                const hot = isHover("pieceMove", p.id);
                 return (
                   <g key={p.id}>
                     <rect
                       x={p.x} y={p.y} width={p.w} height={p.h} rx="0.6"
                       fill={p.tall ? "#44455260" : "#3c3d48"}
-                      stroke={chosen ? "var(--accent)" : "#55566410"}
-                      strokeWidth={chosen ? 0.6 : 0.2}
-                      style={{ cursor: live ? "move" : "default", touchAction: "none" }}
+                      stroke={chosen ? "var(--accent)" : hot ? "rgba(255,255,255,0.5)" : "#55566410"}
+                      strokeWidth={chosen ? 0.6 : hot ? 0.5 : 0.2}
+                      style={live ? grabStyle("pieceMove", p.id) : { cursor: "default" }}
+                      {...(live ? hoverProps("pieceMove", p.id) : {})}
                       onPointerDown={live ? (e) => { onSelectPiece?.(p.id); onPointerDown("pieceMove", p.id, e); } : undefined}
                     />
                     {chosen && live && (
                       <circle
-                        cx={p.x + p.w + 1.6} cy={p.y - 1.2} r="1.5"
-                        fill="var(--accent)" opacity="0.85"
-                        style={{ cursor: "grab", touchAction: "none" }}
+                        cx={p.x + p.w + 1.6} cy={p.y - 1.2} r={hitR(14, 2.4)}
+                        fill="var(--accent)" opacity={isHover("pieceTurn", p.id) ? 1 : 0.85}
+                        style={grabStyle("pieceTurn", p.id)}
+                        {...hoverProps("pieceTurn", p.id)}
                         onPointerDown={(e) => onPointerDown("pieceTurn", p.id, e)}
                       />
                     )}
@@ -209,7 +257,7 @@ export default function StageBlueprint({ camera, actors, onChange, baselineSide,
                 <rect key={w.id} x={w.x} y={w.y} width={w.w} height={w.h} fill={w.opening ? "#9fc4d8" : "#5a5b68"} opacity={w.opening ? 0.55 : 0.9} />
               ))}
               {plan.props.filter((p) => p.w > 5 && p.label).map((p) => (
-                <text key={"t" + p.id} x={p.x + p.w / 2} y={p.y + p.h / 2 + 1} fill="rgba(255,255,255,0.45)" fontSize="2.2" fontFamily="monospace" textAnchor="middle">
+                <text key={"t" + p.id} x={p.x + p.w / 2} y={p.y + p.h / 2 + 1} fill="rgba(255,255,255,0.55)" fontSize="2.2" fontFamily="monospace" textAnchor="middle" pointerEvents="none">
                   {p.label.replace(/^the /, "")}
                 </text>
               ))}
@@ -221,54 +269,92 @@ export default function StageBlueprint({ camera, actors, onChange, baselineSide,
         {al && (
           <>
             <line x1={al.x1} y1={al.y1} x2={al.x2} y2={al.y2} stroke="#E5B769" strokeWidth="0.5" strokeDasharray="2 2" opacity="0.6" />
-            <text x={2} y={4} fill="#E5B769" fontSize="3" fontFamily="monospace" opacity="0.7">180° LINE</text>
+            <text x={clampX(view.x + 5)} y={view.y + 4} fill="#E5B769" fontSize="3" fontFamily="monospace" opacity="0.85" pointerEvents="none">180° LINE</text>
           </>
         )}
 
         {/* Field of view */}
-        <path d={fovPath()} fill="var(--accent)" opacity="0.12" />
+        <path d={fovPath()} fill="var(--accent)" opacity="0.12" pointerEvents="none" />
 
         {/* Background performers — people, but not the scene */}
-        {(extras ?? []).map((e) => (
-          <g key={e.id}>
-            <circle
-              cx={e.x} cy={e.y} r="1.6"
-              fill="rgba(255,255,255,0.13)" stroke="rgba(255,255,255,0.35)" strokeWidth="0.3"
-              style={{ cursor: onExtrasChange ? "move" : "default", touchAction: "none" }}
-              onPointerDown={onExtrasChange ? (ev) => onPointerDown("extra", e.id, ev) : undefined}
-            />
-            <line
-              x1={e.x} y1={e.y}
-              x2={e.x + Math.sin((e.facing * Math.PI) / 180) * 2.6}
-              y2={e.y - Math.cos((e.facing * Math.PI) / 180) * 2.6}
-              stroke="rgba(255,255,255,0.28)" strokeWidth="0.3"
-            />
-          </g>
-        ))}
+        {(extras ?? []).map((e) => {
+          const hot = isHover("extra", e.id);
+          return (
+            <g key={e.id}>
+              <line
+                x1={e.x} y1={e.y}
+                x2={e.x + Math.sin((e.facing * Math.PI) / 180) * 2.6}
+                y2={e.y - Math.cos((e.facing * Math.PI) / 180) * 2.6}
+                stroke="rgba(255,255,255,0.28)" strokeWidth="0.3" pointerEvents="none"
+              />
+              <circle
+                cx={e.x} cy={e.y} r="1.6"
+                fill={hot ? "rgba(255,255,255,0.28)" : "rgba(255,255,255,0.13)"}
+                stroke={hot ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.35)"} strokeWidth="0.3"
+                pointerEvents="none"
+              />
+              {onExtrasChange && (
+                <circle
+                  cx={e.x} cy={e.y} r={hitR(16, 3.0)} fill="transparent"
+                  style={grabStyle("extra", e.id)}
+                  {...hoverProps("extra", e.id)}
+                  onPointerDown={(ev) => onPointerDown("extra", e.id, ev)}
+                />
+              )}
+            </g>
+          );
+        })}
 
-        {/* Actors */}
+        {/* Actors. Body moves them, the ring on the eyeline turns them. */}
         {actors.map((a, i) => {
           const c = COLORS[i % COLORS.length];
           const rad = ((a.facing ?? 0) - 90) * Math.PI / 180;
+          const hx = a.x + Math.cos(rad) * 9;
+          const hy = a.y + Math.sin(rad) * 9;
+          const hotBody = isHover("actorMove", a.id);
+          const hotTurn = isHover("actorFace", a.id);
+          const chosen = selectedActor === a.id;
           return (
             <g key={a.id}>
               <line
-                x1={a.x} y1={a.y}
-                x2={a.x + Math.cos(rad) * 9} y2={a.y + Math.sin(rad) * 9}
-                stroke={c} strokeWidth="0.8" opacity="0.8"
+                x1={a.x} y1={a.y} x2={hx} y2={hy}
+                stroke={c} strokeWidth={hotTurn ? 1.1 : 0.8} opacity={hotTurn ? 1 : 0.8}
+                pointerEvents="none"
               />
+              {/* The halo is the hover feedback: it is the hit area, drawn. */}
+              {(hotBody || chosen) && (
+                <circle cx={a.x} cy={a.y} r={Math.max(5.4, hitR(22, 4.2))} fill={c} opacity={hotBody ? 0.22 : 0.13} pointerEvents="none" />
+              )}
+              {hotTurn && <circle cx={hx} cy={hy} r="4.4" fill={c} opacity="0.18" pointerEvents="none" />}
               <circle
-                cx={a.x + Math.cos(rad) * 9} cy={a.y + Math.sin(rad) * 9} r="2.2"
-                fill="var(--bg)" stroke={c} strokeWidth="0.6"
-                style={{ cursor: "grab" }}
-                onPointerDown={(e) => onPointerDown("actorFace", a.id, e)}
+                cx={hx} cy={hy} r="2.4"
+                fill="var(--bg)" stroke={c} strokeWidth={hotTurn ? 1 : 0.6}
+                pointerEvents="none"
               />
               <circle
                 cx={a.x} cy={a.y} r="3.4" fill={c}
-                style={{ cursor: "grab" }}
-                onPointerDown={(e) => onPointerDown("actorMove", a.id, e)}
+                stroke={chosen ? "#fff" : "none"} strokeWidth={chosen ? 0.7 : 0}
+                pointerEvents="none"
               />
-              <text x={a.x} y={a.y - 5.5} fill="var(--text)" fontSize="3.4" fontFamily="monospace" textAnchor="middle">{a.name}</text>
+              <text x={clampX(a.x)} y={clampY(a.y - 5.5)} fill="var(--text)" fontSize="3.4" fontFamily="monospace" textAnchor="middle" pointerEvents="none">{a.name}</text>
+              {/* Hit areas go last so they sit above the drawing. The turn ring
+                  is added after the body so it wins wherever they overlap. */}
+              <circle
+                cx={a.x} cy={a.y} r={hitR(22, 4.2)} fill="transparent"
+                style={grabStyle("actorMove", a.id)}
+                {...hoverProps("actorMove", a.id)}
+                onPointerDown={(e) => onPointerDown("actorMove", a.id, e)}
+              >
+                <title>Drag {a.name} anywhere. A drag at a scrubbed time writes a keyframe there.</title>
+              </circle>
+              <circle
+                cx={hx} cy={hy} r={hitR(16, 3.6)} fill="transparent"
+                style={grabStyle("actorFace", a.id)}
+                {...hoverProps("actorFace", a.id)}
+                onPointerDown={(e) => onPointerDown("actorFace", a.id, e)}
+              >
+                <title>Drag to turn {a.name}.</title>
+              </circle>
             </g>
           );
         })}
@@ -278,21 +364,40 @@ export default function StageBlueprint({ camera, actors, onChange, baselineSide,
           const rad = (camera.rotation - 90) * Math.PI / 180;
           const hx = camera.x + Math.cos(rad) * 11;
           const hy = camera.y + Math.sin(rad) * 11;
+          const hotBody = isHover("camera", null);
+          const hotTurn = isHover("rotate", null);
+          // Below the body normally; above it when the camera is parked at the
+          // bottom edge, where "CAM" used to be cut in half by the frame.
+          const below = camera.y + 8.5 <= view.y + view.size - 2;
+          const ly = below ? camera.y + 8.5 : camera.y - 5.5;
           return (
             <g>
-              <line x1={camera.x} y1={camera.y} x2={hx} y2={hy} stroke="var(--accent)" strokeWidth="0.8" />
-              <circle
-                cx={hx} cy={hy} r="2.4" fill="var(--bg)" stroke="var(--accent)" strokeWidth="0.7"
-                style={{ cursor: "grab" }}
-                onPointerDown={(e) => onPointerDown("rotate", null, e)}
-              />
+              <line x1={camera.x} y1={camera.y} x2={hx} y2={hy} stroke="var(--accent)" strokeWidth={hotTurn ? 1.1 : 0.8} pointerEvents="none" />
+              {hotTurn && <circle cx={hx} cy={hy} r="4.6" fill="var(--accent)" opacity="0.2" pointerEvents="none" />}
+              <circle cx={hx} cy={hy} r="2.6" fill="var(--bg)" stroke="var(--accent)" strokeWidth={hotTurn ? 1 : 0.7} pointerEvents="none" />
+              {hotBody && <rect x={camera.x - 5.4} y={camera.y - 4.8} width="10.8" height="9.6" rx="1.6" fill="var(--accent)" opacity="0.22" pointerEvents="none" />}
               <rect
                 x={camera.x - 3.6} y={camera.y - 3} width="7.2" height="6" rx="1"
-                fill="var(--accent)"
-                style={{ cursor: "grab" }}
-                onPointerDown={(e) => onPointerDown("camera", null, e)}
+                fill="var(--accent)" stroke={hotBody ? "#fff" : "none"} strokeWidth={hotBody ? 0.5 : 0}
+                pointerEvents="none"
               />
-              <text x={camera.x} y={camera.y + 8.5} fill="var(--accent)" fontSize="3.2" fontFamily="monospace" textAnchor="middle">CAM</text>
+              <text x={clampX(camera.x)} y={clampY(ly)} fill="var(--accent)" fontSize="3.2" fontFamily="monospace" textAnchor="middle" pointerEvents="none">CAM</text>
+              <circle
+                cx={camera.x} cy={camera.y} r={hitR(22, 4.6)} fill="transparent"
+                style={grabStyle("camera", null)}
+                {...hoverProps("camera", null)}
+                onPointerDown={(e) => onPointerDown("camera", null, e)}
+              >
+                <title>Drag the camera anywhere. It passes through walls but not furniture.</title>
+              </circle>
+              <circle
+                cx={hx} cy={hy} r={hitR(16, 3.8)} fill="transparent"
+                style={grabStyle("rotate", null)}
+                {...hoverProps("rotate", null)}
+                onPointerDown={(e) => onPointerDown("rotate", null, e)}
+              >
+                <title>Drag to aim the camera.</title>
+              </circle>
             </g>
           );
         })()}
@@ -309,7 +414,7 @@ export default function StageBlueprint({ camera, actors, onChange, baselineSide,
       <div className="bp-read">{describeStage(read)}</div>
 
       {eyelines.length > 0 && (
-        <div className="bp-read" style={{ borderTop: "none", paddingTop: 0, marginTop: 8, fontSize: 10, color: "var(--muted)" }}>
+        <div className="bp-read" style={{ borderTop: "none", paddingTop: 0, marginTop: 8, fontSize: 11, color: "#9B98A8" }}>
           {eyelines.map((e, i) => <div key={i}>{e.text}</div>)}
         </div>
       )}
@@ -325,7 +430,7 @@ export default function StageBlueprint({ camera, actors, onChange, baselineSide,
       )}
 
       <div className="bp-hint">
-        Drag the camera body to move it, the small circle to aim it. Same for each actor — the dot moves them, the outline circle turns them.
+        Drag anyone by the body to move them, by the ring on their eyeline to turn them. Same for the camera. Works with a mouse, a trackpad or a finger.
       </div>
     </div>
   );

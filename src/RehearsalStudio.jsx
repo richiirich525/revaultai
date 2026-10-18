@@ -5,7 +5,7 @@ import { stateAt, setKey, removeKey, keyTimes, newRehearsal, addCamera, addActor
 import { motionState, defaultBody, BODIES } from "./lib/performers.js";
 import { ACTION_CATEGORIES, searchActions, actionLabel, actionPose } from "./lib/actions.js";
 import { CAMERA_MOVES, MOVE_CATEGORIES, moveKeys } from "./lib/cameraMoves.js";
-import { walkThroughs, resolveMove, CAMERA_RADIUS } from "./lib/stageCollision.js";
+import { walkThroughs, resolveMove, CAMERA_RADIUS, PERSON_RADIUS } from "./lib/stageCollision.js";
 import { buildShootPrompt, buildShootSpec, buildCoverage } from "./lib/shootPrompt.js";
 import { SETS, EXTERIORS, getSet, pieceSize } from "./lib/setCatalog.js";
 import { LIGHT_PRESETS, defaultLight } from "./lib/lighting.js";
@@ -39,19 +39,55 @@ const CameraView = lazy(() => import("./CameraView.jsx"));
 
 const DURATIONS = [4, 6, 8, 10, 15, 30];
 
+// The hover note on each is the glossary: these are the words a filmmaker
+// uses and a first-time visitor does not.
+const LENSES = [
+  [null, "Auto — the lens is chosen from how far away the camera is standing"],
+  [18, "18mm — very wide. Takes in most of a room and stretches whatever is near the front"],
+  [24, "24mm — wide. Room and people together, with the space still readable"],
+  [28, "28mm — mildly wide. A common documentary lens"],
+  [35, "35mm — close to the way the eye reads a room. The usual starting point"],
+  [50, "50mm — natural. Faces look like themselves"],
+  [75, "75mm — long. Flattens the face a little and softens what is behind it"],
+  [100, "100mm — very long. Isolates a face against a background reduced to colour"],
+];
+
+const HEIGHTS = [
+  ["Floor", 0.4, "Camera on the floor, looking up — makes a person loom"],
+  ["Low", 0.9, "Hip height. Slightly below the eye, which lends authority"],
+  ["Eye", 1.55, "Standing eye height. Neutral, and what most scenes use"],
+  ["High", 2.2, "Above the head, looking down — makes a person smaller"],
+  ["Above", 3.6, "Well overhead, looking down on the whole floor"],
+];
+
+const ASPECT_CHOICES = [
+  ["16:9", "Widescreen. What most video is"],
+  ["2.39:1", "Anamorphic scope — the wide, letterboxed feature-film shape"],
+  ["9:16", "Upright, for phones"],
+  ["1:1", "Square"],
+];
+
 const styles = `
-  .rs { max-width: 980px; margin: 0 auto; padding: 0 48px; }
-  .rs-label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.2em; color: var(--accent); text-transform: uppercase; margin-bottom: 8px; }
-  .rs-body { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); line-height: 1.8; }
+  .rs { max-width: 1240px; margin: 0 auto; padding: 0 48px; }
+  .rs-label { font-family: 'DM Mono', monospace; font-size: 10.5px; letter-spacing: 0.18em; color: #B9A2F0; text-transform: uppercase; margin-bottom: 8px; }
+  .rs-body { font-family: 'DM Mono', monospace; font-size: 12px; color: #9B98A8; line-height: 1.8; }
   .rs-panel { border: 1px solid var(--border); border-radius: 8px; padding: 18px 20px; background: var(--surface); margin-bottom: 16px; }
   .rs-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-  .rs-btn { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 3px; padding: 6px 12px; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.08em; cursor: pointer; }
+  .rs-btn { background: none; border: 1px solid var(--border); color: #B5B2C0; border-radius: 3px; padding: 7px 13px; font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.08em; cursor: pointer; }
   .rs-btn:hover { color: var(--text); border-color: var(--muted); }
-  .rs-btn.on { color: var(--accent); border-color: var(--accent); background: var(--bg); }
+  /* Selected has to read at a glance across forty chips, so it is filled
+     rather than tinted. */
+  .rs-btn.on { color: #fff; border-color: var(--accent); background: rgba(123,63,228,0.38); font-weight: 500; }
+  .rs-btn:focus-visible, .rs-act-item:focus-visible { outline: 2px solid #B9A2F0; outline-offset: 2px; }
+  /* The one action that leaves this page and spends money. */
+  .rs-primary { color: #fff !important; background: var(--accent) !important; border-color: var(--accent) !important; font-weight: 500; }
+  .rs-primary:hover { background: #8d52ee !important; color: #fff !important; }
+  /* The timeline follows you down the page instead of scrolling away. */
+  .rs-dock { position: sticky; bottom: 10px; z-index: 20; background: var(--surface); box-shadow: 0 -8px 26px rgba(0,0,0,0.5); }
   .rs-track { position: relative; height: 26px; margin: 10px 0 4px; }
   .rs-track input { position: absolute; inset: 0; width: 100%; accent-color: var(--accent); margin: 0; }
   .rs-tick { position: absolute; top: 0; width: 2px; height: 8px; background: var(--accent); transform: translateX(-1px); pointer-events: none; opacity: 0.8; }
-  .rs-beat { position: absolute; top: 20px; transform: translateX(-50%); font-family: 'DM Mono', monospace; font-size: 8px; color: #E5B769; white-space: nowrap; pointer-events: none; letter-spacing: 0.06em; }
+  .rs-beat { position: absolute; top: 20px; transform: translateX(-50%); font-family: 'DM Mono', monospace; font-size: 10px; color: #E5B769; white-space: nowrap; pointer-events: none; letter-spacing: 0.06em; }
   .rs-time { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; color: var(--text); min-width: 70px; }
   .rs-cams { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
   .rs-cam { border: 1px solid var(--border); border-radius: 5px; padding: 10px 12px; cursor: pointer; background: var(--bg); }
@@ -62,10 +98,10 @@ const styles = `
   .rs-act-item { text-align: left; background: none; border: 1px solid var(--border); border-radius: 4px; padding: 8px 10px; cursor: pointer; font-family: 'DM Mono', monospace; }
   .rs-act-item:hover { border-color: var(--muted); }
   .rs-act-item.on { border-color: var(--accent); }
-  .rs-act-item b { display: block; font-size: 10px; font-weight: 500; color: var(--text); letter-spacing: 0.04em; }
-  .rs-act-item span { display: block; font-size: 9px; color: var(--muted); margin-top: 3px; }
-  .rs-act-none { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); padding: 14px 2px; }
-  .rs-through { font-family: 'DM Mono', monospace; font-size: 10px; color: #E5B769; line-height: 1.8; margin: 2px 0 10px; }
+  .rs-act-item b { display: block; font-size: 11px; font-weight: 500; color: var(--text); letter-spacing: 0.04em; }
+  .rs-act-item span { display: block; font-size: 10px; color: #9B98A8; margin-top: 3px; }
+  .rs-act-none { font-family: 'DM Mono', monospace; font-size: 11px; color: #9B98A8; padding: 14px 2px; }
+  .rs-through { font-family: 'DM Mono', monospace; font-size: 11px; color: #E5B769; line-height: 1.8; margin: 2px 0 10px; }
   .rs-stage { position: fixed; inset: 0; z-index: 150; background: #0b0c10; display: flex; flex-direction: column; }
   .rs-stage-view { flex: 1; min-height: 0; position: relative; }
   .rs-stage-plan { position: absolute; left: 18px; bottom: 18px; width: 300px; max-width: 42vw; z-index: 2;
@@ -83,15 +119,31 @@ const styles = `
   }
   .rs-stage-top .rs-btn:hover { color: #fff; border-color: rgba(255,255,255,0.6); background: rgba(10,11,16,0.95); }
   .rs-stage-top .rs-btn.on { color: #fff; border-color: var(--accent); background: rgba(123,63,228,0.35); }
+  .rs-stage-ctrl { position: absolute; top: 58px; right: 18px; z-index: 5; width: 340px; max-width: 46vw;
+    background: rgba(12,13,18,0.95); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px;
+    backdrop-filter: blur(8px); max-height: calc(100vh - 190px); overflow-y: auto; padding: 12px 14px;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.5); }
+  .rs-stage-ctrl .rs-btn { color: rgba(255,255,255,0.88); border-color: rgba(255,255,255,0.26); }
+  .rs-stage-ctrl .rs-btn:hover { color: #fff; border-color: rgba(255,255,255,0.65); }
+  .rs-stage-ctrl .rs-btn.on { color: #fff; border-color: var(--accent); background: rgba(123,63,228,0.42); }
+  .rs-stage-ctrl .rs-body { color: rgba(255,255,255,0.78); }
+  .rs-stage-ctrl .rs-label { color: #C3AEF5; }
+  .rs-stage-ctrl .rs-input { color: #fff; border-color: rgba(255,255,255,0.26); background: rgba(255,255,255,0.06); }
+  .rs-stage-ctrl .rs-act { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.18); }
+  .rs-stage-ctrl .rs-act-item { border-color: rgba(255,255,255,0.2); }
+  .rs-stage-ctrl .rs-act-item b { color: #fff; }
+  .rs-stage-ctrl .rs-act-item span { color: rgba(255,255,255,0.72); }
+  .rs-stage-sec { margin-top: 14px; }
+  @media (max-width: 860px) { .rs-stage-ctrl { width: auto; left: 10px; right: 10px; max-width: none; max-height: 44vh; top: 92px; } }
   .rs-stage-exit { color: #fff !important; border-color: var(--accent) !important; background: rgba(123,63,228,0.55) !important; font-weight: 500; }
   .rs-stage-exit:hover { background: var(--accent) !important; }
   .rs-walk-hint { position: absolute; top: 14px; left: 18px; z-index: 3; max-width: 340px;
-    font-family: 'DM Mono', monospace; font-size: 9px; line-height: 1.8; color: rgba(255,255,255,0.72);
+    font-family: 'DM Mono', monospace; font-size: 11px; line-height: 1.8; color: rgba(255,255,255,0.85);
     background: rgba(14,15,20,0.78); border: 1px solid var(--border); border-radius: 6px; padding: 8px 11px; pointer-events: none; }
   .rs-stage-track { flex: 1; min-width: 160px; accent-color: var(--accent); }
   @media (max-width: 760px) { .rs-stage-plan { width: auto; left: 10px; right: 10px; max-width: none; max-height: 38vh; } }
   .rs-cam-n { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--text); }
-  .rs-cam-s { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 3px; }
+  .rs-cam-s { font-family: 'DM Mono', monospace; font-size: 11px; color: #9B98A8; margin-top: 3px; }
   .rs-input { background: var(--bg); border: 1px solid var(--border); border-radius: 3px; padding: 6px 9px; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text); }
   .rs-views { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
   @media (max-width: 900px) { .rs-views { grid-template-columns: 1fr; } }
@@ -112,6 +164,13 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
   // beside it, so the room is the thing you're looking at.
   const [stage, setStage] = useState(false);
   const [planOpen, setPlanOpen] = useState(true);
+  // The stage used to be a picture with nothing to change in it. These are
+  // the controls that live inside it.
+  const [ctrlOpen, setCtrlOpen] = useState(false);
+  const [ctrlTab, setCtrlTab] = useState("Cameras");
+  // Who is selected, shared by the plan and the 3D view so picking someone
+  // in the room highlights them on the plan and opens their row here.
+  const [selActor, setSelActor] = useState(null);
   // Walking the camera: held keys drive it, a drag turns it, and both write
   // the same keyframe a drag on the plan would. Refs rather than state —
   // these change every frame and nothing renders off them.
@@ -232,6 +291,43 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
         );
       }
       return { ...prev, actors, cameras };
+    });
+  }
+
+  /*
+    A drag in the picture lands exactly where a drag on the plan does: a
+    keyframe at the playhead, with the same furniture in the way. The 3D view
+    reports a point on the floor; everything after that is shared.
+  */
+  function dragTo(kind, id, p) {
+    setR((prev) => {
+      const cur = stateAt(prev, t);
+      if (kind === "actor") {
+        const i = prev.actors.findIndex((a) => a.id === id);
+        if (i < 0) return prev;
+        const c = cur.actors[i];
+        const q = resolveMove(room, c, p, { radius: PERSON_RADIUS });
+        if (Math.abs(q.x - c.x) < 0.05 && Math.abs(q.y - c.y) < 0.05) return prev;
+        const actors = [...prev.actors];
+        actors[i] = setKey(actors[i], t, {
+          x: q.x, y: q.y, facing: c.facing, pose: c.pose, action: c.action ?? null,
+        });
+        return { ...prev, actors };
+      }
+      const cam = prev.cameras.find((x) => x.id === id);
+      if (!cam) return prev;
+      const c = stateAt({ ...prev, activeCamera: id }, t).camera;
+      // Furniture stops a camera; walls do not. Same rule as the plan.
+      const q = resolveMove(room, c, p, { radius: CAMERA_RADIUS, walls: false });
+      if (Math.abs(q.x - c.x) < 0.05 && Math.abs(q.y - c.y) < 0.05) return prev;
+      return {
+        ...prev,
+        cameras: prev.cameras.map((x) => (x.id !== id ? x : setKey(x, t, {
+          x: q.x, y: q.y, rotation: c.rotation,
+          height: c.height ?? cam.height ?? null,
+          lens: c.lens ?? cam.lens ?? null,
+        }))),
+      };
     });
   }
 
@@ -451,6 +547,25 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
   }, [stage]);
 
   /*
+    The stage is a view, not a page — but Back is what anyone reaches for to
+    leave something full screen, and with no entry of our own that walks off
+    the site, which on unsaved blocking means the browser's own "Leave site?"
+    prompt. One pushed entry turns Back into the way out.
+  */
+  useEffect(() => {
+    if (!stage) return;
+    window.history.pushState({ rsStage: true }, "");
+    const pop = () => setStage(false);
+    window.addEventListener("popstate", pop);
+    return () => {
+      window.removeEventListener("popstate", pop);
+      // Left by the button or by Escape: take our entry back off the stack.
+      // If Back is what closed it, the entry is already gone.
+      if (window.history.state?.rsStage) window.history.back();
+    };
+  }, [stage]);
+
+  /*
     Driving the shot camera, not a separate scouting one. Looking through the
     lens and adjusting is how an angle actually gets found, and the camera you
     are flying had better be the camera that shoots. Every change lands as a
@@ -512,6 +627,8 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
     onExtrasChange: (next) => setR((p) => ({ ...p, extras: next })),
     selectedPiece: selPiece,
     onSelectPiece: setSelPiece,
+    selectedActor: selActor,
+    onSelectActor: setSelActor,
     onSetChange: r.setCustom ? (id, change) => setR((p) => ({
       ...p,
       setCustom: {
@@ -568,7 +685,134 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
     title: `${activeCam?.name ?? "Camera"}${nowRead.shotSize ? " · " + nowRead.shotSize : ""}`,
     rigs: rigList,
     onPickCamera: (id) => setR((p) => ({ ...p, activeCamera: id })),
+    onPickActor: setSelActor,
+    onDragTo: dragTo,
+    selectedActor: selActor,
   };
+
+  /*
+    One definition per control, shared by the studio page and the stage
+    panel. Two copies of a lens row are two copies that drift apart.
+  */
+  function lensButtons() {
+    const cam = r.cameras.find((c) => c.id === r.activeCamera);
+    return LENSES.map(([mm, note]) => (
+      <button key={String(mm)} className={"rs-btn" + ((cam?.lens ?? null) === mm ? " on" : "")}
+        title={note}
+        onClick={() => setR((p) => ({ ...p, cameras: p.cameras.map((c) => c.id === p.activeCamera ? { ...c, lens: mm } : c) }))}>
+        {mm ? mm + "mm" : "Auto"}
+      </button>
+    ));
+  }
+
+  function heightButtons() {
+    const cam = r.cameras.find((c) => c.id === r.activeCamera);
+    return HEIGHTS.map(([label, h, note]) => (
+      <button key={label} className={"rs-btn" + (Math.abs((cam?.height ?? 1.55) - h) < 0.01 ? " on" : "")}
+        title={note}
+        onClick={() => setR((p) => ({ ...p, cameras: p.cameras.map((c) => c.id === p.activeCamera ? { ...c, height: h } : c) }))}>
+        {label}
+      </button>
+    ));
+  }
+
+  function aspectButtons() {
+    return ASPECT_CHOICES.map(([a, note]) => (
+      <button key={a} className={"rs-btn" + ((r.aspect ?? "16:9") === a ? " on" : "")} title={note}
+        onClick={() => setR((p) => ({ ...p, aspect: a }))}>{a}</button>
+    ));
+  }
+
+  function lightButtons() {
+    return (
+      <>
+        {LIGHT_PRESETS.map((p) => (
+          <button key={p.id} title={p.note}
+            className={"rs-btn" + ((r.light?.preset ?? defaultLight().preset) === p.id ? " on" : "")}
+            onClick={() => setR((prev) => ({ ...prev, light: { ...(prev.light ?? defaultLight()), preset: p.id } }))}>
+            {p.label}
+          </button>
+        ))}
+        <span className="rs-body" style={{ fontSize: 11, marginLeft: 6 }}>From</span>
+        <input type="range" min={0} max={359} step={5}
+          aria-label="Which direction the light comes from"
+          value={r.light?.bearing ?? defaultLight().bearing}
+          onChange={(e) => setR((prev) => ({ ...prev, light: { ...(prev.light ?? defaultLight()), bearing: Number(e.target.value) } }))}
+          style={{ width: 130, accentColor: "var(--accent)" }} />
+        <span className="rs-body" style={{ fontSize: 11 }}>{r.light?.bearing ?? defaultLight().bearing}°</span>
+      </>
+    );
+  }
+
+  function setButtons() {
+    return (
+      <>
+        <button className={"rs-btn" + (!r.setId && !r.setCustom ? " on" : "")}
+          onClick={() => setR((p) => ({ ...p, setId: null, setName: null, setCustom: null }))}>Empty stage</button>
+        {r.setId && !genId && !r.setCustom && (
+          <button className="rs-btn" onClick={() => setR((p) => ({ ...p, setCustom: startEditing(getSet(p.setId)) }))}>Dress this set →</button>
+        )}
+        {mySets.map((s) => (
+          <button key={s.id} className={"rs-btn" + (r.setCustom?.savedId === s.id ? " on" : "")}
+            onClick={() => { const u = unpackSet(s); setR((p) => ({ ...p, setCustom: u, setId: null, setName: u.name })); }}>
+            {s.data?.name || "My set"}
+          </button>
+        ))}
+        {[...SETS, ...EXTERIORS].map((s) => (
+          <button key={s.id} className={"rs-btn" + (r.setId === s.id ? " on" : "")} title={s.note}
+            onClick={() => setR((p) => ({ ...p, setId: s.id, setName: null, setCustom: null }))}>{s.name}</button>
+        ))}
+      </>
+    );
+  }
+
+  // The action picker, used by the performer row on the page and by the
+  // same row inside the stage.
+  function actionPicker(i, a) {
+    return (
+            <div className="rs-act">
+              <div className="rs-row">
+                <input
+                  className="rs-input"
+                  value={actQuery}
+                  autoFocus
+                  onChange={(e) => setActQuery(e.target.value)}
+                  placeholder={`What is ${a.name} doing at ${t.toFixed(1)}s?`}
+                  style={{ flex: 1, minWidth: 200 }}
+                />
+                <button className="rs-btn" onClick={() => setActFor(null)}>close</button>
+              </div>
+
+              <div className="rs-act-cats">
+                <button className={"rs-btn" + (actCat === null ? " on" : "")} onClick={() => setActCat(null)}>all</button>
+                {ACTION_CATEGORIES.map((c) => (
+                  <button key={c} className={"rs-btn" + (actCat === c ? " on" : "")} onClick={() => setActCat(actCat === c ? null : c)}>{c}</button>
+                ))}
+              </div>
+
+              <div className="rs-act-grid">
+                {searchActions(actQuery, actCat).map((act) => (
+                  <button
+                    key={act.id}
+                    className={"rs-act-item" + (a.action === act.id ? " on" : "")}
+                    onClick={() => { setAction(i, act.id); setActFor(null); }}
+                  >
+                    <b>{act.label}</b>
+                    <span>{act.cat}{act.pose ? ` · ${act.pose}` : ""}{act.travel ? " · while moving" : ""}</span>
+                  </button>
+                ))}
+              </div>
+              {searchActions(actQuery, actCat).length === 0 && (
+                <div className="rs-act-none">Nothing matches that. Try a different word, or clear the category.</div>
+              )}
+
+              <div className="rs-body" style={{ fontSize: 10, marginTop: 10, opacity: 0.8 }}>
+                Set at {t.toFixed(1)}s and held until you change it. A one-off — a punch, sitting down —
+                plays once from here. Anything on the spot pauses while they walk and resumes at the mark.
+              </div>
+            </div>
+    );
+  }
 
   if (stage) {
     return (
@@ -579,7 +823,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
           className="rs-stage-view"
           style={walk ? { cursor: "grab" } : undefined}
           onPointerDown={(e) => {
-            if (!walk || e.target.closest(".rs-stage-plan, .rs-stage-top")) return;
+            if (!walk || e.target.closest(".rs-stage-plan, .rs-stage-top, .rs-stage-ctrl")) return;
             look.current = { x: e.clientX };
             e.currentTarget.setPointerCapture?.(e.pointerId);
           }}
@@ -610,6 +854,9 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
             )}
             {walk && <button className="rs-btn" onClick={aimAtSubject}>Face the subject  ·  r</button>}
             {walk && <button className="rs-btn" onClick={resetCamera}>Reset view</button>}
+            <button className={"rs-btn" + (ctrlOpen ? " on" : "")} onClick={() => setCtrlOpen((v) => !v)}>
+              {ctrlOpen ? "Hide controls" : "Controls"}
+            </button>
             <button className={"rs-btn" + (planOpen ? " on" : "")} onClick={() => setPlanOpen((v) => !v)}>
               {planOpen ? "Hide plan" : "Show plan"}
             </button>
@@ -620,7 +867,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
             <div className="rs-walk-hint">
               Drag to walk around the set · scroll to come closer · click a camera to make it the one you shoot.
               {r.cameras.length === 1
-                ? " You have one camera — add more in the panel below to compare angles."
+                ? " You have one camera — add another under Controls to compare angles."
                 : ` ${r.cameras.length} cameras on this scene.`}
             </div>
           )}
@@ -629,6 +876,160 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
             <div className="rs-walk-hint">
               W A S D to move · Q E down and up · shift to hurry · drag to look · R to face the subject.
               You are flying {activeCam?.name ?? "the camera"} — everything lands as a mark at {t.toFixed(1)}s.
+            </div>
+          )}
+
+          {ctrlOpen && (
+            <div className="rs-stage-ctrl">
+              <div className="rs-row">
+                {["Cameras", "Performers", "Set", "Light"].map((tab) => (
+                  <button key={tab} className={"rs-btn" + (ctrlTab === tab ? " on" : "")}
+                    onClick={() => setCtrlTab(tab)}>{tab}</button>
+                ))}
+              </div>
+
+              {ctrlTab === "Cameras" && (
+                <>
+                  <div className="rs-label rs-stage-sec">Cameras — same performance, different angle</div>
+                  <div className="rs-row">
+                    {camReads.map((c) => (
+                      <button key={c.id} className={"rs-btn" + (c.id === r.activeCamera ? " on" : "")}
+                        title={c.read.shotSize ? `${c.read.shotSize} · ${c.read.lens}${c.read.subject ? " on " + c.read.subject : ""}` : "Not framing anyone"}
+                        onClick={() => setR((q) => ({ ...q, activeCamera: c.id }))}>{c.name}</button>
+                    ))}
+                    {r.cameras.length < 4 && (
+                      <button className="rs-btn" onClick={() => setR((q) => addCamera(q, now.camera))}>+ Camera</button>
+                    )}
+                  </div>
+                  <div className="rs-body" style={{ fontSize: 11, marginTop: 8 }}>
+                    {nowRead.shotSize
+                      ? `${activeCam?.name ?? "Camera"} — ${nowRead.shotSize} · ${nowRead.lens}${nowRead.subject ? " on " + nowRead.subject : ""}`
+                      : `${activeCam?.name ?? "Camera"} is not framing anyone yet. Drag it in the room, or turn it by the ring on the plan.`}
+                  </div>
+                  <div className="rs-label rs-stage-sec">Lens</div>
+                  <div className="rs-row">{lensButtons()}</div>
+                  <div className="rs-label rs-stage-sec">Height</div>
+                  <div className="rs-row">{heightButtons()}</div>
+                  <div className="rs-label rs-stage-sec">Frame</div>
+                  <div className="rs-row">{aspectButtons()}</div>
+                  <div className="rs-row rs-stage-sec">
+                    <button className={"rs-btn" + (moveOpen ? " on" : "")} onClick={() => setMoveOpen((v) => !v)}>
+                      {moveOpen ? "Close moves" : "Give this camera a move"}
+                    </button>
+                  </div>
+                  {moveOpen && (
+                    <div className="rs-act">
+                      <div className="rs-body" style={{ fontSize: 11, marginBottom: 2 }}>
+                        Runs on {activeCam?.name ?? "the selected camera"} from {(t >= r.duration - 0.5 ? 0 : t).toFixed(1)}s
+                        to {r.duration}s, as two marks you can drag afterwards.
+                      </div>
+                      {MOVE_CATEGORIES.map((cat) => (
+                        <div key={cat} style={{ marginTop: 10 }}>
+                          <div className="rs-label" style={{ marginBottom: 6 }}>{cat}</div>
+                          <div className="rs-act-grid" style={{ maxHeight: "none", gridTemplateColumns: "1fr 1fr" }}>
+                            {CAMERA_MOVES.filter((m) => m.cat === cat).map((m) => (
+                              <button key={m.id} className="rs-act-item"
+                                disabled={m.needsSubject && !nowRead.subject}
+                                style={m.needsSubject && !nowRead.subject ? { opacity: 0.4, cursor: "not-allowed" } : undefined}
+                                onClick={() => applyMove(m.id)}>
+                                <b>{m.label}</b>
+                                <span>{m.needsSubject && !nowRead.subject ? "Needs someone in frame" : m.note}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {ctrlTab === "Performers" && (
+                <>
+                  <div className="rs-row rs-stage-sec" style={{ justifyContent: "space-between" }}>
+                    <div className="rs-label" style={{ marginBottom: 0 }}>Performers at {t.toFixed(1)}s</div>
+                    {r.actors.length < MAX_ACTORS && (
+                      <button className="rs-btn" onClick={() => setR((q) => addActor(q))}>+ Performer</button>
+                    )}
+                  </div>
+                  <div className="rs-body" style={{ fontSize: 11, marginTop: 6 }}>
+                    Click anyone in the room to select them, or drag them straight to a new mark.
+                  </div>
+                  {now.actors.map((a, i) => (
+                    <div key={a.id} style={{ marginTop: 10, paddingTop: 10, borderTop: i ? "1px solid rgba(255,255,255,0.12)" : "none" }}>
+                      <div className="rs-row">
+                        <span style={{ width: 10, height: 10, borderRadius: "50%", background: a.color, display: "inline-block",
+                          outline: selActor === a.id ? "2px solid #fff" : "none", outlineOffset: 1 }} />
+                        <input className="rs-input" value={a.name}
+                          onFocus={() => setSelActor(a.id)}
+                          onChange={(e) => setR((q) => ({ ...q, actors: q.actors.map((x, j) => (j === i ? { ...x, name: e.target.value.slice(0, 24) } : x)) }))}
+                          style={{ width: 92, padding: "4px 7px", fontSize: 11 }} />
+                        {["stand", "sit", "crouch"].map((pose) => (
+                          <button key={pose} className={"rs-btn" + (a.pose === pose ? " on" : "")} onClick={() => setPose(i, pose)}>{pose}</button>
+                        ))}
+                        {r.actors.length > 1 && (
+                          <button className="rs-btn" title={`Take ${a.name} out of the scene`} style={{ marginLeft: "auto" }}
+                            onClick={() => { if (actFor === i) setActFor(null); setR((q) => removeActor(q, a.id)); }}>remove</button>
+                        )}
+                      </div>
+                      <div className="rs-row" style={{ marginTop: 6 }}>
+                        <button className={"rs-btn" + (a.action ? " on" : "")}
+                          onClick={() => { setActFor(actFor === i ? null : i); setActQuery(""); setActCat(null); }}>
+                          {a.action ? actionLabel(a.action) : "+ action"}
+                        </button>
+                        {a.action && <button className="rs-btn" title="Back to no direction" onClick={() => setAction(i, null)}>clear</button>}
+                        {BODIES.map((b) => {
+                          const cur = r.actors[i]?.body ?? defaultBody(i);
+                          return <button key={b} className={"rs-btn" + (cur === b ? " on" : "")}
+                            onClick={() => setR((q) => ({ ...q, actors: q.actors.map((x, j) => (j === i ? { ...x, body: b } : x)) }))}>{b}</button>;
+                        })}
+                      </div>
+                      {actFor === i && actionPicker(i, a)}
+                    </div>
+                  ))}
+                  {throughs.length > 0 && (
+                    <div className="rs-through" style={{ marginTop: 12 }}>
+                      {throughs.slice(0, 3).map((w, k) => (
+                        <div key={k}>{w.name} walks through {w.label} between {w.from.toFixed(1)}s and {w.to.toFixed(1)}s.</div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {ctrlTab === "Set" && (
+                <>
+                  <div className="rs-label rs-stage-sec">Set</div>
+                  <div className="rs-row">{setButtons()}</div>
+                  <div className="rs-label rs-stage-sec">Background</div>
+                  <div className="rs-row">
+                    <button className="rs-btn" onClick={() => setR((q) => {
+                      const x = 30 + Math.round(Math.random() * 40), y = 26 + Math.round(Math.random() * 30);
+                      return { ...q, extras: [...(q.extras ?? []), { id: crypto.randomUUID(), x, y, facing: Math.round(Math.random() * 360) }] };
+                    })}>+ Add a person</button>
+                    {(r.extras ?? []).length > 0 && (
+                      <>
+                        <span className="rs-body" style={{ fontSize: 11 }}>{r.extras.length} in the background</span>
+                        <button className="rs-btn" onClick={() => setR((q) => ({ ...q, extras: (q.extras ?? []).slice(0, -1) }))}>Remove one</button>
+                      </>
+                    )}
+                  </div>
+                  <div className="rs-body" style={{ fontSize: 11, marginTop: 10 }}>
+                    Moving the furniture and saying what things really are is back on the studio page.
+                  </div>
+                </>
+              )}
+
+              {ctrlTab === "Light" && (
+                <>
+                  <div className="rs-label rs-stage-sec">Light</div>
+                  <div className="rs-row">{lightButtons()}</div>
+                  <div className="rs-body" style={{ fontSize: 11, marginTop: 10 }}>
+                    The preset sets the quality and color of the light; From swings it around the room.
+                    Both carry into the shot you generate.
+                  </div>
+                </>
+              )}
             </div>
           )}
 
@@ -697,8 +1098,9 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
             {DURATIONS.map((d) => (
               <button key={d} className={"rs-btn" + (r.duration === d ? " on" : "")} onClick={() => { setR((p) => ({ ...p, duration: d })); if (t > d) setT(d); }}>{d}s</button>
             ))}
-            <button className="rs-btn" style={{ borderColor: "var(--accent)", color: "var(--accent)", marginLeft: 6 }}
-              onClick={() => setStage(true)}>Open the stage →</button>
+            <button className="rs-btn rs-primary" style={{ marginLeft: 6 }}
+              title="The same scene, full screen: walk the camera through the room, see your cameras from outside, and change anything from in there."
+              onClick={() => setStage(true)}>Step onto the set →</button>
           </div>
         </div>
       </div>
@@ -711,19 +1113,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
           </Suspense>
           <div className="rs-row" style={{ marginTop: 10 }}>
             <span className="rs-body" style={{ fontSize: 10 }}>Set</span>
-            <button className={"rs-btn" + (!r.setId && !r.setCustom ? " on" : "")} onClick={() => setR((p) => ({ ...p, setId: null, setName: null, setCustom: null }))}>Empty stage</button>
-            {r.setId && !genId && !r.setCustom && (
-              <button className="rs-btn" onClick={() => setR((p) => ({ ...p, setCustom: startEditing(getSet(p.setId)) }))}>Dress this set →</button>
-            )}
-            {mySets.map((s) => (
-              <button key={s.id} className={"rs-btn" + (r.setCustom?.savedId === s.id ? " on" : "")}
-                onClick={() => { const u = unpackSet(s); setR((p) => ({ ...p, setCustom: u, setId: null, setName: u.name })); }}>
-                {s.data?.name || "My set"}
-              </button>
-            ))}
-            {[...SETS, ...EXTERIORS].map((s) => (
-              <button key={s.id} className={"rs-btn" + (r.setId === s.id ? " on" : "")} title={s.note} onClick={() => setR((p) => ({ ...p, setId: s.id, setName: null, setCustom: null }))}>{s.name}</button>
-            ))}
+            {setButtons()}
           </div>
           <GeneratedSets
             user={user}
@@ -803,7 +1193,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
             return (
               <div className="rs-row" style={{ marginTop: 10, alignItems: "center", flexWrap: "wrap" }}>
                 <button className="rs-btn" onClick={() => setDressOpen((o) => !o)}>
-                  {dressOpen ? "▾" : "▸"} Say what things really are{describedCount ? ` · ${describedCount} described` : ""}
+                  {dressOpen ? "▾" : "▸"} Describe the furniture{describedCount ? ` · ${describedCount} described` : ""}
                 </button>
                 <span className="rs-body" style={{ fontSize: 10, display: dressOpen ? undefined : "none" }}>Leave empty to use the set's own</span>
                 {(dressOpen ? risky : []).map((p) => (
@@ -826,68 +1216,35 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
               </div>
             );
           })()}
-          <div className="rs-row" style={{ marginTop: 10, alignItems: "center" }}>
-            <span className="rs-body" style={{ fontSize: 10 }}>Background</span>
+          <div className="rs-label" style={{ marginTop: 18 }}>Background</div>
+          <div className="rs-row">
             <button className="rs-btn" onClick={() => setR((p) => {
               const x = 30 + Math.round(Math.random() * 40), y = 26 + Math.round(Math.random() * 30);
               return { ...p, extras: [...(p.extras ?? []), { id: crypto.randomUUID(), x, y, facing: Math.round(Math.random() * 360) }] };
             })}>+ Add a person</button>
             {(r.extras ?? []).length > 0 && (
               <>
-                <span className="rs-body" style={{ fontSize: 10 }}>{r.extras.length} in the background</span>
+                <span className="rs-body" style={{ fontSize: 11 }}>{r.extras.length} in the background</span>
                 <button className="rs-btn" onClick={() => setR((p) => ({ ...p, extras: (p.extras ?? []).slice(0, -1) }))}>Remove one</button>
               </>
             )}
-            <span className="rs-body" style={{ fontSize: 10, marginLeft: 6 }}>Lens</span>
-            {[null, 18, 24, 28, 35, 50, 75, 100].map((mm) => {
-              const cam = r.cameras.find((c) => c.id === r.activeCamera);
-              const active = (cam?.lens ?? null) === mm;
-              return (
-                <button key={String(mm)} className={"rs-btn" + (active ? " on" : "")}
-                  title={mm ? `${mm}mm` : "Chosen from how far the camera is standing"}
-                  onClick={() => setR((p) => ({ ...p, cameras: p.cameras.map((c) => c.id === p.activeCamera ? { ...c, lens: mm } : c) }))}>
-                  {mm ? mm + "mm" : "Auto"}
-                </button>
-              );
-            })}
-            <span className="rs-body" style={{ fontSize: 10, marginLeft: 6 }}>Height</span>
-            {[["Floor", 0.4], ["Low", 0.9], ["Eye", 1.55], ["High", 2.2], ["Above", 3.6]].map(([label, h]) => {
-              const cam = r.cameras.find((c) => c.id === r.activeCamera);
-              const active = Math.abs((cam?.height ?? 1.55) - h) < 0.01;
-              return (
-                <button key={label} className={"rs-btn" + (active ? " on" : "")}
-                  onClick={() => setR((p) => ({ ...p, cameras: p.cameras.map((c) => c.id === p.activeCamera ? { ...c, height: h } : c) }))}>
-                  {label}
-                </button>
-              );
-            })}
           </div>
-          <div className="rs-row" style={{ marginTop: 10, alignItems: "center" }}>
-            <span className="rs-body" style={{ fontSize: 10 }}>Light</span>
-            {LIGHT_PRESETS.map((p) => (
-              <button key={p.id} title={p.note}
-                className={"rs-btn" + ((r.light?.preset ?? defaultLight().preset) === p.id ? " on" : "")}
-                onClick={() => setR((prev) => ({ ...prev, light: { ...(prev.light ?? defaultLight()), preset: p.id } }))}>
-                {p.label}
-              </button>
-            ))}
-            <span className="rs-body" style={{ fontSize: 10, marginLeft: 6 }}>From</span>
-            <input type="range" min={0} max={359} step={5}
-              value={r.light?.bearing ?? defaultLight().bearing}
-              onChange={(e) => setR((prev) => ({ ...prev, light: { ...(prev.light ?? defaultLight()), bearing: Number(e.target.value) } }))}
-              style={{ width: 130, accentColor: "var(--accent)" }} />
-            <span className="rs-body" style={{ fontSize: 10 }}>{r.light?.bearing ?? defaultLight().bearing}°</span>
-          </div>
-          <div className="rs-row" style={{ marginTop: 10 }}>
-            <span className="rs-body" style={{ fontSize: 10 }}>Frame</span>
-            {["16:9", "2.39:1", "9:16", "1:1"].map((a) => (
-              <button key={a} className={"rs-btn" + ((r.aspect ?? "16:9") === a ? " on" : "")} onClick={() => setR((p) => ({ ...p, aspect: a }))}>{a}</button>
-            ))}
-          </div>
+
+          <div className="rs-label" style={{ marginTop: 18 }}>Lens</div>
+          <div className="rs-row">{lensButtons()}</div>
+
+          <div className="rs-label" style={{ marginTop: 18 }}>Camera height</div>
+          <div className="rs-row">{heightButtons()}</div>
+
+          <div className="rs-label" style={{ marginTop: 18 }}>Light</div>
+          <div className="rs-row" style={{ alignItems: "center" }}>{lightButtons()}</div>
+
+          <div className="rs-label" style={{ marginTop: 18 }}>Frame shape</div>
+          <div className="rs-row">{aspectButtons()}</div>
         </div>
       </div>
 
-      <div className="rs-panel" style={{ marginTop: 16 }}>
+      <div className="rs-panel rs-dock" style={{ marginTop: 16 }}>
         <div className="rs-row" style={{ justifyContent: "space-between" }}>
           <div className="rs-row">
             <button className="rs-btn" onClick={() => { setT(0); setPlaying(false); }}>⏮</button>
@@ -978,49 +1335,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
               )}
             </div>
 
-            {actFor === i && (
-              <div className="rs-act">
-                <div className="rs-row">
-                  <input
-                    className="rs-input"
-                    value={actQuery}
-                    autoFocus
-                    onChange={(e) => setActQuery(e.target.value)}
-                    placeholder={`What is ${a.name} doing at ${t.toFixed(1)}s?`}
-                    style={{ flex: 1, minWidth: 200 }}
-                  />
-                  <button className="rs-btn" onClick={() => setActFor(null)}>close</button>
-                </div>
-
-                <div className="rs-act-cats">
-                  <button className={"rs-btn" + (actCat === null ? " on" : "")} onClick={() => setActCat(null)}>all</button>
-                  {ACTION_CATEGORIES.map((c) => (
-                    <button key={c} className={"rs-btn" + (actCat === c ? " on" : "")} onClick={() => setActCat(actCat === c ? null : c)}>{c}</button>
-                  ))}
-                </div>
-
-                <div className="rs-act-grid">
-                  {searchActions(actQuery, actCat).map((act) => (
-                    <button
-                      key={act.id}
-                      className={"rs-act-item" + (a.action === act.id ? " on" : "")}
-                      onClick={() => { setAction(i, act.id); setActFor(null); }}
-                    >
-                      <b>{act.label}</b>
-                      <span>{act.cat}{act.pose ? ` · ${act.pose}` : ""}{act.travel ? " · while moving" : ""}</span>
-                    </button>
-                  ))}
-                </div>
-                {searchActions(actQuery, actCat).length === 0 && (
-                  <div className="rs-act-none">Nothing matches that. Try a different word, or clear the category.</div>
-                )}
-
-                <div className="rs-body" style={{ fontSize: 10, marginTop: 10, opacity: 0.8 }}>
-                  Set at {t.toFixed(1)}s and held until you change it. A one-off — a punch, sitting down —
-                  plays once from here. Anything on the spot pauses while they walk and resumes at the mark.
-                </div>
-              </div>
-            )}
+            {actFor === i && actionPicker(i, a)}
           </div>
         ))}
       </div>
@@ -1029,7 +1344,10 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
         <div className="rs-row" style={{ justifyContent: "space-between", marginBottom: 10 }}>
           <div className="rs-label" style={{ marginBottom: 0 }}>Cameras — same performance, different angle</div>
           <div className="rs-row">
-            <button className={"rs-btn" + (moveOpen ? " on" : "")} onClick={() => setMoveOpen((v) => !v)}>Move this camera</button>
+            <button className={"rs-btn" + (moveOpen ? " on" : "")} onClick={() => setMoveOpen((v) => !v)}
+              title="A move happens over time — a dolly, a pan, a crane — and is written as two marks on the timeline. Dragging the camera instead puts it somewhere new at this one moment.">
+              Give this camera a move
+            </button>
             {r.cameras.length < 4 && <button className="rs-btn" onClick={() => setR((p) => addCamera(p, now.camera))}>+ Camera</button>}
           </div>
         </div>
@@ -1090,6 +1408,12 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
         </div>
         <div className="rs-body" style={{ fontSize: 10, marginTop: 10, opacity: 0.8 }}>
           Dragging the camera only moves the selected one. The performers' timing is shared by every camera.
+        </div>
+        <div className="rs-body" style={{ fontSize: 11, marginTop: 8 }}>
+          <b style={{ color: "var(--text)", fontWeight: 500 }}>Shoot this angle</b> hands the framing, lens, blocking
+          and beats to the generator as a written prompt, with the set attached as a reference. Blocking here is free
+          and unlimited — you pick the model and see the price before anything is charged. A location plate, if the
+          scene has a set, is 2 credits.
         </div>
       </div>
     </div>

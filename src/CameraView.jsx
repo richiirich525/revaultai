@@ -5,7 +5,7 @@ import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.j
 import * as SkeletonUtils from "three/examples/jsm/utils/SkeletonUtils.js";
 import {
   toWorld, dirFromBearing, yawFromBearing, lensMm, verticalFov,
-  POSE_LEG_SCALE, poseDrop, EYE_HEIGHT, HEAD_HEIGHT, LEG_HEIGHT, ASPECTS,
+  POSE_LEG_SCALE, poseDrop, EYE_HEIGHT, HEAD_HEIGHT, LEG_HEIGHT, ASPECTS, UNITS_PER_METRE,
 } from "./lib/stage3d.js";
 import { chooseClip, clipTimeFor, MOVING } from "./lib/performers.js";
 import { actionLoops } from "./lib/actions.js";
@@ -246,6 +246,21 @@ function makeRing(color) {
   return ring;
 }
 
+// Something a ray can actually hit. Raycasting a skinned mesh is slow and
+// goes wrong the moment the skeleton moves, so every performer carries a
+// plain body-sized cylinder for picking. Its material is invisible; a mesh
+// handed straight to intersectObjects is still tested.
+const FLOOR_PLANE = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+
+function makeHitProxy() {
+  const m = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.42, 0.42, 1.85, 10),
+    new THREE.MeshBasicMaterial({ visible: false }),
+  );
+  m.position.y = 0.92;
+  return m;
+}
+
 function makePerformer(body, clips, color) {
   const inner = SkeletonUtils.clone(body.scene);
   // Stand-in suit on the human bodies; the mannequin keeps its own look.
@@ -262,8 +277,10 @@ function makePerformer(body, clips, color) {
   facingFix.rotation.y = body.yawFix;
   facingFix.add(inner);
   const g = new THREE.Group();
-  g.add(facingFix, makeRing(color));
-  g.userData = { kind: "performer", mixer: new THREE.AnimationMixer(inner), clips, actions: {}, weights: {}, yaw: null };
+  const ring = makeRing(color);
+  const hit = makeHitProxy();
+  g.add(facingFix, ring, hit);
+  g.userData = { kind: "performer", mixer: new THREE.AnimationMixer(inner), clips, actions: {}, weights: {}, yaw: null, ring, hit };
   return g;
 }
 
@@ -281,8 +298,10 @@ function makeMannequin(color) {
   const nose = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.05, 0.09), face);
   nose.position.set(0, HEAD_HEIGHT + 0.01, -0.13);
   upper.add(torso, head, nose);
-  g.add(legs, upper);
-  g.userData = { kind: "box", legs, upper };
+  const ring = makeRing(color);
+  const hit = makeHitProxy();
+  g.add(legs, upper, ring, hit);
+  g.userData = { kind: "box", legs, upper, ring, hit };
   return g;
 }
 
@@ -328,7 +347,7 @@ function drivePerformer(m, a, t, realDt) {
   m.rotation.y = yawFromBearing(u.yaw);
 }
 
-export default function CameraView({ state, lens, subject, aspect = "16:9", title, setId, genSet, setScale, setGround, onSetError, onSetFit, plateRef, setData, light, height, lensMmOverride, extras, hiddenPieces, fill = false, free = false, rigs = null, onPickCamera }) {
+export default function CameraView({ state, lens, subject, aspect = "16:9", title, setId, genSet, setScale, setGround, onSetError, onSetFit, plateRef, setData, light, height, lensMmOverride, extras, hiddenPieces, fill = false, free = false, rigs = null, onPickCamera, onPickActor, onDragTo, selectedActor = null }) {
   const box = useRef(null);
   const three = useRef(null);
   const lastFrame = useRef(0);
@@ -343,6 +362,14 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
   // tear them off under the pointer.
   const pick = useRef(null);
   useEffect(() => { pick.current = onPickCamera ?? null; });
+  // Same reason: the studio rebuilds these every render, and the drag
+  // listeners are attached once.
+  const pickActor = useRef(null);
+  useEffect(() => { pickActor.current = onPickActor ?? null; });
+  const dragTo = useRef(null);
+  useEffect(() => { dragTo.current = onDragTo ?? null; });
+  const chosen = useRef(null);
+  useEffect(() => { chosen.current = selectedActor ?? null; });
   const [nearWall, setNearWall] = useState(false);
   const outsideRef = useRef(false);
   const hiddenRef = useRef([]);
@@ -628,6 +655,15 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
         actors.set(a.id, m);
       }
       seen.add(a.id);
+      // The picking proxy carries the id, and the ground ring is the hover
+      // and selection feedback — a performer you can grab says so.
+      if (m.userData.hit) m.userData.hit.userData.actorId = a.id;
+      if (m.userData.ring) {
+        const hot = T.hoverKey === "a:" + a.id;
+        const sel = selectedActor === a.id;
+        m.userData.ring.material.opacity = hot ? 1 : sel ? 0.95 : 0.7;
+        m.userData.ring.scale.setScalar(hot ? 1.3 : sel ? 1.15 : 1);
+      }
 
       const w = toWorld(a.x, a.y);
       m.position.set(w.x, 0, w.z);
@@ -663,7 +699,9 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
         g.position.set(w.x, h, w.z);
         g.rotation.y = yawFromBearing(k.rotation ?? 0);
         const u = g.userData;
-        u.body.material.color.setHex(k.active ? 0x7b3fe4 : 0x8b89a0);
+        u.activeNow = k.active;
+        u.body.material.color.setHex(
+          T.hoverKey === "c:" + id ? 0xffffff : k.active ? 0x7b3fe4 : 0x8b89a0);
         u.lines.material.color.setHex(k.active ? 0x7b3fe4 : 0x5a5b68);
         u.lines.material.opacity = k.active ? 0.85 : 0.45;
         u.leg.scale.y = Math.max(0.05, h);
@@ -762,45 +800,156 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
     return () => { if (plateRef) plateRef.current = null; };
   }, [plateRef]);
 
+  /*
+    One pointer story for the whole picture. A performer can be grabbed and
+    walked wherever you are standing — through the lens or outside looking in
+    — and a camera can be picked up whenever you can see it. Anything that
+    isn't an object turns the free view instead. A press that doesn't travel
+    is a selection, not a drag.
+  */
   useEffect(() => {
     const el = box.current;
-    if (!el || !free) return;
-    let drag = null;
+    if (!el) return;
+    let orbitDrag = null;   // turning the free view
+    let grab = null;        // { kind, id, moved, lx, ly }
+    let hoverKey = null;
 
-    const down = (e) => {
-      // A click that doesn't travel is a pick, not an orbit.
-      drag = { x: e.clientX, y: e.clientY, moved: 0 };
-      el.setPointerCapture?.(e.pointerId);
-    };
-    const move = (e) => {
-      if (!drag) return;
-      const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
-      drag.x = e.clientX; drag.y = e.clientY;
-      drag.moved += Math.abs(dx) + Math.abs(dy);
-      const o = orbit.current;
-      o.yaw -= dx * 0.006;
-      o.pitch = Math.max(-0.2, Math.min(1.45, o.pitch + dy * 0.005));
-      three.current?.applyView?.();
-    };
-    const up = (e) => {
-      const wasDrag = drag && drag.moved > 5;
-      drag = null;
-      if (wasDrag || !pick.current) return;
+    const targets = () => {
       const T = three.current;
-      if (!T) return;
+      const out = [];
+      if (!T) return out;
+      for (const m of T.actors.values()) if (m.userData.hit) out.push(m.userData.hit);
+      // You can only pick up a camera you can see, which means the free view.
+      if (free) for (const g of T.rigs.values()) {
+        if (g.visible && g.userData.body) out.push(g.userData.body, g.userData.barrel);
+      }
+      return out;
+    };
+
+    const rayFrom = (e) => {
+      const T = three.current;
+      if (!T) return null;
       const r = el.getBoundingClientRect();
-      const ndc = new THREE.Vector2(
+      if (!r.width || !r.height) return null;
+      const ray = new THREE.Raycaster();
+      ray.setFromCamera(new THREE.Vector2(
         ((e.clientX - r.left) / r.width) * 2 - 1,
         -((e.clientY - r.top) / r.height) * 2 + 1,
-      );
-      const ray = new THREE.Raycaster();
-      ray.setFromCamera(ndc, T.camera);
-      const bodies = [];
-      for (const g of T.rigs.values()) if (g.visible) bodies.push(g.userData.body, g.userData.barrel);
-      const hit = ray.intersectObjects(bodies, false)[0];
-      if (hit?.object?.userData?.camId) pick.current(hit.object.userData.camId);
+      ), T.camera);
+      return ray;
     };
+
+    const hitAt = (e) => {
+      const ray = rayFrom(e);
+      if (!ray) return null;
+      const t = targets();
+      if (!t.length) return null;
+      return ray.intersectObjects(t, false)[0]?.object?.userData ?? null;
+    };
+
+    // Where the pointer meets the floor, back in plan coordinates.
+    const floorAt = (e) => {
+      const ray = rayFrom(e);
+      if (!ray) return null;
+      const at = new THREE.Vector3();
+      if (!ray.ray.intersectPlane(FLOOR_PLANE, at)) return null;
+      return { x: at.x * UNITS_PER_METRE + 50, y: at.z * UNITS_PER_METRE + 50 };
+    };
+
+    // Highlight runs straight on the materials and draws one frame, because
+    // the scene is rendered per React render and a hover is not a state change.
+    const paintHover = (key) => {
+      if (key === hoverKey) return;
+      hoverKey = key;
+      const T = three.current;
+      if (!T) return;
+      T.hoverKey = key;
+      for (const [id, m] of T.actors) {
+        const ring = m.userData.ring;
+        if (!ring) continue;
+        const hot = key === "a:" + id;
+        const sel = chosen.current === id;
+        ring.material.opacity = hot ? 1 : sel ? 0.95 : 0.7;
+        ring.scale.setScalar(hot ? 1.3 : sel ? 1.15 : 1);
+      }
+      for (const [id, g] of T.rigs) {
+        const u = g.userData;
+        if (!u.body) continue;
+        u.body.material.color.setHex(
+          key === "c:" + id ? 0xffffff : u.activeNow ? 0x7b3fe4 : 0x8b89a0);
+      }
+      T.renderer?.render(T.scene, T.camera);
+    };
+
+    const down = (e) => {
+      const ud = hitAt(e);
+      if (ud?.actorId != null && (dragTo.current || pickActor.current)) {
+        e.stopPropagation();
+        grab = { kind: "actor", id: ud.actorId, moved: 0, lx: e.clientX, ly: e.clientY };
+        el.setPointerCapture?.(e.pointerId);
+        el.style.cursor = "grabbing";
+        return;
+      }
+      if (ud?.camId != null && free && (dragTo.current || pick.current)) {
+        e.stopPropagation();
+        grab = { kind: "camera", id: ud.camId, moved: 0, lx: e.clientX, ly: e.clientY };
+        el.setPointerCapture?.(e.pointerId);
+        el.style.cursor = "grabbing";
+        return;
+      }
+      if (!free) return;
+      orbitDrag = { x: e.clientX, y: e.clientY, moved: 0 };
+      el.setPointerCapture?.(e.pointerId);
+    };
+
+    const move = (e) => {
+      if (grab) {
+        grab.moved += Math.abs(e.clientX - grab.lx) + Math.abs(e.clientY - grab.ly);
+        grab.lx = e.clientX; grab.ly = e.clientY;
+        if (grab.moved > 4 && dragTo.current) {
+          const p = floorAt(e);
+          if (p) dragTo.current(grab.kind, grab.id, p);
+        }
+        return;
+      }
+      if (orbitDrag) {
+        const dx = e.clientX - orbitDrag.x, dy = e.clientY - orbitDrag.y;
+        orbitDrag.x = e.clientX; orbitDrag.y = e.clientY;
+        orbitDrag.moved += Math.abs(dx) + Math.abs(dy);
+        const o = orbit.current;
+        o.yaw -= dx * 0.006;
+        o.pitch = Math.max(-0.2, Math.min(1.45, o.pitch + dy * 0.005));
+        three.current?.applyView?.();
+        return;
+      }
+      const ud = hitAt(e);
+      paintHover(ud?.actorId != null ? "a:" + ud.actorId
+        : ud?.camId != null ? "c:" + ud.camId : null);
+      el.style.cursor = ud ? "grab" : free ? "grab" : "default";
+    };
+
+    const up = (e) => {
+      if (grab) {
+        const tap = grab.moved <= 4;
+        const g = grab;
+        grab = null;
+        el.style.cursor = "grab";
+        if (!tap) return;
+        if (g.kind === "actor") pickActor.current?.(g.id);
+        else pick.current?.(g.id);
+        return;
+      }
+      const wasDrag = orbitDrag && orbitDrag.moved > 5;
+      orbitDrag = null;
+      if (wasDrag) return;
+      // A press on empty floor is how you put a performer down again.
+      if (!hitAt(e)) pickActor.current?.(null);
+    };
+
+    const cancel = () => { grab = null; orbitDrag = null; };
+    const leave = () => { if (!grab && !orbitDrag) paintHover(null); };
     const wheel = (e) => {
+      if (!free) return;
       e.preventDefault();
       const o = orbit.current;
       o.dist = Math.max(1.8, Math.min(40, o.dist * (1 + e.deltaY * 0.0012)));
@@ -810,12 +959,15 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
     el.addEventListener("pointerdown", down);
     el.addEventListener("pointermove", move);
     el.addEventListener("pointerup", up);
-    el.addEventListener("pointercancel", () => { drag = null; });
+    el.addEventListener("pointercancel", cancel);
+    el.addEventListener("pointerleave", leave);
     el.addEventListener("wheel", wheel, { passive: false });
     return () => {
       el.removeEventListener("pointerdown", down);
       el.removeEventListener("pointermove", move);
       el.removeEventListener("pointerup", up);
+      el.removeEventListener("pointercancel", cancel);
+      el.removeEventListener("pointerleave", leave);
       el.removeEventListener("wheel", wheel);
     };
   }, [free]);
@@ -831,7 +983,7 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
         : fill
         ? { position: "relative", height: "100%", width: "auto", maxWidth: "100%", maxHeight: "100%", aspectRatio: ratio.css, overflow: "hidden", background: "#0e0f14" }
         : { position: "relative", width: "100%", aspectRatio: ratio.css, maxHeight: "70vh", margin: "0 auto", overflow: "hidden", borderRadius: 4, background: "#0e0f14" }}>
-        <div ref={box} style={{ position: "absolute", inset: 0 }} />
+        <div ref={box} style={{ position: "absolute", inset: 0, touchAction: "none" }} />
         {failed && (
           <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", padding: 20, textAlign: "center" }}>
             This browser can't draw 3D. The overhead plan still works.

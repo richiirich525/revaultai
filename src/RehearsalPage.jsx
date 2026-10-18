@@ -13,6 +13,50 @@ const bar = {
 };
 const mono = { fontFamily: "'DM Mono', monospace" };
 
+// Where the blocking goes next. These were in the page source and nowhere a
+// visitor could see them.
+const NEXT_STEPS = [
+  {
+    page: "scene-breakdown",
+    name: "Scene Breakdown",
+    body: "Turn a written scene into numbered shots, with the characters and locations described the same way every time.",
+  },
+  {
+    page: "coverage",
+    name: "Coverage Planner",
+    body: "The setups an editor needs to cut the scene — master, singles, over-the-shoulders, reactions — and what is missing.",
+  },
+  {
+    page: "blocking",
+    name: "Performance & Blocking",
+    body: "Acting direction you can play, and delivery notes on every line, once the positions are settled.",
+  },
+];
+
+const FAQ = [
+  {
+    q: "What costs money here?",
+    a: "Nothing on this page. Blocking, cameras, sets, lighting, the timeline and the full-screen stage are free and need no account. Credits are only spent when you press Shoot this angle and generate actual video — and the price is shown before you confirm it.",
+  },
+  {
+    q: "Do I need an account?",
+    a: "Only to keep a rehearsal. Without one you can block as much as you like, but the work lives in the page and goes when you close the tab.",
+  },
+  {
+    q: "What do credits buy?",
+    a: "Generated video. Each model has its own price per second, shown next to it on the Generate page. A location plate — the photograph of your set that gets attached to the shot — is 2 credits.",
+  },
+  {
+    q: "Can I get the blocking out of here?",
+    a: "Shoot this angle carries it into the generator as a written shot, and Cover the scene saves every angle as a shot list against a project. There is no video or storyboard export from the rehearsal itself yet.",
+  },
+  {
+    q: "Is this the finished picture?",
+    a: "No. The stand-ins and the grey set are there to settle framing, eyelines and timing. None of that render is ever sent to a model — it would copy the stand-ins. What gets sent is the written shot, and a photographed plate of the set if you have one.",
+  },
+];
+
+
 export default function RehearsalPage({ user, activeProject, notify, onSignInClick, setGenPrefill, setPage }) {
   const [list, setList] = useState([]);
   const [current, setCurrent] = useState({ id: null, data: null, key: "new" });
@@ -207,20 +251,23 @@ export default function RehearsalPage({ user, activeProject, notify, onSignInCli
         <div className="page-hdr-eyebrow">Rehearsal</div>
         <div className="page-hdr-title">Rehearsal Studio</div>
         <div className="page-hdr-sub">Block the scene over time before you spend a credit on it.</div>
+        <div style={{ ...mono, fontSize: 12, color: "#4ADE80", letterSpacing: "0.08em", marginTop: 8 }}>
+          Free — no account needed
+        </div>
       </div>
       <section className="section">
-        <div style={{ ...bar, ...mono, fontSize: 11, color: "var(--muted)", lineHeight: 1.85 }}>
+        <div style={{ ...bar, ...mono, fontSize: 12.5, color: "#9B98A8", lineHeight: 1.85 }}>
           Scrub to a moment and drag anyone — a keyframe is written there, and the movement between keyframes is filled in. Mark beats as you go. Add cameras to compare angles on an identical performance. Shot size, lens, eyelines and the 180° line all update live.
         </div>
 
         <div style={{ ...bar, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-          <button style={{ ...btn, borderColor: "var(--accent)", color: "var(--accent)" }} onClick={save} disabled={saving}>
+          <button style={btn} onClick={save} disabled={saving} title="Keeps this rehearsal under your account so you can come back to it. Everything else on this page works without one.">
             {saving ? "Saving…" : !user ? "Sign in to save" : dirty || !current.id ? "Save rehearsal" : "\u2713 Saved"}
           </button>
           <button style={btn} onClick={startNew}>New rehearsal</button>
-          {dirty && <span style={{ ...mono, fontSize: 10, color: "#E5B769" }}>Unsaved changes</span>}
+          {dirty && <span style={{ ...mono, fontSize: 11, color: "#E5B769" }}>Unsaved changes</span>}
           {activeProject && user && (
-            <span style={{ ...mono, fontSize: 10, color: "var(--muted)" }}>Saving to {activeProject.name}</span>
+            <span style={{ ...mono, fontSize: 11, color: "#9B98A8" }}>Saving to {activeProject.name}</span>
           )}
         </div>
 
@@ -248,6 +295,39 @@ export default function RehearsalPage({ user, activeProject, notify, onSignInCli
         )}
 
         <RehearsalStudio key={current.key} initial={current.data} onChange={onStudioChange} setGenPrefill={setGenPrefill} setPage={setPage} notify={notify} onShoot={onShoot} onCover={onCover} user={user} activeProject={activeProject} />
+
+        <div style={{ ...bar, marginTop: 44 }}>
+          <div style={{ ...mono, fontSize: 10, letterSpacing: "0.2em", color: "#B9A2F0", textTransform: "uppercase", marginBottom: 12 }}>
+            Use it with
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12 }}>
+            {NEXT_STEPS.map((n) => (
+              <button
+                key={n.page}
+                onClick={() => setPage?.(n.page)}
+                style={{
+                  textAlign: "left", background: "var(--surface)", border: "1px solid var(--border)",
+                  borderRadius: 6, padding: "14px 16px", cursor: "pointer", color: "var(--text)",
+                }}
+              >
+                <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 14, fontWeight: 700 }}>{n.name} →</div>
+                <div style={{ ...mono, fontSize: 11.5, color: "#9B98A8", lineHeight: 1.7, marginTop: 6 }}>{n.body}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ ...bar, marginTop: 40, marginBottom: 56 }}>
+          <div style={{ ...mono, fontSize: 10, letterSpacing: "0.2em", color: "#B9A2F0", textTransform: "uppercase", marginBottom: 12 }}>
+            Questions
+          </div>
+          {FAQ.map((f) => (
+            <details key={f.q} style={{ borderTop: "1px solid var(--border)", padding: "12px 0" }}>
+              <summary style={{ ...mono, fontSize: 12.5, color: "var(--text)", cursor: "pointer" }}>{f.q}</summary>
+              <div style={{ ...mono, fontSize: 12, color: "#9B98A8", lineHeight: 1.85, marginTop: 10 }}>{f.a}</div>
+            </details>
+          ))}
+        </div>
       </section>
     </div>
   );
