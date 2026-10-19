@@ -852,8 +852,18 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
                 {walk ? "Stop walking" : "Walk the camera"}
               </button>
             )}
-            {walk && <button className="rs-btn" onClick={aimAtSubject}>Face the subject  ·  r</button>}
-            {walk && <button className="rs-btn" onClick={resetCamera}>Reset view</button>}
+            {(walk || freeView) && (
+              <button className="rs-btn" onClick={aimAtSubject}
+                title="Turn the camera to face whoever the scene is about.">
+                Face the subject{walk ? "  ·  r" : ""}
+              </button>
+            )}
+            {(walk || freeView) && (
+              <button className="rs-btn" onClick={resetCamera}
+                title="Put the camera back where this shot starts — its first mark on the timeline.">
+                Reset view
+              </button>
+            )}
             <button className={"rs-btn" + (ctrlOpen ? " on" : "")} onClick={() => setCtrlOpen((v) => !v)}>
               {ctrlOpen ? "Hide controls" : "Controls"}
             </button>
@@ -905,6 +915,10 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
                     {nowRead.shotSize
                       ? `${activeCam?.name ?? "Camera"} — ${nowRead.shotSize} · ${nowRead.lens}${nowRead.subject ? " on " + nowRead.subject : ""}`
                       : `${activeCam?.name ?? "Camera"} is not framing anyone yet. Drag it in the room, or turn it by the ring on the plan.`}
+                  </div>
+                  <div className="rs-row rs-stage-sec">
+                    <button className="rs-btn" onClick={aimAtSubject}>Face the subject</button>
+                    <button className="rs-btn" onClick={resetCamera}>Reset view</button>
                   </div>
                   <div className="rs-label rs-stage-sec">Lens</div>
                   <div className="rs-row">{lensButtons()}</div>
