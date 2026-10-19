@@ -4,6 +4,109 @@
 
 export const POSTS = [
   {
+    slug: "rehearsal-studio-update-direct-blocking",
+    title: "Rehearsal Studio Update: Grab Anyone, Step Onto the Set",
+    seoTitle: "RevaultAI Rehearsal Studio Update: Direct Blocking in 3D",
+    description:
+      "The Rehearsal Studio now lets you drag performers and cameras directly, on the plan and in 3D, with a full-screen stage you can change from the inside. What shipped, and what hasn't.",
+    date: "2026-10-18",
+    author: "Richard Garland",
+    category: "News",
+    readingTime: "6 min",
+    faq: [
+      ["Do I need an account to use the Rehearsal Studio?", "No. Blocking, cameras, sets, lighting, the timeline and the full-screen 3D stage are free and need no sign-in. An account is only needed to save a rehearsal so you can come back to it later, and credits are only spent when you generate actual video. A call to action on this site said 'sign-in required' for over a year. It was wrong, and it has been corrected."],
+      ["Can I move performers in the 3D view?", "Yes, as of 18 October 2026. Click any performer in the 3D preview or the full-screen stage and drag them across the floor; the move is written as a keyframe at wherever the playhead is sitting, exactly as dragging on the overhead plan does. Cameras can be picked up the same way in the orbit view, where they appear as objects standing in the room. Rotation is still done by the ring handle on the plan."],
+      ["What is the full-screen stage in the Rehearsal Studio?", "A view of your scene at full screen, with the 3D room as the whole picture rather than a panel beside the plan. You can orbit it from outside to see where your cameras are standing, or fly the camera you are actually shooting with using W A S D, which writes every adjustment to the timeline as a mark. It now carries its own controls for cameras, performers, set and lighting, so you do not have to leave it to change anything."],
+    ],
+    content: `
+<p>The Rehearsal Studio could already do considerably more than most people using it ever found. That is not a compliment to the Rehearsal Studio. It is the diagnosis.</p>
+
+<p>Six performers, four cameras, thirty-seven directed actions, thirteen camera moves, sixteen sets, lighting, eyeline reads and a live 180-degree warning &mdash; all of it there, much of it two scrolls below the thing you were looking at, or behind a word nobody uses outside a film set. I had a reviewer go through the page properly. They came back with eighteen problems. Most of them were not missing features. They were features you could not get to.</p>
+
+<p>This is what shipped today.</p>
+
+<h2>Grab Anyone</h2>
+
+<p>You can now pick up a performer and put them somewhere else. Not a small dot handle beside them &mdash; the person. On the overhead plan, in the 3D preview, and inside the full-screen stage. Cameras work the same way, including in the orbit view where they stand in the room as objects you can walk up to.</p>
+
+<p>Drag at a scrubbed moment and a keyframe is written there, which is how the studio has always worked. What changed is that you no longer have to find the handle first.</p>
+
+<p>One detail that matters more than it sounds: hit areas are now measured in screen pixels rather than stage units. The plan is drawn at about 460 pixels wide beside the camera view and about 300 inside the stage, and it zooms to fit whatever is in the scene. Sizing a grab target in stage units means it is comfortable at one zoom level and a pinprick at another. Sizing it in pixels means a performer is the same size under your finger wherever the plan happens to be drawn. There is a grab cursor, a hover highlight on whatever you are about to pick up, and text selection is off over the whole diagram, so a drag that misses no longer highlights the paragraph behind it.</p>
+
+<h2>Step Onto the Set</h2>
+
+<p>The full-screen stage used to be a picture you could walk a camera through and nothing else. Its own hint text told you to add cameras "in the panel below." There was no panel below. That sentence had been sitting there since the stage shipped.</p>
+
+<p>The stage now has controls, on a panel inside it: cameras, performers, set and lighting, with the action picker and the camera moves where you can reach them. Add a third camera without leaving. Change the lens, drop the camera to floor height, swap the set, swing the key light around the room &mdash; all while looking at the room rather than at a form.</p>
+
+<h2>The Bug That Wasn't What It Looked Like</h2>
+
+<p>The review reported that opening the stage triggered an empty "leave page?" prompt from the browser, and asked for it to be removed, since the stage is on the same page.</p>
+
+<p>Opening the stage cannot trigger that prompt. It sets a flag; nothing navigates. What was actually happening: if you load the studio directly, open the stage, cannot find the way out, and press the browser's Back button, you leave the site &mdash; and because there is unsaved blocking, the browser asks you to confirm. The prompt was real. The cause was somewhere else entirely.</p>
+
+<p>Deleting the warning would have hidden the symptom and thrown away the thing that stops you losing an hour of blocking to a stray keystroke. Instead the stage now puts an entry on the browser's history when it opens, so <strong>Back closes the stage</strong> and returns you to the studio, and tidies that entry away if you leave by the button or by Escape. The unsaved-work warning stays where it belongs.</p>
+
+<p>Worth writing down because it generalizes: a bug report is an observation plus a theory, and the theory is the part that is often wrong. Fix the observation.</p>
+
+<h2>It Was Never Behind a Sign-In</h2>
+
+<p>The most prominent button on the page was "Sign in to save." On a tool that is free and needs no account, that is the worst possible first impression &mdash; it reads as a wall. It is now a quiet secondary, the headline says <strong>free, no account needed</strong>, and the primary action is "Step onto the set."</p>
+
+<p>While checking that, I found a call to action on another page of this site telling readers that blocking required a sign-in. It never has. That has been corrected too.</p>
+
+<p>To be exact about what costs what: blocking, cameras, sets, lighting, the timeline and the stage are free, unlimited, and need no account. An account saves a rehearsal. Credits are spent only when you press <em>Shoot this angle</em> and generate real video, and the price is shown before you confirm. That button now says so on the page instead of leaving you to find out.</p>
+
+<h2>Readability, Measured Rather Than Guessed</h2>
+
+<p>The small gray monospace text that labels most of this tool was running at a contrast ratio of 3.53 to 1 against the page background. The brand purple used for section labels was at 3.35. The accessibility standard for text that size is 4.5. Both failed, and I had never measured either.</p>
+
+<p>Both are now the same two colors, lightened until they pass: 6.79 and 8.65. Body text went up a point, buttons went up a point, and the roughly forty identical-looking chip buttons are now grouped under headings &mdash; Lens, Camera height, Light, Frame shape &mdash; instead of running together in one wall. Selected chips are filled rather than tinted, so you can see what is on at a glance. The timeline follows you down the page instead of scrolling away the moment you go to adjust a performer.</p>
+
+<p>Every piece of jargon now has a hover tip. Not "35mm" but what a 35mm lens does to a room. The clipped "CAM" label at the bottom of the plan flips above the camera instead of being cut in half by the frame.</p>
+
+<h2>Honest Limits</h2>
+
+<p>The review asked for more than this, and the rest has not been built. Named plainly, because a feature list that only lists wins is marketing:</p>
+
+<ul>
+<li><strong>No live path recording.</strong> You cannot yet drag a performer around while the scene plays and have the walk recorded in real time, the way walking the camera works.</li>
+<li><strong>No multi-camera switching.</strong> Cameras cannot be watched side by side and cut between live to produce a rough edit.</li>
+<li><strong>No dialogue or sound</strong> on the timeline, so timing is not yet driven by lines.</li>
+<li><strong>Lighting does not change over time.</strong> There are presets and a direction, but no keyframes, and no placeable practical lamps.</li>
+<li><strong>No export.</strong> No animatic video, no storyboard frames, no share link. The blocking leaves as a prompt and a shot list, or not at all.</li>
+<li><strong>No rotation in 3D.</strong> You can move a performer in the room but you still turn them with the ring on the plan.</li>
+</ul>
+
+<p>Three things the review asked for already existed and are worth pointing at, since finding them was the whole problem: camera moves (dolly, truck, pan, arc, crane, zoom, each written as two draggable marks on the timeline), the thirty-seven directed actions, and live warnings for crossing the 180-degree line, mismatched eyelines and a performer walking through furniture.</p>
+
+<div class="cta-inline">
+<strong>Block a Scene Without Spending Anything</strong>
+<p>Drag performers and cameras, step onto the set in 3D, and turn every angle into a prompt. Free, no credits, no account needed.</p>
+<a class="cta-btn" href="/rehearsal">Open the Rehearsal Studio</a>
+</div>
+
+<h2>Why This Rather Than Features</h2>
+
+<p>It is more satisfying to add a thing than to make an existing thing reachable. The changelog looks better. But a capability nobody can find is worth the same as a capability that does not exist, and it costs more, because you are maintaining it.</p>
+
+<p>If you tried the Rehearsal Studio before and bounced off it, the honest answer is that it probably was not you. Try it again. If something is still in the way, the most useful thing you can send me is the sentence that confused you.</p>
+
+<h2>Frequently Asked Questions</h2>
+
+<h3>Do I need an account to use the Rehearsal Studio?</h3>
+<p>No. Blocking, cameras, sets, lighting, the timeline and the full-screen 3D stage are free and need no sign-in. An account is only needed to save a rehearsal so you can come back to it later, and credits are only spent when you generate actual video. A call to action on this site said 'sign-in required' for over a year. It was wrong, and it has been corrected.</p>
+
+<h3>Can I move performers in the 3D view?</h3>
+<p>Yes, as of 18 October 2026. Click any performer in the 3D preview or the full-screen stage and drag them across the floor; the move is written as a keyframe at wherever the playhead is sitting, exactly as dragging on the overhead plan does. Cameras can be picked up the same way in the orbit view, where they appear as objects standing in the room. Rotation is still done by the ring handle on the plan.</p>
+
+<h3>What is the full-screen stage in the Rehearsal Studio?</h3>
+<p>A view of your scene at full screen, with the 3D room as the whole picture rather than a panel beside the plan. You can orbit it from outside to see where your cameras are standing, or fly the camera you are actually shooting with using W A S D, which writes every adjustment to the timeline as a mark. It now carries its own controls for cameras, performers, set and lighting, so you do not have to leave it to change anything.</p>
+
+<p class="editorial-note">Shipped 18 October 2026. For the method this tool is built on, see <a href="/blog/block-a-scene-before-you-generate">how to block a scene before you generate it</a>.</p>
+`,
+  },
+  {
     slug: "180-degree-rule-ai-video",
     title: "The 180-Degree Line, and Why AI Video Breaks It",
     seoTitle: "The 180-Degree Rule in AI Video: Screen Direction",
@@ -486,7 +589,7 @@ Audio: clean lip-synced speech, close and dry. Room tone of a quiet kitchen, a r
 
 <div class="cta-inline">
 <strong>Plan the Scene Before the Model</strong>
-<p>Block scenes, build shot specs and attach location references with RevaultAI's planning tools. Sign-in required.</p>
+<p>Block scenes, build shot specs and attach location references with RevaultAI's planning tools. Blocking is free and needs no account; saving specs and generating need one.</p>
 <a class="cta-btn" href="/tools">See the Tools</a>
 </div>
 
@@ -582,7 +685,7 @@ Audio: clean lip-synced speech, close and dry. Room tone of a quiet kitchen, a r
 
 <div class="cta-inline">
 <strong>Turn Your Blocking Into a Photograph</strong>
-<p>Block a scene in the Rehearsal Studio, approve a photoreal plate, then generate from the photograph. Sign-in required.</p>
+<p>Block a scene in the Rehearsal Studio, approve a photoreal plate, then generate from the photograph. Blocking is free and needs no account; plates and generation cost credits.</p>
 <a class="cta-btn" href="/tools">See the Tools</a>
 </div>
 
@@ -688,7 +791,7 @@ Audio: clean lip-synced speech, close and dry. Room tone of a quiet kitchen, a r
 
 <div class="cta-inline">
 <strong>Shoot Two Angles in the Same Room</strong>
-<p>Block a scene in one of sixteen free sets in the Rehearsal Studio, then shoot each angle with the room attached as a location reference. Sign-in required.</p>
+<p>Block a scene in one of sixteen free sets in the Rehearsal Studio, then shoot each angle with the room attached as a location reference. Blocking is free and needs no account; shooting costs credits.</p>
 <a class="cta-btn" href="/tools">See the Tools</a>
 </div>
 
