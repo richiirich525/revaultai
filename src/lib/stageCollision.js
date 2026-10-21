@@ -134,8 +134,14 @@ export function walkThroughs(rehearsal, set, { radius = PERSON_RADIUS } = {}) {
   for (const a of rehearsal?.actors ?? []) {
     const keys = [...(a.keys ?? [])].sort((x, y) => x.t - y.t);
     for (let i = 0; i < keys.length - 1; i++) {
-      const hit = pathBlocker(set, keys[i], keys[i + 1], { radius });
-      if (hit) out.push({ name: a.name, label: hit.label, from: keys[i].t, to: keys[i + 1].t });
+      const from = keys[i];
+      const to = keys[i + 1];
+      // Someone who has not moved is not walking through anything. A person
+      // seated at a table overlaps the chair, which is what sitting is, and
+      // warning about it was a false alarm on every scene with a chair in it.
+      if (Math.hypot(to.x - from.x, to.y - from.y) < 0.4) continue;
+      const hit = pathBlocker(set, from, to, { radius });
+      if (hit) out.push({ name: a.name, label: hit.label, from: from.t, to: to.t });
     }
   }
   return out;

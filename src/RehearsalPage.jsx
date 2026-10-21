@@ -36,11 +36,11 @@ const NEXT_STEPS = [
 const FAQ = [
   {
     q: "What costs money here?",
-    a: "Nothing on this page. Blocking, cameras, sets, lighting, the timeline and the full-screen stage are free and need no account. Credits are only spent when you press Shoot this angle and generate actual video — and the price is shown before you confirm it.",
+    a: "Nothing on this page. Blocking, cameras, sets, lighting, the timeline, the starter scenes and the full-screen stage are free and need no account. Credits are only spent when you press Shoot this angle and generate actual video — and the price is shown before you confirm it.",
   },
   {
     q: "Do I need an account?",
-    a: "Only to keep a rehearsal. Without one you can block as much as you like, but the work lives in the page and goes when you close the tab.",
+    a: "Only to keep a rehearsal properly. Without one you can block as much as you like, and your scene is saved in your browser as you work, so a refresh or a closed tab does not lose it. An account adds permanence: the rehearsal is filed against your project, survives clearing your browser data, and opens on any machine you sign in from.",
   },
   {
     q: "What do credits buy?",

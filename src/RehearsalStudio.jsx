@@ -8,6 +8,9 @@ import { CAMERA_MOVES, MOVE_CATEGORIES, moveKeys } from "./lib/cameraMoves.js";
 import { walkThroughs, resolveMove, CAMERA_RADIUS, PERSON_RADIUS } from "./lib/stageCollision.js";
 import { buildShootPrompt, buildShootSpec, buildCoverage } from "./lib/shootPrompt.js";
 import { SETS, EXTERIORS, getSet, pieceSize } from "./lib/setCatalog.js";
+import { GEN_MODELS } from "./lib/genModels.js";
+import { STARTERS, getStarter } from "./lib/starters.js";
+import { saveDraft, loadDraft } from "./lib/rehearsalDraft.js";
 import { LIGHT_PRESETS, defaultLight } from "./lib/lighting.js";
 import { toStage } from "./lib/setGeometry.js";
 
@@ -83,6 +86,7 @@ const styles = `
   .rs-primary { color: #fff !important; background: var(--accent) !important; border-color: var(--accent) !important; font-weight: 500; }
   .rs-primary:hover { background: #8d52ee !important; color: #fff !important; }
   /* The timeline follows you down the page instead of scrolling away. */
+  .rs-below { position: relative; }
   .rs-dock { position: sticky; bottom: 10px; z-index: 20; background: var(--surface); box-shadow: 0 -8px 26px rgba(0,0,0,0.5); }
   .rs-track { position: relative; height: 26px; margin: 10px 0 4px; }
   .rs-track input { position: absolute; inset: 0; width: 100%; accent-color: var(--accent); margin: 0; }
@@ -151,7 +155,19 @@ const styles = `
 `;
 
 export default function RehearsalStudio({ initial, onChange, setGenPrefill, setPage, notify, onShoot, onCover, user, activeProject }) {
-  const [r, setR] = useState(() => initial ?? newRehearsal());
+  /*
+    What the studio opens on, decided once. A saved rehearsal wins, then
+    whatever is in this browser from last time, and failing both a starter
+    scene — because two people standing still on an empty floor tells a
+    first-time visitor nothing about what this does.
+  */
+  const [boot] = useState(() => {
+    if (initial) return { r: initial, from: "saved" };
+    const d = loadDraft();
+    if (d) return { r: d.rehearsal, from: "draft" };
+    return { r: getStarter("walk-and-talk").make(), from: "starter" };
+  });
+  const [r, setR] = useState(boot.r);
   const [t, setT] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [beatText, setBeatText] = useState("");
@@ -190,6 +206,10 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
   const [selPiece, setSelPiece] = useState(null);
   const [savingSet, setSavingSet] = useState(false);
   const room = activeRoom(r);
+  // The cheapest model in the catalog sets the floor for this shot. The real
+  // price depends on the model picked on the generate page, so the button
+  // says "from" rather than naming a number it cannot know.
+  const FLOOR = Math.min(...GEN_MODELS.map((m) => m.costPerSecond)) * r.duration;
 
   useEffect(() => {
     if (!user?.id) { setMySets([]); return; }
@@ -219,6 +239,19 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
 
   // Report every change upward so the page can save it.
   useEffect(() => { onChange?.(r); }, [r]);
+
+  /*
+    Keep the work in this browser as it changes, so a refresh or a closed
+    tab does not throw it away. Debounced: a drag changes this on every
+    frame and localStorage is synchronous. Failure is silent by design —
+    see lib/rehearsalDraft.js.
+  */
+  const draftTimer = useRef(null);
+  useEffect(() => {
+    if (draftTimer.current) clearTimeout(draftTimer.current);
+    draftTimer.current = setTimeout(() => saveDraft(r), 600);
+    return () => { if (draftTimer.current) clearTimeout(draftTimer.current); };
+  }, [r]);
 
   // Playback. Time advances in real seconds, and stops at the end.
   useEffect(() => {
@@ -519,6 +552,20 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
       };
     });
     notify?.("Camera back where the shot starts.");
+  }
+
+  // A scene that is already blocked, so the first thing anyone sees is
+  // movement rather than an empty floor.
+  function loadStarter(id) {
+    const st = getStarter(id);
+    if (!st) return;
+    setR(st.make());
+    setT(0);
+    setPlaying(false);
+    setSelActor(null);
+    setActFor(null);
+    setMoveOpen(false);
+    notify?.(`${st.name} loaded — press play.`);
   }
 
   function clearKeyHere() {
@@ -1060,7 +1107,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
 
         <div className="rs-stage-bar">
           <button className="rs-btn" onClick={() => { setT(0); setPlaying(false); }}>⏮</button>
-          <button className="rs-btn on" onClick={() => { if (t >= r.duration) setT(0); setPlaying((p) => !p); }}>
+          <button className={"rs-btn" + (playing ? " on" : "")} onClick={() => { if (t >= r.duration) setT(0); setPlaying((p) => !p); }}>
             {playing ? "Pause" : "Play"}
           </button>
           <span className="rs-time">{t.toFixed(1)}s</span>
@@ -1073,8 +1120,13 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
             </button>
           ))}
           {nowRead.subject && (setGenPrefill || onShoot) && (
-            <button className="rs-btn" style={{ borderColor: "var(--accent)", color: "var(--accent)" }}
-              onClick={() => shoot(r.activeCamera)}>Shoot this angle →</button>
+            <button
+              className="rs-btn rs-primary"
+              title={`Hands this angle to the generator as a written shot. From ${FLOOR} credits for ${r.duration}s depending on the model you pick${(r.setId || r.setCustom) ? ", plus 2 for the location plate" : ""}.`}
+              onClick={() => shoot(r.activeCamera)}
+            >
+              Shoot this angle · from {FLOOR} credits →
+            </button>
           )}
         </div>
 
@@ -1116,6 +1168,28 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
               title="The same scene, full screen: walk the camera through the room, see your cameras from outside, and change anything from in there."
               onClick={() => setStage(true)}>Step onto the set →</button>
           </div>
+        </div>
+
+        <div className="rs-row" style={{ marginTop: 14, alignItems: "center" }}>
+          <span className="rs-body" style={{ fontSize: 11 }}>Start from</span>
+          {STARTERS.map((st) => (
+            <button key={st.id} className="rs-btn" title={st.note} onClick={() => loadStarter(st.id)}>
+              {st.name}
+            </button>
+          ))}
+          <button
+            className="rs-btn"
+            title="Two performers on an empty floor, nothing blocked"
+            onClick={() => { setR(newRehearsal()); setT(0); setPlaying(false); setSelActor(null); setActFor(null); }}
+          >
+            Empty scene
+          </button>
+        </div>
+
+        <div className="rs-body" style={{ fontSize: 11, marginTop: 10 }}>
+          {boot.from === "draft" ? "Picked up where you left off. " : ""}
+          Your blocking is saved in this browser as you work
+          {user ? "." : " — sign in to keep it for good and open it on any machine."}
         </div>
       </div>
 
@@ -1258,11 +1332,15 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
         </div>
       </div>
 
+      {/* The sticky timeline is bounded by this wrapper, so it docks only
+          once you have scrolled down to it rather than floating over the
+          plan and the camera view at the top of the page. */}
+      <div className="rs-below">
       <div className="rs-panel rs-dock" style={{ marginTop: 16 }}>
         <div className="rs-row" style={{ justifyContent: "space-between" }}>
           <div className="rs-row">
             <button className="rs-btn" onClick={() => { setT(0); setPlaying(false); }}>⏮</button>
-            <button className="rs-btn on" onClick={() => { if (t >= r.duration) setT(0); setPlaying((p) => !p); }}>{playing ? "Pause" : "Play"}</button>
+            <button className={"rs-btn" + (playing ? " on" : "")} onClick={() => { if (t >= r.duration) setT(0); setPlaying((p) => !p); }}>{playing ? "Pause" : "Play"}</button>
             <span className="rs-time">{t.toFixed(1)}s</span>
           </div>
           <div className="rs-row">
@@ -1414,7 +1492,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
               )}
               {c.read.subject && (setGenPrefill || onShoot) && (
                 <button className="rs-btn" style={{ marginTop: 8 }} onClick={(e) => { e.stopPropagation(); shoot(c.id); }}>
-                  Shoot this angle →
+                  Shoot this angle · from {FLOOR} credits →
                 </button>
               )}
             </div>
@@ -1429,6 +1507,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
           and unlimited — you pick the model and see the price before anything is charged. A location plate, if the
           scene has a set, is 2 credits.
         </div>
+      </div>
       </div>
     </div>
   );

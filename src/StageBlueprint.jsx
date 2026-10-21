@@ -85,6 +85,10 @@ export default function StageBlueprint({ camera, actors, onChange, baselineSide,
   // Hit radius: at least `px` pixels across, never big enough to swallow the
   // neighbouring handle, which is why each caller passes its own ceiling.
   const hitR = (px, cap) => Math.min(cap, Math.max(px * unit, 2));
+  // Type sized in screen pixels, for the same reason the hit areas are:
+  // a fixed size in stage units is 62% of the width of a small set and
+  // illegible on a large one.
+  const px = (n) => n * unit;
   // Keep a label inside the drawn window so it never clips at an edge.
   const clampX = (x) => Math.max(view.x + 5, Math.min(view.x + view.size - 5, x));
   const clampY = (y) => Math.max(view.y + 3.5, Math.min(view.y + view.size - 1.5, y));
@@ -257,7 +261,7 @@ export default function StageBlueprint({ camera, actors, onChange, baselineSide,
                 <rect key={w.id} x={w.x} y={w.y} width={w.w} height={w.h} fill={w.opening ? "#9fc4d8" : "#5a5b68"} opacity={w.opening ? 0.55 : 0.9} />
               ))}
               {plan.props.filter((p) => p.w > 5 && p.label).map((p) => (
-                <text key={"t" + p.id} x={p.x + p.w / 2} y={p.y + p.h / 2 + 1} fill="rgba(255,255,255,0.55)" fontSize="2.2" fontFamily="monospace" textAnchor="middle" pointerEvents="none">
+                <text key={"t" + p.id} x={p.x + p.w / 2} y={p.y + p.h / 2} fill="rgba(255,255,255,0.6)" fontSize={px(8)} fontFamily="monospace" textAnchor="middle" dominantBaseline="middle" pointerEvents="none">
                   {p.label.replace(/^the /, "")}
                 </text>
               ))}
@@ -269,7 +273,12 @@ export default function StageBlueprint({ camera, actors, onChange, baselineSide,
         {al && (
           <>
             <line x1={al.x1} y1={al.y1} x2={al.x2} y2={al.y2} stroke="#E5B769" strokeWidth="0.5" strokeDasharray="2 2" opacity="0.6" />
-            <text x={clampX(view.x + 5)} y={view.y + 4} fill="#E5B769" fontSize="3" fontFamily="monospace" opacity="0.85" pointerEvents="none">180° LINE</text>
+            <text
+              x={view.x + px(6)} y={view.y + px(14)}
+              fill="#E5B769" fontSize={px(10)} fontFamily="monospace" opacity="0.9" pointerEvents="none"
+            >
+              180° LINE
+            </text>
           </>
         )}
 
@@ -336,7 +345,13 @@ export default function StageBlueprint({ camera, actors, onChange, baselineSide,
                 stroke={chosen ? "#fff" : "none"} strokeWidth={chosen ? 0.7 : 0}
                 pointerEvents="none"
               />
-              <text x={clampX(a.x)} y={clampY(a.y - 5.5)} fill="var(--text)" fontSize="3.4" fontFamily="monospace" textAnchor="middle" pointerEvents="none">{a.name}</text>
+              <text
+                x={clampX(a.x)} y={clampY(a.y - px(13))}
+                fill="var(--text)" fontSize={px(11)} fontFamily="monospace"
+                textAnchor="middle" pointerEvents="none"
+              >
+                {a.name}
+              </text>
               {/* Hit areas go last so they sit above the drawing. The turn ring
                   is added after the body so it wins wherever they overlap. */}
               <circle
@@ -366,10 +381,10 @@ export default function StageBlueprint({ camera, actors, onChange, baselineSide,
           const hy = camera.y + Math.sin(rad) * 11;
           const hotBody = isHover("camera", null);
           const hotTurn = isHover("rotate", null);
-          // Below the body normally; above it when the camera is parked at the
-          // bottom edge, where "CAM" used to be cut in half by the frame.
-          const below = camera.y + 8.5 <= view.y + view.size - 2;
-          const ly = below ? camera.y + 8.5 : camera.y - 5.5;
+          // Behind the camera, opposite the aim, so the label can never meet
+          // the ring whichever way the camera is pointing.
+          const lx = camera.x - Math.cos(rad) * 6.5;
+          const ly = camera.y - Math.sin(rad) * 6.5;
           return (
             <g>
               <line x1={camera.x} y1={camera.y} x2={hx} y2={hy} stroke="var(--accent)" strokeWidth={hotTurn ? 1.1 : 0.8} pointerEvents="none" />
@@ -381,7 +396,13 @@ export default function StageBlueprint({ camera, actors, onChange, baselineSide,
                 fill="var(--accent)" stroke={hotBody ? "#fff" : "none"} strokeWidth={hotBody ? 0.5 : 0}
                 pointerEvents="none"
               />
-              <text x={clampX(camera.x)} y={clampY(ly)} fill="var(--accent)" fontSize="3.2" fontFamily="monospace" textAnchor="middle" pointerEvents="none">CAM</text>
+              <text
+                x={clampX(lx)} y={clampY(ly)}
+                fill="var(--accent)" fontSize={px(10)} fontFamily="monospace"
+                textAnchor="middle" dominantBaseline="middle" pointerEvents="none"
+              >
+                CAM
+              </text>
               <circle
                 cx={camera.x} cy={camera.y} r={hitR(22, 4.6)} fill="transparent"
                 style={grabStyle("camera", null)}

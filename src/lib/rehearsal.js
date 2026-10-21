@@ -93,7 +93,7 @@ export function keyTimes(r) {
   return [...s].sort((a, b) => a - b);
 }
 
-const COLORS = ["#7B3FE4", "#E5B769", "#4ADE80", "#5BA8C2", "#F87171", "#C49A3C"];
+export const COLORS = ["#7B3FE4", "#E5B769", "#4ADE80", "#5BA8C2", "#F87171", "#C49A3C"];
 
 // Date.now() is not unique inside a tick: two things added in the same
 // millisecond get the same id, and then removing one of them removes both.

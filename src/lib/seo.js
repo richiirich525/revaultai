@@ -106,8 +106,8 @@ export const PAGES = {
     description: "The departments a film needs beyond the camera: block a scene, plan the coverage an editor needs, and catch a reverse that crosses the 180-degree line.",
   },
   rehearsal: {
-    title: "Rehearsal Studio — Blocking Before You Generate | RevaultAI",
-    description: "Block a scene over time: move performers and cameras across a timeline, compare angles on one performance, and see shot size and eyelines update live.",
+    title: "Previz Software for Scene Blocking in AI Video | RevaultAI",
+    description: "Free previz for AI video: block a scene over a timeline, walk the camera through the set in 3D, then generate the shot. No account needed.",
   },
   blocking: {
     title: "Blocking & Performance Director — Free Tool | RevaultAI",
