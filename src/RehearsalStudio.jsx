@@ -11,7 +11,7 @@ import { SETS, EXTERIORS, getSet, pieceSize } from "./lib/setCatalog.js";
 import { GEN_MODELS } from "./lib/genModels.js";
 import { STARTERS, getStarter } from "./lib/starters.js";
 import { saveDraft, loadDraft } from "./lib/rehearsalDraft.js";
-import { buildSheet, download, sheetName } from "./lib/storyboard.js";
+import { buildSheet, download, sheetName, assetName } from "./lib/storyboard.js";
 import { LIGHT_PRESETS, defaultLight } from "./lib/lighting.js";
 import { toStage } from "./lib/setGeometry.js";
 
@@ -191,6 +191,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
   // in the room highlights them on the plan and opens their row here.
   const [selActor, setSelActor] = useState(null);
   const [boarding, setBoarding] = useState(false);
+  const [animatic, setAnimatic] = useState(null);
   // Walking the camera: held keys drive it, a drag turns it, and both write
   // the same keyframe a drag on the plan would. Refs rather than state —
   // these change every frame and nothing renders off them.
@@ -653,6 +654,64 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
     }
   }
 
+  /*
+    The rehearsal as a playable file: the selected camera, sampled frame by
+    frame and encoded to MP4 in the browser.
+
+    There is no shortcut here. A frame can only be read off the canvas
+    immediately after it is drawn, and the canvas only draws what the
+    component was last rendered with, so the scene genuinely has to be
+    stepped through a frame at a time. show() moves the playhead and waits
+    two animation frames: one for React to commit, one for the camera view
+    to draw. Everything after that is ffmpeg.
+
+    Twelve frames a second is the animatic convention. Longer scenes drop
+    below it rather than capturing hundreds of stills, because every frame
+    is held in memory twice — once here and once inside ffmpeg.
+  */
+  const MAX_FRAMES = 240;
+
+  const show = (time) => new Promise((done) => {
+    setT(time);
+    requestAnimationFrame(() => requestAnimationFrame(done));
+  });
+
+  async function exportAnimatic() {
+    if (animatic || boarding) return;
+    if (!plateRef.current) { notify?.("The camera view is still loading — try again in a moment."); return; }
+    const fps = Math.max(4, Math.min(12, Math.floor(MAX_FRAMES / Math.max(1, r.duration))));
+    const total = Math.max(2, Math.min(MAX_FRAMES, Math.round(r.duration * fps)));
+    const cam = r.cameras.find((c) => c.id === r.activeCamera);
+    const wasT = t;
+    setPlaying(false);
+    setAnimatic("Capturing 0%");
+    const frames = [];
+    try {
+      for (let i = 0; i < total; i++) {
+        await show(Math.min((i / fps), r.duration));
+        const url = plateRef.current?.({ withPerformers: true });
+        if (!url) throw new Error("the camera view stopped responding");
+        frames.push(new Uint8Array(await (await fetch(url)).arrayBuffer()));
+        if (i % 6 === 0) setAnimatic(`Capturing ${Math.round((i / total) * 100)}%`);
+      }
+      setAnimatic("Loading the encoder…");
+      // 32MB of WebAssembly. Fetched when somebody asks for it, never before.
+      const { renderAnimatic } = await import("./lib/renderCut.js");
+      const data = await renderAnimatic({
+        frames,
+        fps,
+        onStatus: (msg, frac) => setAnimatic(frac == null ? msg : `${msg} ${Math.round(frac * 100)}%`),
+      });
+      download(new Blob([data], { type: "video/mp4" }), assetName(r.title, `${cam?.name ?? "camera"} animatic`, "mp4"));
+      notify?.(`Animatic saved — ${cam?.name ?? "camera"}, ${total} frames at ${fps}fps.`);
+    } catch (e) {
+      notify?.("Could not render the animatic: " + (e?.message || "unknown reason"));
+    } finally {
+      setT(wasT);
+      setAnimatic(null);
+    }
+  }
+
   function clearKeyHere() {
     setR((prev) => ({
       ...prev,
@@ -1050,8 +1109,16 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
                   </div>
                   <div className="rs-row rs-stage-sec">
                     <button className="rs-btn" onClick={aimAtSubject}>Face the subject</button>
-                    <button className="rs-btn" disabled={boarding} onClick={exportStoryboard}>
+                    <button className="rs-btn" disabled={boarding || !!animatic} onClick={exportStoryboard}>
                       {boarding ? "Drawing…" : "Export storyboard"}
+                    </button>
+                    <button
+                      className="rs-btn"
+                      disabled={!!animatic || boarding}
+                      title="The timeline as a playable MP4, rendered in your browser. The selected camera only — switch camera and export again for another angle."
+                      onClick={exportAnimatic}
+                    >
+                      {animatic || "Export animatic"}
                     </button>
                     <button className="rs-btn" onClick={resetCamera}>Reset view</button>
                   </div>
@@ -1530,11 +1597,19 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
             </button>
             <button
               className="rs-btn"
-              disabled={boarding}
+              disabled={boarding || !!animatic}
               title="One frame per camera at this moment, captioned, on one sheet you can print or email. Free."
               onClick={exportStoryboard}
             >
               {boarding ? "Drawing…" : "Export storyboard"}
+            </button>
+            <button
+              className="rs-btn"
+              disabled={!!animatic || boarding}
+              title="The timeline as a playable MP4, rendered in your browser. The selected camera only — switch camera and export again for another angle."
+              onClick={exportAnimatic}
+            >
+              {animatic || "Export animatic"}
             </button>
             {r.cameras.length < 4 && <button className="rs-btn" onClick={() => setR((p) => addCamera(p, now.camera))}>+ Camera</button>}
           </div>

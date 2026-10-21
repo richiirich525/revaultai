@@ -64,7 +64,7 @@ const FAQ = [
   },
   {
     q: "Can I get the blocking out of here?",
-    a: "Four ways. Export storyboard gives you a single sheet with one frame per camera, captioned with the shot size, lens and who is in it — free, no account, downloaded straight to your machine. Share a link gives you a URL that opens the whole scene for anyone, with no account needed at their end, and they can change their copy freely without touching yours. Shoot this angle carries the blocking into the generator as a written shot. Cover the scene saves every angle as a shot list against a project. There is no animatic video export yet.",
+    a: "Five ways. Export storyboard gives you a single sheet with one frame per camera, captioned with the shot size, lens and who is in it — free, no account, downloaded straight to your machine. Share a link gives you a URL that opens the whole scene for anyone, with no account needed at their end, and they can change their copy freely without touching yours. Export animatic renders the timeline as a playable MP4, encoded in your own browser — nothing is uploaded and it costs no credits. Shoot this angle carries the blocking into the generator as a written shot. Cover the scene saves every angle as a shot list against a project.",
   },
   {
     q: "Is this the finished picture?",

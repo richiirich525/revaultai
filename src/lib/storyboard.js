@@ -135,11 +135,14 @@ export function download(blob, filename) {
 }
 
 // "Dinner argument" -> "dinner-argument-storyboard.jpg"
-export function sheetName(title) {
+export function assetName(title, suffix, ext) {
   const stem = String(title || "rehearsal")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "")
     .slice(0, 48) || "rehearsal";
-  return `${stem}-storyboard.jpg`;
+  const tail = suffix ? "-" + String(suffix).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") : "";
+  return `${stem}${tail}.${ext}`;
 }
+
+export const sheetName = (title) => assetName(title, "storyboard", "jpg");

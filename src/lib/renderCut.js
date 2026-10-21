@@ -140,3 +140,57 @@ export async function renderCut({ shots, byId, format, onStatus, signal }) {
     try { ffmpeg.terminate(); } catch { /* never worth surfacing */ }
   }
 }
+
+/*
+  An animatic: the rehearsal itself as a playable file.
+
+  Different problem from renderCut above. There are no source clips here —
+  the input is a run of stills read off the WebGL canvas, one per frame, so
+  this is ffmpeg's image2 demuxer rather than a trim-and-concat. Twelve frames
+  a second is the animatic convention and keeps the capture quick; h264 needs
+  even dimensions, hence the scale filter, because a canvas sized to its
+  container is very often an odd number of pixels wide.
+
+  @param frames    ordered [Uint8Array] of JPEGs, all the same size
+  @param fps       frames per second the stills were sampled at
+  @param onStatus  (message, fraction) — fraction 0..1, or null while loading
+  @param signal    AbortSignal to cancel
+  @returns Uint8Array of an MP4
+*/
+export async function renderAnimatic({ frames, fps = 12, onStatus, signal }) {
+  if (!frames?.length) throw new Error("There are no frames to render.");
+  const ffmpeg = new FFmpeg();
+  try {
+    onStatus?.("Loading the video engine\u2026", null);
+    await ffmpeg.load({ coreURL, wasmURL, classWorkerURL });
+    if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+
+    for (let i = 0; i < frames.length; i++) {
+      await ffmpeg.writeFile(`f${String(i).padStart(4, "0")}.jpg`, frames[i], { signal });
+      // Writing is about half the wall time, so it owns the first half of the bar.
+      if (i % 8 === 0) onStatus?.(`Writing frame ${i + 1} of ${frames.length}\u2026`, (i / frames.length) * 0.5);
+    }
+
+    onStatus?.("Encoding\u2026", 0.55);
+    const code = await ffmpeg.exec(
+      [
+        "-framerate", String(fps),
+        "-i", "f%04d.jpg",
+        "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2",
+        "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
+        "-pix_fmt", "yuv420p",
+        "-movflags", "+faststart",
+        "-y", "animatic.mp4",
+      ],
+      -1,
+      { signal },
+    );
+    if (code !== 0) throw new Error("The frames were captured, but encoding failed.");
+
+    const data = await ffmpeg.readFile("animatic.mp4", undefined, { signal });
+    onStatus?.("Done.", 1);
+    return data instanceof Uint8Array ? data : new Uint8Array(data);
+  } finally {
+    try { ffmpeg.terminate(); } catch { /* never worth surfacing */ }
+  }
+}
