@@ -32,6 +32,7 @@ const { CREDIT_PACKS, bestValuePack, perCreditLabel, priceLabel, savingVsStarter
   await import(path.join(ROOT, "src/lib/creditPacks.js"));
 const { GEN_MODELS: PRICED_MODELS, costOf, snapDuration } =
   await import(path.join(ROOT, "src/lib/genModels.js"));
+const { sectionsHtml } = await import(path.join(ROOT, "src/lib/rehearsalSections.js"));
 
 const template = fs.readFileSync(path.join(DIST, "index.html"), "utf8");
 
@@ -295,7 +296,7 @@ function catalogEntries(page) {
   return out;
 }
 
-function toolBody(page) {
+function toolBody(page, extra = "") {
   const mine = catalogEntries(page);
   if (mine.length === 0) return "";
   const named = new Set();
@@ -320,6 +321,9 @@ function toolBody(page) {
       siblings.push(t);
     }
   }
+  // A page may slot its own sections in here, before the sibling links,
+  // so the static document reads in the order the page does.
+  html += extra;
   if (siblings.length) {
     html += `<h2>Use it with</h2><ul>`
       + siblings.map((t) => `<li><a href="/${esc(t.page)}">${esc(t.name)}</a> \u2014 ${esc(t.get)}</li>`).join("")
@@ -393,9 +397,16 @@ function bodyFor(slug, meta) {
   if (slug in LEGAL_CONTENT) return h1 + legalBody(slug) + TAGLINE;
   if (slug in PAGE_SUMMARIES) return h1 + lede + summaryBody(slug) + TAGLINE;
 
-  const tool = toolBody(slug);
+  /*
+    The Rehearsal Studio carries its own sections, written from the same
+    module the page renders them from. A heading that exists only once
+    React has mounted is a heading no crawler reads, which would have made
+    the whole exercise decorative.
+  */
+  const extra = slug === "rehearsal" ? sectionsHtml(esc) : "";
+  const tool = toolBody(slug, extra);
   if (tool) return h1 + lede + tool + TAGLINE;
-  return h1 + lede + TAGLINE;
+  return h1 + lede + extra + TAGLINE;
 }
 
 /*

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "./lib/supabase.js";
 import RehearsalStudio from "./RehearsalStudio.jsx";
 import ScenePreview from "./ScenePreview.jsx";
+import RehearsalSections from "./RehearsalSections.jsx";
 
 /*
   RehearsalPage — RevaultAI
@@ -66,7 +67,7 @@ const FAQ = [
   },
   {
     q: "Is this the finished picture?",
-    a: "No. The stand-ins and the grey set are there to settle framing, eyelines and timing. None of that render is ever sent to a model — it would copy the stand-ins. What gets sent is the written shot, and a photographed plate of the set if you have one.",
+    a: "No. The stand-ins and the gray set are there to settle framing, eyelines and timing. None of that render is ever sent to a model — it would copy the stand-ins. What gets sent is the written shot, and a photographed plate of the set if you have one.",
   },
 ];
 
@@ -334,6 +335,10 @@ export default function RehearsalPage({ user, activeProject, notify, onSignInCli
           <div style={{ ...mono, fontSize: 11, color: "var(--muted)", marginTop: 10 }}>
             Full screen, in 3D. Free, and nothing is charged until you generate.
           </div>
+        </div>
+
+        <div style={{ marginTop: 40 }}>
+          <RehearsalSections />
         </div>
 
         <div style={{ ...bar, marginTop: 44 }}>

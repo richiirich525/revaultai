@@ -35,7 +35,7 @@ export const JOG = 2.3;       // m/s — above this, they break into a jog
 
 // A directed action beats the inferred one, with one exception: an acting
 // beat played on the spot can't also be a walk cycle, so while a performer is
-// travelling, locomotion wins and the beat resumes when they reach the mark.
+// traveling, locomotion wins and the beat resumes when they reach the mark.
 // Gait actions are the other way round — they exist to replace the walk.
 export function chooseClip(pose, speed, action) {
   const moving = speed >= MOVING;

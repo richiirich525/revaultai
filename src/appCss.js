@@ -218,7 +218,7 @@ export const CSS = `
   .pf-d { color: var(--muted); }
   .gen-form-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
   /* --muted is 3.2-3.5:1 on these backgrounds, under the 4.5 AA needs. This
-     is the same grey lightened until it passes. Uppercase came off because
+     is the same gray lightened until it passes. Uppercase came off because
      model names are not acronyms. */
   .gen-cost { font-family: 'DM Mono', monospace; font-size: 11.5px; letter-spacing: 0.04em; color: var(--muted); display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
   .gen-total { color: var(--text); font-weight: 500; }

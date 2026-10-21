@@ -53,7 +53,7 @@ const LENSES = [
   [35, "35mm — close to the way the eye reads a room. The usual starting point"],
   [50, "50mm — natural. Faces look like themselves"],
   [75, "75mm — long. Flattens the face a little and softens what is behind it"],
-  [100, "100mm — very long. Isolates a face against a background reduced to colour"],
+  [100, "100mm — very long. Isolates a face against a background reduced to color"],
 ];
 
 const HEIGHTS = [
@@ -115,7 +115,7 @@ const styles = `
   .rs-stage-bar { border-top: 1px solid var(--border); background: var(--surface); padding: 10px 18px;
     display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
   .rs-stage-top { position: absolute; top: 14px; right: 18px; z-index: 6; display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-  /* The panel button is dark grey on a 6%-white border — fine on a surface,
+  /* The panel button is dark gray on a 6%-white border — fine on a surface,
      invisible over the picture. Floating controls get their own contrast. */
   .rs-stage-top .rs-btn {
     background: rgba(10,11,16,0.86); color: rgba(255,255,255,0.86);

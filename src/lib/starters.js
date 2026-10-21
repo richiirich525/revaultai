@@ -9,7 +9,7 @@ import { defaultLight } from "./lighting.js";
   real rehearsal: multiple keyframes per performer, a camera that does
   something, and beats on the timeline.
 
-  Coordinates are stage units — 100 x 100, five to the metre, the middle of
+  Coordinates are stage units — 100 x 100, five to the meter, the middle of
   the floor at (50, 50). A bearing of 0 looks up the plan, 90 to the right.
   Positions were chosen against each set's own floor and furniture, and the
   check in scripts/check-starters.mjs confirms nobody walks through a table
@@ -98,7 +98,7 @@ const walkAndTalk = build({
       keys: [
         // Leading them: the camera is ahead down the pavement, walking
         // backwards at their pace with them coming toward it, which is how a
-        // walk-and-talk is actually shot. Four metres out, so it is a two
+        // walk-and-talk is actually shot. Four meters out, so it is a two
         // shot rather than a pair of noses.
         { t: 0, x: 50, y: 71, rotation: facing({ x: 50, y: 71 }, { x: 30, y: 71 }), height: 1.5, lens: 35 },
         { t: 10, x: 92, y: 71, rotation: facing({ x: 92, y: 71 }, { x: 72, y: 71 }), height: 1.5, lens: 35 },
