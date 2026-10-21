@@ -82,3 +82,22 @@ select
       and a.attname = 'stripe_session_id'
       and i.indisunique
   ) then 'ok' else 'NO UNIQUE INDEX' end as status;
+
+-- webhook.js upserts purchases with { onConflict: "user_id,creation_id" }, so
+-- that pair needs a unique constraint too. Without it the sale is never
+-- recorded, and a sale that was never recorded is never paid out.
+select
+  'purchases (user_id, creation_id)' as "needs to be unique",
+  case when exists (
+    select 1
+    from pg_constraint c
+    join pg_class t on t.oid = c.conrelid
+    where t.relname = 'purchases'
+      and t.relnamespace = 'public'::regnamespace
+      and c.contype in ('u','p')
+      and (
+        select array_agg(a.attname::text order by a.attname)
+        from pg_attribute a
+        where a.attrelid = t.oid and a.attnum = any (c.conkey)
+      ) = array['creation_id','user_id']
+  ) then 'ok' else 'NO UNIQUE CONSTRAINT' end as status;

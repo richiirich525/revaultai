@@ -6,8 +6,12 @@ import { createClient } from "@supabase/supabase-js";
 // Image generation is synchronous and can take ~10-30s on slower models.
 export const config = { maxDuration: 60 };
 
+// Every other route in this directory reads VITE_SUPABASE_URL. This one read
+// SUPABASE_URL, which is not set, so createClient threw at module load and the
+// route answered 500 before it ever saw a request. Both names are accepted now
+// so it cannot depend on which one happens to exist.
 const supabase = createClient(
-  process.env.SUPABASE_URL,
+  process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
