@@ -165,7 +165,9 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
     if (initial) return { r: initial, from: "saved" };
     const d = loadDraft();
     if (d) return { r: d.rehearsal, from: "draft" };
-    return { r: getStarter("walk-and-talk").make(), from: "starter" };
+    // The same scene the hero is playing, so the page is one thing rather
+    // than two, and so both share one set's meshes.
+    return { r: getStarter("dinner-argument").make(), from: "starter" };
   });
   const [r, setR] = useState(boot.r);
   const [t, setT] = useState(0);
