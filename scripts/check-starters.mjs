@@ -10,6 +10,7 @@ import { walkThroughs } from "../src/lib/stageCollision.js";
 import { activeRoom } from "../src/lib/setEdit.js";
 import { getAction } from "../src/lib/actions.js";
 import { getSet } from "../src/lib/setCatalog.js";
+import { fitFor, trailFor } from "../src/lib/scenePreview.js";
 
 const problems = [];
 const MOVED = 1.5; // stage units; below this nothing visibly happens
@@ -63,12 +64,24 @@ for (const starter of STARTERS) {
     problems.push(`${tag}: ${w.name} walks through ${w.label} between ${w.from.toFixed(1)}s and ${w.to.toFixed(1)}s`);
   }
 
+  // The hero plays these, so its view box and trails have to be sane too.
+  const fit = fitFor(r);
+  if (![fit.x, fit.y, fit.size].every(Number.isFinite)) problems.push(`${tag}: hero view box is not a number`);
+  if (fit.size > 160 || fit.size < 20) problems.push(`${tag}: hero view box is ${fit.size.toFixed(0)}u — unusable`);
+  for (let i = 0; i < r.actors.length; i++) {
+    const pts = trailFor(r, i).split(" ").map((p) => p.split(",").map(Number));
+    if (pts.some((p) => p.some((n) => !Number.isFinite(n)))) problems.push(`${tag}: trail ${i} has a bad point`);
+    const inside = pts.every(([x, y]) =>
+      x >= fit.x - 1 && x <= fit.x + fit.size + 1 && y >= fit.y - 1 && y <= fit.y + fit.size + 1);
+    if (!inside) problems.push(`${tag}: ${r.actors[i].name} walks outside the hero view box`);
+  }
+
   const mid = stateAt(r, r.duration / 2);
   const read = readStage(mid.camera, mid.actors);
   console.log(
     `  ${starter.name.padEnd(17)} ${r.duration}s  ${String(keyTimes(r).length).padStart(2)} marks  ` +
     `moves ${travel.toFixed(0)}u / cam ${camTravel.toFixed(0)}u  ` +
-    `mid-shot: ${read.shotSize ?? "—"} on ${read.subject ?? "nobody"}`
+    `mid-shot: ${(read.shotSize ?? "—").padEnd(18)} hero box ${fit.size.toFixed(0)}u`
   );
 }
 

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "./lib/supabase.js";
 import RehearsalStudio from "./RehearsalStudio.jsx";
+import ScenePreview from "./ScenePreview.jsx";
 
 /*
   RehearsalPage — RevaultAI
@@ -12,6 +13,19 @@ const bar = {
   maxWidth: 980, margin: "0 auto 18px", padding: "0 48px",
 };
 const mono = { fontFamily: "'DM Mono', monospace" };
+
+const heroCss = `
+  .rh-hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 40px; align-items: center; }
+  .rh-hero-pts { font-family: 'DM Mono', monospace; font-size: 11.5px; color: var(--muted); line-height: 2; margin-top: 18px; }
+  .rh-hero-pts b { color: var(--text); font-weight: 500; }
+  .rh-cta { display: inline-flex; align-items: center; gap: 10px; margin-top: 22px; padding: 13px 22px;
+    background: var(--accent); color: #fff; border: 1px solid var(--accent); border-radius: 4px;
+    font-family: 'DM Mono', monospace; font-size: 12.5px; letter-spacing: 0.06em; cursor: pointer; font-weight: 500; }
+  .rh-cta:hover { background: #8d52ee; }
+  .rh-cta:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 3px; }
+  .rh-cta-note { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); margin-left: 14px; }
+  @media (max-width: 900px) { .rh-hero { grid-template-columns: 1fr; gap: 26px; } }
+`;
 
 // Where the blocking goes next. These were in the page source and nowhere a
 // visitor could see them.
@@ -63,6 +77,8 @@ export default function RehearsalPage({ user, activeProject, notify, onSignInCli
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const latest = useRef(null);
+  // Filled by the studio, so the hero's button can step onto the set.
+  const studio = useRef(null);
   const baseline = useRef(null);
 
   async function loadList() {
@@ -247,13 +263,28 @@ export default function RehearsalPage({ user, activeProject, notify, onSignInCli
 
   return (
     <div className="page">
-      <div className="page-hdr">
-        <div className="page-hdr-eyebrow">Rehearsal</div>
-        <div className="page-hdr-title">Rehearsal Studio</div>
-        <div className="page-hdr-sub">Block the scene over time before you spend a credit on it.</div>
-        <div style={{ ...mono, fontSize: 12, color: "#4ADE80", letterSpacing: "0.08em", marginTop: 8 }}>
-          Free — no account needed
+      <style>{heroCss}</style>
+      <div className="page-hdr rh-hero">
+        <div>
+          <div className="page-hdr-eyebrow">Previz · Scene blocking</div>
+          <div className="page-hdr-title">Rehearsal Studio</div>
+          <div className="page-hdr-sub">Block the scene over time before you spend a credit on it.</div>
+          <div style={{ ...mono, fontSize: 12, color: "#4ADE80", letterSpacing: "0.08em", marginTop: 8 }}>
+            Free — no account needed
+          </div>
+          <div className="rh-hero-pts">
+            <b>Blocking over a timeline</b>, not one frozen setup<br />
+            <b>Walk the camera</b> through the set with W A S D<br />
+            <b>Straight to a generated shot</b> when the angle is right
+          </div>
+          <div>
+            <button className="rh-cta" onClick={() => studio.current?.openStage()}>
+              Step onto the set →
+            </button>
+            <span className="rh-cta-note">or start blocking below</span>
+          </div>
         </div>
+        <ScenePreview height={320} />
       </div>
       <section className="section">
         <div style={{ ...bar, ...mono, fontSize: 12.5, color: "var(--muted)", lineHeight: 1.85 }}>
@@ -294,7 +325,16 @@ export default function RehearsalPage({ user, activeProject, notify, onSignInCli
           </div>
         )}
 
-        <RehearsalStudio key={current.key} initial={current.data} onChange={onStudioChange} setGenPrefill={setGenPrefill} setPage={setPage} notify={notify} onShoot={onShoot} onCover={onCover} user={user} activeProject={activeProject} />
+        <RehearsalStudio key={current.key} initial={current.data} onChange={onStudioChange} setGenPrefill={setGenPrefill} setPage={setPage} notify={notify} onShoot={onShoot} onCover={onCover} user={user} activeProject={activeProject} controlsRef={studio} />
+
+        <div style={{ ...bar, marginTop: 44, textAlign: "center" }}>
+          <button className="rh-cta" onClick={() => studio.current?.openStage()}>
+            Step onto the set →
+          </button>
+          <div style={{ ...mono, fontSize: 11, color: "var(--muted)", marginTop: 10 }}>
+            Full screen, in 3D. Free, and nothing is charged until you generate.
+          </div>
+        </div>
 
         <div style={{ ...bar, marginTop: 44 }}>
           <div style={{ ...mono, fontSize: 10, letterSpacing: "0.2em", color: "var(--accent-text)", textTransform: "uppercase", marginBottom: 12 }}>

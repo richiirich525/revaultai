@@ -154,7 +154,7 @@ const styles = `
   @media (max-width: 760px) { .rs { padding: 0 20px; } }
 `;
 
-export default function RehearsalStudio({ initial, onChange, setGenPrefill, setPage, notify, onShoot, onCover, user, activeProject }) {
+export default function RehearsalStudio({ initial, onChange, setGenPrefill, setPage, notify, onShoot, onCover, user, activeProject, controlsRef }) {
   /*
     What the studio opens on, decided once. A saved rehearsal wins, then
     whatever is in this browser from last time, and failing both a starter
@@ -567,6 +567,21 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
     setMoveOpen(false);
     notify?.(`${st.name} loaded — press play.`);
   }
+
+  /*
+    The hero's call to action sits on the page, above this component, so it
+    needs a way in. Same shape as plateRef: a ref the parent holds and this
+    fills, reassigned every render so the handles are never stale.
+  */
+  useEffect(() => {
+    if (!controlsRef) return;
+    controlsRef.current = {
+      openStage: () => setStage(true),
+      loadStarter,
+      playFromStart: () => { setT(0); setPlaying(true); },
+    };
+    return () => { controlsRef.current = null; };
+  });
 
   function clearKeyHere() {
     setR((prev) => ({
