@@ -773,23 +773,33 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
     }
   });
 
-  // A plate of the set with nobody in it. Stand-ins are never sent to a model,
-  // so they're hidden for the capture and put straight back.
+  /*
+    Two different pictures come off this canvas.
+
+    A plate is the set with nobody in it, bound for a model: the stand-ins are
+    hidden, because a model shown a stand-in copies the stand-in, and so is
+    anything the creator has described in words, or the model builds from the
+    mesh instead of the description. That is the default, and every existing
+    caller relies on it.
+
+    A storyboard frame is the opposite — it is for human eyes, so everybody
+    stays in it and the set is shown whole.
+  */
   useEffect(() => {
     if (!plateRef) return;
-    plateRef.current = () => {
+    plateRef.current = ({ withPerformers = false } = {}) => {
       const T = three.current;
       if (!T) return null;
       const hidden = [];
-      for (const m of T.actors.values()) if (m.visible) { m.visible = false; hidden.push(m); }
-      for (const m of (T.extras?.values() ?? [])) if (m.visible) { m.visible = false; hidden.push(m); }
-      // Anything the creator will describe themselves stays out of the picture,
-      // or the model uses the stand-in instead of building it from the words.
-      const keepOut = new Set(hiddenRef.current ?? []);
-      if (keepOut.size && T.set) {
-        T.set.traverse((o) => {
-          if (o.userData?.pieceId && keepOut.has(o.userData.pieceId) && o.visible) { o.visible = false; hidden.push(o); }
-        });
+      if (!withPerformers) {
+        for (const m of T.actors.values()) if (m.visible) { m.visible = false; hidden.push(m); }
+        for (const m of (T.extras?.values() ?? [])) if (m.visible) { m.visible = false; hidden.push(m); }
+        const keepOut = new Set(hiddenRef.current ?? []);
+        if (keepOut.size && T.set) {
+          T.set.traverse((o) => {
+            if (o.userData?.pieceId && keepOut.has(o.userData.pieceId) && o.visible) { o.visible = false; hidden.push(o); }
+          });
+        }
       }
       T.renderer.render(T.scene, T.camera);
       const url = T.renderer.domElement.toDataURL("image/jpeg", 0.92);

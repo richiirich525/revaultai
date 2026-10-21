@@ -11,6 +11,7 @@ import { SETS, EXTERIORS, getSet, pieceSize } from "./lib/setCatalog.js";
 import { GEN_MODELS } from "./lib/genModels.js";
 import { STARTERS, getStarter } from "./lib/starters.js";
 import { saveDraft, loadDraft } from "./lib/rehearsalDraft.js";
+import { buildSheet, download, sheetName } from "./lib/storyboard.js";
 import { LIGHT_PRESETS, defaultLight } from "./lib/lighting.js";
 import { toStage } from "./lib/setGeometry.js";
 
@@ -189,6 +190,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
   // Who is selected, shared by the plan and the 3D view so picking someone
   // in the room highlights them on the plan and opens their row here.
   const [selActor, setSelActor] = useState(null);
+  const [boarding, setBoarding] = useState(false);
   // Walking the camera: held keys drive it, a drag turns it, and both write
   // the same keyframe a drag on the plan would. Refs rather than state —
   // these change every frame and nothing renders off them.
@@ -584,6 +586,63 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
     };
     return () => { controlsRef.current = null; };
   });
+
+  /*
+    A storyboard of this moment: one frame per camera, captioned with what
+    each one is actually seeing, on a single sheet.
+
+    Capturing a camera means being that camera, so this selects each one in
+    turn and waits for the picture to catch up before reading the canvas —
+    two animation frames and a beat, the same wait the shoot path uses. The
+    selection is put back where it was afterwards, including if a frame
+    throws halfway through.
+  */
+  const settle = (ms) => new Promise((done) => {
+    requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(done, ms)));
+  });
+
+  async function exportStoryboard() {
+    if (boarding) return;
+    if (!plateRef.current) { notify?.("The camera view is still loading — try again in a moment."); return; }
+    const cams = r.cameras ?? [];
+    if (!cams.length) return;
+    const was = r.activeCamera;
+    const wait = genId ? 500 : 200;
+    setBoarding(true);
+    setPlaying(false);
+    const frames = [];
+    try {
+      for (const cam of cams) {
+        setR((p) => (p.activeCamera === cam.id ? p : { ...p, activeCamera: cam.id }));
+        await settle(wait);
+        const url = plateRef.current?.({ withPerformers: true });
+        if (!url) continue;
+        const shot = stateAt({ ...r, activeCamera: cam.id }, t);
+        const read = readStage(shot.camera, shot.actors);
+        frames.push({
+          url,
+          name: cam.name,
+          caption: read.subject
+            ? `${read.shotSize} · ${read.lens} on ${read.subject} · ${t.toFixed(1)}s`
+            : `Framing nobody · ${t.toFixed(1)}s`,
+        });
+      }
+      if (!frames.length) { notify?.("Nothing came back from the camera view."); return; }
+      const blob = await buildSheet({
+        frames,
+        title: r.title || "Rehearsal",
+        note: `${frames.length} ${frames.length === 1 ? "angle" : "angles"} at ${t.toFixed(1)}s of ${r.duration}s`
+          + (r.setName || getSet(r.setId)?.name ? ` · ${r.setName || getSet(r.setId).name}` : ""),
+      });
+      download(blob, sheetName(r.title));
+      notify?.(`Storyboard saved — ${frames.length} ${frames.length === 1 ? "frame" : "frames"}.`);
+    } catch (e) {
+      notify?.("Could not build the storyboard: " + (e?.message || "unknown reason"));
+    } finally {
+      setR((p) => (p.activeCamera === was ? p : { ...p, activeCamera: was }));
+      setBoarding(false);
+    }
+  }
 
   function clearKeyHere() {
     setR((prev) => ({
@@ -982,6 +1041,9 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
                   </div>
                   <div className="rs-row rs-stage-sec">
                     <button className="rs-btn" onClick={aimAtSubject}>Face the subject</button>
+                    <button className="rs-btn" disabled={boarding} onClick={exportStoryboard}>
+                      {boarding ? "Drawing…" : "Export storyboard"}
+                    </button>
                     <button className="rs-btn" onClick={resetCamera}>Reset view</button>
                   </div>
                   <div className="rs-label rs-stage-sec">Lens</div>
@@ -1456,6 +1518,14 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
             <button className={"rs-btn" + (moveOpen ? " on" : "")} onClick={() => setMoveOpen((v) => !v)}
               title="A move happens over time — a dolly, a pan, a crane — and is written as two marks on the timeline. Dragging the camera instead puts it somewhere new at this one moment.">
               Give this camera a move
+            </button>
+            <button
+              className="rs-btn"
+              disabled={boarding}
+              title="One frame per camera at this moment, captioned, on one sheet you can print or email. Free."
+              onClick={exportStoryboard}
+            >
+              {boarding ? "Drawing…" : "Export storyboard"}
             </button>
             {r.cameras.length < 4 && <button className="rs-btn" onClick={() => setR((p) => addCamera(p, now.camera))}>+ Camera</button>}
           </div>

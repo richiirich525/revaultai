@@ -62,7 +62,7 @@ const FAQ = [
   },
   {
     q: "Can I get the blocking out of here?",
-    a: "Shoot this angle carries it into the generator as a written shot, and Cover the scene saves every angle as a shot list against a project. There is no video or storyboard export from the rehearsal itself yet.",
+    a: "Three ways. Export storyboard gives you a single sheet with one frame per camera, captioned with the shot size, lens and who is in it — free, no account, and it downloads straight to your machine. Shoot this angle carries the blocking into the generator as a written shot. Cover the scene saves every angle as a shot list against a project. There is no animatic video export or share link yet.",
   },
   {
     q: "Is this the finished picture?",
