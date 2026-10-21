@@ -208,6 +208,10 @@ export default function GeneratePage({ user, profile, notify, setPage, setGenSub
     setChainBusy(false);
   }
   const COST = (GEN_MODELS.find((m) => m.key === model)?.costPerSecond ?? 1) * duration;
+  // Read off the catalog so the headline cannot drift from the price table.
+  const RATES = GEN_MODELS.map((m) => m.costPerSecond);
+  const MIN_CPS = Math.min(...RATES);
+  const MAX_CPS = Math.max(...RATES);
 
   async function loadGens() {
     if (!user?.id) return;
@@ -424,6 +428,17 @@ export default function GeneratePage({ user, profile, notify, setPage, setGenSub
         : { s: "info", t: "Starting frame", d: "None attached. Optional, but a still gives you far more control over how the shot opens." }
     );
 
+    if (vaultRefIds.length > 0) {
+      const sending = refsToSend(model, imageUrl, vaultRefIds);
+      items.push(
+        sending.length === vaultRefIds.length
+          ? { s: "ok", t: "Reference photos", d: `${sending.length} will be sent${imageUrl ? ", alongside your starting frame" : ""}.` }
+          : sending.length === 0
+          ? { s: "warn", t: "Reference photos", d: `${vaultRefIds.length} chosen, none will be sent — ${imageUrl ? "this model drops reference photos when a starting frame is attached. Remove the frame, or switch to a MiniMax tier, which keeps both." : "this model cannot use reference photos."}` }
+          : { s: "warn", t: "Reference photos", d: `${vaultRefIds.length} chosen, only ${sending.length} will be sent — this model accepts fewer.` }
+      );
+    }
+
     if (vaultNames.length > 0) {
       items.push(
         mentioned.length > 0
@@ -477,7 +492,10 @@ export default function GeneratePage({ user, profile, notify, setPage, setGenSub
       <div className="page-hdr">
         <div className="page-hdr-eyebrow">Create</div>
         <div className="page-hdr-title">Generate</div>
-        <div className="page-hdr-sub">Turn a prompt into a film clip. {COST} credits per 5-second video.</div>
+        <div className="page-hdr-sub">
+          Turn a prompt into a film clip. Models cost {MIN_CPS} to {MAX_CPS} credits a second, and you see the
+          exact price for your shot before you generate it.
+        </div>
       </div>
       <section className="section">
         {user && (
@@ -597,10 +615,23 @@ export default function GeneratePage({ user, profile, notify, setPage, setGenSub
                 </button>
               </div>
             </div>
+            <VaultRefPicker
+              model={model}
+              prompt={prompt}
+              imageUrl={imageUrl}
+              duration={duration}
+              setDuration={setDuration}
+              value={vaultRefIds}
+              onChange={setVaultRefIds}
+              onOpenVault={() => setPage("vault")}
+            />
+
             <div className="gen-form-row">
               <div className="gen-cost">
                 <select className="gen-model-select" value={model} onChange={(e) => setModel(e.target.value)}>
-                  {GEN_MODELS.map((m) => <option key={m.key} value={m.key}>{m.label}</option>)}
+                  {GEN_MODELS.map((m) => (
+                    <option key={m.key} value={m.key}>{m.label} · {m.costPerSecond} cr/s</option>
+                  ))}
                 </select>
                 <select className="gen-model-select" value={duration} onChange={(e) => setDuration(Number(e.target.value))}>
                   {(GEN_MODELS.find((m) => m.key === model)?.durations ?? [5]).map((d) => (
@@ -610,14 +641,17 @@ export default function GeneratePage({ user, profile, notify, setPage, setGenSub
                 {(() => {
                   const m = GEN_MODELS.find((x) => x.key === model);
                   const ignored = !!(imageUrl && m?.ratioFromImage);
-                  const LABELS = { "16:9": "16:9 — Landscape", "9:16": "9:16 — Vertical", "1:1": "1:1 — Square", "21:9": "21:9 — Ultrawide" };
+                  const LABELS = {
+                    "16:9": "16:9 — Landscape", "9:16": "9:16 — Vertical", "1:1": "1:1 — Square",
+                    "21:9": "21:9 — Ultrawide", "4:3": "4:3 — Classic", "3:4": "3:4 — Upright",
+                  };
                   return (
                     <select
                       className="gen-model-select"
                       value={aspect}
                       onChange={(e) => setAspect(e.target.value)}
                       disabled={ignored}
-                      title={ignored ? "Kling matches the aspect ratio of your starting image" : "Aspect ratio"}
+                      title={ignored ? `${m?.label ?? "This model"} takes the aspect ratio from your starting image` : "Aspect ratio"}
                       style={{ opacity: ignored ? 0.5 : 1 }}
                     >
                       {(m?.ratios ?? ["16:9"]).map((r) => (
@@ -626,7 +660,13 @@ export default function GeneratePage({ user, profile, notify, setPage, setGenSub
                     </select>
                   );
                 })()}
-                <span style={{ marginLeft: 12 }}>Cost: {COST} credits · Balance: {typeof profile?.credits === "number" ? profile.credits : "…"}</span>
+                <span className="gen-total">{COST} credits for {duration}s</span>
+                <span
+                  className="gen-bal"
+                  style={typeof profile?.credits === "number" && profile.credits < COST ? { color: "#F87171" } : undefined}
+                >
+                  balance {typeof profile?.credits === "number" ? profile.credits : "…"}
+                </span>
               </div>
               <button className="gen-button" onClick={handleGenerate} disabled={submitting}>
                 {submitting ? "Starting..." : "Generate"}
@@ -645,16 +685,6 @@ export default function GeneratePage({ user, profile, notify, setPage, setGenSub
             />
             <div className="gen-form-row" style={{ display: "none" }}>
             </div>
-            <VaultRefPicker
-              model={model}
-              prompt={prompt}
-              imageUrl={imageUrl}
-              duration={duration}
-              setDuration={setDuration}
-              value={vaultRefIds}
-              onChange={setVaultRefIds}
-              onOpenVault={() => setPage("vault")}
-            />
             <div className="pf">
               <div className="pf-head">
                 <span className="pf-title">Ready to generate?</span>

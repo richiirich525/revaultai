@@ -217,8 +217,14 @@ export const CSS = `
   .pf-k { color: var(--text); }
   .pf-d { color: var(--muted); }
   .gen-form-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
-  .gen-cost { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.12em; color: var(--muted); text-transform: uppercase; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
-  .gen-model-select { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text); background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; padding: 8px 10px; cursor: pointer; }
+  /* --muted is 3.2-3.5:1 on these backgrounds, under the 4.5 AA needs. This
+     is the same grey lightened until it passes. Uppercase came off because
+     model names are not acronyms. */
+  .gen-cost { font-family: 'DM Mono', monospace; font-size: 11.5px; letter-spacing: 0.04em; color: #9B98A8; display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+  .gen-total { color: var(--text); font-weight: 500; }
+  .gen-bal { opacity: 0.9; }
+  .gen-model-select { font-family: 'DM Mono', monospace; font-size: 11.5px; letter-spacing: 0.02em; color: var(--text); background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; padding: 9px 11px; cursor: pointer; max-width: 100%; }
+  .gen-model-select:focus-visible { outline: 2px solid #B9A2F0; outline-offset: 2px; }
   .gen-button { padding: 12px 28px; font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text); background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; transition: color 0.2s, border-color 0.2s; }
   .gen-button:hover { color: var(--accent); border-color: var(--accent); }
   .gen-button:disabled { opacity: 0.5; cursor: default; }
