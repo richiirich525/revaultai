@@ -23,7 +23,7 @@ const styles = `
   .bp-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
   .bp-btn { background: none; border: 1px solid var(--border); color: var(--text); border-radius: 3px; padding: 6px 12px; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; }
   .bp-btn:hover { color: var(--text); border-color: var(--muted); }
-  .bp-hint { font-family: 'DM Mono', monospace; font-size: 11px; color: #9B98A8; line-height: 1.7; margin-top: 10px; }
+  .bp-hint { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); line-height: 1.7; margin-top: 10px; }
 `;
 
 const COLORS = ["#7B3FE4", "#E5B769", "#4ADE80", "#5BA8C2", "#F87171", "#C49A3C"];
@@ -414,7 +414,7 @@ export default function StageBlueprint({ camera, actors, onChange, baselineSide,
       <div className="bp-read">{describeStage(read)}</div>
 
       {eyelines.length > 0 && (
-        <div className="bp-read" style={{ borderTop: "none", paddingTop: 0, marginTop: 8, fontSize: 11, color: "#9B98A8" }}>
+        <div className="bp-read" style={{ borderTop: "none", paddingTop: 0, marginTop: 8, fontSize: 11, color: "var(--muted)" }}>
           {eyelines.map((e, i) => <div key={i}>{e.text}</div>)}
         </div>
       )}

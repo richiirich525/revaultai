@@ -256,7 +256,7 @@ export default function RehearsalPage({ user, activeProject, notify, onSignInCli
         </div>
       </div>
       <section className="section">
-        <div style={{ ...bar, ...mono, fontSize: 12.5, color: "#9B98A8", lineHeight: 1.85 }}>
+        <div style={{ ...bar, ...mono, fontSize: 12.5, color: "var(--muted)", lineHeight: 1.85 }}>
           Scrub to a moment and drag anyone — a keyframe is written there, and the movement between keyframes is filled in. Mark beats as you go. Add cameras to compare angles on an identical performance. Shot size, lens, eyelines and the 180° line all update live.
         </div>
 
@@ -267,7 +267,7 @@ export default function RehearsalPage({ user, activeProject, notify, onSignInCli
           <button style={btn} onClick={startNew}>New rehearsal</button>
           {dirty && <span style={{ ...mono, fontSize: 11, color: "#E5B769" }}>Unsaved changes</span>}
           {activeProject && user && (
-            <span style={{ ...mono, fontSize: 11, color: "#9B98A8" }}>Saving to {activeProject.name}</span>
+            <span style={{ ...mono, fontSize: 11, color: "var(--muted)" }}>Saving to {activeProject.name}</span>
           )}
         </div>
 
@@ -297,7 +297,7 @@ export default function RehearsalPage({ user, activeProject, notify, onSignInCli
         <RehearsalStudio key={current.key} initial={current.data} onChange={onStudioChange} setGenPrefill={setGenPrefill} setPage={setPage} notify={notify} onShoot={onShoot} onCover={onCover} user={user} activeProject={activeProject} />
 
         <div style={{ ...bar, marginTop: 44 }}>
-          <div style={{ ...mono, fontSize: 10, letterSpacing: "0.2em", color: "#B9A2F0", textTransform: "uppercase", marginBottom: 12 }}>
+          <div style={{ ...mono, fontSize: 10, letterSpacing: "0.2em", color: "var(--accent-text)", textTransform: "uppercase", marginBottom: 12 }}>
             Use it with
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12 }}>
@@ -311,20 +311,20 @@ export default function RehearsalPage({ user, activeProject, notify, onSignInCli
                 }}
               >
                 <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 14, fontWeight: 700 }}>{n.name} →</div>
-                <div style={{ ...mono, fontSize: 11.5, color: "#9B98A8", lineHeight: 1.7, marginTop: 6 }}>{n.body}</div>
+                <div style={{ ...mono, fontSize: 11.5, color: "var(--muted)", lineHeight: 1.7, marginTop: 6 }}>{n.body}</div>
               </button>
             ))}
           </div>
         </div>
 
         <div style={{ ...bar, marginTop: 40, marginBottom: 56 }}>
-          <div style={{ ...mono, fontSize: 10, letterSpacing: "0.2em", color: "#B9A2F0", textTransform: "uppercase", marginBottom: 12 }}>
+          <div style={{ ...mono, fontSize: 10, letterSpacing: "0.2em", color: "var(--accent-text)", textTransform: "uppercase", marginBottom: 12 }}>
             Questions
           </div>
           {FAQ.map((f) => (
             <details key={f.q} style={{ borderTop: "1px solid var(--border)", padding: "12px 0" }}>
               <summary style={{ ...mono, fontSize: 12.5, color: "var(--text)", cursor: "pointer" }}>{f.q}</summary>
-              <div style={{ ...mono, fontSize: 12, color: "#9B98A8", lineHeight: 1.85, marginTop: 10 }}>{f.a}</div>
+              <div style={{ ...mono, fontSize: 12, color: "var(--muted)", lineHeight: 1.85, marginTop: 10 }}>{f.a}</div>
             </details>
           ))}
         </div>

@@ -42,25 +42,47 @@ function esc(s) {
 }
 
 // Escapes, then turns **bold** into <strong> — the only markdown a banner uses.
+// The $1 here is a deliberate capture reference, unlike every other
+// replacement in this file; see lit() below.
 function escBold(s) {
   return esc(s).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
 }
+
+/*
+  Everything this file injects goes through lit().
+
+  In a replacement STRING, "$1", "$&", "$`", "$'" and "$$" are instructions to
+  String.replace rather than text. That is what broke the pricing page: the
+  body was injected with `$1${html}$3`, so the "$15" inside our own copy was
+  read as "capture group 1, then a 5" and shipped as <div id="root">5. "$32"
+  became </div>2 for the same reason, and "$5" survived only because the
+  pattern had no fifth group.
+
+  A replacement FUNCTION is never scanned for those sequences, so passing one
+  makes the inserted text literal no matter what is in it. Any new injection
+  below must use lit() or its own replacer, never a template string.
+*/
+const lit = (text) => () => text;
 
 // Replace a meta tag if present, otherwise insert it before </head>.
 function setMeta(html, attr, key, value) {
   const re = new RegExp(`<meta\\s+${attr}=["']${key}["'][^>]*>`, "i");
   const tag = `<meta ${attr}="${key}" content="${esc(value)}">`;
-  return re.test(html) ? html.replace(re, tag) : html.replace("</head>", `    ${tag}\n  </head>`);
+  return re.test(html)
+    ? html.replace(re, lit(tag))
+    : html.replace("</head>", lit(`    ${tag}\n  </head>`));
 }
 
 function setTitle(html, title) {
-  return html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${esc(title)}</title>`);
+  return html.replace(/<title>[\s\S]*?<\/title>/i, lit(`<title>${esc(title)}</title>`));
 }
 
 function setCanonical(html, url) {
   const re = /<link\s+rel=["']canonical["'][^>]*>/i;
   const tag = `<link rel="canonical" href="${esc(url)}">`;
-  return re.test(html) ? html.replace(re, tag) : html.replace("</head>", `    ${tag}\n  </head>`);
+  return re.test(html)
+    ? html.replace(re, lit(tag))
+    : html.replace("</head>", lit(`    ${tag}\n  </head>`));
 }
 
 function setRobots(html, index) {
@@ -70,7 +92,7 @@ function setRobots(html, index) {
 function injectJsonLd(html, obj) {
   if (!obj) return html;
   const tag = `<script type="application/ld+json">${JSON.stringify(obj)}</script>`;
-  return html.replace("</head>", `    ${tag}\n  </head>`);
+  return html.replace("</head>", lit(`    ${tag}\n  </head>`));
 }
 
 /*
@@ -103,14 +125,17 @@ function injectTaaftBadge(html) {
     '<div id="taaft-badge" style="background:#0E0F14;padding:34px 16px 44px;text-align:center">' +
     TAAFT_BADGE +
     '</div>';
-  return html.replace("</body>", "  " + block + "\n</body>");
+  return html.replace("</body>", lit("  " + block + "\n</body>"));
 }
 
 // Static body content. React clears #root on mount, so this is a crawler-facing
 // and no-JS fallback that matches the rendered page.
 function injectBody(html, inner) {
   const styled = `<div style="max-width:760px;margin:0 auto;padding:64px 24px;font-family:system-ui,sans-serif;background:#0E0F14;color:#E8E6F0;min-height:100vh">${inner}</div>`;
-  return html.replace(/(<div id="root">)([\s\S]*?)(<\/div>)/, `$1${styled}$3`);
+  return html.replace(
+    /(<div id="root">)([\s\S]*?)(<\/div>)/,
+    (_match, open, _old, close) => open + styled + close,
+  );
 }
 
 function writeRoute(routePath, html) {

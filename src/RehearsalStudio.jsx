@@ -69,16 +69,16 @@ const ASPECT_CHOICES = [
 
 const styles = `
   .rs { max-width: 1240px; margin: 0 auto; padding: 0 48px; }
-  .rs-label { font-family: 'DM Mono', monospace; font-size: 10.5px; letter-spacing: 0.18em; color: #B9A2F0; text-transform: uppercase; margin-bottom: 8px; }
-  .rs-body { font-family: 'DM Mono', monospace; font-size: 12px; color: #9B98A8; line-height: 1.8; }
+  .rs-label { font-family: 'DM Mono', monospace; font-size: 10.5px; letter-spacing: 0.18em; color: var(--accent-text); text-transform: uppercase; margin-bottom: 8px; }
+  .rs-body { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); line-height: 1.8; }
   .rs-panel { border: 1px solid var(--border); border-radius: 8px; padding: 18px 20px; background: var(--surface); margin-bottom: 16px; }
   .rs-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-  .rs-btn { background: none; border: 1px solid var(--border); color: #B5B2C0; border-radius: 3px; padding: 7px 13px; font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.08em; cursor: pointer; }
+  .rs-btn { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 3px; padding: 7px 13px; font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.08em; cursor: pointer; }
   .rs-btn:hover { color: var(--text); border-color: var(--muted); }
   /* Selected has to read at a glance across forty chips, so it is filled
      rather than tinted. */
   .rs-btn.on { color: #fff; border-color: var(--accent); background: rgba(123,63,228,0.38); font-weight: 500; }
-  .rs-btn:focus-visible, .rs-act-item:focus-visible { outline: 2px solid #B9A2F0; outline-offset: 2px; }
+  .rs-btn:focus-visible, .rs-act-item:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; }
   /* The one action that leaves this page and spends money. */
   .rs-primary { color: #fff !important; background: var(--accent) !important; border-color: var(--accent) !important; font-weight: 500; }
   .rs-primary:hover { background: #8d52ee !important; color: #fff !important; }
@@ -99,8 +99,8 @@ const styles = `
   .rs-act-item:hover { border-color: var(--muted); }
   .rs-act-item.on { border-color: var(--accent); }
   .rs-act-item b { display: block; font-size: 11px; font-weight: 500; color: var(--text); letter-spacing: 0.04em; }
-  .rs-act-item span { display: block; font-size: 10px; color: #9B98A8; margin-top: 3px; }
-  .rs-act-none { font-family: 'DM Mono', monospace; font-size: 11px; color: #9B98A8; padding: 14px 2px; }
+  .rs-act-item span { display: block; font-size: 10px; color: var(--muted); margin-top: 3px; }
+  .rs-act-none { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); padding: 14px 2px; }
   .rs-through { font-family: 'DM Mono', monospace; font-size: 11px; color: #E5B769; line-height: 1.8; margin: 2px 0 10px; }
   .rs-stage { position: fixed; inset: 0; z-index: 150; background: #0b0c10; display: flex; flex-direction: column; }
   .rs-stage-view { flex: 1; min-height: 0; position: relative; }
@@ -143,7 +143,7 @@ const styles = `
   .rs-stage-track { flex: 1; min-width: 160px; accent-color: var(--accent); }
   @media (max-width: 760px) { .rs-stage-plan { width: auto; left: 10px; right: 10px; max-width: none; max-height: 38vh; } }
   .rs-cam-n { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--text); }
-  .rs-cam-s { font-family: 'DM Mono', monospace; font-size: 11px; color: #9B98A8; margin-top: 3px; }
+  .rs-cam-s { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); margin-top: 3px; }
   .rs-input { background: var(--bg); border: 1px solid var(--border); border-radius: 3px; padding: 6px 9px; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text); }
   .rs-views { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
   @media (max-width: 900px) { .rs-views { grid-template-columns: 1fr; } }
