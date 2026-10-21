@@ -3,6 +3,7 @@ import { supabase } from "./lib/supabase.js";
 import RehearsalStudio from "./RehearsalStudio.jsx";
 import ScenePreview from "./ScenePreview.jsx";
 import RehearsalSections from "./RehearsalSections.jsx";
+import { createShare, loadShare, shareUrl } from "./lib/shareRehearsal.js";
 
 /*
   RehearsalPage — RevaultAI
@@ -55,7 +56,7 @@ const FAQ = [
   },
   {
     q: "Do I need an account?",
-    a: "Only to keep a rehearsal properly. Without one you can block as much as you like, and your scene is saved in your browser as you work, so a refresh or a closed tab does not lose it. An account adds permanence: the rehearsal is filed against your project, survives clearing your browser data, and opens on any machine you sign in from.",
+    a: "Only to keep a rehearsal properly. Without one you can block as much as you like, and your scene is saved in your browser as you work, so a refresh or a closed tab does not lose it. An account adds permanence: the rehearsal is filed against your project, survives clearing your browser data, and opens on any machine you sign in from. Making a share link also needs one — opening somebody else's never does.",
   },
   {
     q: "What do credits buy?",
@@ -63,7 +64,7 @@ const FAQ = [
   },
   {
     q: "Can I get the blocking out of here?",
-    a: "Three ways. Export storyboard gives you a single sheet with one frame per camera, captioned with the shot size, lens and who is in it — free, no account, and it downloads straight to your machine. Shoot this angle carries the blocking into the generator as a written shot. Cover the scene saves every angle as a shot list against a project. There is no animatic video export or share link yet.",
+    a: "Four ways. Export storyboard gives you a single sheet with one frame per camera, captioned with the shot size, lens and who is in it — free, no account, downloaded straight to your machine. Share a link gives you a URL that opens the whole scene for anyone, with no account needed at their end, and they can change their copy freely without touching yours. Shoot this angle carries the blocking into the generator as a written shot. Cover the scene saves every angle as a shot list against a project. There is no animatic video export yet.",
   },
   {
     q: "Is this the finished picture?",
@@ -80,6 +81,15 @@ export default function RehearsalPage({ user, activeProject, notify, onSignInCli
   const latest = useRef(null);
   // Filled by the studio, so the hero's button can step onto the set.
   const studio = useRef(null);
+  const [sharing, setSharing] = useState(false);
+  const [link, setLink] = useState(null);
+  const [copied, setCopied] = useState(false);
+  // Arriving on a share: hold the studio back rather than booting it on a
+  // starter scene and swapping underneath the visitor a moment later.
+  const [opening, setOpening] = useState(() => {
+    try { return !!new URLSearchParams(window.location.search).get("scene"); }
+    catch { return false; }
+  });
   const baseline = useRef(null);
 
   async function loadList() {
@@ -94,6 +104,71 @@ export default function RehearsalPage({ user, activeProject, notify, onSignInCli
     setList(data ?? []);
   }
   useEffect(() => { loadList(); }, [user?.id, activeProject?.id]);
+
+  /*
+    A shared scene, opened by its link. Nobody needs an account for this —
+    that is the whole point of the feature — and what arrives is treated as
+    a stranger's JSON: loadShare sanitizes it before it reaches the studio.
+  */
+  useEffect(() => {
+    let id = null;
+    try { id = new URLSearchParams(window.location.search).get("scene"); } catch { id = null; }
+    if (!id) return;
+    let alive = true;
+    (async () => {
+      try {
+        const shared = await loadShare(id);
+        if (!alive) return;
+        if (shared) {
+          setCurrent({ id: null, data: shared, key: "share-" + id });
+          /*
+            Take the id back out of the address bar. Left in, returning to
+            this page re-opens the original and throws away whatever the
+            visitor has done to their copy since.
+          */
+          try {
+            const u = new URL(window.location.href);
+            u.searchParams.delete("scene");
+            window.history.replaceState(window.history.state, "", u.pathname + u.search);
+          } catch { /* an address bar we cannot rewrite is not worth failing over */ }
+          notify?.("Opened a shared scene — it is yours to change. Sign in to keep your version.");
+        } else {
+          notify?.("That link did not match a scene. It may have been deleted.");
+        }
+      } catch (e) {
+        if (alive) notify?.("Could not open that shared scene: " + (e?.message || "unknown reason"));
+      } finally {
+        if (alive) setOpening(false);
+      }
+    })();
+    return () => { alive = false; };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /*
+    Making a share needs an account, opening one never does.
+
+    Not to gate the feature — it is because an unauthenticated write
+    endpoint that accepts a blob of JSON is free storage for whoever finds
+    it. The row is owned, so it can be rate-limited, counted and deleted.
+    Reading stays open, which is the half that matters to the person you
+    send the link to.
+  */
+  async function share() {
+    if (!user?.id) { notify?.("Sign in to get a link — opening one needs no account."); onSignInClick?.(); return; }
+    const data = latest.current;
+    if (!data) { notify?.("Nothing to share yet."); return; }
+    setSharing(true);
+    setCopied(false);
+    try {
+      const url = shareUrl(await createShare(data, user.id));
+      setLink(url);
+      try { await navigator.clipboard.writeText(url); setCopied(true); } catch { /* shown below to copy by hand */ }
+    } catch (e) {
+      notify?.("Could not make a link: " + (e?.message || "unknown reason"));
+    } finally {
+      setSharing(false);
+    }
+  }
 
   // Don't lose unsaved blocking to a stray tab close.
   useEffect(() => {
@@ -297,11 +372,35 @@ export default function RehearsalPage({ user, activeProject, notify, onSignInCli
             {saving ? "Saving…" : !user ? "Sign in to save" : dirty || !current.id ? "Save rehearsal" : "\u2713 Saved"}
           </button>
           <button style={btn} onClick={startNew}>New rehearsal</button>
+          <button
+            style={btn}
+            onClick={share}
+            disabled={sharing}
+            title="A link that opens this scene for anyone, with or without an account."
+          >
+            {sharing ? "Making a link…" : "Share a link"}
+          </button>
           {dirty && <span style={{ ...mono, fontSize: 11, color: "#E5B769" }}>Unsaved changes</span>}
           {activeProject && user && (
             <span style={{ ...mono, fontSize: 11, color: "var(--muted)" }}>Saving to {activeProject.name}</span>
           )}
         </div>
+
+        {link && (
+          <div style={{ ...bar, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+            <span style={{ ...mono, fontSize: 11, color: "#4ADE80" }}>
+              {copied ? "Link copied." : "Link ready — copy it below."}
+            </span>
+            <input
+              readOnly
+              value={link}
+              onFocus={(e) => e.target.select()}
+              style={{ ...mono, flex: 1, minWidth: 260, fontSize: 11, color: "var(--text)",
+                background: "var(--bg)", border: "1px solid var(--border)", borderRadius: 3, padding: "7px 9px" }}
+            />
+            <span style={{ ...mono, fontSize: 11, color: "var(--muted)" }}>Opens without an account.</span>
+          </div>
+        )}
 
         {list.length > 0 && (
           <div style={{ ...bar }}>
@@ -326,7 +425,11 @@ export default function RehearsalPage({ user, activeProject, notify, onSignInCli
           </div>
         )}
 
+        {opening ? (
+          <div style={{ ...bar, ...mono, fontSize: 12, color: "var(--muted)" }}>Opening a shared scene…</div>
+        ) : (
         <RehearsalStudio key={current.key} initial={current.data} onChange={onStudioChange} setGenPrefill={setGenPrefill} setPage={setPage} notify={notify} onShoot={onShoot} onCover={onCover} user={user} activeProject={activeProject} controlsRef={studio} />
+        )}
 
         <div style={{ ...bar, marginTop: 44, textAlign: "center" }}>
           <button className="rh-cta" onClick={() => studio.current?.openStage()}>

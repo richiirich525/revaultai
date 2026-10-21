@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/check-starters.mjs && vite build && node scripts/prerender.js && node scripts/check-prerender.mjs",
+    "build": "node scripts/check-starters.mjs && node scripts/check-share.mjs && vite build && node scripts/prerender.js && node scripts/check-prerender.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },

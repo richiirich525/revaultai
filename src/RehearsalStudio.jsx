@@ -251,7 +251,16 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
     see lib/rehearsalDraft.js.
   */
   const draftTimer = useRef(null);
+  const sawFirst = useRef(false);
   useEffect(() => {
+    /*
+      The first pass is whatever the studio opened on, not something the
+      visitor made. Skipping it means opening a shared link, or looking
+      at a starter scene, never overwrites the draft you already had in
+      this browser. The first real edit saves normally — by then you
+      have chosen this scene.
+    */
+    if (!sawFirst.current) { sawFirst.current = true; return; }
     if (draftTimer.current) clearTimeout(draftTimer.current);
     draftTimer.current = setTimeout(() => saveDraft(r), 600);
     return () => { if (draftTimer.current) clearTimeout(draftTimer.current); };
