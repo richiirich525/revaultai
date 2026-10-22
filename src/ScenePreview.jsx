@@ -31,21 +31,36 @@ const Stage3D = lazy(() => import("./CameraView.jsx"));
 const FPS = 24;     // a decorative loop does not need 60
 const HOLD = 1.2;   // seconds held on the last frame before looping
 
-export default function ScenePreview({ sceneId = "dinner-argument", height = 320, threeD = true }) {
+export default function ScenePreview({
+  sceneId = "dinner-argument",
+  rehearsal = null,
+  sceneKey = null,
+  height = 320,
+  threeD = true,
+}) {
   const scene = useMemo(() => {
-    // "empty" is the studio's Empty scene button. It is a real choice
-    // someone can make below, so the hero follows it rather than carrying on
-    // with a scene they have just replaced.
-    const st = sceneId === "empty" ? null : (getStarter(sceneId) ?? STARTERS[0]);
-    const r = st ? st.make() : newRehearsal();
+    /*
+      A rehearsal handed in wins: that is the scene someone is actually
+      working on, mid-edit and all. Without one this falls back to a named
+      starter, which is what the marketing sections further down the page use,
+      and "empty" matches the studio's Empty scene button — a real choice
+      someone can make, so the hero follows it rather than carrying on with a
+      scene they have just replaced.
+    */
+    const st = (rehearsal || sceneId === "empty") ? null : (getStarter(sceneId) ?? STARTERS[0]);
+    const r = rehearsal ?? (st ? st.make() : newRehearsal());
     return {
-      name: st ? st.name : "an empty stage",
+      name: st ? st.name : rehearsal ? (rehearsal.title?.trim() || "your scene") : "an empty stage",
       r,
       room: activeRoom(r),
       fit: fitFor(r),
       trails: r.actors.map((_, i) => trailFor(r, i)),
     };
-  }, [sceneId]);
+  }, [sceneId, rehearsal]);
+
+  // Rewinding is for a scene someone swapped to, never for an edit to the one
+  // already playing — otherwise the loop restarts under every drag.
+  const identity = sceneKey ?? sceneId;
 
   // Asked for less motion: one still frame, no clock, and no 3D download.
   const [still] = useState(
@@ -86,10 +101,12 @@ export default function ScenePreview({ sceneId = "dinner-argument", height = 320
     of the way through and read as broken.
   */
   const mounted = useRef(false);
+  const durRef = useRef(scene.r.duration);
+  useEffect(() => { durRef.current = scene.r.duration; }, [scene.r.duration]);
   useEffect(() => {
     if (!mounted.current) { mounted.current = true; return; }
-    setT(still ? scene.r.duration * 0.55 : 0);
-  }, [scene, still]);
+    setT(still ? durRef.current * 0.55 : 0);
+  }, [identity, still]);
 
   useEffect(() => {
     if (!live || still) return;
@@ -108,7 +125,9 @@ export default function ScenePreview({ sceneId = "dinner-argument", height = 320
     };
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
-  }, [live, still, scene]);
+    // Keyed on the duration, not the scene: an edit must not tear the clock
+    // down and restart it sixty times a second.
+  }, [live, still, scene.r.duration]);
 
   const clamped = Math.min(t, scene.r.duration);
   const now = stateAt(scene.r, clamped);

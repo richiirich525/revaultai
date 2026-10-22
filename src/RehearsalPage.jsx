@@ -82,9 +82,23 @@ export default function RehearsalPage({ user, activeProject, notify, onSignInCli
   // Filled by the studio, so the hero's button can step onto the set.
   const studio = useRef(null);
 
-  // Which scene the hero loops. The studio reports it when someone picks a
-  // starter below, so the two halves of the page never show different scenes.
+  /*
+    The hero shows the rehearsal being worked on, not a stand-in.
+
+    heroR is the scene itself. The studio reports a change on every frame of a
+    drag, so these are coalesced to roughly seven a second — the hero is
+    decoration and does not need every intermediate position. The geometry
+    behind it measures 0.13ms for a starter and 1.6ms for six performers with
+    forty marks each, so the limit is there for the re-render, not the maths.
+
+    heroScene is a separate signal: which scene was deliberately chosen. It
+    tells the preview to rewind, which an edit must not do.
+  */
   const [heroScene, setHeroScene] = useState("dinner-argument");
+  const [heroR, setHeroR] = useState(null);
+  const heroPending = useRef(null);
+  const heroTimer = useRef(0);
+  useEffect(() => () => { if (heroTimer.current) clearTimeout(heroTimer.current); }, []);
   const [sharing, setSharing] = useState(false);
   const [link, setLink] = useState(null);
   const [copied, setCopied] = useState(false);
@@ -182,10 +196,21 @@ export default function RehearsalPage({ user, activeProject, notify, onSignInCli
     return () => window.removeEventListener("beforeunload", warn);
   }, [dirty]);
 
+  const HERO_MS = 150;
+  function pushHero(r) {
+    heroPending.current = r;
+    if (heroTimer.current) return;
+    heroTimer.current = setTimeout(() => {
+      heroTimer.current = 0;
+      setHeroR(heroPending.current);
+    }, HERO_MS);
+  }
+
   // The studio reports every change. The first report after opening is the
   // starting point, not an edit.
   function onStudioChange(r) {
     latest.current = r;
+    pushHero(r);
     const s = JSON.stringify(r);
     if (baseline.current === null) { baseline.current = s; return; }
     setDirty(s !== baseline.current);
@@ -364,7 +389,12 @@ export default function RehearsalPage({ user, activeProject, notify, onSignInCli
             <span className="rh-cta-note">or start blocking below</span>
           </div>
         </div>
-        <ScenePreview sceneId={heroScene} height={320} />
+        <ScenePreview
+          rehearsal={heroR}
+          sceneId={heroScene}
+          sceneKey={heroScene + "|" + current.key}
+          height={320}
+        />
       </div>
       <section className="section">
         <div style={{ ...bar, ...mono, fontSize: 12.5, color: "var(--muted)", lineHeight: 1.85 }}>
