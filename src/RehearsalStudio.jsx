@@ -155,7 +155,7 @@ const styles = `
   @media (max-width: 760px) { .rs { padding: 0 20px; } }
 `;
 
-export default function RehearsalStudio({ initial, onChange, setGenPrefill, setPage, notify, onShoot, onCover, user, activeProject, controlsRef }) {
+export default function RehearsalStudio({ initial, onChange, setGenPrefill, setPage, notify, onShoot, onCover, user, activeProject, controlsRef, onScene }) {
   /*
     What the studio opens on, decided once. A saved rehearsal wins, then
     whatever is in this browser from last time, and failing both a starter
@@ -579,6 +579,8 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
     setSelActor(null);
     setActFor(null);
     setMoveOpen(false);
+    // The hero above runs its own loop of whichever scene is chosen here.
+    onScene?.(id);
     notify?.(`${st.name} loaded — press play.`);
   }
 
@@ -1335,7 +1337,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
           <button
             className="rs-btn"
             title="Two performers on an empty floor, nothing blocked"
-            onClick={() => { setR(newRehearsal()); setT(0); setPlaying(false); setSelActor(null); setActFor(null); }}
+            onClick={() => { setR(newRehearsal()); setT(0); setPlaying(false); setSelActor(null); setActFor(null); onScene?.("empty"); }}
           >
             Empty scene
           </button>

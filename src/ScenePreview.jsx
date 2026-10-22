@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { stateAt } from "./lib/rehearsal.js";
+import { newRehearsal, stateAt } from "./lib/rehearsal.js";
 import { motionState } from "./lib/performers.js";
 import { readStage } from "./lib/stageGeometry.js";
 import { planShapes } from "./lib/setGeometry.js";
@@ -33,10 +33,13 @@ const HOLD = 1.2;   // seconds held on the last frame before looping
 
 export default function ScenePreview({ sceneId = "dinner-argument", height = 320, threeD = true }) {
   const scene = useMemo(() => {
-    const st = getStarter(sceneId) ?? STARTERS[0];
-    const r = st.make();
+    // "empty" is the studio's Empty scene button. It is a real choice
+    // someone can make below, so the hero follows it rather than carrying on
+    // with a scene they have just replaced.
+    const st = sceneId === "empty" ? null : (getStarter(sceneId) ?? STARTERS[0]);
+    const r = st ? st.make() : newRehearsal();
     return {
-      name: st.name,
+      name: st ? st.name : "an empty stage",
       r,
       room: activeRoom(r),
       fit: fitFor(r),
@@ -76,6 +79,17 @@ export default function ScenePreview({ sceneId = "dinner-argument", height = 320
     }
     return () => { document.removeEventListener("visibilitychange", onVis); io?.disconnect(); };
   }, [still]);
+
+  /*
+    Switching scenes rewinds. Without this the new scene picks up at whatever
+    second the last one had reached, so a four-second loop can open two thirds
+    of the way through and read as broken.
+  */
+  const mounted = useRef(false);
+  useEffect(() => {
+    if (!mounted.current) { mounted.current = true; return; }
+    setT(still ? scene.r.duration * 0.55 : 0);
+  }, [scene, still]);
 
   useEffect(() => {
     if (!live || still) return;

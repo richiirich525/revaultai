@@ -81,6 +81,10 @@ export default function RehearsalPage({ user, activeProject, notify, onSignInCli
   const latest = useRef(null);
   // Filled by the studio, so the hero's button can step onto the set.
   const studio = useRef(null);
+
+  // Which scene the hero loops. The studio reports it when someone picks a
+  // starter below, so the two halves of the page never show different scenes.
+  const [heroScene, setHeroScene] = useState("dinner-argument");
   const [sharing, setSharing] = useState(false);
   const [link, setLink] = useState(null);
   const [copied, setCopied] = useState(false);
@@ -360,7 +364,7 @@ export default function RehearsalPage({ user, activeProject, notify, onSignInCli
             <span className="rh-cta-note">or start blocking below</span>
           </div>
         </div>
-        <ScenePreview height={320} />
+        <ScenePreview sceneId={heroScene} height={320} />
       </div>
       <section className="section">
         <div style={{ ...bar, ...mono, fontSize: 12.5, color: "var(--muted)", lineHeight: 1.85 }}>
@@ -428,7 +432,7 @@ export default function RehearsalPage({ user, activeProject, notify, onSignInCli
         {opening ? (
           <div style={{ ...bar, ...mono, fontSize: 12, color: "var(--muted)" }}>Opening a shared scene…</div>
         ) : (
-        <RehearsalStudio key={current.key} initial={current.data} onChange={onStudioChange} setGenPrefill={setGenPrefill} setPage={setPage} notify={notify} onShoot={onShoot} onCover={onCover} user={user} activeProject={activeProject} controlsRef={studio} />
+        <RehearsalStudio key={current.key} initial={current.data} onChange={onStudioChange} setGenPrefill={setGenPrefill} setPage={setPage} notify={notify} onShoot={onShoot} onCover={onCover} user={user} activeProject={activeProject} controlsRef={studio} onScene={setHeroScene} />
         )}
 
         <div style={{ ...bar, marginTop: 44, textAlign: "center" }}>
