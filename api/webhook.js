@@ -153,7 +153,10 @@ export default async function handler(req, res) {
 
       await supabase.from("purchases").upsert(
         { user_id, creation_id, stripe_session_id: session.id, amount_total: session.amount_total, currency: session.currency, stripe_fee: stripeFee, amount_net: amountNet },
-        { onConflict: "user_id,creation_id" }
+        // One row per sale. Keying this on (user_id, creation_id) meant a
+        // buyer's second purchase of a film overwrote their first, taking the
+        // first sale's session id with it and orphaning its payout row.
+        { onConflict: "stripe_session_id" }
       );
     }
   }

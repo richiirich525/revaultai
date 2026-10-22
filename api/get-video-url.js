@@ -145,6 +145,9 @@ export default async function handler(req, res) {
             .select("user_id")
             .eq("user_id", user.id)
             .eq("creation_id", id)
+            // Buying the same film twice is two rows now, and asking for a
+            // single row would fail outright rather than granting access.
+            .limit(1)
             .maybeSingle();
           if (purchase) allowed = true;
         }

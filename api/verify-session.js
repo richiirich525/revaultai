@@ -39,7 +39,8 @@ export default async function handler(req, res) {
 
   const { error } = await supabase.from("purchases").upsert(
     { user_id, creation_id, stripe_session_id: session.id },
-    { onConflict: "user_id,creation_id" }
+    // One row per sale — see the note in webhook.js.
+    { onConflict: "stripe_session_id" }
   );
 
   if (error) {

@@ -88,17 +88,32 @@ uniq as (
              and a.attname = 'stripe_session_id' and i.indisunique
          ) then 'ok' else 'NO UNIQUE INDEX' end as status
   union all
-  select 'uniqueness', 'purchases (user_id, creation_id)',
+  -- A sale is identified by its Stripe session, so that is what must be unique.
+  select 'uniqueness', 'purchases (stripe_session_id)',
          case when exists (
-           select 1 from pg_constraint c
-           join pg_class t on t.oid = c.conrelid
+           select 1 from pg_index x
+           join pg_class t on t.oid = x.indrelid
            where t.relname = 'purchases' and t.relnamespace = 'public'::regnamespace
-             and c.contype in ('u','p')
+             and x.indisunique
+             and (select array_agg(a.attname::text)
+                  from pg_attribute a
+                  where a.attrelid = t.oid and a.attnum = any (x.indkey))
+                 = array['stripe_session_id']
+         ) then 'ok' else 'NO UNIQUE INDEX' end
+  union all
+  -- And the buyer+film pair must NOT be unique any more: while it was, a second
+  -- purchase of the same film overwrote the first and orphaned its payout.
+  select 'uniqueness', 'purchases (user_id, creation_id) is not unique',
+         case when exists (
+           select 1 from pg_index x
+           join pg_class t on t.oid = x.indrelid
+           where t.relname = 'purchases' and t.relnamespace = 'public'::regnamespace
+             and x.indisunique
              and (select array_agg(a.attname::text order by a.attname)
                   from pg_attribute a
-                  where a.attrelid = t.oid and a.attnum = any (c.conkey))
+                  where a.attrelid = t.oid and a.attnum = any (x.indkey))
                  = array['creation_id','user_id']
-         ) then 'ok' else 'NO UNIQUE CONSTRAINT' end
+         ) then 'STILL UNIQUE — run 2026-10-21-purchases-one-row-per-sale.sql' else 'ok' end
 )
 select area, item, status
 from (select * from cols union all select * from rls

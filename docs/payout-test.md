@@ -192,11 +192,15 @@ name, so the row is recorded as failed rather than lost.
   `blockedReason` returns "already paid" and the upsert on
   `stripe_session_id` keeps one row. Confirm `payouts` still has exactly one
   row for that session.
-- **Buy the same film twice as the same buyer.** The `purchases` upsert is on
-  `(user_id, creation_id)`, so the second purchase overwrites the first rather
-  than creating a second payable sale. Decide whether that is what you want —
-  it means a buyer cannot buy the same film twice, and if that is intended it
-  should be enforced at checkout rather than discovered here.
+- **Buy the same film twice as the same buyer.** This used to overwrite the
+  first purchase, because both writers upserted on `(user_id, creation_id)`.
+  The first sale's session id went with it and its `payouts` row was left
+  pointing at nothing, so the creator was owed for a sale the table had
+  forgotten. Fixed by `sql/2026-10-21-purchases-one-row-per-sale.sql`: sales
+  are keyed on `stripe_session_id` and each one is separately payable.
+  Confirm here that `purchases` holds **two** rows for that buyer and film,
+  that both appear in the payouts report, and that paying one leaves the other
+  still due.
 
 ---
 
