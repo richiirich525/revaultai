@@ -1,5 +1,51 @@
 import { fal } from '@fal-ai/client';
 import { createClient } from '@supabase/supabase-js';
+import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+
+/*
+  A start frame arrives as an R2_PUBLIC_URL link, which is how this app records
+  where an object lives — not a link anybody can fetch. That bucket is private:
+  every read path in get-video-url.js turns such a link back into a key and
+  presigns it, and nothing anywhere fetches the stored form directly.
+
+  fal has to fetch the start frame itself, from outside, so it needs the same
+  treatment. Handing over the stored form hands fal a 403, which is why a
+  generation with a start frame failed on every model while reference photos —
+  which already come back presigned — worked.
+
+  Anything not on our own bucket is passed straight through: fal's CDN serves
+  the location plates, and those are already fetchable.
+*/
+let r2Client = null;
+function getR2Client() {
+  const accountId = process.env.R2_ACCOUNT_ID;
+  const accessKeyId = process.env.R2_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
+  if (!accountId || !accessKeyId || !secretAccessKey) throw new Error('Missing R2 credentials.');
+  if (!r2Client) {
+    r2Client = new S3Client({
+      region: 'auto',
+      endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+      credentials: { accessKeyId, secretAccessKey },
+    });
+  }
+  return r2Client;
+}
+
+export async function signForFal(url) {
+  const base = (process.env.R2_PUBLIC_URL ?? '').replace(/\/$/, '');
+  if (!base || typeof url !== 'string' || !url.startsWith(base + '/')) return url;
+  const key = decodeURIComponent(url.slice(base.length + 1));
+  if (!key) return url;
+  return await getSignedUrl(
+    getR2Client(),
+    new GetObjectCommand({ Bucket: process.env.R2_BUCKET_NAME, Key: key }),
+    // 2 hours, matching signIfOurs in edit-video.js: a queued job may not be
+    // picked up for a while, and the link has to still work when it is.
+    { expiresIn: 7200 },
+  );
+}
 
 // Model catalog — server-side only, client just sends a model key
 const MODELS = {
@@ -358,6 +404,14 @@ export default async function handler(req, res) {
     }
 
     // 5. Submit the job to fal, with our webhook for completion
+    let startFrame = imageUrl;
+    if (imageUrl) {
+      try {
+        startFrame = await signForFal(imageUrl);
+      } catch (e) {
+        console.error('could not sign the start frame:', e.message);
+      }
+    }
     try {
       const { request_id } = await fal.queue.submit(
         refs.length ? refModel.falId : imageUrl ? selected.imageFalId : selected.falId,
@@ -366,7 +420,7 @@ export default async function handler(req, res) {
           prompt: refPrompt,
           duration: selected.durationParam[seconds],
           ...(imageUrl && selected.aspectIgnoredWithImage ? {} : { aspect_ratio: ratio }),
-          ...(imageUrl ? { image_url: imageUrl } : {}),
+          ...(imageUrl ? { image_url: startFrame } : {}),
           ...(refs.length && refModel.mode !== "elements"
             ? { [refModel.refsParam || "image_urls"]: refs.map((r) => r.url) }
             : {}),
