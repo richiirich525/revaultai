@@ -121,6 +121,37 @@ const REF_MODELS = {
   'minimax-h3-1080':{ falId: 'minimax/h3-max/reference-to-video', named: true, plainRefs: true, refsParam: 'reference_image_urls', startFrameWithRefs: true, maxRefs: 9 },
 };
 
+/*
+  What fal actually objected to, as one readable line.
+
+  fal reports a rejected submission as a 422 with body.detail — a list of
+  { loc, msg } — and a failed job through the webhook as an error that may be
+  a string, an object or that same list. Collapsing any of those to a fixed
+  sentence is how a failure becomes a mystery, so this flattens whatever shape
+  turns up. Exported because the webhook needs the same treatment.
+*/
+export function falErrorText(err) {
+  const pick = (d) => {
+    if (!d) return "";
+    if (typeof d === "string") return d;
+    if (Array.isArray(d)) {
+      return d.map((e) => {
+        if (typeof e === "string") return e;
+        const field = Array.isArray(e?.loc) ? e.loc.filter((x) => x !== "body").join(".") : "";
+        return (field ? field + ": " : "") + String(e?.msg ?? e?.message ?? JSON.stringify(e));
+      }).join("; ");
+    }
+    if (typeof d === "object") return String(d.msg ?? d.message ?? d.error ?? JSON.stringify(d));
+    return String(d);
+  };
+  const useful = (v) => (v && v !== "{}" && v !== "[]" ? v : "");
+  const text = useful(pick(err?.body?.detail)) || useful(pick(err?.detail))
+    || useful(pick(err?.body)) || String(err?.message ?? "") || useful(pick(err));
+  // Signed reference URLs carry credentials in the query string. They are long,
+  // useless to read and must not be parked in a row the client reads back.
+  return text.replace(/https?:\/\/\S+/g, "[url]").trim().slice(0, 300);
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -355,19 +386,7 @@ export default async function handler(req, res) {
     } catch (falError) {
       // fal rejected the job — refund and mark failed
       console.error('fal submit error:', falError, JSON.stringify(falError?.body ?? null));
-      // fal returns 422 with a list of {loc, msg}. Keep it short enough to read
-      // in the generations list, and never leak a signed URL into it.
-      const detail = (() => {
-        const d = falError?.body?.detail;
-        if (Array.isArray(d)) {
-          return d.map((e) => {
-            const field = Array.isArray(e?.loc) ? e.loc.filter((x) => x !== 'body').join('.') : '';
-            return (field ? field + ': ' : '') + String(e?.msg ?? '');
-          }).join('; ').slice(0, 300);
-        }
-        if (typeof d === 'string') return d.slice(0, 300);
-        return String(falError?.message ?? '').slice(0, 300);
-      })();
+      const detail = falErrorText(falError);
       await supabase.rpc('add_credits', {
         p_user_id: user.id,
         p_amount: cost,

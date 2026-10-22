@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { createClient } from "@supabase/supabase-js";
+import { falErrorText } from "./generate-video.js";
 
 // Vercel must NOT pre-parse the body — signature verification needs the raw bytes
 export const config = { api: { bodyParser: false } };
@@ -136,7 +137,9 @@ export default async function handler(req, res) {
         .from("generations")
         .update({
           status: "failed",
-          error_message: typeof error === "string" ? error : "Generation failed",
+          // fal sends a structured error here, so the old string-only check
+          // threw the reason away and left "Generation failed" behind.
+          error_message: falErrorText(error) || falErrorText(payload) || "Generation failed",
           completed_at: new Date().toISOString(),
         })
         .eq("id", gen.id);
