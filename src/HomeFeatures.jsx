@@ -9,7 +9,7 @@ export default function HomeFeatures({ setPage, user, onSignInClick }) {
     {
       n: "01",
       title: "Generate",
-      body: "Seedance 2.5, Veo 3.1, Kling 3.0 and Wan 2.6 behind one credit balance. Text to video or animate from a still. No subscriptions, no API keys.",
+      body: "Veo 3.1, Kling 3.0, Seedance 2.5, MiniMax H3 Max and Wan 2.6 behind one credit balance. Text to video or animate from a still. No subscriptions, no API keys.",
     },
     {
       n: "02",

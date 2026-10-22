@@ -53,7 +53,7 @@ export default function AiVideoGeneratorPage({ setPage, user, onSignInClick }) {
           <span className="avg-eyebrow">AI Video Generator</span>
           <h1>Five frontier models.<br />One <em>credit balance</em>.</h1>
           <p className="avg-lede">
-            Generate cinematic video with Seedance 2.5, Seedance 2.0, Veo 3.1, Kling 3.0 and Wan 2.6 — then
+            Generate cinematic video with Veo 3.1, Kling 3.0, Seedance 2.5, MiniMax H3 Max and Wan 2.6 — then
             upscale, extend, and lip-sync the result without leaving the page. No subscription,
             no API keys, no separate account for every model. Pay per second with credits, and
             keep what you make.

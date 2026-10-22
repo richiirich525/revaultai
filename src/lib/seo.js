@@ -70,9 +70,13 @@ export const PAGES = {
       "A hand-picked exhibition of remarkable AI-generated films from across the web, credited to their directors and streaming from their own channels.",
   },
   "ai-video-generator": {
-    title: "AI Video Generator — Seedance, Veo, Kling & Wan | RevaultAI",
+    // Five model families, ten tiers — see src/lib/genModels.js, which is the
+    // list the Generate page actually offers. Naming all five here would push
+    // the title past the length a result page shows, so the names live in the
+    // description, where there is room for the versions too.
+    title: "AI Video Generator — Five Frontier Models | RevaultAI",
     description:
-      "Generate AI video with Seedance 2.0, Veo 3.1, Kling 3.0, and Wan 2.6, then upscale to 4K, extend, and lip-sync — one credit balance, no subscription.",
+      "Generate AI video with Veo 3.1, Kling 3.0, Seedance 2.5, MiniMax and Wan 2.6, then upscale to 4K, extend and lip-sync — one credit balance, no subscription.",
   },
   "founding-creators": {
     title: "Founding Creators Wanted — RevaultAI",
