@@ -116,9 +116,9 @@ const REF_MODELS = {
   // reference_image_urls rather than image_urls, and — alone in this table —
   // will hold a reference set AND open on an exact first frame. Everywhere
   // else those two are alternatives, so chaining a shot costs you the faces.
-  'minimax-h3-480': { falId: 'minimax/h3-max/reference-to-video', named: true, plainRefs: true, refsParam: 'reference_image_urls', startFrameWithRefs: true, maxRefs: 12 },
-  'minimax-h3':     { falId: 'minimax/h3-max/reference-to-video', named: true, plainRefs: true, refsParam: 'reference_image_urls', startFrameWithRefs: true, maxRefs: 12 },
-  'minimax-h3-1080':{ falId: 'minimax/h3-max/reference-to-video', named: true, plainRefs: true, refsParam: 'reference_image_urls', startFrameWithRefs: true, maxRefs: 12 },
+  'minimax-h3-480': { falId: 'minimax/h3-max/reference-to-video', named: true, plainRefs: true, refsParam: 'reference_image_urls', startFrameWithRefs: true, maxRefs: 9 },
+  'minimax-h3':     { falId: 'minimax/h3-max/reference-to-video', named: true, plainRefs: true, refsParam: 'reference_image_urls', startFrameWithRefs: true, maxRefs: 9 },
+  'minimax-h3-1080':{ falId: 'minimax/h3-max/reference-to-video', named: true, plainRefs: true, refsParam: 'reference_image_urls', startFrameWithRefs: true, maxRefs: 9 },
 };
 
 export default async function handler(req, res) {
@@ -354,7 +354,20 @@ export default async function handler(req, res) {
       return res.status(200).json({ generationId: gen.id });
     } catch (falError) {
       // fal rejected the job — refund and mark failed
-      console.error('fal submit error:', falError);
+      console.error('fal submit error:', falError, JSON.stringify(falError?.body ?? null));
+      // fal returns 422 with a list of {loc, msg}. Keep it short enough to read
+      // in the generations list, and never leak a signed URL into it.
+      const detail = (() => {
+        const d = falError?.body?.detail;
+        if (Array.isArray(d)) {
+          return d.map((e) => {
+            const field = Array.isArray(e?.loc) ? e.loc.filter((x) => x !== 'body').join('.') : '';
+            return (field ? field + ': ' : '') + String(e?.msg ?? '');
+          }).join('; ').slice(0, 300);
+        }
+        if (typeof d === 'string') return d.slice(0, 300);
+        return String(falError?.message ?? '').slice(0, 300);
+      })();
       await supabase.rpc('add_credits', {
         p_user_id: user.id,
         p_amount: cost,
@@ -363,7 +376,12 @@ export default async function handler(req, res) {
       });
       await supabase
         .from('generations')
-        .update({ status: 'failed', error_message: 'Generation service rejected the job' })
+        .update({
+          status: 'failed',
+          error_message: detail
+            ? 'Rejected by the generation service — ' + detail
+            : 'Generation service rejected the job',
+        })
         .eq('id', gen.id);
       return res.status(502).json({ error: 'Generation failed to start — credits refunded' });
     }
