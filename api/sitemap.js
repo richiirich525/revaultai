@@ -7,7 +7,19 @@ import { createClient } from "@supabase/supabase-js";
 
 const SITE = "https://www.revaultai.com";
 
-// Static pages, with rough priority. Home highest, legal pages lowest.
+/*
+  Static pages, with rough priority. Home highest, legal pages lowest.
+
+  The fourth slot, where present, is the date that page's copy last changed in
+  a way worth recrawling: a new section, a rewritten headline, a corrected
+  price. Bump it by hand when you make such a change, and leave it off when
+  you have not.
+
+  It is deliberately NOT the deploy date. Google discounts lastmod from sites
+  that stamp every page with "now" on every push, so a date that moves when
+  the copy did not is worse than no date at all. Pages below with no date are
+  making no claim, which is the honest default.
+*/
 const STATIC_PAGES = [
   ["/", "1.0", "daily"],
   ["/explore", "0.9", "daily"],
@@ -27,9 +39,9 @@ const STATIC_PAGES = [
   ["/frame-planner", "0.9", "monthly"],
   ["/tools", "0.9", "weekly"],
   ["/lot", "0.9", "weekly"],
-  ["/pricing", "0.8", "monthly"],
+  ["/pricing", "0.8", "monthly", "2026-10-21"],       // prices render correctly again
   ["/blocking", "0.9", "monthly"],
-  ["/rehearsal", "0.9", "monthly"],
+  ["/rehearsal", "0.9", "monthly", "2026-10-21"],     // six new sections, live hero
   ["/autopsy", "0.9", "monthly"],
   ["/discovered", "0.8", "weekly"],
   ["/faq", "0.6", "monthly"],
@@ -62,6 +74,20 @@ function listableHandle(username) {
   return !RESERVED_HANDLES.has(h.toLowerCase());
 }
 
+/*
+  A lastmod is only worth sending if it is a real, past date. A malformed or
+  future one is a reason for a crawler to distrust the whole file, so anything
+  that fails this is dropped rather than published.
+*/
+function safeDate(d) {
+  if (typeof d !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(d)) return null;
+  const t = Date.parse(d + "T00:00:00Z");
+  if (Number.isNaN(t)) return null;
+  // Tomorrow, not today, so a page edited in any time zone still counts.
+  if (t > Date.now() + 86400000) return null;
+  return d;
+}
+
 function esc(s) {
   return String(s ?? "")
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
@@ -83,12 +109,12 @@ export default async function handler(req, res) {
   const url = process.env.VITE_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  const entries = STATIC_PAGES.map(([path, priority, changefreq])  => 
-    urlEntry({ loc: SITE + path, priority, changefreq })
+  const entries = STATIC_PAGES.map(([path, priority, changefreq, lastmod]) =>
+    urlEntry({ loc: SITE + path, priority, changefreq, lastmod: safeDate(lastmod) })
   );
 
     for (const p of POSTS) {
-    entries.push(urlEntry({ loc: SITE + "/blog/" + p.slug, lastmod: p.date, changefreq: "monthly", priority: "0.7" }));
+    entries.push(urlEntry({ loc: SITE + "/blog/" + p.slug, lastmod: safeDate(p.date), changefreq: "monthly", priority: "0.7" }));
   }
 
   // Prompt directory — index plus one page per model.
