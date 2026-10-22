@@ -4,6 +4,91 @@
 
 export const POSTS = [
   {
+    slug: "get-the-blocking-out-storyboard-animatic-share",
+    title: "Getting the Blocking Out: Storyboards, Animatics and a Link",
+    seoTitle: "Export AI Previz: Storyboard Frames, Animatic Video, Share Link",
+    description:
+      "The Rehearsal Studio can now hand the blocking over: a captioned storyboard sheet, an animatic MP4 rendered in your browser, and a link that opens the scene for anyone. Free, no account.",
+    date: "2026-10-21",
+    author: "Richard Garland",
+    category: "News",
+    readingTime: "6 min",
+    faq: [
+      ["How do I export a storyboard from the Rehearsal Studio?", "Press Export storyboard, in the Cameras panel or inside the full-screen stage. You get one sheet with a frame from every camera at the current moment, each captioned with its shot size, lens, subject and timecode. It downloads straight to your machine, costs nothing and needs no account. Export from the full-screen stage rather than the small panel if you want the frames sharper: the renderer sizes itself to its container, so a bigger view means a bigger frame."],
+      ["Can I export an animatic of my blocking?", "Yes. Export animatic renders the timeline as a playable MP4 at twelve frames a second, dropping to eight for a thirty-second scene. It encodes in your own browser using a WebAssembly build of ffmpeg, so nothing is uploaded and no credits are spent. It covers the camera you have selected; switch camera and export again for another angle."],
+      ["Can I share a rehearsal with someone who has no account?", "Yes. Share a link gives you a URL that opens the whole scene for anyone, signed in or not, and what they get is their copy to change freely without touching yours. Making a link needs an account; opening one never does. A share is reachable by its link and not otherwise, so nobody can browse a list of what has been shared."],
+    ],
+    content: `
+<p>A rehearsal that cannot leave the page it was made on is a sketch on a napkin. You can block a scene properly in the Rehearsal Studio &mdash; performers and cameras over a timeline, shot sizes and eyelines read back at you &mdash; and until this week the only way out was to generate a shot or save a shot list. If what you wanted was to show somebody the plan, there was nothing to show them.</p>
+
+<p>Three ways out now, all free and none of them touching credits.</p>
+
+<h2>A storyboard sheet</h2>
+
+<p><strong>Export storyboard</strong> gives you one sheet with a frame from every camera on the scene, taken at whatever moment the playhead is sitting on. Each frame is captioned with what that camera is actually seeing &mdash; <em>A-cam &middot; Medium close-up &middot; 50mm on Ruth &middot; 4.0s</em> &mdash; under a header naming the scene, how many angles, the time and the set.</p>
+
+<p>One file rather than a folder of numbered JPEGs, because a storyboard is a thing you read in order, and because a browser download of several files at once is a permission prompt nobody enjoys. Print it, email it, drop it in a deck.</p>
+
+<p>One practical note: the frame is whatever resolution the 3D view happens to be. The renderer sizes itself to its container, so a storyboard exported from the full-screen stage is considerably sharper than one from the panel beside the plan. If the sheet is going anywhere that matters, step onto the set first.</p>
+
+<h2>An animatic</h2>
+
+<p><strong>Export animatic</strong> renders the timeline as a playable MP4 &mdash; the blocking actually moving, at twelve frames a second, which is the animatic convention. A thirty-second scene drops to eight to keep the capture manageable.</p>
+
+<p>It encodes in your own browser, using a WebAssembly build of ffmpeg. Nothing is uploaded, nothing is generated, no credits are spent. The scene is stepped through a frame at a time and read off the canvas, so a ten-second shot takes a few seconds to capture and a few more to encode. Progress shows on the button.</p>
+
+<p>It covers the camera you have selected. Switch camera and export again for the reverse, which is also the honest way to check that two angles cut together: watch them back to back before either one has cost anything.</p>
+
+<h2>A link</h2>
+
+<p><strong>Share a link</strong> gives you a URL that opens the whole scene &mdash; blocking, cameras, set, lighting, timeline &mdash; for anyone you send it to, with no account at their end. What they get is their copy. They can drag your performers somewhere else and it will not touch yours.</p>
+
+<p>Making a link needs an account. Opening one never does. That asymmetry is deliberate and worth being straight about: an endpoint that lets anyone write a blob of data is free storage for whoever finds it, and an owned row is one that can be counted and deleted. The half that matters to the person receiving the link stays open.</p>
+
+<p>A share is reachable by its link and not otherwise. There is no way to browse a list of what people have shared, which took slightly more care to build than the obvious version would have and seemed worth it.</p>
+
+<h2>Three other things that landed with them</h2>
+
+<p><strong>The studio opens on a blocked scene.</strong> Three starter scenes &mdash; a walk-and-talk, a dinner argument, a standoff &mdash; each with real multi-keyframe blocking rather than two people standing still on an empty floor. The dinner argument plays in the page header, so the first thing you see is a scene being rehearsed. Load any of them from <em>Start from</em>, or take an empty stage if you would rather.</p>
+
+<p><strong>Your work survives a refresh.</strong> Blocking is saved in your browser as you go, so a closed tab no longer throws it away. An account is still what makes it permanent and reachable from another machine, but losing an hour of work to a stray keystroke is no longer one of the costs of not having one.</p>
+
+<p><strong>The shoot button says what it costs.</strong> <em>Shoot this angle &middot; from 8 credits</em>, rather than making you find that out on the next page. It says <em>from</em> because the real price depends on which model you pick, and the studio genuinely does not know that yet.</p>
+
+<div class="cta-inline">
+<strong>Block a Scene and Take It With You</strong>
+<p>Drag performers and cameras, step onto the set in 3D, then export a storyboard, an animatic or a link. Free, no credits, no account needed.</p>
+<a class="cta-btn" href="/rehearsal">Open the Rehearsal Studio</a>
+</div>
+
+<h2>Honest limits</h2>
+
+<ul>
+  <li><strong>The animatic is stand-ins, not footage.</strong> It is gray performers in a gray room. That is the point &mdash; it is for timing and coverage, not for showing a client what the film looks like. None of it is ever sent to a model, because a model shown a stand-in copies the stand-in.</li>
+  <li><strong>The storyboard captures one moment.</strong> One frame per camera at the playhead, not a frame per beat. If you want three moments, export three sheets.</li>
+  <li><strong>A shared scene cannot carry a generated set.</strong> Those live behind the account that made them, so a share drops the reference rather than sending the other person somewhere they have no access.</li>
+  <li><strong>There is still no before-and-after.</strong> Pairing a rehearsal frame with the shot it became is the obvious next thing and it is not built yet.</li>
+</ul>
+
+<h2>And one correction</h2>
+
+<p>While this was being built, the pricing page was found to be serving two of its three prices as rubbish in the HTML &mdash; "$15" arriving as a stray fragment of markup &mdash; because of how the page was assembled before being sent. Anyone with JavaScript running saw the right numbers; search engines and anything without it did not. It is fixed, and the build now refuses to produce a pricing page whose prices are missing, which is the sort of check that should have existed before the bug rather than after it.</p>
+
+<h2>Frequently Asked Questions</h2>
+
+<h3>How do I export a storyboard from the Rehearsal Studio?</h3>
+<p>Press Export storyboard, in the Cameras panel or inside the full-screen stage. You get one sheet with a frame from every camera at the current moment, each captioned with its shot size, lens, subject and timecode. It downloads straight to your machine, costs nothing and needs no account. Export from the full-screen stage rather than the small panel if you want the frames sharper: the renderer sizes itself to its container, so a bigger view means a bigger frame.</p>
+
+<h3>Can I export an animatic of my blocking?</h3>
+<p>Yes. Export animatic renders the timeline as a playable MP4 at twelve frames a second, dropping to eight for a thirty-second scene. It encodes in your own browser using a WebAssembly build of ffmpeg, so nothing is uploaded and no credits are spent. It covers the camera you have selected; switch camera and export again for another angle.</p>
+
+<h3>Can I share a rehearsal with someone who has no account?</h3>
+<p>Yes. Share a link gives you a URL that opens the whole scene for anyone, signed in or not, and what they get is their copy to change freely without touching yours. Making a link needs an account; opening one never does. A share is reachable by its link and not otherwise, so nobody can browse a list of what has been shared.</p>
+
+<p class="editorial-note">Shipped 21 October 2026. For what the studio is for in the first place, see <a href="/blog/block-a-scene-before-you-generate">how to block a scene before you generate it</a>.</p>
+`,
+  },
+  {
     slug: "rehearsal-studio-update-direct-blocking",
     title: "Rehearsal Studio Update: Grab Anyone, Step Onto the Set",
     seoTitle: "RevaultAI Rehearsal Studio Update: Direct Blocking in 3D",
