@@ -25,10 +25,30 @@ export default function SubmitPage({ setCreations, notify, setPage, user, profil
   function updateField(key, value) { setForm((prev) => ({ ...prev, [key]: value })); }
   function formatBytes(b) { if (b < 1024 * 1024) return (b / 1024).toFixed(1) + " KB"; return (b / (1024 * 1024)).toFixed(1) + " MB"; }
 
+  /*
+    What to credit a submission to. This used to read "Kling 3.0 if the model
+    was Kling, otherwise Wan 2.6", so every Veo, Seedance and MiniMax take
+    reached the archive labeled as Wan. The names match the tiers offered on
+    the Generate page; an unknown key credits the platform rather than guessing
+    at a model, because a wrong credit is worse than a vague one.
+  */
+  function generatedWith(model) {
+    const key = String(model ?? "");
+    const name =
+      key.startsWith("kling") ? "Kling 3.0" :
+      key.startsWith("veo") ? "Veo 3.1" :
+      key.startsWith("seedance-2.5") ? "Seedance 2.5" :
+      key.startsWith("seedance") ? "Seedance 2.0" :
+      key.startsWith("minimax") ? "MiniMax H3 Max" :
+      key.startsWith("wan") ? "Wan 2.6" :
+      null;
+    return name ? `${name} (RevaultAI Generate)` : "RevaultAI Generate";
+  }
+
   // If arriving from the Generate page, attach the generated video automatically
   useEffect(() => {
     if (!prefill?.videoUrl) return;
-    setForm((prev) => ({ ...prev, prompt: prefill.prompt ?? prev.prompt, tools: prev.tools || (prefill.model === "kling-3.0" ? "Kling 3.0 (RevaultAI Generate)" : "Wan 2.6 (RevaultAI Generate)") }));
+    setForm((prev) => ({ ...prev, prompt: prefill.prompt ?? prev.prompt, tools: prev.tools || generatedWith(prefill.model) }));
     (async () => {
       setUploadState("processing");
       try {

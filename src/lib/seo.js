@@ -33,7 +33,7 @@ export const PAGES = {
   generate: {
     title: "Generate AI Video — RevaultAI",
     description:
-      "Turn a prompt into a cinematic film clip with Wan and Kling, then submit it straight to the RevaultAI archive.",
+      "Turn a prompt into a cinematic film clip with Veo, Kling, Seedance, MiniMax or Wan, then submit it straight to the RevaultAI archive.",
   },
   submit: {
     title: "Submit Your AI Film — RevaultAI",
@@ -107,7 +107,7 @@ export const PAGES = {
   },
   rehearsal: {
     title: "Previz Software for Scene Blocking in AI Video | RevaultAI",
-    description: "Free previz for AI video: block a scene over a timeline, walk the camera through the set in 3D, then generate the shot. No account needed.",
+    description: "Free previz and scene blocking for AI video: start from a blocked scene, autosave in your browser and export a storyboard sheet, animatic MP4 or share link.",
   },
   blocking: {
     title: "Blocking & Performance Director — Free Tool | RevaultAI",

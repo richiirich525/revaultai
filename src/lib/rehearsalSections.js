@@ -58,6 +58,13 @@ export const REHEARSAL_SECTIONS = [
     copy: "The 180° line is drawn for you, eyelines are read back in words, and the plan says so the moment a camera crosses to the wrong side. Catching that here costs nothing; catching it after you have generated both shots costs two generations.",
     visual: "continuity",
   },
+  {
+    id: "start-and-export",
+    eyebrow: "Starting and finishing",
+    h2: "Start from a scene, take the blocking with you",
+    copy: "The studio opens on a scene that's already blocked: a walk-and-talk, a dinner argument or a standoff. Your blocking is saved in this browser as you work, with no account needed. Sign in to keep it for good. When the blocking is ready, hand it over as a captioned storyboard sheet, an animatic MP4 rendered in your browser, or a share link. Making a link needs an account; opening one never does.",
+    visual: "handoff",
+  },
 ];
 
 // The static HTML a crawler reads. Headings and copy only — the diagrams are

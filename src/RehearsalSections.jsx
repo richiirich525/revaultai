@@ -170,12 +170,48 @@ function ContinuityArt() {
   );
 }
 
+/*
+  The three ways blocking leaves the studio, with the one account rule that
+  applies to them drawn where it belongs rather than written underneath.
+*/
+function HandoffArt() {
+  const cards = [
+    { x: 12, label: "STORYBOARD", sub: "a captioned sheet" },
+    { x: 72, label: "ANIMATIC", sub: "MP4, in-browser" },
+    { x: 132, label: "SHARE LINK", sub: "opens for anyone" },
+  ];
+  return (
+    <svg viewBox="0 0 200 112" style={frame} role="img"
+      aria-label="Blocking leaving the studio three ways: a storyboard sheet, an animatic MP4 and a share link">
+      <rect x={12} y={10} width="176" height="17" rx="2" fill={C.floor} stroke={C.line} strokeWidth="0.6" />
+      <circle cx={24} cy={18.5} r="3" fill={C.accent} />
+      <circle cx={33} cy={18.5} r="3" fill={C.accentText} />
+      <Mono x={42} y={21} fill={C.muted} size={6}>A SCENE, ALREADY BLOCKED</Mono>
+      {cards.map((c) => (
+        <g key={c.label}>
+          <line x1={c.x + 28} y1={27} x2={c.x + 28} y2={52} stroke={C.line} strokeWidth="0.8" />
+          <rect x={c.x} y={52} width="56" height="30" rx="2" fill={C.accent} opacity="0.08" />
+          <rect x={c.x} y={52} width="56" height="30" rx="2" fill="none" stroke={C.line} strokeWidth="0.6" />
+          <Mono x={c.x + 28} y={66} anchor="middle" fill={C.accentText} size={6}>{c.label}</Mono>
+          <Mono x={c.x + 28} y={76} anchor="middle" fill={C.muted} size={5.5}>{c.sub}</Mono>
+        </g>
+      ))}
+      <Mono x={12} y={96} fill={C.muted} size={6}>no account needed</Mono>
+      <line x1={12} y1={99} x2={124} y2={99} stroke={C.line} strokeWidth="0.6" />
+      <Mono x={132} y={96} fill={C.amber} size={6}>sign in to make</Mono>
+      <line x1={132} y1={99} x2={188} y2={99} stroke={C.amber} strokeWidth="0.6" opacity="0.7" />
+      <Mono x={12} y={108} fill={C.muted} size={5.5}>autosaved in this browser as you work</Mono>
+    </svg>
+  );
+}
+
 function Visual({ kind }) {
   if (kind === "scene") return <ScenePreview sceneId="walk-and-talk" height={210} threeD={false} />;
   if (kind === "timeline") return <TimelineArt />;
   if (kind === "moves") return <MovesArt />;
   if (kind === "angles") return <AnglesArt />;
   if (kind === "walk") return <WalkArt />;
+  if (kind === "handoff") return <HandoffArt />;
   return <ContinuityArt />;
 }
 

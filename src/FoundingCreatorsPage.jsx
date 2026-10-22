@@ -222,7 +222,7 @@ export default function FoundingCreatorsPage() {
             </div>
           </div>
           <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted, #6B6878)", lineHeight: 1.8, marginTop: 28, maxWidth: 620 }}>
-            Also on the platform: generate films directly on RevaultAI with Wan and Kling, and submit straight to the vault.
+            Also on the platform: generate films directly on RevaultAI with Veo, Kling, Seedance, MiniMax and Wan, and submit straight to the vault.
           </p>
         </section>
 
