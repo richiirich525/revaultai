@@ -41,7 +41,7 @@ export default async function handler(req, res) {
     }
 
     const { type, id } = req.body || {};
-    if (type !== "generations" && (!id || !["creation", "generation", "vault", "voice"].includes(type))) {
+    if (type !== "generations" && (!id || !["creation", "generation", "vault", "vault-voice", "voice"].includes(type))) {
       return res.status(400).json({ error: "Invalid request" });
     }
 
@@ -116,7 +116,19 @@ export default async function handler(req, res) {
     let allowed = false;
     let asAttachment = false;
 
-    if (type === "voice") {
+    if (type === "vault-voice") {
+      // The voice sample on one of your own Vault characters, so you can hear
+      // which recording is attached before a scene is read in it.
+      const { data: entry } = await supabase
+        .from("vault_entries")
+        .select("user_id, voice_sample_url")
+        .eq("id", id)
+        .maybeSingle();
+      if (entry?.voice_sample_url && entry.user_id === user.id) {
+        storedUrl = entry.voice_sample_url;
+        allowed = true;
+      }
+    } else if (type === "voice") {
       // A recorded scene read: its owner, and nobody else. Stored as an
       // R2_PUBLIC_URL key carrier like everything else here, so the key is
       // derived from it below and presigned.

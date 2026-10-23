@@ -9,7 +9,7 @@ import { plainPresets } from "./lib/voiceModels.js";
   to its owner and the client writes directly.
 */
 
-const BLANK = { kind: "character", name: "", description: "", wardrobe: "", distinguishing: "", notes: "", images: [], voice: "" };
+const BLANK = { kind: "character", name: "", description: "", wardrobe: "", distinguishing: "", notes: "", images: [], voice: "", voiceSample: "" };
 const MAX_IMAGES = 3;
 
 const KINDS = [
@@ -73,6 +73,10 @@ export default function VaultPage({ user, onSignInClick, setPage, notify, active
   const [uploading, setUploading] = useState(false);
   const [previews, setPreviews] = useState({});   // entryId -> [signed urls]
   const [localPreviews, setLocalPreviews] = useState([]);  // object URLs for the form, index-matched to form.images
+  const [voiceBusy, setVoiceBusy] = useState(false);
+  // A blob URL for a sample just picked, so it can be heard before saving.
+  // A sample already saved is in a private bucket and needs a signed link.
+  const [samplePreview, setSamplePreview] = useState(null);
   const [muts, setMuts] = useState({});            // entryId -> [mutation]
   const [mutOpen, setMutOpen] = useState(null);    // entryId whose timeline is open
   const [mutForm, setMutForm] = useState({ beat: 1, event: "", modifier: "" });
@@ -151,6 +155,10 @@ export default function VaultPage({ user, onSignInClick, setPage, notify, active
     });
   }
 
+  function clearSamplePreview() {
+    setSamplePreview((u) => { if (u?.startsWith("blob:")) URL.revokeObjectURL(u); return null; });
+  }
+
   function clearLocalPreviews() {
     setLocalPreviews((p) => {
       p.forEach((u) => { if (u?.startsWith("blob:")) URL.revokeObjectURL(u); });
@@ -188,7 +196,62 @@ export default function VaultPage({ user, onSignInClick, setPage, notify, active
   useEffect(() => { load(); }, [user?.id]);
 
   function set(k, v) { setForm((f) => ({ ...f, [k]: v })); }
-  function reset() { setForm(BLANK); setEditingId(null); setError(null); clearLocalPreviews(); }
+
+  /*
+    A recording of the voice you actually want, which the model clones. Goes
+    up the same way every other file here does: ask for a presigned PUT, send
+    the bytes straight to R2, keep the returned link. That link is a key
+    carrier against a private bucket, so playback is signed and the recording
+    studio presigns it again before fal is allowed to fetch it.
+  */
+  const MAX_SAMPLE_BYTES = 10 * 1024 * 1024;
+  async function pickVoiceSample(file) {
+    if (!file) return;
+    if (!file.type?.startsWith("audio/")) { setError("That needs to be an audio file."); return; }
+    if (file.size > MAX_SAMPLE_BYTES) { setError("Keep the sample under 10MB — a clean 10 to 30 seconds is plenty."); return; }
+    setVoiceBusy(true); setError(null);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const r = await fetch("/api/get-upload-url", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + sess?.session?.access_token, "Content-Type": "application/json" },
+        body: JSON.stringify({ fileType: file.type }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.uploadUrl) { setError(j.error || "Could not prepare the upload."); setVoiceBusy(false); return; }
+      await new Promise((resolve, reject) => {
+        const x = new XMLHttpRequest();
+        x.open("PUT", j.uploadUrl);
+        x.setRequestHeader("Content-Type", file.type);
+        x.addEventListener("load", () => (x.status >= 200 && x.status < 300) ? resolve() : reject(new Error("Upload failed (" + x.status + ")")));
+        x.addEventListener("error", () => reject(new Error("Network error during upload")));
+        x.send(file);
+      });
+      if (samplePreview?.startsWith("blob:")) URL.revokeObjectURL(samplePreview);
+      setSamplePreview(URL.createObjectURL(file));
+      set("voiceSample", j.videoPublicUrl);
+      notify?.("Voice sample attached. Save the entry to keep it.");
+    } catch (err) {
+      setError("Voice sample upload failed: " + err.message);
+    }
+    setVoiceBusy(false);
+  }
+
+  /* Hear the sample already on a saved character. */
+  async function hearSavedSample(entryId) {
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const r = await fetch("/api/get-video-url", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + sess?.session?.access_token, "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "vault-voice", id: entryId }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (r.ok && j.url) setSamplePreview(j.url);
+      else setError(j.error || "Could not load that sample.");
+    } catch { setError("Could not load that sample."); }
+  }
+  function reset() { setForm(BLANK); setEditingId(null); setError(null); clearLocalPreviews(); clearSamplePreview(); }
 
   async function save() {
     if (!form.name.trim()) { setError("Give this entry a name."); return; }
@@ -204,6 +267,7 @@ export default function VaultPage({ user, onSignInClick, setPage, notify, active
       notes: form.notes?.trim().slice(0, 600) || null,
       images: (form.images ?? []).slice(0, MAX_IMAGES),
       voice_preset: form.kind === "character" && form.voice ? form.voice : null,
+      voice_sample_url: form.kind === "character" && form.voiceSample ? form.voiceSample : null,
       ...(editingId ? {} : { project_id: activeProject?.id ?? null }),
     };
     let e;
@@ -229,7 +293,9 @@ export default function VaultPage({ user, onSignInClick, setPage, notify, active
       notes: entry.notes ?? "",
       images: Array.isArray(entry.images) ? entry.images : [],
       voice: entry.voice_preset ?? "",
+      voiceSample: entry.voice_sample_url ?? "",
     });
+    clearSamplePreview();
     clearLocalPreviews();
     setLocalPreviews(previews[entry.id] ?? []);
     setEditingId(entry.id);
@@ -370,9 +436,47 @@ export default function VaultPage({ user, onSignInClick, setPage, notify, active
                     </button>
                   ))}
                 </div>
-                <div className="vt-body" style={{ fontSize: 10, marginBottom: 16, opacity: 0.8 }}>
+                <div className="vt-body" style={{ fontSize: 10, marginBottom: 12, opacity: 0.8 }}>
                   Used when a scene with this character is recorded. Leave it unset and the
                   read-through uses a default voice.
+                </div>
+
+                <div style={{ border: "1px solid var(--border)", borderRadius: 4, padding: 14, marginBottom: 16, background: "var(--bg)" }}>
+                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: form.voiceSample ? "var(--accent)" : "var(--muted)", marginBottom: 8 }}>
+                    {voiceBusy ? "Uploading the sample…" : form.voiceSample ? "Their own voice — a recording you supplied" : "Or clone a real voice"}
+                  </div>
+                  {form.voiceSample ? (
+                    <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+                      {samplePreview
+                        ? <audio controls preload="none" src={samplePreview} style={{ height: 32 }} />
+                        : editingId
+                          ? <button type="button" className="vt-chip" onClick={() => hearSavedSample(editingId)}>Hear it</button>
+                          : null}
+                      <button
+                        type="button"
+                        className="vt-chip"
+                        onClick={() => {
+                          clearSamplePreview();
+                          set("voiceSample", "");
+                        }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <input
+                      type="file"
+                      accept="audio/*"
+                      disabled={voiceBusy}
+                      onChange={(e) => pickVoiceSample(e.target.files?.[0])}
+                      style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text)" }}
+                    />
+                  )}
+                  <div className="vt-body" style={{ fontSize: 10, marginTop: 9, opacity: 0.8 }}>
+                    A clean 10 to 30 seconds of one person speaking, under 10MB. A sample takes
+                    precedence over the voice chosen above. Only upload a voice you have the right
+                    to use.
+                  </div>
                 </div>
               </>
             )}
