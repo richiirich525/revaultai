@@ -23,6 +23,9 @@ with expected (tbl, col) as (
     ('coverage_slots','lens_mm'), ('coverage_slots','camera_height'), ('coverage_slots','favors'),
     ('coverage_slots','actors'),
 
+    -- vault_entries: a character's locked voice, read by the recording studio.
+    ('vault_entries','voice_preset'), ('vault_entries','voice_sample_url'),
+
     -- profiles: the Stripe Connect columns the payout flow needs.
     ('profiles','stripe_account_id'), ('profiles','stripe_country'),
     ('profiles','stripe_payouts_enabled'), ('profiles','stripe_details_submitted'),

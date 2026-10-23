@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./lib/supabase.js";
+import { plainPresets } from "./lib/voiceModels.js";
 
 /*
   VaultPage — RevaultAI
@@ -8,7 +9,7 @@ import { supabase } from "./lib/supabase.js";
   to its owner and the client writes directly.
 */
 
-const BLANK = { kind: "character", name: "", description: "", wardrobe: "", distinguishing: "", notes: "", images: [] };
+const BLANK = { kind: "character", name: "", description: "", wardrobe: "", distinguishing: "", notes: "", images: [], voice: "" };
 const MAX_IMAGES = 3;
 
 const KINDS = [
@@ -202,6 +203,7 @@ export default function VaultPage({ user, onSignInClick, setPage, notify, active
       distinguishing: form.distinguishing?.trim().slice(0, 400) || null,
       notes: form.notes?.trim().slice(0, 600) || null,
       images: (form.images ?? []).slice(0, MAX_IMAGES),
+      voice_preset: form.kind === "character" && form.voice ? form.voice : null,
       ...(editingId ? {} : { project_id: activeProject?.id ?? null }),
     };
     let e;
@@ -226,6 +228,7 @@ export default function VaultPage({ user, onSignInClick, setPage, notify, active
       distinguishing: entry.distinguishing ?? "",
       notes: entry.notes ?? "",
       images: Array.isArray(entry.images) ? entry.images : [],
+      voice: entry.voice_preset ?? "",
     });
     clearLocalPreviews();
     setLocalPreviews(previews[entry.id] ?? []);
@@ -341,6 +344,36 @@ export default function VaultPage({ user, onSignInClick, setPage, notify, active
                   onChange={(e) => set("distinguishing", e.target.value)}
                   placeholder="Small scar through the left eyebrow"
                 />
+
+                {/*
+                  A voice, locked the same way the wardrobe is. The recording
+                  studio reads this, so a character sounds like themselves in
+                  every scene rather than being recast each time.
+                */}
+                <div className="vt-label">Voice</div>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
+                  <button
+                    type="button"
+                    className={"vt-chip" + (form.voice ? "" : " on")}
+                    onClick={() => set("voice", "")}
+                  >
+                    No voice yet
+                  </button>
+                  {plainPresets().map((v) => (
+                    <button
+                      key={v}
+                      type="button"
+                      className={"vt-chip" + (form.voice === v ? " on" : "")}
+                      onClick={() => set("voice", v)}
+                    >
+                      {v.replace(" [EN]", "")}
+                    </button>
+                  ))}
+                </div>
+                <div className="vt-body" style={{ fontSize: 10, marginBottom: 16, opacity: 0.8 }}>
+                  Used when a scene with this character is recorded. Leave it unset and the
+                  read-through uses a default voice.
+                </div>
               </>
             )}
 
