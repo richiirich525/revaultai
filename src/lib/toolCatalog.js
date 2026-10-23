@@ -86,7 +86,7 @@ export const JOBS = [
     tools: [
       { name: "Generate", page: "generate", access: "credits",
         give: "A prompt, or a still to animate", get: "Video from five models on one credit balance",
-        blurb: "Seedance, Veo, Kling and Wan behind one balance. No subscription and no API keys — pay per second of output." },
+        blurb: "Veo, Kling, Seedance, MiniMax and Wan behind one balance. No subscription and no API keys — pay per second of output." },
       { name: "Generation Autopsy", page: "autopsy", access: "free",
         give: "A prompt that disappointed", get: "Why it failed, and a revised prompt",
         blurb: "Causes ranked by confidence, with the offending wording quoted, and a revised prompt built to hold." },

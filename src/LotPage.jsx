@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { DEPARTMENTS } from "./lib/lotDepartments.js";
 import { supabase } from "./lib/supabase.js";
 import CoveragePlan from "./CoveragePlan.jsx";
 import StagingBoard from "./StagingBoard.jsx";
@@ -14,38 +15,6 @@ import { geometricCount } from "./lib/stageGeometry.js";
   the live read across their own scene.
 */
 
-const DEPARTMENTS = [
-  {
-    name: "Rehearsal Studio",
-    page: "rehearsal",
-    lead: "The stage.",
-    body: "Block a scene over time. Move performers and cameras across a timeline, then compare angles on one identical performance. Shot size, lens and eyelines update as you move.",
-  },
-  {
-    name: "Performance & Blocking",
-    page: "blocking",
-    lead: "The floor.",
-    body: "Where people stand and move relative to camera, acting direction you can play, and delivery notes on every line you wrote.",
-  },
-  {
-    name: "Coverage Planner",
-    page: "coverage",
-    lead: "The first AD.",
-    body: "The setups an editor actually needs to cut the scene — master, singles, over-the-shoulders, reactions, inserts — and an honest read on what is missing.",
-  },
-  {
-    name: "Continuity Check",
-    page: "continuity-check",
-    lead: "The notebook.",
-    body: "Reads a shot list the way a script supervisor reads a shooting script: a character described two ways, wardrobe that drifts, light that moves for no reason.",
-  },
-  {
-    name: "Script Supervisor",
-    page: "projects",
-    lead: "The whole film.",
-    body: "One report across a project. Screen direction between setups, state that fails to carry from one shot to the next, declared changes no later shot reflects.",
-  },
-];
 
 const styles = `
   .lot-wrap { max-width: 900px; margin: 0 auto; padding: 0 48px; }
@@ -59,6 +28,14 @@ const styles = `
   .lot-dept { border: 1px solid var(--border); border-radius: 8px; background: var(--surface); padding: 22px 24px; text-align: left; cursor: pointer; transition: border-color 0.2s; min-width: 0; }
   .lot-dept:hover { border-color: var(--accent); }
   .lot-dept:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .lot-dept-multi { cursor: default; }
+  .lot-dept-multi:hover { border-color: var(--border); }
+  .lot-doors { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 13px; }
+  .lot-door { background: none; border: 1px solid var(--border); color: var(--text); border-radius: 3px;
+    padding: 5px 10px; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.04em;
+    cursor: pointer; transition: border-color 0.2s, color 0.2s; }
+  .lot-door:hover { border-color: var(--accent); color: var(--accent); }
+  .lot-door:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .lot-dept-lead { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin-bottom: 9px; }
   .lot-dept-name { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
   .lot-dept-body { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); line-height: 1.85; }
@@ -168,13 +145,33 @@ export default function LotPage({ user, activeProject, setPage, notify, onSignIn
 
       <div className="lot-sec">The departments</div>
       <div className="lot-depts">
-        {DEPARTMENTS.map((d) => (
-          <button key={d.page} type="button" className="lot-dept" onClick={() => setPage(d.page)}>
-            <div className="lot-dept-lead">{d.lead}</div>
-            <div className="lot-dept-name">{d.name}</div>
-            <div className="lot-dept-body">{d.body}</div>
-          </button>
-        ))}
+        {DEPARTMENTS.map((d) => {
+          const single = d.tools.length === 1;
+          const inner = (
+            <>
+              <div className="lot-dept-lead">{d.lead}</div>
+              <div className="lot-dept-name">{d.name}</div>
+              <div className="lot-dept-body">{d.body}</div>
+            </>
+          );
+          // One door: the whole card is the link, as it has always been.
+          return single ? (
+            <button key={d.name} type="button" className="lot-dept" onClick={() => setPage(d.tools[0][1])}>
+              {inner}
+            </button>
+          ) : (
+            <div key={d.name} className="lot-dept lot-dept-multi">
+              {inner}
+              <div className="lot-doors">
+                {d.tools.map(([label, page]) => (
+                  <button key={page} type="button" className="lot-door" onClick={() => setPage(page)}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       <div className="lot-rule" />

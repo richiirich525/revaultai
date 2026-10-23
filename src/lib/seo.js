@@ -42,7 +42,7 @@ export const PAGES = {
   about: {
     title: "About RevaultAI — A Studio Lot, Rebuilt in Software",
     description:
-      "RevaultAI is a studio lot rebuilt in software: a soundstage, prop house, camera cage, script supervisor, cutting room and theater for AI film.",
+      "RevaultAI is a studio lot rebuilt in software: a stage, camera department, wardrobe, script supervisor, lab, cutting room and production office for AI film.",
   },
   faq: {
     title: "FAQ — How RevaultAI Works",
