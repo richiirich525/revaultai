@@ -4,6 +4,7 @@
   This runs them through the same functions the studio does.
 */
 import { STARTERS } from "../src/lib/starters.js";
+import { GALLERY } from "../src/lib/galleryScenes.js";
 import { stateAt, keyTimes } from "../src/lib/rehearsal.js";
 import { readStage } from "../src/lib/stageGeometry.js";
 import { walkThroughs } from "../src/lib/stageCollision.js";
@@ -15,7 +16,11 @@ import { fitFor, trailFor } from "../src/lib/scenePreview.js";
 const problems = [];
 const MOVED = 1.5; // stage units; below this nothing visibly happens
 
-for (const starter of STARTERS) {
+/*
+  The gallery scenes are hand-authored coordinates too, against sets the
+  starters never touch, so they go through exactly the same checks.
+*/
+for (const starter of [...STARTERS, ...GALLERY]) {
   const r = starter.make();
   const tag = starter.id;
   const room = activeRoom(r);
@@ -91,4 +96,4 @@ if (problems.length) {
   console.error("");
   process.exit(1);
 }
-console.log(`\ncheck-starters: ${STARTERS.length} scenes, all valid.`);
+console.log(`\ncheck-starters: ${STARTERS.length} starters and ${GALLERY.length} gallery scenes, all valid.`);

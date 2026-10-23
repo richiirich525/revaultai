@@ -1,5 +1,6 @@
 import { planShapes } from "./lib/setGeometry.js";
 import { resolveMove, PERSON_RADIUS, CAMERA_RADIUS } from "./lib/stageCollision.js";
+import { placeLabels, labelBox } from "./lib/planLabels.js";
 import { useEffect, useRef, useState } from "react";
 import { STAGE, readStage, describeStage, axisFor, bearing, eyelinesFor, eyelineProblems } from "./lib/stageGeometry.js";
 
@@ -92,6 +93,40 @@ export default function StageBlueprint({ camera, actors, onChange, baselineSide,
   // Keep a label inside the drawn window so it never clips at an edge.
   const clampX = (x) => Math.max(view.x + 5, Math.min(view.x + view.size - 5, x));
   const clampY = (y) => Math.max(view.y + 3.5, Math.min(view.y + view.size - 1.5, y));
+
+  /*
+    Where the names go. Each label used to sit a fixed distance above its own
+    body, which is right for two people apart and wrong for four around a
+    table — the names landed on each other and on the turn rings. Now the set
+    labels hold their place in the middle of their furniture and the performers
+    and the camera are placed around them. See lib/planLabels.js.
+  */
+  const FONT_LABEL = 12;
+  const labelPlan = (() => {
+    const setPlan = set ? planShapes(set) : null;
+    const items = [];
+    if (setPlan) {
+      for (const piece of setPlan.props) {
+        if (!(piece.w > 5 && piece.label)) continue;
+        const text = piece.label.replace(/^the /, "");
+        items.push({ id: "set:" + piece.id, x: piece.x + piece.w / 2, y: piece.y + piece.h / 2,
+          fixed: true, ...labelBox(text, unit, 10) });
+      }
+    }
+    for (const a of actors) {
+      items.push({ id: "actor:" + a.id, x: a.x, y: a.y, ...labelBox(a.name, unit, FONT_LABEL) });
+    }
+    items.push({ id: "cam", x: camera.x, y: camera.y, ...labelBox("CAM", unit, FONT_LABEL) });
+
+    const circles = [
+      ...actors.map((a) => ({ x: a.x, y: a.y, r: 3.4 })),
+      ...actors.map((a) => ({ x: a.x, y: a.y, r: 6.5 })),   // the turn ring
+      { x: camera.x, y: camera.y, r: 3.6 },
+    ];
+    const placedList = placeLabels(items, circles, view);
+    const byId = new Map(placedList.map((x) => [x.id, x]));
+    return (id, fx, fy) => byId.get(id) ?? { x: fx, y: fy };
+  })();
 
   const read = readStage(camera, actors);
   const eyelines = eyelinesFor(camera, actors);
@@ -345,13 +380,18 @@ export default function StageBlueprint({ camera, actors, onChange, baselineSide,
                 stroke={chosen ? "#fff" : "none"} strokeWidth={chosen ? 0.7 : 0}
                 pointerEvents="none"
               />
-              <text
-                x={clampX(a.x)} y={clampY(a.y - px(13))}
-                fill="var(--text)" fontSize={px(11)} fontFamily="monospace"
-                textAnchor="middle" pointerEvents="none"
-              >
-                {a.name}
-              </text>
+              {(() => {
+                const at = labelPlan("actor:" + a.id, a.x, a.y - px(13));
+                return (
+                  <text
+                    x={clampX(at.x)} y={clampY(at.y)}
+                    fill="var(--text)" fontSize={px(FONT_LABEL)} fontFamily="monospace"
+                    textAnchor="middle" dominantBaseline="middle" pointerEvents="none"
+                  >
+                    {a.name}
+                  </text>
+                );
+              })()}
               {/* Hit areas go last so they sit above the drawing. The turn ring
                   is added after the body so it wins wherever they overlap. */}
               <circle
@@ -396,13 +436,18 @@ export default function StageBlueprint({ camera, actors, onChange, baselineSide,
                 fill="var(--accent)" stroke={hotBody ? "#fff" : "none"} strokeWidth={hotBody ? 0.5 : 0}
                 pointerEvents="none"
               />
-              <text
-                x={clampX(lx)} y={clampY(ly)}
-                fill="var(--accent)" fontSize={px(10)} fontFamily="monospace"
-                textAnchor="middle" dominantBaseline="middle" pointerEvents="none"
-              >
-                CAM
-              </text>
+              {(() => {
+                const at = labelPlan("cam", lx, ly);
+                return (
+                  <text
+                    x={clampX(at.x)} y={clampY(at.y)}
+                    fill="var(--accent-text)" fontSize={px(FONT_LABEL)} fontFamily="monospace"
+                    textAnchor="middle" dominantBaseline="middle" pointerEvents="none"
+                  >
+                    CAM
+                  </text>
+                );
+              })()}
               <circle
                 cx={camera.x} cy={camera.y} r={hitR(22, 4.6)} fill="transparent"
                 style={grabStyle("camera", null)}

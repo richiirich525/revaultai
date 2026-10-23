@@ -17,10 +17,10 @@ import { defaultLight } from "./lighting.js";
 */
 
 // Which way one point has to face to look at another.
-const facing = (from, to) =>
+export const facing = (from, to) =>
   Math.round((Math.atan2(to.x - from.x, -(to.y - from.y)) * 180) / Math.PI + 360) % 360;
 
-function build(spec) {
+export function build(spec) {
   return {
     id: spec.id,
     name: spec.name,

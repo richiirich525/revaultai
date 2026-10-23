@@ -3,6 +3,9 @@ import { supabase } from "./lib/supabase.js";
 import RehearsalStudio from "./RehearsalStudio.jsx";
 import ScenePreview from "./ScenePreview.jsx";
 import RehearsalSections from "./RehearsalSections.jsx";
+import PageLink from "./PageLink.jsx";
+import SiteFooter from "./SiteFooter.jsx";
+import SceneGallery from "./SceneGallery.jsx";
 import { createShare, loadShare, shareUrl } from "./lib/shareRehearsal.js";
 
 /*
@@ -422,7 +425,13 @@ export default function RehearsalPage({ user, activeProject, notify, onSignInCli
           >
             {sharing ? "Making a link…" : "Share a link"}
           </button>
-          {dirty && <span style={{ ...mono, fontSize: 12.5, color: "#E5B769" }}>Unsaved changes</span>}
+          {!user ? (
+            <span style={{ ...mono, fontSize: 12.5, color: "#4ADE80" }}>Saved in this browser</span>
+          ) : dirty ? (
+            <span style={{ ...mono, fontSize: 12.5, color: "#E5B769" }}>Not saved to your account yet</span>
+          ) : current.id ? (
+            <span style={{ ...mono, fontSize: 12.5, color: "#4ADE80" }}>Saved to your account</span>
+          ) : null}
           {activeProject && user && (
             <span style={{ ...mono, fontSize: 12.5, color: "var(--muted)" }}>Saving to {activeProject.name}</span>
           )}
@@ -500,23 +509,34 @@ export default function RehearsalPage({ user, activeProject, notify, onSignInCli
           <RehearsalSections />
         </div>
 
+        <div style={{ ...bar }}>
+          <SceneGallery
+            onOpen={(id) => {
+              studio.current?.loadStarter(id);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          />
+        </div>
+
         <div style={{ ...bar, marginTop: 44 }}>
           <div style={{ ...mono, fontSize: 12, letterSpacing: "0.2em", color: "var(--accent-text)", textTransform: "uppercase", marginBottom: 12 }}>
             Use it with
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12 }}>
             {NEXT_STEPS.map((n) => (
-              <button
+              <PageLink
                 key={n.page}
-                onClick={() => setPage?.(n.page)}
+                page={n.page}
+                setPage={setPage}
                 style={{
-                  textAlign: "left", background: "var(--surface)", border: "1px solid var(--border)",
-                  borderRadius: 6, padding: "14px 16px", cursor: "pointer", color: "var(--text)",
+                  display: "block", textAlign: "left", background: "var(--surface)",
+                  border: "1px solid var(--border)", borderRadius: 6, padding: "14px 16px",
+                  color: "var(--text)", textDecoration: "none",
                 }}
               >
                 <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 14, fontWeight: 700 }}>{n.name} →</div>
-                <div style={{ ...mono, fontSize: 13, color: "var(--muted)", lineHeight: 1.7, marginTop: 6 }}>{n.body}</div>
-              </button>
+                <div style={{ fontFamily: "var(--font-body)", fontSize: 13.5, color: "var(--muted)", lineHeight: 1.7, marginTop: 6 }}>{n.body}</div>
+              </PageLink>
             ))}
           </div>
         </div>
@@ -533,6 +553,7 @@ export default function RehearsalPage({ user, activeProject, notify, onSignInCli
           ))}
         </div>
       </section>
+      <SiteFooter setPage={setPage} />
     </div>
   );
 }

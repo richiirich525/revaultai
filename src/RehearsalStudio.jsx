@@ -10,6 +10,7 @@ import { buildShootPrompt, buildShootSpec, buildCoverage } from "./lib/shootProm
 import { SETS, EXTERIORS, getSet, pieceSize } from "./lib/setCatalog.js";
 import { GEN_MODELS } from "./lib/genModels.js";
 import { STARTERS, getStarter } from "./lib/starters.js";
+import { getGalleryScene } from "./lib/galleryScenes.js";
 import { saveDraft, loadDraft } from "./lib/rehearsalDraft.js";
 import { buildSheet, download, sheetName, assetName } from "./lib/storyboard.js";
 import { LIGHT_PRESETS, defaultLight } from "./lib/lighting.js";
@@ -148,6 +149,34 @@ const styles = `
     font-family: 'DM Mono', monospace; font-size: 12.5px; line-height: 1.8; color: rgba(255,255,255,0.85);
     background: rgba(14,15,20,0.78); border: 1px solid var(--border); border-radius: 6px; padding: 8px 11px; pointer-events: none; }
   .rs-stage-track { flex: 1; min-width: 160px; accent-color: var(--accent-text); }
+
+  /* The hint shown the first time the stage opens, before either mode is on.
+     Until now the only hints appeared after pressing a button nobody knew to
+     press. This one is dismissible and stays dismissed. */
+  .rs-first { position: absolute; left: 18px; bottom: 86px; z-index: 6; max-width: 360px;
+    font-family: var(--font-body); font-size: 14px; line-height: 1.7; color: #F2F1F7;
+    background: rgba(10,11,16,0.92); border: 1px solid var(--accent); border-radius: 8px;
+    padding: 13px 15px; box-shadow: 0 8px 28px rgba(0,0,0,0.5); }
+  .rs-first b { color: #fff; font-weight: 600; }
+  .rs-first kbd { font-family: 'DM Mono', monospace; font-size: 12px; background: rgba(255,255,255,0.14);
+    border: 1px solid rgba(255,255,255,0.3); border-radius: 3px; padding: 1px 6px; color: #fff; }
+  .rs-first-x { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* A walk pad, because W A S D is not a thing a phone has. Shown when the
+     pointer is coarse, which is the honest test for "no keyboard". */
+  .rs-pad { position: absolute; right: 16px; bottom: 96px; z-index: 6; display: none;
+    grid-template-columns: repeat(3, 56px); grid-template-rows: repeat(3, 56px); gap: 6px; }
+  .rs-pad button { -webkit-user-select: none; user-select: none; touch-action: none;
+    background: rgba(10,11,16,0.86); border: 1px solid rgba(255,255,255,0.3); color: #fff;
+    border-radius: 8px; font-family: 'DM Mono', monospace; font-size: 15px; cursor: pointer; }
+  .rs-pad button:active { background: rgba(123,63,228,0.55); border-color: var(--accent-text); }
+  .rs-pad .rs-pad-gap { visibility: hidden; }
+  @media (pointer: coarse) {
+    .rs-pad { display: grid; }
+    /* 44px is the floor for anything meant to be tapped. */
+    .rs-btn { min-height: 44px; padding: 10px 15px; }
+    .rs-first { left: 10px; right: 10px; max-width: none; bottom: 78px; }
+  }
   @media (max-width: 760px) { .rs-stage-plan { width: auto; left: 10px; right: 10px; max-width: none; max-height: 38vh; } }
   .rs-cam-n { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--text); }
   .rs-cam-s { font-family: 'DM Mono', monospace; font-size: 12.5px; color: var(--muted); margin-top: 3px; }
@@ -198,6 +227,17 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
   // the same keyframe a drag on the plan would. Refs rather than state —
   // these change every frame and nothing renders off them.
   const [walk, setWalk] = useState(false);
+  /*
+    Shown once, then remembered. Wrapped because storage throws in a private
+    window, and a hint is not worth breaking the stage over.
+  */
+  const [hintSeen, setHintSeen] = useState(() => {
+    try { return localStorage.getItem("rv-stage-hint") === "seen"; } catch { return false; }
+  });
+  function dismissHint() {
+    setHintSeen(true);
+    try { localStorage.setItem("rv-stage-hint", "seen"); } catch { /* fine */ }
+  }
   // Looking at the cameras rather than through one of them.
   const [freeView, setFreeView] = useState(false);
   const held = useRef(new Set());
@@ -216,7 +256,20 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
   // The cheapest model in the catalog sets the floor for this shot. The real
   // price depends on the model picked on the generate page, so the button
   // says "from" rather than naming a number it cannot know.
+  /*
+    One place the price is worked out, because it was being worked out in three
+    and they disagreed. The button said "from 10 credits" and the charge came
+    to 12, since the location plate was only mentioned in a tooltip.
+
+    FLOOR is the cheapest model for this duration — a real floor, not an
+    estimate, which is why every label says "from". PLATE is charged once per
+    distinct location view and cached after that, so covering three angles of
+    one room is three plates, not one.
+  */
+  const PLATE = 2;
   const FLOOR = Math.min(...GEN_MODELS.map((m) => m.costPerSecond)) * r.duration;
+  const usingSet = !!(r.setId || r.setCustom);
+  const perAngle = FLOOR + (usingSet ? PLATE : 0);
 
   useEffect(() => {
     if (!user?.id) { setMySets([]); return; }
@@ -255,6 +308,12 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
   */
   const draftTimer = useRef(null);
   const sawFirst = useRef(false);
+  /*
+    null until the first save has been attempted, then true or false. Claiming
+    "saved in this browser" when the write was refused is worse than saying
+    nothing, because somebody then closes the tab believing it.
+  */
+  const [draftOk, setDraftOk] = useState(null);
   useEffect(() => {
     /*
       The first pass is whatever the studio opened on, not something the
@@ -265,7 +324,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
     */
     if (!sawFirst.current) { sawFirst.current = true; return; }
     if (draftTimer.current) clearTimeout(draftTimer.current);
-    draftTimer.current = setTimeout(() => saveDraft(r), 600);
+    draftTimer.current = setTimeout(() => setDraftOk(saveDraft(r)), 600);
     return () => { if (draftTimer.current) clearTimeout(draftTimer.current); };
   }, [r]);
 
@@ -495,6 +554,21 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
     notify?.(`${label} on ${cam.name}, ${from.toFixed(1)}s to ${r.duration}s. Press play to watch it.`);
   }
 
+  /*
+    The pad writes into the same held-key set the keyboard does, so a tap and a
+    keypress are the same input as far as the movement loop is concerned.
+    setPointerCapture keeps the press alive if a thumb slides off the button.
+  */
+  function padDown(e, key) {
+    e.preventDefault();
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* not fatal */ }
+    held.current.add(key);
+  }
+  function padUp(e, key) {
+    try { e.currentTarget.releasePointerCapture(e.pointerId); } catch { /* not fatal */ }
+    held.current.delete(key);
+  }
+
   // One place every walk input lands, so a key, a drag and a reset all write
   // the camera the same way.
   function nudgeCamera(fn) {
@@ -573,7 +647,9 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
   // A scene that is already blocked, so the first thing anyone sees is
   // movement rather than an empty floor.
   function loadStarter(id) {
-    const st = getStarter(id);
+    // Starters and gallery scenes are the same shape and load the same way;
+    // the only difference is where they are offered.
+    const st = getStarter(id) ?? getGalleryScene(id);
     if (!st) return;
     setR(st.make());
     setT(0);
@@ -1077,10 +1153,44 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
             </div>
           )}
 
+          {!hintSeen && !walk && !freeView && (
+            <div className="rs-first">
+              <b>You are looking through {activeCam?.name ?? "the camera"}.</b> Press{" "}
+              <b>Walk the camera</b> and then hold <kbd>W</kbd> to move,{" "}
+              <kbd>A</kbd> <kbd>D</kbd> to step sideways, and drag to look around.
+              Everywhere you stop becomes a mark on the timeline.
+              <div className="rs-first-x">
+                <button className="rs-btn" onClick={() => { setWalk(true); setPlaying(false); dismissHint(); }}>
+                  Start walking
+                </button>
+                <button className="rs-btn" onClick={dismissHint}>Got it</button>
+              </div>
+            </div>
+          )}
+
           {walk && !freeView && (
             <div className="rs-walk-hint">
               W A S D to move · Q E down and up · shift to hurry · drag to look · R to face the subject.
               You are flying {activeCam?.name ?? "the camera"} — everything lands as a mark at {t.toFixed(1)}s.
+            </div>
+          )}
+
+          {walk && !freeView && (
+            /*
+              Press and hold, the same contract the keys have: pointerdown adds
+              to the same held set the key handler uses, so the two inputs share
+              one movement loop rather than having a second one of their own.
+            */
+            <div className="rs-pad" aria-label="Walk controls">
+              <span className="rs-pad-gap" />
+              <button aria-label="Forward" onPointerDown={(e) => padDown(e, "w")} onPointerUp={(e) => padUp(e, "w")} onPointerCancel={(e) => padUp(e, "w")} onPointerLeave={(e) => padUp(e, "w")}>▲</button>
+              <button aria-label="Up" onPointerDown={(e) => padDown(e, "e")} onPointerUp={(e) => padUp(e, "e")} onPointerCancel={(e) => padUp(e, "e")} onPointerLeave={(e) => padUp(e, "e")}>↑</button>
+              <button aria-label="Left" onPointerDown={(e) => padDown(e, "a")} onPointerUp={(e) => padUp(e, "a")} onPointerCancel={(e) => padUp(e, "a")} onPointerLeave={(e) => padUp(e, "a")}>◀</button>
+              <button aria-label="Back" onPointerDown={(e) => padDown(e, "s")} onPointerUp={(e) => padUp(e, "s")} onPointerCancel={(e) => padUp(e, "s")} onPointerLeave={(e) => padUp(e, "s")}>▼</button>
+              <button aria-label="Right" onPointerDown={(e) => padDown(e, "d")} onPointerUp={(e) => padUp(e, "d")} onPointerCancel={(e) => padUp(e, "d")} onPointerLeave={(e) => padUp(e, "d")}>▶</button>
+              <span className="rs-pad-gap" />
+              <span className="rs-pad-gap" />
+              <button aria-label="Down" onPointerDown={(e) => padDown(e, "q")} onPointerUp={(e) => padUp(e, "q")} onPointerCancel={(e) => padUp(e, "q")} onPointerLeave={(e) => padUp(e, "q")}>↓</button>
             </div>
           )}
 
@@ -1281,10 +1391,10 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
           {nowRead.subject && (setGenPrefill || onShoot) && (
             <button
               className="rs-btn rs-primary"
-              title={`Hands this angle to the generator as a written shot. From ${FLOOR} credits for ${r.duration}s depending on the model you pick${(r.setId || r.setCustom) ? ", plus 2 for the location plate" : ""}.`}
+              title={`Hands this angle to the generator as a written shot. From ${perAngle} credits for ${r.duration}s — ${FLOOR} for the cheapest model${usingSet ? ` plus ${PLATE} for the location plate` : ""}. A pricier model costs more, and you see the figure before confirming.`}
               onClick={() => shoot(r.activeCamera)}
             >
-              Shoot this angle · from {FLOOR} credits →
+              Shoot this angle · from {perAngle} credits →
             </button>
           )}
         </div>
@@ -1345,10 +1455,21 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
           </button>
         </div>
 
-        <div className="rs-body" style={{ fontSize: 12.5, marginTop: 10 }}>
+        <div className="rs-body" style={{ fontSize: 13, marginTop: 10 }}>
           {boot.from === "draft" ? "Picked up where you left off. " : ""}
-          Your blocking is saved in this browser as you work
-          {user ? "." : " — sign in to keep it for good and open it on any machine."}
+          {draftOk === false ? (
+            <>
+              This browser is refusing to store your blocking — a private window, or site
+              data turned off, will do that. It is still here while this tab is open.{" "}
+              {user ? "Press Save rehearsal to keep it." : "Sign in and it is kept on the server instead."}
+            </>
+          ) : (
+            <>
+              Your blocking is saved in this browser as you work, so a refresh or a closed tab
+              does not lose it. Clearing your browser data does delete it
+              {user ? "." : " — sign in to keep it on the server and open it on any machine."}
+            </>
+          )}
         </div>
       </div>
 
@@ -1656,18 +1777,21 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
                 <span style={{ display: "inline-flex", flexDirection: "column", gap: 3, marginTop: 8 }}>
                   <button className="rs-btn" style={{ borderColor: "var(--accent)", color: "var(--accent-text)" }}
                     onClick={(e) => { e.stopPropagation(); onCover(buildCoverage(r)); }}>
-                    Cover the scene — all {camReads.filter((x) => x.read.subject).length} angles →
+                    Cover the scene · {camReads.filter((x) => x.read.subject).length} angles · from {camReads.filter((x) => x.read.subject).length * perAngle} credits →
                   </button>
                   {/* Nothing is charged here, but the scene's real cost should be
                       visible before anyone starts filling slots. */}
-                  <span className="rs-body" style={{ fontSize: 12, opacity: 0.75 }}>
-                    Free to plan.{(r.setId || r.setCustom) ? ` Location plates ${camReads.filter((x) => x.read.subject).length * 2} credits when you shoot them.` : ""} Each shot priced when you generate it.
+                  <span className="rs-body" style={{ fontSize: 12.5, opacity: 0.85 }}>
+                    This saves the angles as a shot list and charges nothing now. The figure above is
+                    what all {camReads.filter((x) => x.read.subject).length} would cost at the cheapest
+                    model{usingSet ? `, plates included` : ""} — you generate them one at a time and
+                    see each price before confirming.
                   </span>
                 </span>
               )}
               {c.read.subject && (setGenPrefill || onShoot) && (
                 <button className="rs-btn" style={{ marginTop: 8 }} onClick={(e) => { e.stopPropagation(); shoot(c.id); }}>
-                  Shoot this angle · from {FLOOR} credits →
+                  Shoot this angle · from {perAngle} credits →
                 </button>
               )}
             </div>
@@ -1679,8 +1803,10 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
         <div className="rs-body" style={{ fontSize: 12.5, marginTop: 8 }}>
           <b style={{ color: "var(--text)", fontWeight: 500 }}>Shoot this angle</b> hands the framing, lens, blocking
           and beats to the generator as a written prompt, with the set attached as a reference. Blocking here is free
-          and unlimited — you pick the model and see the price before anything is charged. A location plate, if the
-          scene has a set, is 2 credits.
+          and unlimited — you pick the model and see the price before anything is charged.
+          {usingSet
+            ? ` The figures on the buttons are ${FLOOR} for the cheapest model at ${r.duration}s plus ${PLATE} for the location plate, which is charged once per view of this set and reused after that.`
+            : ` The figures on the buttons are the cheapest model at ${r.duration}s. Dress the set and a location plate adds ${PLATE} credits per view.`}
         </div>
       </div>
       </div>
