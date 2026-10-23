@@ -176,6 +176,19 @@ export default function LotPage({ user, activeProject, setPage, notify, onSignIn
 
       <div className="lot-rule" />
 
+      <div className="lot-sec">Front of house</div>
+      <p className="lot-note" style={{ marginBottom: 34 }}>
+        <b>The theater is not a department.</b> Everything above is crew — the rooms you work in
+        before anyone watches anything. What the work is <i>for</i> sits outside the gates: a
+        curated gallery rather than a feed, where a film is presented and can be sold.
+        {" "}
+        <button type="button" className="lot-door" onClick={() => setPage("explore")}>Explore</button>
+        {" "}
+        <button type="button" className="lot-door" onClick={() => setPage("premium-films")}>Premium films</button>
+      </p>
+
+      <div className="lot-rule" />
+
       <p className="lot-note" style={{ marginBottom: 72 }}>
         <b>Why screen direction needs more than one setup.</b> A single camera is always correct
         on its own. The error only exists between two: cut from one side of the line of action to

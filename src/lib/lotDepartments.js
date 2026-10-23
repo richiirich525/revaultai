@@ -31,9 +31,9 @@ export const DEPARTMENTS = [
     tools: [["Performance & Blocking", "blocking"]],
   },
   {
-    lead: "The stage.",
+    lead: "The stage, and the art department.",
     name: "Rehearsal Studio",
-    body: "Block a scene over time. Move performers and cameras across a timeline, then compare angles on one identical performance. Shot size, lens and eyelines update as you move.",
+    body: "Block a scene over time. Move performers and cameras across a timeline, then compare angles on one identical performance. Shot size, lens and eyelines update as you move. The set is dressed here too — pick a room or describe the furniture, then have the location rendered as a plate the generator matches shot to shot.",
     tools: [["Rehearsal Studio", "rehearsal"]],
   },
   {
