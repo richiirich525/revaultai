@@ -33,6 +33,7 @@ const { CREDIT_PACKS, bestValuePack, perCreditLabel, priceLabel, savingVsStarter
 const { GEN_MODELS: PRICED_MODELS, costOf, snapDuration } =
   await import(path.join(ROOT, "src/lib/genModels.js"));
 const { sectionsHtml } = await import(path.join(ROOT, "src/lib/rehearsalSections.js"));
+const { footerHtml } = await import(path.join(ROOT, "src/lib/footerLinks.js"));
 
 const template = fs.readFileSync(path.join(DIST, "index.html"), "utf8");
 
@@ -381,7 +382,13 @@ function summaryBody(slug) {
   return sections + links;
 }
 
-const TAGLINE = `<p><a href="/">RevaultAI</a> \u2014 a curated gallery for AI-generated film.</p>`;
+/*
+  Appended to every prerendered page. The footer is part of it because a
+  footer that only exists after React hydrates is a footer no crawler reads —
+  which defeats the one job it was added for.
+*/
+const TAGLINE = `<p><a href="/">RevaultAI</a> \u2014 a curated gallery for AI-generated film.</p>`
+  + footerHtml(esc);
 
 function bodyFor(slug, meta) {
   if (slug === "about") return aboutHtml() + TAGLINE;

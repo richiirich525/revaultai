@@ -1,4 +1,5 @@
 import PageLink from "./PageLink.jsx";
+import { FOOTER_GROUPS, FOOTER_NOTE } from "./lib/footerLinks.js";
 
 /*
   SiteFooter — RevaultAI
@@ -18,46 +19,7 @@ import PageLink from "./PageLink.jsx";
   scripts/check-links.mjs, so a renamed page cannot leave a dead footer link.
 */
 
-const GROUPS = [
-  {
-    title: "Make something",
-    links: [
-      ["rehearsal", "Rehearsal Studio"],
-      ["tools", "All the tools"],
-      ["generate", "Generate"],
-      ["lot", "The Lot"],
-    ],
-  },
-  {
-    title: "Watch",
-    links: [
-      ["explore", "Explore"],
-      ["premium-films", "Premium films"],
-      ["creators", "Creators"],
-      ["discovered", "Discovered"],
-    ],
-  },
-  {
-    title: "About",
-    links: [
-      ["pricing", "Pricing & credits"],
-      ["about", "About RevaultAI"],
-      ["blog", "Journal"],
-      ["contact", "Contact"],
-    ],
-  },
-  {
-    title: "The small print",
-    links: [
-      ["terms", "Terms"],
-      ["privacy", "Privacy"],
-      ["refunds", "Refunds"],
-      ["guidelines", "Guidelines"],
-      ["ai-disclaimer", "AI disclaimer"],
-      ["dmca", "DMCA"],
-    ],
-  },
-];
+
 
 const css = `
   .ft { border-top: 1px solid var(--border); margin-top: 72px; padding: 44px 0 56px; }
@@ -86,13 +48,9 @@ export default function SiteFooter({ setPage }) {
     <footer className="ft">
       <style>{css}</style>
       <div className="ft-wrap">
-        <div className="ft-note">
-          <b>Blocking a scene is free and needs no account.</b> Credits are only spent when you
-          generate actual video, and the price is shown before you confirm it. There is no
-          subscription.
-        </div>
+        <div className="ft-note">{FOOTER_NOTE}</div>
         <div className="ft-cols">
-          {GROUPS.map((g) => (
+          {FOOTER_GROUPS.map((g) => (
             <div key={g.title}>
               <div className="ft-h">{g.title}</div>
               <div className="ft-list">
