@@ -18,12 +18,12 @@ import { STAGE, readStage, describeStage, axisFor, bearing, eyelinesFor, eyeline
 const styles = `
   .bp { border: 1px solid var(--border); border-radius: 8px; background: var(--bg); padding: 14px; user-select: none; -webkit-user-select: none; }
   .bp svg { width: 100%; height: auto; display: block; touch-action: none; user-select: none; -webkit-user-select: none; }
-  .bp-read { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text); line-height: 1.8; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
-  .bp-warn { font-family: 'DM Mono', monospace; font-size: 11px; color: #F0C97A; line-height: 1.7; margin-top: 8px; }
+  .bp-read { font-family: var(--font-body); font-size: 12px; color: var(--text); line-height: 1.8; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .bp-warn { font-family: var(--font-body); font-size: 12.5px; color: #F0C97A; line-height: 1.7; margin-top: 8px; }
   .bp-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
-  .bp-btn { background: none; border: 1px solid var(--border); color: var(--text); border-radius: 3px; padding: 6px 12px; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; }
+  .bp-btn { background: none; border: 1px solid var(--border); color: var(--text); border-radius: 3px; padding: 6px 12px; font-family: 'DM Mono', monospace; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; }
   .bp-btn:hover { color: var(--text); border-color: var(--muted); }
-  .bp-hint { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); line-height: 1.7; margin-top: 10px; }
+  .bp-hint { font-family: var(--font-body); font-size: 12.5px; color: var(--muted); line-height: 1.7; margin-top: 10px; }
 `;
 
 const COLORS = ["#7B3FE4", "#E5B769", "#4ADE80", "#5BA8C2", "#F87171", "#C49A3C"];
@@ -426,7 +426,7 @@ export default function StageBlueprint({ camera, actors, onChange, baselineSide,
 
       {(set || extent) && (
         <div className="bp-row">
-          <button className="bp-btn" onClick={() => setFit((v) => !v)} style={fit ? { color: "var(--accent)", borderColor: "var(--accent)" } : undefined}>
+          <button className="bp-btn" onClick={() => setFit((v) => !v)} style={fit ? { color: "var(--accent-text)", borderColor: "var(--accent)" } : undefined}>
             {fit ? "Fit to set" : "Whole stage"}
           </button>
         </div>
@@ -435,7 +435,7 @@ export default function StageBlueprint({ camera, actors, onChange, baselineSide,
       <div className="bp-read">{describeStage(read)}</div>
 
       {eyelines.length > 0 && (
-        <div className="bp-read" style={{ borderTop: "none", paddingTop: 0, marginTop: 8, fontSize: 11, color: "var(--muted)" }}>
+        <div className="bp-read" style={{ borderTop: "none", paddingTop: 0, marginTop: 8, fontSize: 12.5, color: "var(--muted)" }}>
           {eyelines.map((e, i) => <div key={i}>{e.text}</div>)}
         </div>
       )}

@@ -4,9 +4,15 @@
 */
 
 export const CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Mono:wght@300;400&family=Syne:wght@400;500;600;700;800&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Mono:wght@300;400&family=Syne:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root { --bg: #0E0F14; --bg2: #13141A; --bg3: #1A1B23; --surface: #12131A; --border: rgba(255,255,255,0.06); --border-hover: rgba(123,63,228,0.35); --text: #E8E6F0; --muted: #8C889B; --accent: #7B3FE4; --accent-text: #B9A2F0; --accent-dim: rgba(123,63,228,0.15); --accent-glow: rgba(123,63,228,0.4); --premium: #C49A3C; --premium-dim: rgba(196,154,60,0.12); }
+  :root { --bg: #0E0F14; --bg2: #13141A; --bg3: #1A1B23; --surface: #12131A; --border: rgba(255,255,255,0.06); --border-hover: rgba(123,63,228,0.35); --text: #E8E6F0;
+    /* Body prose. DM Mono is kept for technical readouts — lens values,
+       timecodes, shot sizes — where a monospace reads as deliberate rather
+       than as small gray noise. */
+    --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+    --font-display: 'Syne', sans-serif; --muted: #8C889B; --accent: #7B3FE4; --accent-text: #B9A2F0; --accent-dim: rgba(123,63,228,0.15); --accent-glow: rgba(123,63,228,0.4); --premium: #C49A3C; --premium-dim: rgba(196,154,60,0.12); }
   html { scroll-behavior: smooth; }
   body { background: var(--bg); color: var(--text); font-family: 'Syne', sans-serif; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
   ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: var(--bg); } ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 2px; }

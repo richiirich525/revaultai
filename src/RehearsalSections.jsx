@@ -220,11 +220,11 @@ const css = `
   .rh-sec { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 36px;
     align-items: center; padding: 34px 0; border-top: 1px solid var(--border); }
   .rh-sec:nth-child(even) .rh-sec-art { order: -1; }
-  .rh-sec-eyebrow { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.2em;
+  .rh-sec-eyebrow { font-family: 'DM Mono', monospace; font-size: 12px; letter-spacing: 0.2em;
     color: var(--accent-text); text-transform: uppercase; margin-bottom: 10px; }
   .rh-sec h2 { font-family: 'Syne', sans-serif; font-size: 21px; font-weight: 700;
     color: var(--text); margin: 0 0 10px; line-height: 1.3; letter-spacing: -0.01em; }
-  .rh-sec p { font-family: 'DM Mono', monospace; font-size: 12.5px; color: var(--muted);
+  .rh-sec p { font-family: var(--font-body); font-size: 14px; color: var(--muted);
     line-height: 1.85; margin: 0; }
   @media (max-width: 860px) {
     .rh-secs { padding: 0 20px; }

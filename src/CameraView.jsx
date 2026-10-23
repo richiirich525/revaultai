@@ -995,15 +995,15 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
         : { position: "relative", width: "100%", aspectRatio: ratio.css, maxHeight: "70vh", margin: "0 auto", overflow: "hidden", borderRadius: 4, background: "#0e0f14" }}>
         <div ref={box} style={{ position: "absolute", inset: 0, touchAction: "none" }} />
         {failed && (
-          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", padding: 20, textAlign: "center" }}>
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Mono', monospace", fontSize: 12.5, color: "var(--muted)", padding: 20, textAlign: "center" }}>
             This browser can't draw 3D. The overhead plan still works.
           </div>
         )}
-        <div style={{ position: "absolute", top: 8, left: 10, fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.75)", pointerEvents: "none", textShadow: "0 1px 3px rgba(0,0,0,0.8)" }}>
+        <div style={{ position: "absolute", top: 8, left: 10, fontFamily: "'DM Mono', monospace", fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase", color: "#F2F1F7", background: "rgba(8,9,13,0.72)", borderRadius: 4, padding: "4px 9px", pointerEvents: "none" }}>
           {title}
         </div>
         {(outsideSet || wildWall || nearWall) && (
-          <div style={{ position: "absolute", bottom: 8, left: 10, maxWidth: "62%", pointerEvents: "none", fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: "0.1em", borderRadius: 3, padding: "3px 10px",
+          <div style={{ position: "absolute", bottom: 8, left: 10, maxWidth: "62%", pointerEvents: "none", fontFamily: "'DM Mono', monospace", fontSize: 12, letterSpacing: "0.1em", borderRadius: 3, padding: "3px 10px",
             color: outsideSet || nearWall ? "#0e0f14" : "rgba(255,255,255,0.75)",
             background: outsideSet || nearWall ? "#E5B769" : "rgba(0,0,0,0.45)" }}>
             {outsideSet ? "Too far back — you're seeing past the set"
@@ -1012,11 +1012,11 @@ export default function CameraView({ state, lens, subject, aspect = "16:9", titl
           </div>
         )}
         {loadNote && !failed && (
-          <div style={{ position: "absolute", top: 8, right: 10, fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: "0.08em", color: "rgba(255,255,255,0.55)", pointerEvents: "none" }}>
+          <div style={{ position: "absolute", top: 8, right: 10, fontFamily: "'DM Mono', monospace", fontSize: 12, letterSpacing: "0.08em", color: "#E8E6F0", background: "rgba(8,9,13,0.72)", borderRadius: 4, padding: "4px 9px", pointerEvents: "none" }}>
             {loadNote}
           </div>
         )}
-        <div style={{ position: "absolute", bottom: 8, right: 10, fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: "0.1em", color: "rgba(255,255,255,0.6)", pointerEvents: "none", textShadow: "0 1px 3px rgba(0,0,0,0.8)" }}>
+        <div style={{ position: "absolute", bottom: 8, right: 10, fontFamily: "'DM Mono', monospace", fontSize: 12, letterSpacing: "0.1em", color: "#E8E6F0", background: "rgba(8,9,13,0.72)", borderRadius: 4, padding: "4px 9px", pointerEvents: "none" }}>
           {lensMm(lens)}mm · {aspect}
         </div>
       </div>

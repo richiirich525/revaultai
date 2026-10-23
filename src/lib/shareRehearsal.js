@@ -13,18 +13,36 @@ import { sanitize, tooBig } from "./shareSanitize.js";
 
 export { sanitize, tooBig };
 
-/* Make a share. Signed in only — see the note in the UI about why. */
-export async function createShare(rehearsal, userId) {
+/*
+  Make a share. No account needed: without one the link works at once and
+  expires in 30 days, and signing in keeps it instead.
+
+  This goes through /api/share-rehearsal rather than inserting directly,
+  because anonymous shares have to be metered and only the server can do that.
+  The scene is sanitized here before sending and again on arrival — this half
+  is a courtesy to the creator, that half is the rule.
+
+  Returns { id, anonymous, expiresInDays }.
+*/
+export async function createShare(rehearsal) {
   const clean = sanitize(rehearsal);
   if (!clean) throw new Error("there is nothing in this rehearsal to share");
   if (tooBig(clean)) throw new Error("this scene is too big to share — try it without a dressed set");
-  const { data, error } = await supabase
-    .from("shared_rehearsals")
-    .insert({ user_id: userId, title: clean.title, data: clean })
-    .select("id")
-    .single();
-  if (error) throw new Error(error.message);
-  return data.id;
+
+  const { data: sess } = await supabase.auth.getSession();
+  const token = sess?.session?.access_token;
+  const r = await fetch("/api/share-rehearsal", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(token ? { Authorization: "Bearer " + token } : {}) },
+    body: JSON.stringify({ rehearsal: clean }),
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) {
+    const e = new Error(j.error || "could not make a link just now");
+    e.needsAccount = !!j.needsAccount;
+    throw e;
+  }
+  return { id: j.id, anonymous: !!j.anonymous, expiresInDays: j.expiresInDays ?? null };
 }
 
 /* Open one. No account needed, which is the point of the whole feature. */

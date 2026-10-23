@@ -62,7 +62,7 @@ export const REHEARSAL_SECTIONS = [
     id: "start-and-export",
     eyebrow: "Starting and finishing",
     h2: "Start from a scene, take the blocking with you",
-    copy: "The studio opens on a scene that's already blocked: a walk-and-talk, a dinner argument or a standoff. Your blocking is saved in this browser as you work, with no account needed. Sign in to keep it for good. When the blocking is ready, hand it over as a captioned storyboard sheet, an animatic MP4 rendered in your browser, or a share link. Making a link needs an account; opening one never does.",
+    copy: "The studio opens on a scene that's already blocked: a walk-and-talk, a dinner argument or a standoff. Your blocking is saved in this browser as you work, with no account needed. Sign in to keep it for good. When the blocking is ready, hand it over as a captioned storyboard sheet, an animatic MP4 rendered in your browser, or a share link. No account is needed for any of that: a link made without one works for 30 days, and signing in makes it permanent.",
     visual: "handoff",
   },
 ];

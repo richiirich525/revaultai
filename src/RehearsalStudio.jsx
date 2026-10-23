@@ -73,15 +73,15 @@ const ASPECT_CHOICES = [
 
 const styles = `
   .rs { max-width: 1240px; margin: 0 auto; padding: 0 48px; }
-  .rs-label { font-family: 'DM Mono', monospace; font-size: 10.5px; letter-spacing: 0.18em; color: var(--accent-text); text-transform: uppercase; margin-bottom: 8px; }
-  .rs-body { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); line-height: 1.8; }
+  .rs-label { font-family: 'DM Mono', monospace; font-size: 12.5px; letter-spacing: 0.18em; color: var(--accent-text); text-transform: uppercase; margin-bottom: 8px; }
+  .rs-body { font-family: var(--font-body); font-size: 12px; color: var(--muted); line-height: 1.8; }
   .rs-panel { border: 1px solid var(--border); border-radius: 8px; padding: 18px 20px; background: var(--surface); margin-bottom: 16px; }
   .rs-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-  .rs-btn { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 3px; padding: 7px 13px; font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.08em; cursor: pointer; }
+  .rs-btn { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 3px; padding: 7px 13px; font-family: 'DM Mono', monospace; font-size: 12.5px; letter-spacing: 0.08em; cursor: pointer; }
   .rs-btn:hover { color: var(--text); border-color: var(--muted); }
   /* Selected has to read at a glance across forty chips, so it is filled
      rather than tinted. */
-  .rs-btn.on { color: #fff; border-color: var(--accent); background: rgba(123,63,228,0.38); font-weight: 500; }
+  .rs-btn.on { color: #fff; border-color: var(--accent-text); background: rgba(123,63,228,0.38); font-weight: 500; }
   .rs-btn:focus-visible, .rs-act-item:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; }
   /* The one action that leaves this page and spends money. */
   .rs-primary { color: #fff !important; background: var(--accent) !important; border-color: var(--accent) !important; font-weight: 500; }
@@ -90,23 +90,23 @@ const styles = `
   .rs-below { position: relative; }
   .rs-dock { position: sticky; bottom: 10px; z-index: 20; background: var(--surface); box-shadow: 0 -8px 26px rgba(0,0,0,0.5); }
   .rs-track { position: relative; height: 26px; margin: 10px 0 4px; }
-  .rs-track input { position: absolute; inset: 0; width: 100%; accent-color: var(--accent); margin: 0; }
+  .rs-track input { position: absolute; inset: 0; width: 100%; accent-color: var(--accent-text); margin: 0; }
   .rs-tick { position: absolute; top: 0; width: 2px; height: 8px; background: var(--accent); transform: translateX(-1px); pointer-events: none; opacity: 0.8; }
-  .rs-beat { position: absolute; top: 20px; transform: translateX(-50%); font-family: 'DM Mono', monospace; font-size: 10px; color: #E5B769; white-space: nowrap; pointer-events: none; letter-spacing: 0.06em; }
+  .rs-beat { position: absolute; top: 20px; transform: translateX(-50%); font-family: 'DM Mono', monospace; font-size: 12px; color: #E5B769; white-space: nowrap; pointer-events: none; letter-spacing: 0.06em; }
   .rs-time { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; color: var(--text); min-width: 70px; }
   .rs-cams { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
   .rs-cam { border: 1px solid var(--border); border-radius: 5px; padding: 10px 12px; cursor: pointer; background: var(--bg); }
-  .rs-cam.on { border-color: var(--accent); }
+  .rs-cam.on { border-color: var(--accent-text); }
   .rs-act { border: 1px solid var(--border); border-radius: 6px; padding: 12px 14px; margin: 8px 0 4px; background: var(--bg); }
   .rs-act-cats { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0; }
   .rs-act-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; max-height: 240px; overflow-y: auto; }
   .rs-act-item { text-align: left; background: none; border: 1px solid var(--border); border-radius: 4px; padding: 8px 10px; cursor: pointer; font-family: 'DM Mono', monospace; }
   .rs-act-item:hover { border-color: var(--muted); }
-  .rs-act-item.on { border-color: var(--accent); }
-  .rs-act-item b { display: block; font-size: 11px; font-weight: 500; color: var(--text); letter-spacing: 0.04em; }
-  .rs-act-item span { display: block; font-size: 10px; color: var(--muted); margin-top: 3px; }
-  .rs-act-none { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); padding: 14px 2px; }
-  .rs-through { font-family: 'DM Mono', monospace; font-size: 11px; color: #E5B769; line-height: 1.8; margin: 2px 0 10px; }
+  .rs-act-item.on { border-color: var(--accent-text); }
+  .rs-act-item b { display: block; font-size: 12.5px; font-weight: 500; color: var(--text); letter-spacing: 0.04em; }
+  .rs-act-item span { display: block; font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .rs-act-none { font-family: var(--font-body); font-size: 12.5px; color: var(--muted); padding: 14px 2px; }
+  .rs-through { font-family: var(--font-body); font-size: 12.5px; color: #E5B769; line-height: 1.8; margin: 2px 0 10px; }
   .rs-stage { position: fixed; inset: 0; z-index: 150; background: #0b0c10; display: flex; flex-direction: column; }
   .rs-stage-view { flex: 1; min-height: 0; position: relative; }
   .rs-stage-plan { position: absolute; left: 18px; bottom: 18px; width: 300px; max-width: 42vw; z-index: 2;
@@ -123,15 +123,17 @@ const styles = `
     box-shadow: 0 2px 10px rgba(0,0,0,0.45);
   }
   .rs-stage-top .rs-btn:hover { color: #fff; border-color: rgba(255,255,255,0.6); background: rgba(10,11,16,0.95); }
-  .rs-stage-top .rs-btn.on { color: #fff; border-color: var(--accent); background: rgba(123,63,228,0.35); }
+  .rs-stage-top .rs-btn.on { color: #fff; border-color: var(--accent-text); background: rgba(123,63,228,0.35); }
   .rs-stage-ctrl { position: absolute; top: 58px; right: 18px; z-index: 5; width: 340px; max-width: 46vw;
     background: rgba(12,13,18,0.95); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px;
     backdrop-filter: blur(8px); max-height: calc(100vh - 190px); overflow-y: auto; padding: 12px 14px;
     box-shadow: 0 8px 28px rgba(0,0,0,0.5); }
   .rs-stage-ctrl .rs-btn { color: rgba(255,255,255,0.88); border-color: rgba(255,255,255,0.26); }
   .rs-stage-ctrl .rs-btn:hover { color: #fff; border-color: rgba(255,255,255,0.65); }
-  .rs-stage-ctrl .rs-btn.on { color: #fff; border-color: var(--accent); background: rgba(123,63,228,0.42); }
-  .rs-stage-ctrl .rs-body { color: rgba(255,255,255,0.78); }
+  .rs-stage-ctrl .rs-btn.on { color: #fff; border-color: var(--accent-text); background: rgba(123,63,228,0.42); }
+  /* Solid rather than translucent: text over a panel that sits over a live 3D
+     view has no predictable contrast until the alpha is removed. */
+  .rs-stage-ctrl .rs-body { color: #E4E2EC; }
   .rs-stage-ctrl .rs-label { color: #C3AEF5; }
   .rs-stage-ctrl .rs-input { color: #fff; border-color: rgba(255,255,255,0.26); background: rgba(255,255,255,0.06); }
   .rs-stage-ctrl .rs-act { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.18); }
@@ -143,13 +145,13 @@ const styles = `
   .rs-stage-exit { color: #fff !important; border-color: var(--accent) !important; background: rgba(123,63,228,0.55) !important; font-weight: 500; }
   .rs-stage-exit:hover { background: var(--accent) !important; }
   .rs-walk-hint { position: absolute; top: 14px; left: 18px; z-index: 3; max-width: 340px;
-    font-family: 'DM Mono', monospace; font-size: 11px; line-height: 1.8; color: rgba(255,255,255,0.85);
+    font-family: 'DM Mono', monospace; font-size: 12.5px; line-height: 1.8; color: rgba(255,255,255,0.85);
     background: rgba(14,15,20,0.78); border: 1px solid var(--border); border-radius: 6px; padding: 8px 11px; pointer-events: none; }
-  .rs-stage-track { flex: 1; min-width: 160px; accent-color: var(--accent); }
+  .rs-stage-track { flex: 1; min-width: 160px; accent-color: var(--accent-text); }
   @media (max-width: 760px) { .rs-stage-plan { width: auto; left: 10px; right: 10px; max-width: none; max-height: 38vh; } }
   .rs-cam-n { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--text); }
-  .rs-cam-s { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); margin-top: 3px; }
-  .rs-input { background: var(--bg); border: 1px solid var(--border); border-radius: 3px; padding: 6px 9px; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text); }
+  .rs-cam-s { font-family: 'DM Mono', monospace; font-size: 12.5px; color: var(--muted); margin-top: 3px; }
+  .rs-input { background: var(--bg); border: 1px solid var(--border); border-radius: 3px; padding: 6px 9px; font-family: 'DM Mono', monospace; font-size: 12.5px; color: var(--text); }
   .rs-views { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
   @media (max-width: 900px) { .rs-views { grid-template-columns: 1fr; } }
   @media (max-width: 760px) { .rs { padding: 0 20px; } }
@@ -926,13 +928,13 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
             {p.label}
           </button>
         ))}
-        <span className="rs-body" style={{ fontSize: 11, marginLeft: 6 }}>From</span>
+        <span className="rs-body" style={{ fontSize: 12.5, marginLeft: 6 }}>From</span>
         <input type="range" min={0} max={359} step={5}
           aria-label="Which direction the light comes from"
           value={r.light?.bearing ?? defaultLight().bearing}
           onChange={(e) => setR((prev) => ({ ...prev, light: { ...(prev.light ?? defaultLight()), bearing: Number(e.target.value) } }))}
           style={{ width: 130, accentColor: "var(--accent)" }} />
-        <span className="rs-body" style={{ fontSize: 11 }}>{r.light?.bearing ?? defaultLight().bearing}°</span>
+        <span className="rs-body" style={{ fontSize: 12.5 }}>{r.light?.bearing ?? defaultLight().bearing}°</span>
       </>
     );
   }
@@ -999,7 +1001,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
                 <div className="rs-act-none">Nothing matches that. Try a different word, or clear the category.</div>
               )}
 
-              <div className="rs-body" style={{ fontSize: 10, marginTop: 10, opacity: 0.8 }}>
+              <div className="rs-body" style={{ fontSize: 12, marginTop: 10, opacity: 0.8 }}>
                 Set at {t.toFixed(1)}s and held until you change it. A one-off — a punch, sitting down —
                 plays once from here. Anything on the spot pauses while they walk and resumes at the mark.
               </div>
@@ -1104,7 +1106,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
                       <button className="rs-btn" onClick={() => setR((q) => addCamera(q, now.camera))}>+ Camera</button>
                     )}
                   </div>
-                  <div className="rs-body" style={{ fontSize: 11, marginTop: 8 }}>
+                  <div className="rs-body" style={{ fontSize: 12.5, marginTop: 8 }}>
                     {nowRead.shotSize
                       ? `${activeCam?.name ?? "Camera"} — ${nowRead.shotSize} · ${nowRead.lens}${nowRead.subject ? " on " + nowRead.subject : ""}`
                       : `${activeCam?.name ?? "Camera"} is not framing anyone yet. Drag it in the room, or turn it by the ring on the plan.`}
@@ -1137,7 +1139,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
                   </div>
                   {moveOpen && (
                     <div className="rs-act">
-                      <div className="rs-body" style={{ fontSize: 11, marginBottom: 2 }}>
+                      <div className="rs-body" style={{ fontSize: 12.5, marginBottom: 2 }}>
                         Runs on {activeCam?.name ?? "the selected camera"} from {(t >= r.duration - 0.5 ? 0 : t).toFixed(1)}s
                         to {r.duration}s, as two marks you can drag afterwards.
                       </div>
@@ -1170,7 +1172,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
                       <button className="rs-btn" onClick={() => setR((q) => addActor(q))}>+ Performer</button>
                     )}
                   </div>
-                  <div className="rs-body" style={{ fontSize: 11, marginTop: 6 }}>
+                  <div className="rs-body" style={{ fontSize: 12.5, marginTop: 6 }}>
                     Click anyone in the room to select them, or drag them straight to a new mark.
                   </div>
                   {now.actors.map((a, i) => (
@@ -1181,7 +1183,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
                         <input className="rs-input" value={a.name}
                           onFocus={() => setSelActor(a.id)}
                           onChange={(e) => setR((q) => ({ ...q, actors: q.actors.map((x, j) => (j === i ? { ...x, name: e.target.value.slice(0, 24) } : x)) }))}
-                          style={{ width: 92, padding: "4px 7px", fontSize: 11 }} />
+                          style={{ width: 92, padding: "4px 7px", fontSize: 12.5 }} />
                         {["stand", "sit", "crouch"].map((pose) => (
                           <button key={pose} className={"rs-btn" + (a.pose === pose ? " on" : "")} onClick={() => setPose(i, pose)}>{pose}</button>
                         ))}
@@ -1227,12 +1229,12 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
                     })}>+ Add a person</button>
                     {(r.extras ?? []).length > 0 && (
                       <>
-                        <span className="rs-body" style={{ fontSize: 11 }}>{r.extras.length} in the background</span>
+                        <span className="rs-body" style={{ fontSize: 12.5 }}>{r.extras.length} in the background</span>
                         <button className="rs-btn" onClick={() => setR((q) => ({ ...q, extras: (q.extras ?? []).slice(0, -1) }))}>Remove one</button>
                       </>
                     )}
                   </div>
-                  <div className="rs-body" style={{ fontSize: 11, marginTop: 10 }}>
+                  <div className="rs-body" style={{ fontSize: 12.5, marginTop: 10 }}>
                     Moving the furniture and saying what things really are is back on the studio page.
                   </div>
                 </>
@@ -1242,7 +1244,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
                 <>
                   <div className="rs-label rs-stage-sec">Light</div>
                   <div className="rs-row">{lightButtons()}</div>
-                  <div className="rs-body" style={{ fontSize: 11, marginTop: 10 }}>
+                  <div className="rs-body" style={{ fontSize: 12.5, marginTop: 10 }}>
                     The preset sets the quality and color of the light; From swings it around the room.
                     Both carry into the shot you generate.
                   </div>
@@ -1317,7 +1319,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
             style={{ fontFamily: "'Syne', sans-serif", fontSize: 15, fontWeight: 700, minWidth: 220, flex: 1 }}
           />
           <div className="rs-row">
-            <span className="rs-body" style={{ fontSize: 10 }}>Length</span>
+            <span className="rs-body" style={{ fontSize: 12 }}>Length</span>
             {DURATIONS.map((d) => (
               <button key={d} className={"rs-btn" + (r.duration === d ? " on" : "")} onClick={() => { setR((p) => ({ ...p, duration: d })); if (t > d) setT(d); }}>{d}s</button>
             ))}
@@ -1328,7 +1330,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
         </div>
 
         <div className="rs-row" style={{ marginTop: 14, alignItems: "center" }}>
-          <span className="rs-body" style={{ fontSize: 11 }}>Start from</span>
+          <span className="rs-body" style={{ fontSize: 12.5 }}>Start from</span>
           {STARTERS.map((st) => (
             <button key={st.id} className="rs-btn" title={st.note} onClick={() => loadStarter(st.id)}>
               {st.name}
@@ -1343,7 +1345,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
           </button>
         </div>
 
-        <div className="rs-body" style={{ fontSize: 11, marginTop: 10 }}>
+        <div className="rs-body" style={{ fontSize: 12.5, marginTop: 10 }}>
           {boot.from === "draft" ? "Picked up where you left off. " : ""}
           Your blocking is saved in this browser as you work
           {user ? "." : " — sign in to keep it for good and open it on any machine."}
@@ -1357,7 +1359,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
             <CameraView {...viewProps} />
           </Suspense>
           <div className="rs-row" style={{ marginTop: 10 }}>
-            <span className="rs-body" style={{ fontSize: 10 }}>Set</span>
+            <span className="rs-body" style={{ fontSize: 12 }}>Set</span>
             {setButtons()}
           </div>
           <GeneratedSets
@@ -1402,22 +1404,22 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
           )}
           {genSet && (
             <div className="rs-row" style={{ marginTop: 10, alignItems: "center" }}>
-              <span className="rs-body" style={{ fontSize: 10 }}>Set size</span>
+              <span className="rs-body" style={{ fontSize: 12 }}>Set size</span>
               <input
                 type="range" min={-0.08} max={0.08} step={0.002}
                 value={Math.log10(r.setScale || 1)}
                 onChange={(e) => setR((p) => ({ ...p, setScale: Math.round(Math.pow(10, Number(e.target.value)) * 1000) / 1000 }))}
                 style={{ width: 150, accentColor: "var(--accent)" }}
               />
-              <span className="rs-body" style={{ fontSize: 10 }}>{(r.setScale || 1).toFixed(2)}×</span>
-              <span className="rs-body" style={{ fontSize: 10, marginLeft: 8 }}>Floor</span>
+              <span className="rs-body" style={{ fontSize: 12 }}>{(r.setScale || 1).toFixed(2)}×</span>
+              <span className="rs-body" style={{ fontSize: 12, marginLeft: 8 }}>Floor</span>
               <input
                 type="range" min={-4} max={4} step={0.05}
                 value={r.setGround ?? 0}
                 onChange={(e) => setR((p) => ({ ...p, setGround: Number(e.target.value) }))}
                 style={{ width: 110, accentColor: "var(--accent)" }}
               />
-              <span className="rs-body" style={{ fontSize: 10, opacity: 0.8 }}>
+              <span className="rs-body" style={{ fontSize: 12, opacity: 0.8 }}>
                 {genFit
                   ? `${genFit.width.toFixed(1)} × ${genFit.depth.toFixed(1)} m — ${genFit.metric ? "sized from the world's own measurements" : "size estimated; this draft carries none"}`
                   : "Fitting the set…"}
@@ -1440,7 +1442,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
                 <button className="rs-btn" onClick={() => setDressOpen((o) => !o)}>
                   {dressOpen ? "▾" : "▸"} Describe the furniture{describedCount ? ` · ${describedCount} described` : ""}
                 </button>
-                <span className="rs-body" style={{ fontSize: 10, display: dressOpen ? undefined : "none" }}>Leave empty to use the set's own</span>
+                <span className="rs-body" style={{ fontSize: 12, display: dressOpen ? undefined : "none" }}>Leave empty to use the set's own</span>
                 {(dressOpen ? risky : []).map((p) => (
                   <input
                     key={p.id}
@@ -1455,7 +1457,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
                         return { ...prev, setCustom: describePiece(base, p.id, text) };
                       });
                     }}
-                    style={{ width: 150, background: "var(--bg)", border: "1px solid " + (p.asked ? "var(--accent)" : "var(--border)"), borderRadius: 3, padding: "5px 8px", fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--text)" }}
+                    style={{ width: 150, background: "var(--bg)", border: "1px solid " + (p.asked ? "var(--accent)" : "var(--border)"), borderRadius: 3, padding: "5px 8px", fontFamily: "'DM Mono', monospace", fontSize: 12, color: "var(--text)" }}
                   />
                 ))}
               </div>
@@ -1469,7 +1471,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
             })}>+ Add a person</button>
             {(r.extras ?? []).length > 0 && (
               <>
-                <span className="rs-body" style={{ fontSize: 11 }}>{r.extras.length} in the background</span>
+                <span className="rs-body" style={{ fontSize: 12.5 }}>{r.extras.length} in the background</span>
                 <button className="rs-btn" onClick={() => setR((p) => ({ ...p, extras: (p.extras ?? []).slice(0, -1) }))}>Remove one</button>
               </>
             )}
@@ -1554,7 +1556,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
                   ...p,
                   actors: p.actors.map((x, j) => (j === i ? { ...x, name: e.target.value.slice(0, 24) } : x)),
                 }))}
-                style={{ width: 96, padding: "4px 7px", fontSize: 10 }}
+                style={{ width: 96, padding: "4px 7px", fontSize: 12 }}
               />
               {["stand", "sit", "crouch"].map((p) => (
                 <button key={p} className={"rs-btn" + (a.pose === p ? " on" : "")} onClick={() => setPose(i, p)}>{p}</button>
@@ -1570,7 +1572,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
               {a.action && (
                 <button className="rs-btn" title="Back to no direction" onClick={() => setAction(i, null)}>clear</button>
               )}
-              <span className="rs-body" style={{ fontSize: 10, marginLeft: 10 }}>as</span>
+              <span className="rs-body" style={{ fontSize: 12, marginLeft: 10 }}>as</span>
               {BODIES.map((b) => {
                 const cur = r.actors[i]?.body ?? defaultBody(i);
                 return <button key={b} className={"rs-btn" + (cur === b ? " on" : "")} onClick={() => setR((p) => ({ ...p, actors: p.actors.map((x, j) => (j === i ? { ...x, body: b } : x)) }))}>{b}</button>;
@@ -1619,7 +1621,7 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
 
         {moveOpen && (
           <div className="rs-act" style={{ marginBottom: 12 }}>
-            <div className="rs-body" style={{ fontSize: 10, marginBottom: 2 }}>
+            <div className="rs-body" style={{ fontSize: 12, marginBottom: 2 }}>
               Runs on {activeCam?.name ?? "the selected camera"} from {(t >= r.duration - 0.5 ? 0 : t).toFixed(1)}s to {r.duration}s.
               It writes two marks, so you can drag either one afterwards.
             </div>
@@ -1652,13 +1654,13 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
               {c.read.subject && <div className="rs-cam-s">on {c.read.subject}</div>}
               {onCover && camReads.filter((x) => x.read.subject).length > 1 && c.id === camReads.find((x) => x.read.subject)?.id && (
                 <span style={{ display: "inline-flex", flexDirection: "column", gap: 3, marginTop: 8 }}>
-                  <button className="rs-btn" style={{ borderColor: "var(--accent)", color: "var(--accent)" }}
+                  <button className="rs-btn" style={{ borderColor: "var(--accent)", color: "var(--accent-text)" }}
                     onClick={(e) => { e.stopPropagation(); onCover(buildCoverage(r)); }}>
                     Cover the scene — all {camReads.filter((x) => x.read.subject).length} angles →
                   </button>
                   {/* Nothing is charged here, but the scene's real cost should be
                       visible before anyone starts filling slots. */}
-                  <span className="rs-body" style={{ fontSize: 9, opacity: 0.75 }}>
+                  <span className="rs-body" style={{ fontSize: 12, opacity: 0.75 }}>
                     Free to plan.{(r.setId || r.setCustom) ? ` Location plates ${camReads.filter((x) => x.read.subject).length * 2} credits when you shoot them.` : ""} Each shot priced when you generate it.
                   </span>
                 </span>
@@ -1671,10 +1673,10 @@ export default function RehearsalStudio({ initial, onChange, setGenPrefill, setP
             </div>
           ))}
         </div>
-        <div className="rs-body" style={{ fontSize: 10, marginTop: 10, opacity: 0.8 }}>
+        <div className="rs-body" style={{ fontSize: 12, marginTop: 10, opacity: 0.8 }}>
           Dragging the camera only moves the selected one. The performers' timing is shared by every camera.
         </div>
-        <div className="rs-body" style={{ fontSize: 11, marginTop: 8 }}>
+        <div className="rs-body" style={{ fontSize: 12.5, marginTop: 8 }}>
           <b style={{ color: "var(--text)", fontWeight: 500 }}>Shoot this angle</b> hands the framing, lens, blocking
           and beats to the generator as a written prompt, with the set attached as a reference. Blocking here is free
           and unlimited — you pick the model and see the price before anything is charged. A location plate, if the
