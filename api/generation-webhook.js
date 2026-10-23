@@ -32,7 +32,7 @@ function ed25519KeyFromRaw(rawBase64Url) {
   });
 }
 
-async function verifyFalSignature(req, rawBody) {
+export async function verifyFalSignature(req, rawBody) {
   const requestId = req.headers["x-fal-webhook-request-id"];
   const userId = req.headers["x-fal-webhook-user-id"];
   const timestamp = req.headers["x-fal-webhook-timestamp"];
@@ -62,7 +62,7 @@ async function verifyFalSignature(req, rawBody) {
   return false;
 }
 
-function getR2Client() {
+export function getR2Client() {
   const accountId = process.env.R2_ACCOUNT_ID;
   const accessKeyId = process.env.R2_ACCESS_KEY_ID;
   const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
