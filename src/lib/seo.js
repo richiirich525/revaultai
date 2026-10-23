@@ -92,6 +92,10 @@ export const PAGES = {
     description:
       "Free director-grade video prompts for Seedance 2.5, Veo 3.1, and Kling 3.0. Copy, paste, and generate. No account needed.",
   },
+  "recording-studio": {
+    title: "Voice Over for AI Video — Scene Read-Through | RevaultAI",
+    description: "Hear a scene read in your characters' own voices before you generate it. Set a voice once in the Vault and it is used every time that character speaks.",
+  },
   autopsy: {
     title: "Generation Autopsy — Why Your AI Video Failed | RevaultAI",
     description: "Paste the prompt behind a disappointing generation and find out what in the wording broke it — with a revised prompt built to hold. Free, no account.",

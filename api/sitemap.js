@@ -42,6 +42,7 @@ const STATIC_PAGES = [
   ["/pricing", "0.8", "monthly", "2026-10-21"],       // prices render correctly again
   ["/blocking", "0.9", "monthly"],
   ["/rehearsal", "0.9", "monthly", "2026-10-21"],     // six new sections, live hero
+  ["/recording-studio", "0.9", "monthly", "2026-10-22"],   // new room on the lot
   ["/autopsy", "0.9", "monthly"],
   ["/discovered", "0.8", "weekly"],
   ["/faq", "0.6", "monthly"],

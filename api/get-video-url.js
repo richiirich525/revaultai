@@ -41,7 +41,7 @@ export default async function handler(req, res) {
     }
 
     const { type, id } = req.body || {};
-    if (type !== "generations" && (!id || !["creation", "generation", "vault"].includes(type))) {
+    if (type !== "generations" && (!id || !["creation", "generation", "vault", "voice"].includes(type))) {
       return res.status(400).json({ error: "Invalid request" });
     }
 
@@ -116,7 +116,20 @@ export default async function handler(req, res) {
     let allowed = false;
     let asAttachment = false;
 
-    if (type === "generation") {
+    if (type === "voice") {
+      // A recorded scene read: its owner, and nobody else. Stored as an
+      // R2_PUBLIC_URL key carrier like everything else here, so the key is
+      // derived from it below and presigned.
+      const { data: take } = await supabase
+        .from("voice_takes")
+        .select("user_id, audio_url")
+        .eq("id", id)
+        .maybeSingle();
+      if (take?.audio_url && take.user_id === user.id) {
+        storedUrl = take.audio_url;
+        allowed = true;
+      }
+    } else if (type === "generation") {
       // Generated videos: owner only
       const { data: gen } = await supabase
         .from("generations")

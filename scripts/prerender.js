@@ -277,7 +277,7 @@ const TOOL_INDEX = "tools";
 const TOOL_PAGES = new Set([
   "ai-video-generator", "prompt-builder", "scene-breakdown", "which-model",
   "continuity-check", "shot-director", "coverage", "frame-planner",
-  "blocking", "rehearsal", "autopsy",
+  "blocking", "rehearsal", "autopsy", "recording-studio",
 ]);
 
 // An H1 is a heading, not a search-result title — drop the brand suffix the

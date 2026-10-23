@@ -78,6 +78,12 @@ export const DEPARTMENTS = [
     ],
   },
   {
+    lead: "The recording studio.",
+    name: "Recording Studio",
+    body: "A scene read aloud in your characters' own voices, before a frame of it is generated. A voice set on a character in the Vault is reused every time they speak, the way their locked description is. Four voices to a read, and the turn order is the order you wrote.",
+    tools: [["Recording Studio", "recording-studio"]],
+  },
+  {
     lead: "Dailies.",
     name: "Takes",
     body: "Generations group themselves into shots: select, star, reject with a reason, compare side by side, and see what a usable shot actually costs. Every take carries its own debugger, and the keeper's closing frames are read for what the next shot inherits.",
