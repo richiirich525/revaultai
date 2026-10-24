@@ -37,6 +37,7 @@ export default function GeneratePage({ user, profile, notify, setPage, setGenSub
     const mapped = genPrefill.generateModelKey || MAP[genPrefill.modelKey];
     if (mapped) setModel(mapped);
     if (genPrefill.aspectRatio) setAspect(genPrefill.aspectRatio);
+    if (genPrefill.endImageUrl) { setEndImageUrl(genPrefill.endImageUrl); setEndImageName(genPrefill.endImageName || "a frame you chose"); }
     specRef.current = genPrefill.filmSpecId ? { id: genPrefill.filmSpecId, version: genPrefill.filmSpecVersion ?? 1 } : null;
     slotRef.current = genPrefill.coverageSlotId ?? null;
     promoRef.current = genPrefill.promotedFrom ?? null;
@@ -75,6 +76,14 @@ export default function GeneratePage({ user, profile, notify, setPage, setGenSub
   }, [model]);
   const [submitting, setSubmitting] = useState(false);
   const [imageUrl, setImageUrl] = useState(null);
+  /*
+    The frame the shot should END on. The Frame Planner has described this for
+    every shot since it shipped and there was nowhere to send it; MiniMax takes
+    it as end_image_url, and will take it on its own without a start frame.
+  */
+  const [endImageUrl, setEndImageUrl] = useState(null);
+  const [endImageName, setEndImageName] = useState("");
+  const [endBusy, setEndBusy] = useState(false);
   const [imageName, setImageName] = useState("");
   const [imageBusy, setImageBusy] = useState(false);
   // Credits are spent server-side, so the balance held in state goes stale the
@@ -111,6 +120,40 @@ export default function GeneratePage({ user, profile, notify, setPage, setGenSub
     }
     setImgGenBusy(false);
   }
+  /*
+    Upload a closing frame. Same two-step presigned PUT as the start frame;
+    kept separate only because the busy flags and the labels differ.
+  */
+  async function handleEndImagePick(file) {
+    if (!file) return;
+    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) { notify("Image must be JPG, PNG, or WebP."); return; }
+    if (file.size > 10 * 1024 * 1024) { notify("Image must be under 10 MB."); return; }
+    setEndBusy(true);
+    try {
+      const token = await getSessionToken();
+      const r = await fetch("/api/get-upload-url", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
+        body: JSON.stringify({ fileType: file.type }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.uploadUrl) { notify(j.error || "Could not prepare the image upload."); setEndBusy(false); return; }
+      await new Promise((resolve, reject) => {
+        const x = new XMLHttpRequest();
+        x.open("PUT", j.uploadUrl);
+        x.setRequestHeader("Content-Type", file.type);
+        x.addEventListener("load", () => (x.status >= 200 && x.status < 300) ? resolve() : reject(new Error("Upload failed (" + x.status + ")")));
+        x.addEventListener("error", () => reject(new Error("Network error during upload")));
+        x.send(file);
+      });
+      setEndImageUrl(j.videoPublicUrl);
+      setEndImageName(file.name);
+    } catch (err) {
+      notify("Closing frame upload failed: " + err.message);
+    }
+    setEndBusy(false);
+  }
+
   async function handleImagePick(file) {
     if (!file) return;
     if (!/^image\/(jpeg|png|webp)$/.test(file.type)) { notify("Image must be JPG, PNG, or WebP."); return; }
@@ -466,7 +509,7 @@ export default function GeneratePage({ user, profile, notify, setPage, setGenSub
       const res = await fetch("/api/generate-video", {
         method: "POST",
         headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: prompt.trim(), model, duration, aspectRatio: aspect, imageUrl: imageUrl || undefined, projectId: activeProject?.id ?? null, filmSpecId: specRef.current?.id ?? null, filmSpecVersion: specRef.current?.version ?? null, vaultRefIds: refsToSend(model, imageUrl, vaultRefIds), coverageSlotId: slotRef.current, promotedFrom: promoRef.current, locationUrl: locRef.current?.url ?? null, locationName: locRef.current?.name ?? null }),
+        body: JSON.stringify({ prompt: prompt.trim(), model, duration, aspectRatio: aspect, imageUrl: imageUrl || undefined, endImageUrl: endImageUrl || undefined, projectId: activeProject?.id ?? null, filmSpecId: specRef.current?.id ?? null, filmSpecVersion: specRef.current?.version ?? null, vaultRefIds: refsToSend(model, imageUrl, vaultRefIds), coverageSlotId: slotRef.current, promotedFrom: promoRef.current, locationUrl: locRef.current?.url ?? null, locationName: locRef.current?.name ?? null }),
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -477,6 +520,8 @@ export default function GeneratePage({ user, profile, notify, setPage, setGenSub
       notify("Generation started — it usually takes a few minutes.");
       setPrompt("");
       setImageUrl(null);
+      setEndImageUrl(null);
+      setEndImageName("");
       setImageName("");
       setSubmitting(false);
       loadGens();
@@ -596,6 +641,34 @@ export default function GeneratePage({ user, profile, notify, setPage, setGenSub
                 <input type="file" accept="image/jpeg,image/png,image/webp" disabled={imageBusy} onChange={(e) => handleImagePick(e.target.files[0])} style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text)" }} />
               )}
             </div>
+            {(() => {
+              const m = GEN_MODELS.find((x) => x.key === model);
+              const supported = !!m?.endFrame;
+              return (
+                <div style={{ marginTop: 10, padding: 12, background: "var(--bg3)", border: "1px solid var(--border)", borderRadius: 4, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.1em", color: "var(--muted)", textTransform: "uppercase" }}>
+                    {endBusy ? "Uploading closing frame..." : endImageUrl ? "Closing frame: " + endImageName : "Closing frame (optional)"}
+                  </span>
+                  {endImageUrl ? (
+                    <button className="gen-button" style={{ padding: "6px 14px", fontSize: 10 }} onClick={() => { setEndImageUrl(null); setEndImageName(""); }}>Remove</button>
+                  ) : supported ? (
+                    <input type="file" accept="image/jpeg,image/png,image/webp" disabled={endBusy} onChange={(e) => handleEndImagePick(e.target.files[0])} style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--text)" }} />
+                  ) : (
+                    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--muted)" }}>
+                      Switch to a MiniMax tier to land the shot on an exact frame.
+                    </span>
+                  )}
+                  {supported && (
+                    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--muted)", flexBasis: "100%", lineHeight: 1.7 }}>
+                      The shot ends exactly on this image. Works with or without a starting frame —
+                      given on its own, the canvas follows it. The Frame Planner describes this frame
+                      for any shot, and every take you have made can save the frame it ended on.
+                    </span>
+                  )}
+                </div>
+              );
+            })()}
+
             <div className="gen-form-row" style={{ flexDirection: "column", alignItems: "stretch", gap: 8 }}>
               <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.15em", color: "var(--accent)", textTransform: "uppercase" }}>Or generate a starting image</div>
               <input

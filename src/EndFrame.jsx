@@ -114,6 +114,18 @@ export default function EndFrame({ generation, notify, setGenPrefill, setPage })
     notify?.("Loaded as the starting frame for your next shot.");
   }
 
+  /*
+    The other direction, and the more useful one for building toward a beat:
+    a shot that has to ARRIVE at this frame. MiniMax takes it as end_image_url
+    and will take it without a starting frame at all, so a bridging shot can
+    be specified by where it has to end up rather than where it begins.
+  */
+  function useAsEnd() {
+    setGenPrefill?.({ prompt: "", endImageUrl: saved, endImageName: "the frame this take ended on" });
+    setPage?.("generate");
+    notify?.("Loaded as the closing frame. Write what leads up to it.");
+  }
+
   if (saved && !open) {
     return (
       <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginTop: 10 }}>
@@ -122,6 +134,7 @@ export default function EndFrame({ generation, notify, setGenPrefill, setPage })
           Ends at {Number(savedAt ?? 0).toFixed(2)}s
         </div>
         {setGenPrefill && <button style={btn} onClick={useAsStart}>Start the next shot here →</button>}
+        {setGenPrefill && <button style={btn} onClick={useAsEnd}>Land a shot on this frame →</button>}
         <button style={btn} onClick={() => setOpen(true)}>Choose another frame</button>
       </div>
     );

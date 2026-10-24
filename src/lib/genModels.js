@@ -27,9 +27,15 @@ export const GEN_MODELS = [
   // MiniMax H3 Max. Twelve references, and the only model here that will open
   // on an exact first frame without dropping them — so a chained shot keeps
   // its faces. Four extra aspect ratios, 4:3 and 3:4 among them.
-  { key: "minimax-h3-480", label: "MiniMax H3 Max — Draft (480p)", costPerSecond: 1, durations: [5, 10, 15], ratios: ["21:9", "16:9", "4:3", "1:1", "3:4", "9:16"], ratioFromImage: true },
-  { key: "minimax-h3", label: "MiniMax H3 Max — Standard (768p)", costPerSecond: 2, durations: [5, 10, 15], ratios: ["21:9", "16:9", "4:3", "1:1", "3:4", "9:16"], ratioFromImage: true },
-  { key: "minimax-h3-1080", label: "MiniMax H3 Max — 1080p", costPerSecond: 3, durations: [5, 10, 15], ratios: ["21:9", "16:9", "4:3", "1:1", "3:4", "9:16"], ratioFromImage: true },
+  // endFrame: this model will land the shot on an exact closing frame, which
+  // is what the Frame Planner has been producing all along with nowhere to
+  // send it. Set only where the endpoint schema actually lists end_image_url —
+  // on minimax/h3-max/image-to-video it reads "may be provided alone for
+  // end-only keyframe generation". The other families are unflagged because
+  // their schemas have not been checked, not because they lack it.
+  { key: "minimax-h3-480", label: "MiniMax H3 Max — Draft (480p)", costPerSecond: 1, durations: [5, 10, 15], ratios: ["21:9", "16:9", "4:3", "1:1", "3:4", "9:16"], ratioFromImage: true, endFrame: true },
+  { key: "minimax-h3", label: "MiniMax H3 Max — Standard (768p)", costPerSecond: 2, durations: [5, 10, 15], ratios: ["21:9", "16:9", "4:3", "1:1", "3:4", "9:16"], ratioFromImage: true, endFrame: true },
+  { key: "minimax-h3-1080", label: "MiniMax H3 Max — 1080p", costPerSecond: 3, durations: [5, 10, 15], ratios: ["21:9", "16:9", "4:3", "1:1", "3:4", "9:16"], ratioFromImage: true, endFrame: true },
 ];
 
 export const DEFAULT_MODEL = "wan-2.6";

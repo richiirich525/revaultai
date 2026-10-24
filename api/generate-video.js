@@ -108,6 +108,9 @@ const MODELS = {
   'minimax-h3-480': {
     falId: 'minimax/h3-max/text-to-video',
     imageFalId: 'minimax/h3-max/image-to-video',
+    // end_image_url is on the image-to-video and reference-to-video routes.
+    // image_url is optional on both, so an end frame works on its own.
+    endFrame: true,
     creditsPerSecond: 1,
     durationParam: { 5: 5, 10: 10, 15: 15 },             // a float, not an enum
     aspectRatios: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'],
@@ -117,6 +120,7 @@ const MODELS = {
   'minimax-h3': {
     falId: 'minimax/h3-max/text-to-video',
     imageFalId: 'minimax/h3-max/image-to-video',
+    endFrame: true,
     creditsPerSecond: 2,
     durationParam: { 5: 5, 10: 10, 15: 15 },
     aspectRatios: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'],
@@ -126,6 +130,7 @@ const MODELS = {
   'minimax-h3-1080': {
     falId: 'minimax/h3-max/text-to-video',
     imageFalId: 'minimax/h3-max/image-to-video',
+    endFrame: true,
     creditsPerSecond: 3,
     durationParam: { 5: 5, 10: 10, 15: 15 },
     aspectRatios: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'],
@@ -217,7 +222,7 @@ export default async function handler(req, res) {
     }
 
     // 2. Validate input
-    const { prompt, model, duration, imageUrl, aspectRatio, projectId, filmSpecId, filmSpecVersion, vaultRefIds, coverageSlotId, promotedFrom, locationUrl, locationName } = req.body;
+    const { prompt, model, duration, imageUrl, endImageUrl, aspectRatio, projectId, filmSpecId, filmSpecVersion, vaultRefIds, coverageSlotId, promotedFrom, locationUrl, locationName } = req.body;
     const pid = typeof projectId === "string" ? projectId : null;
 
     // Normalise a prompt so trivial edits still count as the same shot.
@@ -234,6 +239,23 @@ export default async function handler(req, res) {
     };
     const selected = MODELS[model];
     if (!selected) return res.status(400).json({ error: 'Unknown model' });
+
+    /*
+      A closing frame. The Frame Planner has always described the frame a shot
+      ends on and EndFrame.jsx has always been able to save one; this is where
+      it finally reaches the generator, so the shot lands on that frame
+      instead of somewhere near it.
+
+      Refused rather than silently dropped on a model that cannot do it: a
+      creator who asked for an exact ending and got an approximate one would
+      have no way of knowing why.
+    */
+    const wantsEnd = typeof endImageUrl === 'string' && /^https?:\/\//.test(endImageUrl);
+    if (wantsEnd && !selected.endFrame) {
+      return res.status(400).json({
+        error: 'That model cannot land on a closing frame. Switch to a MiniMax tier, which can, or remove the closing frame.',
+      });
+    }
     if (imageUrl && !selected.imageFalId) {
       return res.status(400).json({ error: 'That model does not support image input' });
     }
@@ -412,15 +434,32 @@ export default async function handler(req, res) {
         console.error('could not sign the start frame:', e.message);
       }
     }
+    let endFrame = wantsEnd ? endImageUrl : null;
+    if (endFrame) {
+      try {
+        endFrame = await signForFal(endFrame);
+      } catch (e) {
+        console.error('could not sign the end frame:', e.message);
+      }
+    }
+
+    /*
+      Which route. image_url is optional on the image-to-video endpoint, and
+      end_image_url "may be provided alone for end-only keyframe generation",
+      so a closing frame on its own belongs on that route rather than on
+      text-to-video, which has no such field.
+    */
+    const usingImageRoute = !!(imageUrl || endFrame);
     try {
       const { request_id } = await fal.queue.submit(
-        refs.length ? refModel.falId : imageUrl ? selected.imageFalId : selected.falId,
+        refs.length ? refModel.falId : usingImageRoute ? selected.imageFalId : selected.falId,
         {
         input: {
           prompt: refPrompt,
           duration: selected.durationParam[seconds],
-          ...(imageUrl && selected.aspectIgnoredWithImage ? {} : { aspect_ratio: ratio }),
+          ...(usingImageRoute && selected.aspectIgnoredWithImage ? {} : { aspect_ratio: ratio }),
           ...(imageUrl ? { image_url: startFrame } : {}),
+          ...(endFrame ? { end_image_url: endFrame } : {}),
           ...(refs.length && refModel.mode !== "elements"
             ? { [refModel.refsParam || "image_urls"]: refs.map((r) => r.url) }
             : {}),
