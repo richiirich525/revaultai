@@ -12,7 +12,7 @@
   copy of the module before it was trusted.
 */
 import {
-  spineFrom, spineGaps, spineIsUsable, factsFor, parseLock, lightingFact, MIN_SHOTS,
+  spineFrom, spineGaps, spineIsUsable, factsFor, parseLock, lightingFact, planFor, MIN_SHOTS,
 } from "../src/lib/sequenceSpine.js";
 
 let pass = 0;
@@ -133,6 +133,46 @@ const RUTH = spec({
 
   ok("counts say what was read",
      good.counts.shots === 2 && good.counts.withSpec === 2 && good.counts.rendered === 2);
+}
+
+/* ---- the plan handed to the footage ----------------------------------- */
+{
+  const seq = spineFrom({ shots: [
+    { spec: { ...RUTH, action: { endState: "she is holding the envelope" } }, generationId: "g1" },
+    { spec: spec({
+        subjects: { characters: ["Ruth"], locations: ["the cafe"] },
+        continuityLocks: ["Ruth: soaked jacket"],
+      }), generationId: "g2" },
+  ] });
+
+  const first = planFor(seq, 0);
+  ok("the first shot has a plan", first.ok);
+  ok("it uses the ending state", /holding the envelope/.test(first.text));
+  ok("it names who is in frame", /In frame: Ruth/.test(first.text));
+  ok("it states the lighting", /window left/.test(first.text), first.text);
+  ok("the first shot commits to nothing yet", first.committed.length === 0,
+     JSON.stringify(first.committed));
+  ok("so it carries no commitment heading", !/CARRIED FROM EARLIER/.test(first.text));
+
+  const second = planFor(seq, 1);
+  ok("the second shot names what it inherited", /CARRIED FROM EARLIER/.test(second.text), second.text);
+  ok("including the coat", second.committed.some((c) => /soaked jacket/.test(c.value)));
+  ok("and says which shot established it", /established in shot 1/.test(second.text), second.text);
+  ok("a fact established here is not a commitment",
+     !second.committed.some((c) => c.dimension === "prop"));
+
+  const bare = spineFrom({ shots: [{ spec: spec(), generationId: "g1" }] });
+  ok("a spec with nothing in it yields no plan", !planFor(bare, 0).ok);
+  ok("and asking for a shot that is not there is not a crash", planFor(bare, 9).ok === false);
+
+  const noEnd = spineFrom({ shots: [
+    { spec: spec({ subjects: { characters: ["Ruth"] }, continuityLocks: ["Ruth: soaked jacket"] }), generationId: "g1" },
+  ] });
+  ok("a shot with no ending state can still be checked", planFor(noEnd, 0).ok,
+     "this is the refusal observe-state used to make");
+
+  ok("an ending state never becomes a carrier",
+     !seq.carries.some((c) => /holding the envelope/.test(c.value)));
 }
 
 if (fails.length) {

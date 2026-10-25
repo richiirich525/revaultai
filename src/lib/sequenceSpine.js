@@ -151,6 +151,10 @@ export function spineFrom({ title = "", shots = [] } = {}) {
       rendered: !!shot?.generationId,
       generationId: shot?.generationId ?? null,
       seconds: Number(spec?.timing?.durationSeconds) || null,
+      /* Kept beside the facts rather than among them: an ending state is a
+         description of one moment, not a thing that can recur, so it must
+         never become a carrier. */
+      endState: text(spec?.action?.endState),
       facts: factsFor(spec),
       hasSpec: !!spec,
     };
@@ -210,6 +214,69 @@ export function spineFrom({ title = "", shots = [] } = {}) {
       rendered: beats.filter((b) => b.rendered).length,
       carriers: carries.length,
     },
+  };
+}
+
+/*
+  What a given shot was supposed to contain, written out for comparison
+  against the footage.
+
+  observe-state.js used to compare one field, `action.endState`, and refuse
+  the whole check when it was empty. That threw away everything else the spec
+  holds and meant a shot with a named cast, a wardrobe lock and stated
+  lighting could not be checked at all. The same mistake Story Worlds made:
+  read one field, conclude there is nothing there.
+
+  The distinction that matters is WHERE a fact came from. A fact stated only
+  in this shot is a plan, and the footage differing from it is often just the
+  model making a better choice. A fact carried from an earlier shot is a
+  commitment, and the footage differing from it is continuity breaking. They
+  read identically in the spec and they are not the same claim, so they are
+  labelled separately and the second is the one worth alarming anybody about.
+*/
+export function planFor(spine, index) {
+  const beat = spine?.beats?.[index];
+  if (!beat) return { ok: false, text: "", fields: [], committed: [] };
+
+  const committed = [];
+  for (const carrier of spine.carries ?? []) {
+    /* Carried into this shot from an earlier one. A carrier that only
+       reaches forward was established here, so it is a plan, not yet a
+       commitment. */
+    if (!carrier.beats.includes(index)) continue;
+    if (!carrier.beats.some((b) => b < index)) continue;
+    committed.push(carrier);
+  }
+
+  const lines = [];
+  const fields = [];
+
+  const endState = text(beat.endState);
+  if (endState) { lines.push(`Ends with: ${endState}`); fields.push("endState"); }
+
+  const f = beat.facts ?? {};
+  if (f.cast?.length) { lines.push(`In frame: ${f.cast.join(", ")}`); fields.push("cast"); }
+  if (f.location?.length) { lines.push(`Where: ${f.location.join(", ")}`); fields.push("location"); }
+  if (f.prop?.length) { lines.push(`Handled: ${f.prop.join(", ")}`); fields.push("prop"); }
+  if (f.lighting?.length) { lines.push(`Lit by: ${f.lighting.join("; ")}`); fields.push("lighting"); }
+  if (f.direction?.length) { lines.push(`Screen direction: ${f.direction.join(", ")}`); fields.push("direction"); }
+  if (f.lock?.length) { lines.push(`Locked: ${f.lock.join("; ")}`); fields.push("lock"); }
+
+  if (committed.length) {
+    const carried = committed.map((c) => {
+      const first = Math.min(...c.beats.filter((b) => b < index)) + 1;
+      return `${c.value} (established in shot ${first})`;
+    });
+    lines.push("");
+    lines.push("CARRIED FROM EARLIER SHOTS \u2014 these are commitments, not intentions:");
+    for (const line of carried) lines.push(`- ${line}`);
+  }
+
+  return {
+    ok: lines.some((l) => text(l)),
+    text: lines.join("\n"),
+    fields,
+    committed: committed.map((c) => ({ dimension: c.dimension, value: c.value, beats: c.beats })),
   };
 }
 
