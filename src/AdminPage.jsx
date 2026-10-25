@@ -531,12 +531,13 @@ export default function AdminPage({ creations, setCreations, notify }) {
             <div style={{ flex: 1, minWidth: 260 }}>
               <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", lineHeight: 1.7 }}>
                 The sequence spine. How many real projects carry enough structure for a continuity check to
-                have anything to say — two shots or more, specs it can read, and some fact appearing in
-                more than one of them. A coat nobody wears twice cannot be inconsistent.
+                have anything to say — two Shot Specs or more, and some fact appearing in more than one of
+                them. A coat nobody wears twice cannot be inconsistent.
               </div>
               <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--muted)", lineHeight: 1.7, marginTop: 10, opacity: 0.8 }}>
-                A shot reaches its spec only through the take chosen for it, so watch the unattached count:
-                if planning exists and nothing points at it, the fix is a column rather than more authoring.
+                The sequence is the specs, not the shots. A shot is a record of a generation; a spec is the
+                plan, written against a project and referencing no shot at all. Joining them was inventing a
+                link nobody built, which is what made the first run of this read zero.
               </div>
               {spine && (
                 <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, lineHeight: 1.8, marginTop: 12, color: spine.error ? "#E5B769" : "var(--muted)" }}>
@@ -544,18 +545,14 @@ export default function AdminPage({ creations, setCreations, notify }) {
                     <>
                       <div style={{ color: spine.percent >= 70 ? "#4ADE80" : "#E5B769" }}>
                         {spine.usable} of {spine.projects} sequences could be checked &mdash; {spine.percent}%.
-                        {" "}Across {spine.shots} shots.
+                        {" "}Across {spine.specs.written} Shot Specs.
                       </div>
                       <div style={{ marginTop: 6 }}>
-                        &nbsp;&nbsp;{spine.specs.reachableFromAShot} specs reachable from a shot,{" "}
-                        {spine.specs.unattached} sitting unattached
+                        &nbsp;&nbsp;{spine.specs.filmed} of {spine.specs.written} specs have been filmed
                       </div>
-                      {spine.chain && (
-                        <div>
-                          &nbsp;&nbsp;{spine.chain.withAChosenTake} of {spine.chain.shots} shots have a chosen take,{" "}
-                          {spine.chain.takesCarryingASpec} of those takes recorded a spec
-                        </div>
-                      )}
+                      <div>
+                        &nbsp;&nbsp;{spine.shots.withAChosenTake} of {spine.shots.recorded} shots have a chosen take
+                      </div>
                       {spine.reasons.map((r) => (
                         <div key={r.id}>&nbsp;&nbsp;{r.count} &times; {r.why}</div>
                       ))}
