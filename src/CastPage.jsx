@@ -115,13 +115,40 @@ export default function CastPage({ user, setPage, notify, onSignInClick }) {
   const [over, setOver] = useState(false);
   const fileRef = useRef(null);
 
-  /* A pack made before signing in is claimed on sign-in. Until the claim
-     route exists this only tells them it is kept; see the note at the foot
-     of this file. */
+  /*
+    A pack made before signing in is claimed the moment a session appears.
+
+    Guarded by a ref rather than by state because this effect can run again
+    before the claim returns — React re-runs it on any dependency change,
+    and a second claim in flight is how somebody ends up with two of
+    themselves in their Vault. The route is idempotent too; the ref just
+    saves the round trip.
+  */
+  const claiming = useRef(false);
   useEffect(() => {
-    if (user && packToken && !packId) {
-      notify?.("Signed in — your pack is kept.");
-    }
+    if (!user || !packToken || packId || claiming.current) return;
+    claiming.current = true;
+    (async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        const t = data?.session?.access_token;
+        if (!t) { claiming.current = false; return; }
+        const res = await fetch("/api/claim-pack", {
+          method: "POST",
+          headers: { "content-type": "application/json", Authorization: "Bearer " + t },
+          body: JSON.stringify({ packToken }),
+        });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) { notify?.(body.error || "We could not keep that pack."); return; }
+        if (body.packId) setPackId(body.packId);
+        notify?.(body.sets
+          ? `Kept — your pack and ${body.sets} set${body.sets === 1 ? "" : "s"} are in your Vault.`
+          : "Kept — your pack is in your Vault.");
+      } catch {
+        notify?.("We could not keep that pack.");
+        claiming.current = false;
+      }
+    })();
   }, [user, packToken, packId, notify]);
 
   async function token() {
