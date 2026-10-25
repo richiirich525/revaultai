@@ -88,7 +88,7 @@ function tooSimilar(a, b) {
  * @param seconds  shot length, for the scene block
  * @returns { ok, prompt, parts, warnings, errors }
  */
-export function compileScene({ packs = [], scene = "", styleId = "", seconds = 8 } = {}) {
+export function compileScene({ packs = [], scene = "", styleId = "", seconds = 8, still = false } = {}) {
   const errors = [];
   const warnings = [];
 
@@ -122,7 +122,9 @@ export function compileScene({ packs = [], scene = "", styleId = "", seconds = 8
 
   /* ---- [SCENE] --------------------------------------------------------- */
   const sceneLines = [`[SCENE] ${sceneText}`];
-  if (!/\b\d+(\.\d+)?\s*second/i.test(sceneText)) {
+  /* A still has no duration, and telling a still model about seconds is at
+     best ignored and at worst read as motion blur. */
+  if (!still && !/\b\d+(\.\d+)?\s*second/i.test(sceneText)) {
     sceneLines.push(`Duration ${Number(seconds) || 8} seconds.`);
   }
 
@@ -159,6 +161,7 @@ export function compileScene({ packs = [], scene = "", styleId = "", seconds = 8
     "No on-screen text, captions, logos or watermarks.",
     "No additional people, reflections of people, or figures in the background.",
   ];
+  if (still) negatives.push("A single still frame. No motion blur, no sequence, no panels.");
   if (style.kind === "medium") {
     /* A drawn medium has a specific failure: the model reverts to photoreal
        partway, or renders a photo of a drawing rather than a drawing. */

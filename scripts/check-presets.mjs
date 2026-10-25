@@ -20,6 +20,7 @@
 */
 import { compileScene, samePackBlock, MAX_PACKS_IN_FRAME } from "../src/lib/promptCompiler.js";
 import { STYLE_PRESETS, MEDIUMS, GENRES, styleById, protectedTermIn, PROTECTED_TERMS } from "../src/lib/stylePresets.js";
+import { buildStillSet, setIsOnePerson, POSES, FREE_SET } from "../src/lib/stillSet.js";
 
 let bad = 0;
 const ok = (name, cond, extra = "") => {
@@ -183,5 +184,62 @@ const thin = compileScene({ packs: [{ name: "Jo" }], scene: "JO sits down.", sty
 ok("a pack with only a name compiles", thin.ok, thin.errors);
 ok("and says so without inventing anything", thin.parts.pack === "[PACK] JO — ", thin.parts.pack);
 
+/* ---- Animate Yourself: the still set ------------------------------------ */
+const uniquePoses = new Set(POSES.map((p) => p.id));
+ok("every pose has a unique id", uniquePoses.size === POSES.length);
+ok("a pose is written as a shot, not a mood", POSES.every((p) => p.words.length > 60), POSES.map((p) => p.words.length));
+ok("every pose says something about the camera or the light",
+  POSES.every((p) => /camera|lens|crop|angle|light|frame/i.test(p.words)), POSES.filter((p) => !/camera|lens|crop|angle|light|frame/i.test(p.words)).map((p) => p.id));
+
+const set = buildStillSet({ pack: nell, mediumId: "cel-shade" });
+ok("a set compiles", set.ok, set.errors);
+ok("the free set is four", set.stills.length === FREE_SET, set.stills.length);
+ok("every still is one person", setIsOnePerson(set.stills));
+ok("and it is the SAME person as the photoreal scene", set.stills[0].parts.pack === solo.parts.pack,
+  { still: set.stills[0].parts.pack, scene: solo.parts.pack });
+ok("the poses actually differ", new Set(set.stills.map((s2) => s2.parts.scene)).size === set.stills.length);
+ok("a still carries no duration", !/Duration/.test(set.stills[0].prompt), set.stills[0].parts.scene);
+ok("but a scene still does", /Duration/.test(solo.prompt));
+ok("a still is told it is one frame", /single still frame/i.test(set.stills[0].parts.negative));
+ok("and told to stay in the medium", /photorealism/.test(set.stills[0].parts.negative));
+ok("each still names its pose", set.stills.every((s2, i) => s2.poseId === POSES[i].id));
+
+const full = buildStillSet({ pack: nell, mediumId: "ink-halftone", count: 8 });
+ok("a full set is eight", full.stills.length === 8);
+ok("all eight are one person", setIsOnePerson(full.stills));
+ok("a bigger count than there are poses is clamped",
+  buildStillSet({ pack: nell, mediumId: "cel-shade", count: 99 }).stills.length === POSES.length);
+/* 0 and NaN mean "unset", not "none" — a caller who passes neither gets the
+   free set rather than an empty one. */
+ok("an unset count gives the free set",
+  buildStillSet({ pack: nell, mediumId: "cel-shade", count: 0 }).stills.length === FREE_SET);
+ok("and so does a nonsense one",
+  buildStillSet({ pack: nell, mediumId: "cel-shade", count: "lots" }).stills.length === FREE_SET);
+ok("but one is honored", buildStillSet({ pack: nell, mediumId: "cel-shade", count: 1 }).stills.length === 1);
+ok("and a negative count still gives one",
+  buildStillSet({ pack: nell, mediumId: "cel-shade", count: -5 }).stills.length === 1);
+
+/* A genre is not a drawing medium, and letting one through would quietly
+   turn Animate Yourself into a photoreal portrait generator. */
+const wrongKind = buildStillSet({ pack: nell, mediumId: "neo-noir" });
+ok("a genre is refused as a medium", !wrongKind.ok);
+ok("and the refusal explains the difference",
+  wrongKind.errors.some((e) => /film look, not a drawing medium/.test(e)), wrongKind.errors);
+ok("no pack is refused", !buildStillSet({ mediumId: "cel-shade" }).ok);
+ok("no medium is refused", !buildStillSet({ pack: nell }).ok);
+ok("an unknown medium is refused", !buildStillSet({ pack: nell, mediumId: "crayon" }).ok);
+ok("called with nothing is refused, not a crash", !buildStillSet().ok);
+
+/* A pack that cannot compile fails once, not eight times. */
+const badPack = buildStillSet({ pack: { name: "Pixar", identity: "A person." }, mediumId: "cel-shade" });
+ok("a protected pack name is refused", !badPack.ok);
+ok("and reported once, not per pose", badPack.errors.length === 1, badPack.errors);
+
+/* The property that makes a set a set. */
+ok("setIsOnePerson catches a mixed set",
+  !setIsOnePerson([{ parts: { pack: "[PACK] A — x" } }, { parts: { pack: "[PACK] B — y" } }]));
+ok("and tolerates a set of one", setIsOnePerson([{ parts: { pack: "[PACK] A — x" } }]));
+ok("and an empty one", setIsOnePerson([]));
+
 if (bad) { console.error(`\ncheck-presets FAILED: ${bad} problem${bad === 1 ? "" : "s"}.`); process.exit(1); }
-console.log(`check-presets: ${MEDIUMS.length} mediums, ${GENRES.length} genres, nobody imitated, pack blocks deterministic.`);
+console.log(`check-presets: ${MEDIUMS.length} mediums, ${GENRES.length} genres, ${POSES.length} poses, nobody imitated, pack blocks deterministic.`);
