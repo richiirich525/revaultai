@@ -64,7 +64,33 @@ export default function StateReview({ generation, notify }) {
     });
   }
 
-  async function run() {
+  /*
+    What the comparison actually had to work with, read back out of the plan
+    it was given.
+
+    Derived from `planned_end` rather than from the response, because a stored
+    observation is loaded from the row and never carries the response fields.
+    One source for both paths beats two that can disagree.
+  */
+  function comparedAgainst(plannedEnd) {
+    const text = String(plannedEnd || "");
+    const labels = [
+      ["Ends with:", "the ending"], ["In frame:", "who is in it"], ["Where:", "the place"],
+      ["Handled:", "props"], ["Lit by:", "lighting"], ["Screen direction:", "screen direction"],
+      ["Locked:", "continuity locks"],
+    ];
+    const found = labels.filter(([token]) => text.includes(token)).map(([, name]) => name);
+    return {
+      fields: found,
+      carried: /CARRIED FROM EARLIER SHOTS/.test(text),
+      /* Observations written before the plan widened compared one line and
+         nothing else. They are not wrong, they are narrow, and a verdict of
+         "ends as planned" off one line should not look like a clean bill. */
+      thin: found.length <= 1 && !text.includes("In frame:"),
+    };
+  }
+
+  async function run(refresh = false) {
     setBusy(true);
     try {
       // Signed at the moment of the click. A link the page signed earlier may
@@ -74,7 +100,7 @@ export default function StateReview({ generation, notify }) {
       const r = await fetch("/api/observe-state", {
         method: "POST",
         headers: { Authorization: "Bearer " + sess?.session?.access_token, "Content-Type": "application/json" },
-        body: JSON.stringify({ generationId: generation.id, frames }),
+        body: JSON.stringify({ generationId: generation.id, frames, refresh }),
       });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) notify?.(j.error || "Could not read the ending state.");
@@ -111,13 +137,37 @@ export default function StateReview({ generation, notify }) {
 
   const diffs = state.differences ?? [];
   const settled = state.resolution !== "pending";
+  const scope = comparedAgainst(state.planned_end);
+
+  /* Printed under every verdict, because a verdict is only as good as the
+     plan behind it. */
+  const scopeLine = (
+    <div className="sr-body" style={{ opacity: 0.75, marginTop: 6 }}>
+      {scope.thin
+        ? "Only the ending line was compared \u2014 this take was read before the check widened."
+        : `Compared against ${scope.fields.join(", ")}.`}
+      {scope.carried && " Facts carried from earlier shots were treated as commitments."}
+      {" "}
+      <button
+        type="button"
+        onClick={() => run(true)}
+        disabled={busy}
+        style={{ background: "none", border: "none", padding: 0, color: "var(--accent-text, var(--accent))", cursor: "pointer", font: "inherit", textDecoration: "underline" }}
+      >
+        {busy ? "Reading\u2026" : "Check again"}
+      </button>
+    </div>
+  );
 
   if (diffs.length === 0) {
     return (
       <div className="sr sr-done">
         <style>{styles}</style>
-        <div className="sr-label" style={{ color: "#4ADE80" }}>✓ Ends as planned</div>
+        <div className="sr-label" style={{ color: scope.thin ? "var(--muted)" : "#4ADE80" }}>
+          {scope.thin ? "Nothing to report from one line" : "✓ Matches what was planned"}
+        </div>
         <div className="sr-body">{state.observed_end}</div>
+        {scopeLine}
       </div>
     );
   }
@@ -142,6 +192,8 @@ export default function StateReview({ generation, notify }) {
           <div className="sr-pair"><b>Filmed:</b> {d.observed}</div>
         </div>
       ))}
+
+      {scopeLine}
 
       {!settled && (
         <>
