@@ -115,12 +115,33 @@ create table if not exists public.world_beats (
   -- signed in, which is allowed in a shared room and must not be mistaken for
   -- a beat the owner wrote.
   author_id   uuid references auth.users (id) on delete set null,
+  -- Which character said it, when a character said it, and null when a person
+  -- did. author_id cannot carry this on its own: a line spoken by a character
+  -- has no author, and so does a line spoken by somebody with the link who is
+  -- not signed in, and those two must never be mistaken for each other.
+  speaker     text,
   kind        text not null default 'beat',
   text        text not null,
   created_at  timestamptz not null default now(),
   constraint world_beats_text_length check (char_length(text) between 1 and 1200),
   constraint world_beats_kind_known check (kind in ('origin', 'beat', 'said', 'arrived'))
 );
+
+-- The same column, for a database where the table above already existed. This
+-- file is meant to be safe to run twice, and `create table if not exists`
+-- would quietly skip a new column on the second run.
+do $$
+begin
+  if not exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'world_beats' and column_name = 'speaker'
+  ) then
+    alter table public.world_beats add column speaker text;
+    raise notice 'world_beats.speaker: added';
+  else
+    raise notice 'world_beats.speaker: already present';
+  end if;
+end $$;
 
 alter table public.world_beats enable row level security;
 
@@ -184,7 +205,8 @@ as $$
     w.capsule,
     coalesce(
       (
-        select jsonb_agg(jsonb_build_object('kind', b.kind, 'text', b.text, 'at', b.created_at)
+        select jsonb_agg(jsonb_build_object('kind', b.kind, 'text', b.text,
+                                            'speaker', b.speaker, 'at', b.created_at)
                          order by b.created_at, b.id)
         from public.world_beats b
         where b.capsule_id = w.id
