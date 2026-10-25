@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { fal } from "@fal-ai/client";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { buildStillSet, setIsOnePerson, FREE_SET, POSES } from "../src/lib/stillSet.js";
+import { stampStill } from "../src/lib/watermark.js";
 
 /*
   animate-pack — RevaultAI
@@ -95,17 +96,38 @@ export function packFromVaultRow(row) {
 
 /* Persist each still so it outlives fal's hosting, exactly as
    generate-image.js does. Returns the R2 carrier form. */
-export async function persistStill(falUrl, folder) {
+export async function persistStill(falUrl, folder, { mark = false, medium = null } = {}) {
   const res = await fetch(falUrl);
   if (!res.ok) throw new Error("Could not download the still: " + res.status);
   const contentType = res.headers.get("content-type") || "image/png";
-  const ext = contentType.includes("jpeg") ? "jpg" : contentType.includes("webp") ? "webp" : "png";
+  let body = Buffer.from(await res.arrayBuffer());
+  let type = contentType;
+
+  /*
+    Free output carries a visible mark. Signed-in output does not, which is
+    a real reason to sign in rather than a nag about one.
+
+    A stamping failure does not lose the image. An unmarked drawing is worth
+    more to the person than no drawing, and the failure is logged rather than
+    hidden so it can be chased.
+  */
+  if (mark) {
+    const stamped = await stampStill(body, { model: "nano-banana-2", medium });
+    if (stamped.stamped) {
+      body = stamped.buffer;
+      type = type.includes("png") ? "image/png" : "image/jpeg";
+    } else {
+      console.error("animate-pack: could not stamp a still:", stamped.error);
+    }
+  }
+
+  const ext = type.includes("jpeg") ? "jpg" : type.includes("webp") ? "webp" : "png";
   const key = `${folder}/${crypto.randomUUID()}.${ext}`;
   await getR2Client().send(new PutObjectCommand({
     Bucket: process.env.R2_BUCKET_NAME,
     Key: key,
-    Body: Buffer.from(await res.arrayBuffer()),
-    ContentType: contentType,
+    Body: body,
+    ContentType: type,
   }));
   return `${(process.env.R2_PUBLIC_URL ?? "").replace(/\/$/, "")}/${key}`;
 }
@@ -231,7 +253,11 @@ export default async function handler(req, res) {
         });
         const url = result?.data?.images?.[0]?.url;
         if (!url) throw new Error("No image came back");
-        drawn.push({ poseId: still.poseId, note: still.note, url: await persistStill(url, folder) });
+        drawn.push({
+          poseId: still.poseId,
+          note: still.note,
+          url: await persistStill(url, folder, { mark: !owner, medium: mediumId }),
+        });
       } catch (err) {
         console.error(`animate-pack: ${still.poseId} failed:`, err.message);
         failed.push(still.poseId);
