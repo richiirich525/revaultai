@@ -34,7 +34,7 @@ export default function AdminPage({ creations, setCreations, notify }) {
   const [dueBusy, setDueBusy] = useState(false);
   const [sending, setSending] = useState(null);
   const [gate, setGate] = useState(null);
-  const [gateBusy, setGateBusy] = useState(false);
+  const [gateBusy, setGateBusy] = useState(null);
 
   /*
     What is owed, and why anything owed is not yet payable. This only ever
@@ -101,21 +101,21 @@ export default function AdminPage({ creations, setCreations, notify }) {
 
     Reads only. Nothing is locked and nothing is charged.
   */
-  async function measureGate() {
-    setGateBusy(true);
+  async function measureGate(scope) {
+    setGateBusy(scope);
     try {
       const token = await getSessionToken();
       const res = await fetch("/api/world-gate", {
         method: "POST",
         headers: { "content-type": "application/json", Authorization: "Bearer " + token },
-        body: JSON.stringify({ limit: 200 }),
+        body: JSON.stringify({ limit: 200, scope }),
       });
       const body = await res.json().catch(() => ({}));
       setGate(res.ok ? body : { error: body.error || "The measurement could not run." });
     } catch (err) {
       setGate({ error: err.message });
     }
-    setGateBusy(false);
+    setGateBusy(null);
   }
 
   async function runCheck(route) {
@@ -414,16 +414,31 @@ export default function AdminPage({ creations, setCreations, notify }) {
                 somebody to meet, somewhere to be, and some condition the place is in. The plan proceeds at
                 seven in ten.
               </div>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--muted)", lineHeight: 1.7, marginTop: 10, opacity: 0.8 }}>
+                This admin account owns no takes of its own, so measure every account to see a real
+                number. Across accounts the reasons are counted but no prompts are shown.
+              </div>
             </div>
-            <button
-              className="btn-ghost"
-              type="button"
-              onClick={measureGate}
-              disabled={gateBusy}
-              style={{ opacity: gateBusy ? 0.6 : 1, whiteSpace: "nowrap" }}
-            >
-              {gateBusy ? "Measuring..." : "Measure"}
-            </button>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <button
+                className="btn-ghost"
+                type="button"
+                onClick={() => measureGate("mine")}
+                disabled={!!gateBusy}
+                style={{ opacity: gateBusy ? 0.6 : 1, whiteSpace: "nowrap" }}
+              >
+                {gateBusy === "mine" ? "Measuring..." : "This account"}
+              </button>
+              <button
+                className="btn-ghost"
+                type="button"
+                onClick={() => measureGate("all")}
+                disabled={!!gateBusy}
+                style={{ opacity: gateBusy ? 0.6 : 1, whiteSpace: "nowrap" }}
+              >
+                {gateBusy === "all" ? "Measuring..." : "Every account"}
+              </button>
+            </div>
           </div>
 
           {gate && (
@@ -437,6 +452,7 @@ export default function AdminPage({ creations, setCreations, notify }) {
                   <div style={{ fontSize: 13, color: gate.passesGate ? "#4ADE80" : "#E5B769", marginBottom: 12 }}>
                     {gate.usable} of {gate.takes} finished takes would build a world — {Math.round(gate.rate * 100)}%.
                     {" "}{gate.passesGate ? "That clears the gate." : "That is below the seven in ten the plan asks for."}
+                    {gate.scope === "all" && gate.accounts > 1 ? ` Across ${gate.accounts} accounts.` : ""}
                   </div>
 
                   {gate.whyNot?.length > 0 && (

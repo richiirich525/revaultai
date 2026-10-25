@@ -26,6 +26,10 @@ import { capsuleFrom, capsuleGaps } from "../src/lib/worldCapsule.js";
 
 const MAX_TAKES = 200;
 
+/* Matches every other admin route here, checked server-side rather than
+   trusted from the client. */
+const ADMIN_EMAILS = ["richardgarland999@gmail.com"];
+
 export default async function handler(req, res) {
   if (req.method !== "POST" && req.method !== "GET") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -43,10 +47,35 @@ export default async function handler(req, res) {
 
     const limit = Math.min(Number(req.query?.limit ?? req.body?.limit) || 50, MAX_TAKES);
 
-    const { data: takes, error: takesError } = await supabase
-      .from("generations")
-      .select("id, user_id, prompt, model, status, project_id, film_spec_id, film_spec_version, vault_ref_ids, end_frame_url, end_frame_at, created_at, completed_at")
-      .eq("user_id", user.id)
+    /*
+      Whose takes to measure.
+
+      "mine" is the honest default and the only thing a normal user can ask
+      for. "all" exists because the question this answers is a product
+      question — do takes in general carry enough structure to become a world
+      — and the account that asks it is not necessarily the account that makes
+      the films. Measuring one person's own takes from an admin account that
+      has never generated anything returns zero and means nothing.
+
+      Across everybody, the numbers come back as counts only. Nobody else's
+      prompts are shown: the reasons are the useful part, and a list of other
+      people's ideas is not something an aggregate needs to include.
+    */
+    const everyone = (req.body?.scope ?? req.query?.scope) === "all";
+    if (everyone && !ADMIN_EMAILS.includes((user.email ?? "").toLowerCase())) {
+      return res.status(403).json({ error: "Only an admin can measure every account." });
+    }
+    /* Applied to every read below or none of them. Filtering takes by owner
+       but not the Vault entries they reference would resolve other people's
+       casts to nothing and report their worlds as empty — a wrong number that
+       looks exactly like a real one. */
+    const mine = (q) => (everyone ? q : q.eq("user_id", user.id));
+
+    const { data: takes, error: takesError } = await mine(
+      supabase
+        .from("generations")
+        .select("id, user_id, prompt, model, status, project_id, film_spec_id, film_spec_version, vault_ref_ids, end_frame_url, end_frame_at, created_at, completed_at"),
+    )
       .eq("status", "complete")
       .order("created_at", { ascending: false })
       .limit(limit);
@@ -75,15 +104,15 @@ export default async function handler(req, res) {
 
     const [specsRes, vaultRes, observedRes] = await Promise.all([
       specIds.length
-        ? supabase.from("film_specs").select("id, spec").eq("user_id", user.id).in("id", specIds)
+        ? mine(supabase.from("film_specs").select("id, spec")).in("id", specIds)
         : Promise.resolve({ data: [] }),
       refIds.length
-        ? supabase.from("vault_entries")
-            .select("id, kind, name, description, wardrobe, distinguishing, images, voice_preset, voice_sample_url")
-            .eq("user_id", user.id).in("id", refIds)
+        ? mine(supabase.from("vault_entries")
+            .select("id, kind, name, description, wardrobe, distinguishing, images, voice_preset, voice_sample_url"))
+            .in("id", refIds)
         : Promise.resolve({ data: [] }),
-      supabase.from("observed_states").select("generation_id, observed_end, differences")
-        .eq("user_id", user.id).in("generation_id", takeIds),
+      mine(supabase.from("observed_states").select("generation_id, observed_end, differences"))
+        .in("generation_id", takeIds),
     ]);
 
     /*
@@ -129,13 +158,18 @@ export default async function handler(req, res) {
         for (const t of gaps.thin) shortfalls.set(t, (shortfalls.get(t) ?? 0) + 1);
       } else {
         for (const m of gaps.missing) reasons.set(m, (reasons.get(m) ?? 0) + 1);
-        if (worst.length < 10) worst.push({ id: take.id, prompt: String(take.prompt ?? "").slice(0, 80), missing: gaps.missing });
+        /* Not across everybody: see the note on scope above. */
+        if (!everyone && worst.length < 10) {
+          worst.push({ id: take.id, prompt: String(take.prompt ?? "").slice(0, 80), missing: gaps.missing });
+        }
       }
     }
 
     const byCount = (m) => [...m.entries()].sort((a, b) => b[1] - a[1]).map(([reason, count]) => ({ reason, count }));
 
     return res.status(200).json({
+      scope: everyone ? "all" : "mine",
+      accounts: everyone ? new Set(rows.map((r) => r.user_id)).size : 1,
       takes: rows.length,
       usable,
       rate: Math.round((usable / rows.length) * 100) / 100,
