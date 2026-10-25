@@ -35,6 +35,8 @@ export default function AdminPage({ creations, setCreations, notify }) {
   const [sending, setSending] = useState(null);
   const [gate, setGate] = useState(null);
   const [gateBusy, setGateBusy] = useState(null);
+  const [spine, setSpine] = useState(null);
+  const [spineBusy, setSpineBusy] = useState(null);
   const [extract, setExtract] = useState(null);
   const [extractBusy, setExtractBusy] = useState(false);
 
@@ -118,6 +120,32 @@ export default function AdminPage({ creations, setCreations, notify }) {
       setGate({ error: err.message });
     }
     setGateBusy(null);
+  }
+
+  /*
+    The same instrument as the world gate, pointed at planning rather than at
+    finished takes: how many real sequences carry enough structure for a
+    continuity check to have anything to say.
+
+    It decides whether drift detection and selective regeneration are worth
+    building, which is exactly the question Story Worlds answered the
+    expensive way. Reads only. Nothing is written and nothing is charged.
+  */
+  async function measureSpine(scope) {
+    setSpineBusy(scope);
+    try {
+      const token = await getSessionToken();
+      const res = await fetch("/api/spine-gate", {
+        method: "POST",
+        headers: { "content-type": "application/json", Authorization: "Bearer " + token },
+        body: JSON.stringify({ limit: 500, scope }),
+      });
+      const body = await res.json().catch(() => ({}));
+      setSpine(res.ok ? body : { error: body.error || "The measurement could not run." });
+    } catch (err) {
+      setSpine({ error: err.message });
+    }
+    setSpineBusy(null);
   }
 
   /*
@@ -497,6 +525,54 @@ export default function AdminPage({ creations, setCreations, notify }) {
             >
               {extractBusy ? "Reading..." : "Read prompts"}
             </button>
+          </div>
+
+          <div style={{ borderTop: "1px solid var(--border)", padding: "20px 0", display: "flex", justifyContent: "space-between", gap: 20, flexWrap: "wrap", alignItems: "flex-start" }}>
+            <div style={{ flex: 1, minWidth: 260 }}>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", lineHeight: 1.7 }}>
+                The sequence spine. How many real projects carry enough structure for a continuity check to
+                have anything to say \u2014 two shots or more, specs it can read, and some fact appearing in
+                more than one of them. A coat nobody wears twice cannot be inconsistent.
+              </div>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--muted)", lineHeight: 1.7, marginTop: 10, opacity: 0.8 }}>
+                A shot reaches its spec only through the take chosen for it, so watch the unattached count:
+                if planning exists and nothing points at it, the fix is a column rather than more authoring.
+              </div>
+              {spine && (
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, lineHeight: 1.8, marginTop: 12, color: spine.error ? "#E5B769" : "var(--muted)" }}>
+                  {spine.error ? spine.error : spine.projects === 0 ? spine.note : (
+                    <>
+                      <div style={{ color: spine.percent >= 70 ? "#4ADE80" : "#E5B769" }}>
+                        {spine.usable} of {spine.projects} sequences could be checked &mdash; {spine.percent}%.
+                        {" "}Across {spine.shots} shots.
+                      </div>
+                      <div style={{ marginTop: 6 }}>
+                        &nbsp;&nbsp;{spine.specs.reachableFromAShot} specs reachable from a shot,{" "}
+                        {spine.specs.unattached} sitting unattached
+                      </div>
+                      {spine.reasons.map((r) => (
+                        <div key={r.id}>&nbsp;&nbsp;{r.count} &times; {r.why}</div>
+                      ))}
+                      {spine.examples.filter((e) => e.usable && e.topCarriers.length).slice(0, 2).map((e, i) => (
+                        <div key={i} style={{ marginTop: 6, opacity: 0.85 }}>
+                          &nbsp;&nbsp;{e.shots} shots, {e.carriers} carriers: {e.topCarriers.join("; ")}
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <button className="btn-ghost" type="button" onClick={() => measureSpine("mine")}
+                disabled={!!spineBusy} style={{ opacity: spineBusy ? 0.6 : 1, whiteSpace: "nowrap" }}>
+                {spineBusy === "mine" ? "Measuring..." : "Spine: this account"}
+              </button>
+              <button className="btn-ghost" type="button" onClick={() => measureSpine("all")}
+                disabled={!!spineBusy} style={{ opacity: spineBusy ? 0.6 : 1, whiteSpace: "nowrap" }}>
+                {spineBusy === "all" ? "Measuring..." : "Every account"}
+              </button>
+            </div>
           </div>
 
           {gate && (
