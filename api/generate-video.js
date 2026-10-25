@@ -1,6 +1,7 @@
 import { fal } from '@fal-ai/client';
 import { compileScene, MAX_PACKS_IN_FRAME } from "../src/lib/promptCompiler.js";
 import { beatById, beatFor } from "../src/lib/sceneBeats.js";
+import { dayScene } from "../src/lib/dayScene.js";
 import { createClient } from '@supabase/supabase-js';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -247,6 +248,10 @@ export default async function handler(req, res) {
        images it resolved for people who are not this user. */
     let crewInvite = null;
     let castRefs = null;
+    /* Set by the Memory Cinema branch: the day being filmed, and the scene
+       line compiled from it. */
+    let memoryDay = null;
+    let dayLine = null;
 
     /*
       A Cast Yourself scene: packs, a genre and a beat, compiled here.
@@ -267,6 +272,7 @@ export default async function handler(req, res) {
       let packIds = [];
       let styleId = cast.styleId;
       const asCrew = typeof cast.crewInviteId === "string" && !!cast.crewInviteId;
+      const asDay = typeof cast.dayId === "string" && !!cast.dayId;
 
       /*
         A solo scene is whatever the caller asks for. A crew scene is not: the
@@ -276,12 +282,102 @@ export default async function handler(req, res) {
         host could collect faces for one scene and shoot a different one.
       */
       let beat = null;
-      if (!asCrew) {
+      if (!asCrew && !asDay) {
         beat = beatById(cast.beatId);
         if (!beat) return res.status(400).json({ error: "Pick what happens in this scene." });
       }
 
-      if (asCrew) {
+      if (asDay) {
+        /*
+          Memory Cinema. A day the person wrote down, filmed once, when they
+          ask for it.
+
+          THE GRANT IS CHECKED HERE AND NOWHERE ELSE THAT MATTERS. A day
+          stores the packs it wants in frame, and a client can put any id in
+          that list, so the list is treated as a request rather than a fact.
+          castable_for returns only packs whose owner built them and granted
+          a live, unexpired pass to this user, so a pass revoked between
+          saving the day and filming it takes effect immediately — which is
+          the only moment that counts, because it is the moment the face is
+          used. Nothing is filtered by the client and nothing is trusted from
+          the row.
+        */
+        const { data: dayRow, error: dayError } = await supabase
+          .from("memory_days")
+          .select("id, day, note, photos, style_id, pack_id, cast_packs, status")
+          .eq("id", cast.dayId).eq("user_id", user.id).maybeSingle();
+        if (dayError) {
+          console.error("generate-video could not read the day:", dayError);
+          return res.status(502).json({ error: "Could not read that day: " + dayError.message });
+        }
+        if (!dayRow) return res.status(404).json({ error: "That day is not yours, or is gone." });
+        if (dayRow.status === "filmed") {
+          return res.status(409).json({ error: "That day is already filmed." });
+        }
+        if (!dayRow.pack_id) {
+          return res.status(422).json({ error: "Pick which character plays you." });
+        }
+
+        const { data: own } = await supabase
+          .from("vault_entries")
+          .select("id, name, description, build, distinguishing, wardrobe, images")
+          .eq("id", dayRow.pack_id).eq("user_id", user.id).eq("kind", "character").maybeSingle();
+        if (!own) return res.status(404).json({ error: "That character is not in your Vault." });
+
+        packs.push({
+          name: own.name, identity: own.description, build: own.build,
+          distinguishing: own.distinguishing, wardrobe: own.wardrobe,
+          images: Array.isArray(own.images) ? own.images : [],
+        });
+        packIds.push(own.id);
+
+        const wanted = (Array.isArray(dayRow.cast_packs) ? dayRow.cast_packs : [])
+          .filter((x) => typeof x === "string" && x);
+        if (wanted.length) {
+          const { data: allowed, error: grantError } = await supabase
+            .rpc("castable_for", { p_user: user.id });
+          if (grantError) {
+            console.error("generate-video could not check the grants:", grantError);
+            return res.status(502).json({
+              error: "We could not confirm who agreed to be in this, so nothing was filmed.",
+            });
+          }
+          const byId = new Map((allowed ?? []).map((r) => [r.pack_id, r]));
+          const refused = [];
+          for (const id of wanted) {
+            const row = byId.get(id);
+            if (!row) { refused.push(id); continue; }
+            if (packs.length >= MAX_PACKS_IN_FRAME) break;
+            packs.push({
+              name: row.name, identity: row.description, build: row.build,
+              distinguishing: row.distinguishing, wardrobe: row.wardrobe,
+              images: Array.isArray(row.images) ? row.images : [],
+            });
+            packIds.push(row.id);
+          }
+          /*
+            Somebody in that day no longer agrees, or never did. Refuse
+            rather than quietly filming a smaller scene: a person who set up
+            a day with their sister in it should be told she is not in it,
+            not handed a film she has to notice is wrong.
+          */
+          if (refused.length) {
+            return res.status(409).json({
+              error: refused.length === wanted.length
+                ? "Nobody in that day has agreed to be cast. Ask them, or film it with just you."
+                : "Somebody in that day has withdrawn their character. Take them out of it, or ask again.",
+            });
+          }
+        }
+
+        const built = dayScene({ note: dayRow.note, photos: dayRow.photos, cast: packs });
+        if (!built.ok) {
+          return res.status(422).json({ error: built.errors[0], problems: built.errors });
+        }
+        dayLine = built.scene;
+        styleId = dayRow.style_id;
+        memoryDay = dayRow;
+      } else if (asCrew) {
         /*
           A crew scene. This is the ONLY place in the product where one
           person's locked identity reaches another person's generation, so
@@ -405,7 +501,7 @@ export default async function handler(req, res) {
 
       const compiled = compileScene({
         packs,
-        scene: beatFor(beat, packs),
+        scene: dayLine ?? beatFor(beat, packs),
         styleId,
         seconds: Number(duration) || 8,
       });
@@ -422,7 +518,7 @@ export default async function handler(req, res) {
         already resolved, signed here rather than through the owner-scoped
         route, so no existing authorization is widened to make this work.
       */
-      if (crewInvite) {
+      if (crewInvite || (memoryDay && packs.length > 1)) {
         castRefs = [];
         for (let i = 0; i < packs.length; i++) {
           /*
@@ -616,6 +712,18 @@ export default async function handler(req, res) {
         .update({ status: "shot", generation_id: gen.id })
         .eq("id", crewInvite.id).eq("status", "full");
       if (markError) console.error("generate-video could not mark the crew scene shot:", markError.message);
+    }
+
+    /* A day is filmed once. Marked only after the generation row exists, so
+       a failure before this point leaves a day somebody can still film
+       rather than one that is spent with nothing to show. The status guard
+       means two taps cannot both win. */
+    if (memoryDay) {
+      const { error: dayMarkError } = await supabase
+        .from("memory_days")
+        .update({ status: "filmed", generation_id: gen.id, updated_at: new Date().toISOString() })
+        .eq("id", memoryDay.id).eq("user_id", user.id).eq("status", "draft");
+      if (dayMarkError) console.error("generate-video could not mark the day filmed:", dayMarkError.message);
     }
 
     // 4b. Group this generation into a shot. A near-identical prompt from the

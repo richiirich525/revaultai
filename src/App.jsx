@@ -18,6 +18,7 @@ import BlockingPage from "./BlockingPage.jsx";
 import AutopsyPage from "./AutopsyPage.jsx";
 import RecordingStudioPage from "./RecordingStudioPage.jsx";
 import CastPage from "./CastPage.jsx";
+import MemoryPage from "./MemoryPage.jsx";
 import TakesPage from "./TakesPage.jsx";
 import RehearsalPage from "./RehearsalPage.jsx";
 import { CSS } from "./appCss.js";
@@ -91,7 +92,7 @@ const [page, setPageState]        = useState("home");
   // ---- URL routing ----
   const detailIdRef = useRef(null);
   const creatorUserRef = useRef(null);
-  const KNOWN_PAGES = ["home","explore","creators","feed","generate","settings","admin","submit","set-password","email-confirmed","terms","faq","contact","guidelines","premium-films","about","become-creator","privacy","refunds","dmca","ai-disclaimer","purchase-success","founding-creators","blog","ai-video-generator","prompt-builder","prompts","search","scene-breakdown","which-model","vault","continuity-check","shot-director","coverage","frame-planner","blocking","autopsy","takes","projects","tools","specs","rehearsal","finish","lot","pricing","recording-studio","discovered","cast"];
+  const KNOWN_PAGES = ["home","explore","creators","feed","generate","settings","admin","submit","set-password","email-confirmed","terms","faq","contact","guidelines","premium-films","about","become-creator","privacy","refunds","dmca","ai-disclaimer","purchase-success","founding-creators","blog","ai-video-generator","prompt-builder","prompts","search","scene-breakdown","which-model","vault","continuity-check","shot-director","coverage","frame-planner","blocking","autopsy","takes","projects","tools","specs","rehearsal","finish","lot","pricing","recording-studio","discovered","cast","memory"];
 
   function setDetailId(id) { detailIdRef.current = id; setDetailIdState(id); }
   const blogSlugRef = useRef(null);
@@ -322,6 +323,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       case "takes": return <TakesPage setGenPrefill={setGenPrefill} activeProject={activeProject} user={user} onSignInClick={() => setAuthOpen(true)} setPage={setPage} notify={notify} />;
       case "recording-studio": return <RecordingStudioPage setPage={setPage} user={user} activeProject={activeProject} notify={notify} onSignInClick={() => setAuthOpen(true)} />;
       case "cast": return <CastPage setPage={setPage} user={user} notify={notify} onSignInClick={() => setAuthOpen(true)} />;
+      case "memory": return <MemoryPage setPage={setPage} user={user} notify={notify} onSignInClick={() => setAuthOpen(true)} />;
       case "autopsy": return <AutopsyPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} setGenPrefill={setGenPrefill} apPrefill={apPrefill} setApPrefill={setApPrefill} />;
       case "blocking": return <BlockingPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} setGenPrefill={setGenPrefill} />;
       case "frame-planner": return <FramePlannerPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} setGenPrefill={setGenPrefill} notify={notify} />;
