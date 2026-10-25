@@ -3,6 +3,8 @@ import { supabase } from "./lib/supabase.js";
 import { MEDIUMS, GENRES } from "./lib/stylePresets.js";
 import { POSES, FREE_SET } from "./lib/stillSet.js";
 import { BEATS } from "./lib/sceneBeats.js";
+import { ANGLES, USABLE_SET, angleById } from "./lib/captureAngles.js";
+import { isAdmin } from "./lib/admin.js";
 
 /*
   CastPage — RevaultAI
@@ -101,9 +103,12 @@ function readFile(file) {
 }
 
 export default function CastPage({ user, setPage, notify, onSignInClick }) {
-  const [step, setStep] = useState(
-    () => (new URLSearchParams(window.location.search).get("crew") ? "invited" : "selfie"),
-  );
+  const [step, setStep] = useState(() => {
+    const q = new URLSearchParams(window.location.search);
+    if (q.get("crew")) return "invited";
+    if (q.get("capture")) return "capture";
+    return "selfie";
+  });
   const [busy, setBusy] = useState(null);
   const [error, setError] = useState(null);
 
@@ -120,6 +125,9 @@ export default function CastPage({ user, setPage, notify, onSignInClick }) {
   const [crew, setCrew] = useState(null);
   const [joined, setJoined] = useState(false);
   const [mine, setMine] = useState([]);
+  const [capture, setCapture] = useState(null);
+  const [typedCode, setTypedCode] = useState("");
+  const captureRef = useRef(null);
   const [stills, setStills] = useState([]);
   const [over, setOver] = useState(false);
   const fileRef = useRef(null);
@@ -324,6 +332,148 @@ export default function CastPage({ user, setPage, notify, onSignInClick }) {
     setBusy(null);
   }
 
+  /*
+    A capture session. The camera is never on the machine you are working at:
+    on the lot it is a rig with an operator, and at home it is the phone in
+    your pocket rather than the laptop webcam pointing up your nose. Both are
+    the same handoff, so both are this.
+  */
+  async function openCapture(source) {
+    setError(null);
+    setBusy("capture");
+    try {
+      const t = await token();
+      const res = await fetch("/api/capture-open", {
+        method: "POST",
+        headers: { "content-type": "application/json", ...(t ? { Authorization: "Bearer " + t } : {}) },
+        body: JSON.stringify(source === "booth" ? { source: "booth", rig: "lot" } : {}),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) setError(body.error || "We could not start that capture.");
+      else { setCapture({ ...body, shot: [] }); setStep("remote"); }
+    } catch (err) {
+      setError(err.message || "We could not start that capture.");
+    }
+    setBusy(null);
+  }
+
+  async function readCapture(code) {
+    const res = await fetch("/api/capture-open", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ code }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.error || "That code does not match a capture.");
+    return body;
+  }
+
+  async function sendFrame(file, pose) {
+    if (!file) return;
+    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) {
+      setError("That needs to be a JPEG, PNG or WebP photo.");
+      return;
+    }
+    setError(null);
+    setBusy("frame");
+    try {
+      const { base64 } = await readFile(file);
+      const res = await fetch("/api/capture-frame", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ code: capture.code, pose, image: base64, mediaType: file.type }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) setError(body.error || "We could not use that photo.");
+      else setCapture((c) => ({ ...c, shot: body.shot, next: body.next, usable: body.usable }));
+    } catch (err) {
+      setError(err.message || "Something went wrong sending that photo.");
+    }
+    setBusy(null);
+  }
+
+  /* Build from the capture rather than from a photo. Every frame was already
+     read and gated as it arrived, so this is a database read on the server,
+     not another eight vision calls over the same faces. */
+  async function buildFromCapture() {
+    setError(null);
+    setBusy("pack");
+    try {
+      const t = await token();
+      const res = await fetch("/api/build-pack", {
+        method: "POST",
+        headers: { "content-type": "application/json", ...(t ? { Authorization: "Bearer " + t } : {}) },
+        body: JSON.stringify({ sessionCode: capture.code, name: name.trim() || undefined }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) setError(body.error || "We could not build a pack from that capture.");
+      else {
+        setPack(body.pack);
+        setName(body.pack.name === "You" ? "" : body.pack.name);
+        setPackToken(body.packToken ?? null);
+        setPackId(body.packId ?? null);
+        setStep("pack");
+      }
+    } catch (err) {
+      setError(err.message || "Something went wrong building that pack.");
+    }
+    setBusy(null);
+  }
+
+  /* The device holding the camera. It knows only the code, so it asks what
+     has been shot already and carries on from there \u2014 which is also what
+     makes a dropped connection recoverable: reopen the link, same session. */
+  useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get("capture");
+    if (!code) return;
+    let live = true;
+    (async () => {
+      try {
+        const body = await readCapture(code);
+        if (live) setCapture({ ...body, code: code.trim().toUpperCase() });
+      } catch (err) {
+        if (live) setError(err.message);
+      }
+    })();
+    return () => { live = false; };
+  }, []);
+
+  /*
+    The waiting room polls. A poll rather than a socket because the whole
+    session is a few minutes long and a socket would be infrastructure for a
+    progress bar; it stops the moment the capture is usable or finished, so
+    it cannot run all day on a forgotten tab.
+  */
+  useEffect(() => {
+    if (step !== "remote" || !capture?.code) return;
+    if (capture.status !== "open" || capture.usable) return;
+    const id = setInterval(async () => {
+      try {
+        const body = await readCapture(capture.code);
+        setCapture((c) => (c ? { ...c, ...body } : c));
+      } catch { /* a missed poll is a missed poll; the next one is in four seconds */ }
+    }, 4000);
+    captureRef.current = id;
+    return () => clearInterval(id);
+  }, [step, capture?.code, capture?.status, capture?.usable]);
+
+  /* Typed off a laptop screen rather than followed as a link \u2014 which is
+     most of the time, because the link is on the wrong device by definition. */
+  async function joinCapture() {
+    const code = typedCode.trim().toUpperCase();
+    if (code.length < 6) { setError("That code is six characters."); return; }
+    setError(null);
+    setBusy("capture");
+    try {
+      const body = await readCapture(code);
+      if (body.status !== "open") setError("That capture is already finished.");
+      else { setCapture({ ...body, code }); setStep("capture"); }
+    } catch (err) {
+      setError(err.message || "That code does not match a capture.");
+    }
+    setBusy(null);
+  }
+
   async function takeSeat(pid, ptok, displayName) {
     setBusy("join");
     try {
@@ -452,6 +602,157 @@ export default function CastPage({ user, setPage, notify, onSignInClick }) {
             style={{ display: "none" }}
             onChange={(e) => onFile(e.target.files?.[0])}
           />
+          <div className="cast-row">
+            <button className="btn-ghost" type="button" disabled={busy === "capture"}
+              onClick={() => openCapture("phone")}>
+              {busy === "capture" ? "Starting\u2026" : "Use my phone, several angles"}
+            </button>
+            {isAdmin(user) && (
+              <button className="btn-ghost" type="button" disabled={busy === "capture"}
+                onClick={() => openCapture("booth")}>
+                Open a booth capture
+              </button>
+            )}
+          </div>
+          <div style={{ ...mono, fontSize: 11, color: "var(--muted)", lineHeight: 1.7, marginTop: 10 }}>
+            One photo works. {USABLE_SET} angles or more holds up when the camera moves \u2014
+            that is the only difference, and it is a real one.
+          </div>
+
+          <div className="cast-label">Or you have a code</div>
+          <div className="cast-row">
+            <input
+              className="cast-name"
+              style={{ maxWidth: 200, letterSpacing: 4, textTransform: "uppercase" }}
+              value={typedCode}
+              placeholder="ABC234"
+              maxLength={6}
+              aria-label="Capture code"
+              onChange={(e) => setTypedCode(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); joinCapture(); } }}
+            />
+            <button className="btn-ghost" type="button"
+              disabled={busy === "capture" || typedCode.trim().length < 6}
+              onClick={joinCapture}>
+              {busy === "capture" ? "Opening\u2026" : "Shoot the angles"}
+            </button>
+          </div>
+        </>
+      )}
+
+      {/*
+        The waiting room. Whoever opened the capture watches angles arrive
+        from the other device. Nothing here is a face: the status read returns
+        which angles are shot and nothing else.
+      */}
+      {step === "remote" && capture && (
+        <>
+          <h1 className="cast-h">
+            {capture.source === "booth" ? "Booth capture open." : "Open this on your phone."}
+          </h1>
+          <p className="cast-sub">
+            {capture.source === "booth"
+              ? "The console shoots the angles. They appear here as they land."
+              : "Go to revaultai.com/cast on your phone and enter this code, or open the link below on it."}
+          </p>
+          <div className="cast-card" style={{ display: "block" }}>
+            <div style={{ ...mono, fontSize: 32, letterSpacing: 6, color: "var(--text)" }}>
+              {capture.code}
+            </div>
+            <input className="cast-name" readOnly aria-label="Capture link"
+              style={{ marginTop: 12 }}
+              value={`${window.location.origin}/cast?capture=${capture.code}`}
+              onFocus={(e) => e.target.select()} />
+          </div>
+
+          <div className="cast-label">Angles</div>
+          <div className="cast-grid">
+            {(capture.angles ?? ANGLES).map((a) => {
+              const done = (capture.shot ?? []).includes(a.id);
+              return (
+                <div key={a.id} className="cast-opt" data-on={done ? "1" : "0"}>
+                  <div className="cast-opt-l">{a.label}</div>
+                  <div className="cast-opt-n">{done ? "Shot" : a.required ? "Needed" : "Waiting"}</div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="cast-row">
+            <button className="gen-button" type="button"
+              disabled={!capture.usable || busy === "pack"} onClick={buildFromCapture}>
+              {busy === "pack"
+                ? "Building\u2026"
+                : capture.usable
+                  ? "Build my character"
+                  : `${(capture.shot ?? []).length} of ${USABLE_SET} so far`}
+            </button>
+            <button className="btn-ghost" type="button"
+              onClick={() => { setCapture(null); setStep("selfie"); }}>
+              Use one photo instead
+            </button>
+          </div>
+          {capture.status === "expired" && (
+            <p className="cast-sub">That capture expired. Start another one.</p>
+          )}
+        </>
+      )}
+
+      {/*
+        The camera device. One angle at a time, named, because "upload some
+        photos of yourself" produces six of the same forward-facing smile and
+        only the first of those is worth anything downstream.
+      */}
+      {step === "capture" && (
+        <>
+          <h1 className="cast-h">{capture ? "Shoot these angles." : "Opening that capture\u2026"}</h1>
+          {capture && (
+            <>
+              <p className="cast-sub">
+                {capture.next
+                  ? `Next: ${capture.next.label}. ${angleById(capture.next.id)?.note ?? ""}`
+                  : "Every angle is shot. You can retake any of them."}
+              </p>
+              <div className="cast-grid">
+                {(capture.angles ?? ANGLES).map((a) => {
+                  const done = (capture.shot ?? []).includes(a.id);
+                  return (
+                    <div key={a.id}>
+                      <button className="cast-opt" data-on={done ? "1" : "0"} type="button"
+                        style={{ width: "100%" }}
+                        disabled={busy === "frame"}
+                        onClick={() => {
+                          const input = document.createElement("input");
+                          input.type = "file";
+                          input.accept = "image/jpeg,image/png,image/webp";
+                          input.capture = a.id === "full-body" ? "environment" : "user";
+                          input.onchange = () => sendFrame(input.files?.[0], a.id);
+                          input.click();
+                        }}>
+                        <div className="cast-opt-l">{a.label}</div>
+                        <div className="cast-opt-n">
+                          {busy === "frame" ? "Sending\u2026" : done ? "Shot \u2014 tap to retake" : a.note}
+                        </div>
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+              <div style={{ ...mono, fontSize: 11, color: "var(--muted)", lineHeight: 1.7, marginTop: 14 }}>
+                {capture.usable
+                  ? "That is enough. Finish on the device you started on, or build it here."
+                  : `${(capture.shot ?? []).length} of ${USABLE_SET}. Straight at the camera is the one we cannot do without.`}
+              </div>
+              {capture.usable && (
+                <div className="cast-row">
+                  <button className="gen-button" type="button" disabled={busy === "pack"}
+                    onClick={buildFromCapture}>
+                    {busy === "pack" ? "Building\u2026" : "Build my character here"}
+                  </button>
+                </div>
+              )}
+            </>
+          )}
         </>
       )}
 

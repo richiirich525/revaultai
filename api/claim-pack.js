@@ -82,6 +82,25 @@ export default async function handler(req, res) {
       return res.status(502).json({ error: "Could not keep that pack: " + insertError.message });
     }
 
+    /*
+      If this pack came out of a capture, the session has been waiting for a
+      vault row to point at. Linking it now is what keeps deletion whole:
+      capture_sessions.pack_id cascades, and delete-pack purges the frame
+      objects by asking capture_keys_for_pack first. Unlinked, the frames
+      would outlive every path that knows about them.
+    */
+    const captureCode = pending.pack?.capture?.code;
+    if (typeof captureCode === "string" && captureCode) {
+      const { error: linkError } = await supabase
+        .from("capture_sessions")
+        .update({ pack_id: entry.id })
+        .eq("code", captureCode)
+        .is("pack_id", null);
+      if (linkError) {
+        console.error("claim-pack kept the pack but could not link its capture:", linkError.message, entry.id);
+      }
+    }
+
     /* Marked only after the Vault entry exists. The other order loses the
        pack entirely if the insert fails: marked as claimed, nowhere to be. */
     const { error: markError } = await supabase

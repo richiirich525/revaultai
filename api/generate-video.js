@@ -425,14 +425,24 @@ export default async function handler(req, res) {
       if (crewInvite) {
         castRefs = [];
         for (let i = 0; i < packs.length; i++) {
-          const first = packs[i].images.find((u) => typeof u === "string" && u);
-          if (!first) continue;
+          /*
+            Up to three frames per person, the same cap the Vault path uses
+            at the ref lookup below. It is not arbitrary: three packs at
+            three frames is nine, which fits every model's reference budget.
+            Sending one frame was leaving a multi-angle capture unused in
+            exactly the scenes that need identity most \u2014 two faces in one
+            shot is where a single forward-facing reference falls apart.
+          */
+          const usable = packs[i].images.filter((u) => typeof u === "string" && u).slice(0, 3);
+          if (!usable.length) continue;
+          const signed = [];
+          for (const u of usable) signed.push(await signForFal(u));
           castRefs.push({
             id: packIds[i],
             name: packs[i].name,
             kind: "character",
-            url: await signForFal(first),
-            urls: [await signForFal(first)],
+            url: signed[0],
+            urls: signed,
           });
         }
         if (castRefs.length < 2) {

@@ -102,8 +102,32 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Which pack should we delete?" });
     }
 
+    /*
+      A capture's frames are the same face in a second place, and they are
+      not in `images`: the pack keeps the frames it was built from, but a
+      retaken angle leaves an object that only capture_frames knows about.
+      So ask the database, rather than inferring the list from the pack.
+      Read before anything is deleted, because capture_sessions.pack_id
+      cascades and the rows will be gone the moment the pack is.
+    */
+    let captureKeys = [];
+    if (mode === "vault") {
+      const { data: frameUrls, error: captureError } = await supabase
+        .rpc("capture_keys_for_pack", { p_pack: packId });
+      if (captureError) {
+        /* Deleting the pack while its frames are unreadable would leave
+           faces behind with nothing pointing at them, which is the one
+           outcome this route exists to prevent. */
+        console.error("delete-pack could not list the capture frames:", captureError);
+        return res.status(502).json({
+          error: "We could not check that character's capture, so nothing was deleted. Try again.",
+        });
+      }
+      captureKeys = (frameUrls ?? []).map((u) => (typeof u === "string" ? u : u?.capture_keys_for_pack));
+    }
+
     /* ---- the files first ------------------------------------------------ */
-    const keys = keysForPack({ packImages, sets });
+    const keys = keysForPack({ packImages: [...packImages, ...captureKeys], sets });
     const stuck = [];
 
     const ready = process.env.R2_ACCOUNT_ID && process.env.R2_ACCESS_KEY_ID

@@ -2,6 +2,7 @@ import crypto from "crypto";
 import { createClient } from "@supabase/supabase-js";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { protectedTermIn } from "../src/lib/stylePresets.js";
+import { captureIsUsable } from "../src/lib/captureAngles.js";
 
 /*
   build-pack — RevaultAI
@@ -175,14 +176,15 @@ export default async function handler(req, res) {
   );
 
   try {
-    const { image, mediaType, name } = req.body || {};
+    const { image, mediaType, name, sessionCode } = req.body || {};
+    const fromCapture = typeof sessionCode === "string" && !!sessionCode.trim();
 
-    if (typeof image !== "string" || image.length < 100) {
+    if (!fromCapture && (typeof image !== "string" || image.length < 100)) {
       return res.status(400).json({ error: "Send a photo to build a pack from." });
     }
     /* ~8MB of base64 is about a 6MB photo, which is more than a phone needs
        and less than a way to fill the request. */
-    if (image.length > 8_000_000) {
+    if (!fromCapture && image.length > 8_000_000) {
       return res.status(413).json({ error: "That photo is too large. A normal phone photo is fine." });
     }
     const type = ["image/jpeg", "image/png", "image/webp"].includes(mediaType) ? mediaType : "image/jpeg";
@@ -207,16 +209,84 @@ export default async function handler(req, res) {
     }
 
     /* ---- the vision pass, then the gates ------------------------------- */
+    /*
+      A capture has already done this. Every frame was read and gated by
+      capture-frame as it arrived, and the reads were stored, so building
+      from a session is a database read rather than a second pass over the
+      same faces: another eight vision calls would cost money to arrive at
+      answers already on disk, and re-reading could disagree with the gate
+      that already let the frame in.
+    */
     let read;
-    try {
-      read = await readSelfie(image, type);
-    } catch (err) {
-      console.error("build-pack could not read the selfie:", err.message);
-      return res.status(502).json({ error: "We could not read that photo. Try again in a moment." });
-    }
+    let session = null;
+    let frames = [];
 
-    const refusal = gateFailure(read);
-    if (refusal) return res.status(422).json({ error: refusal });
+    if (fromCapture) {
+      const { data: row, error: sessionError } = await supabase
+        .from("capture_sessions")
+        .select("id, code, source, status, rig, operator_id, owner_id, expires_at")
+        .eq("code", sessionCode.trim().toUpperCase())
+        .maybeSingle();
+      if (sessionError) {
+        console.error("build-pack could not read the capture:", sessionError);
+        return res.status(502).json({ error: "Could not read that capture: " + sessionError.message });
+      }
+      if (!row) return res.status(404).json({ error: "That code does not match a capture." });
+      if (row.status !== "open") {
+        return res.status(409).json({ error: "That capture has already been built into a pack." });
+      }
+      if (new Date(row.expires_at) < new Date()) {
+        return res.status(410).json({ error: "That capture has expired. Start a new one." });
+      }
+      /*
+        A session opened by somebody signed in belongs to them. An anonymous
+        session belongs to whoever holds the code, which is the same rule as
+        a pending pack, and it is what lets you start on a laptop with no
+        account and finish on your phone.
+      */
+      if (row.owner_id && row.owner_id !== user?.id) {
+        return res.status(403).json({ error: "That capture belongs to somebody else." });
+      }
+      session = row;
+
+      const { data: shotFrames, error: frameError } = await supabase
+        .from("capture_frames")
+        .select("pose, image_url, read")
+        .eq("session_id", row.id)
+        .order("created_at", { ascending: true });
+      if (frameError) {
+        console.error("build-pack could not read the frames:", frameError);
+        return res.status(502).json({ error: "Could not read those frames: " + frameError.message });
+      }
+      frames = shotFrames ?? [];
+
+      const front = frames.find((f) => f.pose === "front");
+      if (!front) {
+        return res.status(422).json({ error: "We still need one looking straight at the camera." });
+      }
+      /* The front frame is the canonical read. Build and wardrobe can come
+         from a full-body frame when there is one, because that is the frame
+         that actually shows them. */
+      const body = frames.find((f) => f.pose === "full-body");
+      read = {
+        ...front.read,
+        build: body?.read?.build || front.read?.build,
+        wardrobe: body?.read?.wardrobe || front.read?.wardrobe,
+      };
+
+      const stillRefused = gateFailure(read);
+      if (stillRefused) return res.status(422).json({ error: stillRefused });
+    } else {
+      try {
+        read = await readSelfie(image, type);
+      } catch (err) {
+        console.error("build-pack could not read the selfie:", err.message);
+        return res.status(502).json({ error: "We could not read that photo. Try again in a moment." });
+      }
+
+      const refusal = gateFailure(read);
+      if (refusal) return res.status(422).json({ error: refusal });
+    }
 
     if (!cut(read.identity, 10)) {
       return res.status(422).json({ error: "We could not see enough of your face to build a pack. Try better light, looking at the camera." });
@@ -231,12 +301,21 @@ export default async function handler(req, res) {
     /* Stored only now, after the gates have passed. A refused photo is never
        written anywhere — a minor's face should not sit in a bucket because
        the refusal happened a line too late. */
-    let storedUrl;
-    try {
-      storedUrl = await persistSelfie(image, type);
-    } catch (err) {
-      console.error("build-pack could not store the selfie:", err.message);
-      return res.status(502).json({ error: "We read your photo but could not save it. Try again in a moment." });
+    let storedImages;
+    if (fromCapture) {
+      /* Already stored, by capture-frame, as each frame was gated. Front
+         first: every model treats the first reference as the primary one. */
+      storedImages = [
+        ...frames.filter((f) => f.pose === "front"),
+        ...frames.filter((f) => f.pose !== "front"),
+      ].map((f) => f.image_url);
+    } else {
+      try {
+        storedImages = [await persistSelfie(image, type)];
+      } catch (err) {
+        console.error("build-pack could not store the selfie:", err.message);
+        return res.status(502).json({ error: "We read your photo but could not save it. Try again in a moment." });
+      }
     }
 
     const pack = {
@@ -246,8 +325,23 @@ export default async function handler(req, res) {
       build: cut(read.build, 300),
       distinguishing: cut(read.distinguishing, 300),
       wardrobe: cut(read.wardrobe, 300),
-      images: [storedUrl],
-      capture: { source: "phone", plateSet: null, capturedAt: new Date().toISOString() },
+      images: storedImages,
+      capture: fromCapture
+        ? {
+            source: session.source,
+            rig: session.rig ?? null,
+            operator: session.operator_id ?? null,
+            /* The angles actually shot, named. A frame count alone cannot
+               tell a six-angle walkaround from six forward-facing frames,
+               and only the first of those is worth anything downstream. */
+            angles: frames.map((f) => f.pose),
+            frames: frames.length,
+            usable: captureIsUsable(frames.map((f) => f.pose)),
+            code: session.code,
+            plateSet: null,
+            capturedAt: new Date().toISOString(),
+          }
+        : { source: "phone", plateSet: null, capturedAt: new Date().toISOString() },
       consent: { self: true, duetable: false, grantedAt: new Date().toISOString() },
       locked: LOCKED_FIELDS,
     };
@@ -274,6 +368,24 @@ export default async function handler(req, res) {
         console.error("build-pack could not save the pack:", error);
         return res.status(502).json({ error: "We built your pack but could not save it: " + error.message });
       }
+      /*
+        Tie the capture to the pack it became. This is what makes deletion
+        whole: capture_sessions.pack_id cascades, and delete-pack purges the
+        frame objects by reading capture_keys_for_pack first. A session left
+        unlinked is a set of faces nothing would ever come back for.
+      */
+      if (session) {
+        const { error: linkError } = await supabase
+          .from("capture_sessions")
+          .update({ pack_id: saved.id, status: "built" })
+          .eq("id", session.id);
+        if (linkError) {
+          /* The pack exists and is usable, so this is not a failure to
+             report to the person — but it is a set of orphaned frames, and
+             that has to be visible somewhere. */
+          console.error("build-pack saved a pack but could not link its capture:", linkError, saved.id);
+        }
+      }
       return res.status(200).json({ packId: saved.id, pack, kept: true });
     }
 
@@ -285,6 +397,22 @@ export default async function handler(req, res) {
     if (error) {
       console.error("build-pack could not hold the pack:", error);
       return res.status(502).json({ error: "We built your pack but could not hold on to it: " + error.message });
+    }
+
+    /*
+      An anonymous capture has no vault row to point at yet, so the session
+      stays open-ended and claim-pack links it when the pack is claimed. The
+      code travels inside the pack for exactly that reason, and for no other:
+      it is the holder's own code, and pending_packs is not publicly readable.
+    */
+    if (session) {
+      const { error: markError } = await supabase
+        .from("capture_sessions")
+        .update({ status: "built" })
+        .eq("id", session.id);
+      if (markError) {
+        console.error("build-pack could not mark the capture built:", markError);
+      }
     }
 
     /* The token is the only way back to this pack, and it is returned once.
