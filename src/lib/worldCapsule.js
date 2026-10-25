@@ -67,7 +67,7 @@ function imageList(images, max = 4) {
  * @param observed    the observed_states row for the take, or null
  * @param rehearsal   the rehearsals row the take was blocked in, or null
  */
-export function capsuleFrom({ generation = null, spec = null, vault = [], observed = null, rehearsal = null } = {}) {
+export function capsuleFrom({ generation = null, spec = null, vault = [], observed = null, rehearsal = null, extracted = null } = {}) {
   const gen = generation ?? {};
   const rows = Array.isArray(vault) ? vault : [];
   const of = (kind) => rows.filter((r) => r?.kind === kind);
@@ -93,6 +93,7 @@ export function capsuleFrom({ generation = null, spec = null, vault = [], observ
       voice: c.voice_preset || c.voice_sample_url
         ? { preset: cut(c.voice_preset, 60) || null, fromVault: true }
         : null,
+      source: "vault",
     });
     if (cast.length >= 8) break;
   }
@@ -130,6 +131,43 @@ export function capsuleFrom({ generation = null, spec = null, vault = [], observ
       distinguishing: "",
       images: [],
       voice: null,
+      source: "spec",
+    });
+    if (cast.length >= 8) break;
+  }
+
+  /*
+    Last resort: what the prompt itself says.
+
+    Measured against a real corpus of 71 finished takes, the two sources above
+    found a usable cast in none of them — 52 takes referenced nothing at all
+    and 19 named people the spec never described. But every take has a prompt,
+    and a prompt like "Nell waits at the sink in a gray cardigan" carries a
+    cast, a set and a state in prose. A model reads it once, server-side, and
+    the result lands here.
+
+    Two rules keep this honest. Extraction records only what the prompt
+    STATES — a prompt that names Nell and says nothing about her yields a name
+    and an empty description, which still fails the floor, correctly. And
+    anyone sourced this way is marked, because an identity inferred from a
+    sentence is not the locked identity a Vault entry gives and the product
+    must never present the two as the same thing.
+  */
+  for (const e of Array.isArray(extracted?.characters) ? extracted.characters : []) {
+    const name = cut(e?.name, 80);
+    if (!name) continue;
+    const key = name.toLowerCase();
+    if (seen.has(key) || cast.some((c) => c.name.toLowerCase() === key)) continue;
+    seen.add(key);
+    cast.push({
+      vaultId: null,
+      name,
+      description: cut(e?.description, 700),
+      wardrobe: cut(e?.wardrobe, 400),
+      distinguishing: "",
+      images: [],
+      voice: null,
+      source: "prompt",
     });
     if (cast.length >= 8) break;
   }
@@ -140,10 +178,14 @@ export function capsuleFrom({ generation = null, spec = null, vault = [], observ
      stage set it was blocked on, which is enough for the 3D stage to load. */
   const vaultSet = of("location")[0] ?? null;
   const specLocations = Array.isArray(spec?.subjects?.locations) ? spec.subjects.locations : [];
-  const setName = cut(vaultSet?.name, 120) || cut(specLocations[0], 120) || cut(rehearsal?.set_id, 120);
+  const exLocation = Array.isArray(extracted?.locations) ? extracted.locations[0] : null;
+  const setName = cut(vaultSet?.name, 120) || cut(specLocations[0], 120)
+    || cut(rehearsal?.set_id, 120) || cut(exLocation?.name, 120);
   const set = {
     name: setName,
-    description: cut(vaultSet?.description, 700) || cut(lockFor.get(setName.toLowerCase()), 700),
+    description: cut(vaultSet?.description, 700)
+      || cut(lockFor.get(setName.toLowerCase()), 700)
+      || cut(exLocation?.description, 700),
     images: imageList(vaultSet?.images, 2),
     /* The rehearsal's own set, so the stage can be stood up without a model. */
     stageSetId: cut(rehearsal?.data?.setId ?? rehearsal?.set_id, 60) || null,
@@ -165,6 +207,13 @@ export function capsuleFrom({ generation = null, spec = null, vault = [], observ
     if (props.length >= 10) break;
   }
 
+  for (const e of Array.isArray(extracted?.props) ? extracted.props : []) {
+    const name = cut(e?.name, 80);
+    if (!name || props.some((x) => x.name.toLowerCase() === name.toLowerCase())) continue;
+    props.push({ vaultId: null, name, description: cut(e?.description, 300) });
+    if (props.length >= 10) break;
+  }
+
   const vaultLook = of("look")[0] ?? null;
   const look = {
     look: cut(spec?.style?.look, 300) || cut(vaultLook?.description, 300),
@@ -179,7 +228,7 @@ export function capsuleFrom({ generation = null, spec = null, vault = [], observ
      door closes and footage that shows it open describes two different
      worlds, and the viewer is about to walk into the second one. */
   const observedText = cut(observed?.observed_end, 900);
-  const plannedText = cut(spec?.action?.endState, 900);
+  const plannedText = cut(spec?.action?.endState, 900) || cut(extracted?.endState, 900);
   const carried = (Array.isArray(observed?.differences) ? observed.differences : [])
     .filter((d) => d?.consequential !== false && d?.confidence !== "low")
     .slice(0, 6)
@@ -271,6 +320,9 @@ export function capsuleGaps(capsule) {
   if (!c.state?.text) missing.push("no world state — the take has neither an observed nor a planned ending");
   if (!c.set?.name && !c.set?.stageSetId) missing.push("nowhere to be — no location and no rehearsal set");
 
+  if (named.length && named.every((p) => p.source === "prompt")) {
+    thin.push("every identity was read from the prompt, not locked in the Vault");
+  }
   if (!c.entry?.imageUrl) thin.push("no establishing frame, so arrival has no picture");
   if (!(c.cast ?? []).some((p) => p.voice)) thin.push("nobody has a voice yet");
   if (!c.set?.stageSetId) thin.push("no blocked set, so the 3D stage cannot be stood up");

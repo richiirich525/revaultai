@@ -102,7 +102,7 @@ export default async function handler(req, res) {
     const refIds = [...new Set(rows.flatMap((r) => (Array.isArray(r.vault_ref_ids) ? r.vault_ref_ids : [])).filter((v) => typeof v === "string"))];
     const takeIds = rows.map((r) => r.id);
 
-    const [specsRes, vaultRes, observedRes] = await Promise.all([
+    const [specsRes, vaultRes, observedRes, extractedRes] = await Promise.all([
       specIds.length
         ? mine(supabase.from("film_specs").select("id, spec")).in("id", specIds)
         : Promise.resolve({ data: [] }),
@@ -113,6 +113,8 @@ export default async function handler(req, res) {
         : Promise.resolve({ data: [] }),
       mine(supabase.from("observed_states").select("generation_id, observed_end, differences"))
         .in("generation_id", takeIds),
+      mine(supabase.from("prompt_extractions").select("generation_id, extracted"))
+        .in("generation_id", takeIds),
     ]);
 
     /*
@@ -121,6 +123,10 @@ export default async function handler(req, res) {
       than it is and report a gate number that is simply wrong, which is the
       most expensive kind of answer to get back.
     */
+    /* An extraction read that fails is not fatal: the table may simply not
+       exist yet on a database where the migration has not been run, and the
+       gate should still report the number the other sources give. */
+    if (extractedRes.error) console.error("world-gate: no prompt extractions read:", extractedRes.error.message);
     const readError = specsRes.error ?? vaultRes.error ?? observedRes.error;
     if (readError) {
       console.error("world-gate could not read what the takes refer to:", readError);
@@ -130,6 +136,7 @@ export default async function handler(req, res) {
     const specById = new Map((specsRes.data ?? []).map((s) => [s.id, s.spec]));
     const vaultById = new Map((vaultRes.data ?? []).map((v) => [v.id, v]));
     const observedByTake = new Map((observedRes.data ?? []).map((o) => [o.generation_id, o]));
+    const extractedByTake = new Map((extractedRes.data ?? []).map((e) => [e.generation_id, e.extracted]));
 
     let usable = 0;
     const reasons = new Map();
@@ -143,6 +150,7 @@ export default async function handler(req, res) {
         spec: specById.get(take.film_spec_id) ?? null,
         vault: refs.map((id) => vaultById.get(id)).filter(Boolean),
         observed: observedByTake.get(take.id) ?? null,
+        extracted: extractedByTake.get(take.id) ?? null,
         /* No rehearsal: nothing links a take to the scene it was blocked in,
            so this measurement is the floor rather than the ceiling. Takes
            locked with a rehearsal named will do better than this number. */
@@ -169,6 +177,9 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       scope: everyone ? "all" : "mine",
+      /* How much of the corpus has had its prompt read, so a low number is
+         not mistaken for a verdict on extraction that never ran. */
+      promptsRead: extractedByTake.size,
       accounts: everyone ? new Set(rows.map((r) => r.user_id)).size : 1,
       takes: rows.length,
       usable,

@@ -35,6 +35,8 @@ export default function AdminPage({ creations, setCreations, notify }) {
   const [sending, setSending] = useState(null);
   const [gate, setGate] = useState(null);
   const [gateBusy, setGateBusy] = useState(null);
+  const [extract, setExtract] = useState(null);
+  const [extractBusy, setExtractBusy] = useState(false);
 
   /*
     What is owed, and why anything owed is not yet payable. This only ever
@@ -116,6 +118,31 @@ export default function AdminPage({ creations, setCreations, notify }) {
       setGate({ error: err.message });
     }
     setGateBusy(null);
+  }
+
+  /*
+    Reads the prompts of takes that have not been read yet, in batches.
+
+    This is a backfill, so it is deliberately one batch per press rather than
+    a loop: each press reports what it read and how many remain, which means
+    a rate limit or a bad batch stops at 25 takes instead of silently halfway
+    through 71.
+  */
+  async function readPrompts() {
+    setExtractBusy(true);
+    try {
+      const token = await getSessionToken();
+      const res = await fetch("/api/extract-prompt", {
+        method: "POST",
+        headers: { "content-type": "application/json", Authorization: "Bearer " + token },
+        body: JSON.stringify({ limit: 25, scope: "all" }),
+      });
+      const body = await res.json().catch(() => ({}));
+      setExtract(res.ok ? body : { error: body.error || "Extraction could not run." });
+    } catch (err) {
+      setExtract({ error: err.message });
+    }
+    setExtractBusy(false);
   }
 
   async function runCheck(route) {
@@ -441,6 +468,37 @@ export default function AdminPage({ creations, setCreations, notify }) {
             </div>
           </div>
 
+          <div style={{ borderTop: "1px solid var(--border)", padding: "20px 0", display: "flex", justifyContent: "space-between", gap: 20, flexWrap: "wrap", alignItems: "flex-start" }}>
+            <div style={{ flex: 1, minWidth: 260 }}>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", lineHeight: 1.7 }}>
+                Read the prompts. Most takes reference no Vault entry and carry no spec, but every one has a
+                prompt that names who is in it and where. Reads 25 unread takes a press, records only what the
+                prompt actually says, and never invents an appearance.
+              </div>
+              {extract && (
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, lineHeight: 1.8, marginTop: 10, color: extract.error ? "#E5B769" : "var(--muted)" }}>
+                  {extract.error ? extract.error : extract.read === 0 ? extract.note : (
+                    <>
+                      <div style={{ color: "#4ADE80" }}>Read {extract.read} prompts. {extract.remaining} left.</div>
+                      <div>&nbsp;&nbsp;{extract.withDescribedCast} gave a described cast</div>
+                      <div>&nbsp;&nbsp;{extract.namedButNotDescribed} named somebody without describing them</div>
+                      {extract.failed > 0 && <div>&nbsp;&nbsp;{extract.failed} failed</div>}
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+            <button
+              className="btn-ghost"
+              type="button"
+              onClick={readPrompts}
+              disabled={extractBusy}
+              style={{ opacity: extractBusy ? 0.6 : 1, whiteSpace: "nowrap" }}
+            >
+              {extractBusy ? "Reading..." : "Read prompts"}
+            </button>
+          </div>
+
           {gate && (
             <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, lineHeight: 1.85, paddingBottom: 24, color: "var(--muted)" }}>
               {gate.error ? (
@@ -454,6 +512,12 @@ export default function AdminPage({ creations, setCreations, notify }) {
                     {" "}{gate.passesGate ? "That clears the gate." : "That is below the seven in ten the plan asks for."}
                     {gate.scope === "all" && gate.accounts > 1 ? ` Across ${gate.accounts} accounts.` : ""}
                   </div>
+                  {typeof gate.promptsRead === "number" && (
+                    <div style={{ marginBottom: 12 }}>
+                      {gate.promptsRead} of {gate.takes} prompts have been read.
+                      {gate.promptsRead < gate.takes ? " Read the rest before judging this number." : ""}
+                    </div>
+                  )}
 
                   {gate.whyNot?.length > 0 && (
                     <div style={{ marginBottom: 12 }}>

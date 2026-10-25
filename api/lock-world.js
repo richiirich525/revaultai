@@ -79,7 +79,7 @@ export default async function handler(req, res) {
     */
     const refIds = Array.isArray(gen.vault_ref_ids) ? gen.vault_ref_ids.filter((v) => typeof v === "string") : [];
 
-    const [specRes, vaultRes, observedRes, rehearsalRes] = await Promise.all([
+    const [specRes, vaultRes, observedRes, rehearsalRes, extractedRes] = await Promise.all([
       gen.film_spec_id
         ? supabase.from("film_specs").select("spec").eq("id", gen.film_spec_id).eq("user_id", user.id).maybeSingle()
         : Promise.resolve({ data: null }),
@@ -94,11 +94,16 @@ export default async function handler(req, res) {
       typeof rehearsalId === "string" && rehearsalId
         ? supabase.from("rehearsals").select("id, title, data").eq("id", rehearsalId).eq("user_id", user.id).maybeSingle()
         : Promise.resolve({ data: null }),
+      supabase.from("prompt_extractions").select("extracted")
+        .eq("generation_id", gen.id).eq("user_id", user.id).maybeSingle(),
     ]);
 
     /* A read that failed here would not fail the lock — it would lock a
        thinner world than the creator actually has, or refuse one that was
        fine. Either is worse than saying so. */
+    /* Not fatal, for the same reason as the gate: a world locked without it
+       is thinner, not broken. */
+    if (extractedRes.error) console.error("lock-world: no prompt extraction read:", extractedRes.error.message);
     const readError = specRes.error ?? vaultRes.error ?? observedRes.error ?? rehearsalRes.error;
     if (readError) {
       console.error("lock-world could not read what the take refers to:", readError);
@@ -117,6 +122,7 @@ export default async function handler(req, res) {
       vault,
       observed: observedRes.data ?? null,
       rehearsal: rehearsalRes.data ?? null,
+      extracted: extractedRes.data?.extracted ?? null,
     });
     const gaps = capsuleGaps(capsule);
 

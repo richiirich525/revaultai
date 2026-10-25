@@ -229,5 +229,78 @@ const weird = capsuleFrom({
 });
 ok("only a well-formed lock is used", weird.cast[0].description === "the right one", weird.cast[0].description);
 
+/*
+  A take with nothing but a prompt.
+
+  The last resort, and the one the corpus forced: 52 of 71 finished takes
+  referenced no Vault entry and had no spec naming anyone. Extraction reads
+  the prompt once, server-side, and lands here.
+*/
+const fromPrompt = capsuleFrom({
+  generation: { id: "g", prompt: "Nell waits at the sink in a gray cardigan, the door open behind her" },
+  extracted: {
+    characters: [{ name: "Nell", description: "A woman in a gray cardigan", wardrobe: "Gray cardigan" }],
+    locations: [{ name: "The kitchen", description: "A sink, a door standing open" }],
+    props: [{ name: "Cardigan", description: "Gray" }],
+    endState: "She is at the sink with the door open behind her.",
+  },
+});
+const fp = capsuleGaps(fromPrompt);
+ok("a prompt-only take is usable", fp.usable === true, fp.missing);
+ok("the cast came from the prompt", fromPrompt.cast[0].name === "Nell", fromPrompt.cast);
+ok("and is marked as inferred, not locked", fromPrompt.cast[0].source === "prompt", fromPrompt.cast[0]);
+ok("the set came from the prompt", fromPrompt.set.name === "The kitchen", fromPrompt.set.name);
+ok("and its description with it", /sink, a door/.test(fromPrompt.set.description), fromPrompt.set.description);
+ok("the state came from the prompt", /door open behind her/.test(fromPrompt.state.text), fromPrompt.state.text);
+ok("props came from the prompt", fromPrompt.props[0]?.name === "Cardigan", fromPrompt.props);
+ok("and the weakness is reported",
+  fp.thin.some((t) => /read from the prompt, not locked/.test(t)), fp.thin);
+
+/* A prompt that names somebody and says nothing about them must NOT pass.
+   Inventing an appearance would be a capsule that looks locked and is not. */
+const bareName = capsuleGaps(capsuleFrom({
+  generation: { id: "g", prompt: "Nell waits" },
+  extracted: { characters: [{ name: "Nell", description: "" }], locations: [{ name: "A room" }], endState: "She waits." },
+}));
+ok("a named but undescribed extraction still fails the floor", bareName.usable === false, bareName.missing);
+ok("and says why", bareName.missing.some((m) => /named but not described/.test(m)), bareName.missing);
+
+/* The richer sources win, and nobody is duplicated across them. */
+const layered = capsuleFrom({
+  generation: { id: "g", prompt: "p" },
+  spec: { subjects: { characters: ["Theo"] }, action: { endState: "planned ending" },
+    continuityLocks: ["Theo: the spec's description"] },
+  vault: [{ id: "v1", kind: "character", name: "Nell", description: "The Vault's description.", images: [`${R2}/n.png`] }],
+  extracted: {
+    characters: [{ name: "Nell", description: "the prompt's guess" }, { name: "Theo", description: "another guess" },
+      { name: "Iris", description: "somebody only the prompt saw" }],
+    endState: "the prompt's ending",
+  },
+});
+ok("the Vault wins over the prompt", layered.cast.find((c) => c.name === "Nell").source === "vault");
+ok("the spec wins over the prompt", layered.cast.find((c) => c.name === "Theo").source === "spec");
+ok("the prompt still adds who the others missed",
+  layered.cast.find((c) => c.name === "Iris")?.source === "prompt", layered.cast.map((c) => c.name + ":" + c.source));
+ok("nobody is duplicated across three sources", layered.cast.length === 3, layered.cast.map((c) => c.name));
+ok("a spec ending beats a prompt ending", layered.state.text === "planned ending", layered.state.text);
+ok("a mixed cast is not reported as all-inferred",
+  !capsuleGaps(layered).thin.some((t) => /read from the prompt/.test(t)), capsuleGaps(layered).thin);
+
+/* Extraction is untrusted model output: bound it like everything else. */
+const hugeEx = capsuleFrom({
+  generation: { id: "g", prompt: "p" },
+  extracted: {
+    characters: Array(30).fill(0).map((_, i) => ({ name: "N" + i, description: "d".repeat(3000) })),
+    props: Array(30).fill(0).map((_, i) => ({ name: "P" + i, description: "x".repeat(900) })),
+    locations: [{ name: "L".repeat(400), description: "y".repeat(2000) }],
+    endState: "z".repeat(4000),
+  },
+});
+ok("extracted cast is capped", hugeEx.cast.length === 8, hugeEx.cast.length);
+ok("extracted props are capped", hugeEx.props.length === 10, hugeEx.props.length);
+ok("extracted descriptions are truncated", hugeEx.cast[0].description.length === 700);
+ok("an extracted set name is truncated", hugeEx.set.name.length === 120, hugeEx.set.name.length);
+ok("an extracted ending is truncated", hugeEx.state.text.length === 900);
+
 if (bad) { console.error(`\ncheck-capsule FAILED: ${bad} problem${bad === 1 ? "" : "s"}.`); process.exit(1); }
 console.log("check-capsule: extraction holds — footage over plan, images unsigned, voices by reference, thin takes still walkable.");
