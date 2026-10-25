@@ -101,7 +101,9 @@ function readFile(file) {
 }
 
 export default function CastPage({ user, setPage, notify, onSignInClick }) {
-  const [step, setStep] = useState("selfie");
+  const [step, setStep] = useState(
+    () => (new URLSearchParams(window.location.search).get("crew") ? "invited" : "selfie"),
+  );
   const [busy, setBusy] = useState(null);
   const [error, setError] = useState(null);
 
@@ -113,6 +115,10 @@ export default function CastPage({ user, setPage, notify, onSignInClick }) {
 
   const [choice, setChoice] = useState(null);
   const [genre, setGenre] = useState(null);
+  const [seats, setSeats] = useState(1);
+  const [crewId, setCrewId] = useState(() => new URLSearchParams(window.location.search).get("crew"));
+  const [crew, setCrew] = useState(null);
+  const [joined, setJoined] = useState(false);
   const [stills, setStills] = useState([]);
   const [over, setOver] = useState(false);
   const fileRef = useRef(null);
@@ -152,6 +158,35 @@ export default function CastPage({ user, setPage, notify, onSignInClick }) {
       }
     })();
   }, [user, packToken, packId, notify]);
+
+  /*
+    Somebody opened an invite link. The whole first screen changes: this
+    person was asked by name, which is the most convincing thing that will
+    ever happen to them in this product, so it leads rather than sitting
+    under a generic hero.
+
+    Read straight from the address bar because the router here carries a page
+    and nothing else, and threading one query parameter through it would be a
+    change to every other page for the benefit of this one.
+  */
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("crew");
+    if (!id) return;
+    (async () => {
+      try {
+        const res = await fetch("/api/crew-invite", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ inviteId: id }),
+        });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) { setError(body.error || "That invite could not be opened."); return; }
+        setCrew(body);
+      } catch {
+        setError("That invite could not be opened.");
+      }
+    })();
+  }, []);
 
   async function token() {
     const { data } = await supabase.auth.getSession();
@@ -243,7 +278,7 @@ export default function CastPage({ user, setPage, notify, onSignInClick }) {
         headers: { "content-type": "application/json", Authorization: "Bearer " + t },
         body: JSON.stringify({
           model: "seedance-2.5",
-          duration: 8,
+          duration: 5,
           aspectRatio: "16:9",
           /* The prompt is compiled on the server from these ids. Nothing
              about the identity is sent from here. */
@@ -263,6 +298,95 @@ export default function CastPage({ user, setPage, notify, onSignInClick }) {
     setBusy(null);
   }
 
+  async function takeSeat(pid, ptok, displayName) {
+    setBusy("join");
+    try {
+      const t = await token();
+      const res = await fetch("/api/crew-join", {
+        method: "POST",
+        headers: { "content-type": "application/json", ...(t ? { Authorization: "Bearer " + t } : {}) },
+        body: JSON.stringify({ inviteId: crewId, packId: pid, packToken: ptok, displayName }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) setError(body.error || "We could not add you to that scene.");
+      else {
+        setJoined(true);
+        setCrew((c) => ({ ...(c ?? {}), taken: body.taken, seats: body.seats }));
+        setStep("invited");
+      }
+    } catch (err) {
+      setError(err.message || "We could not add you to that scene.");
+    }
+    setBusy(null);
+  }
+
+  /* The host opens a scene and gets a link. The beat is chosen first because
+     what happens is the interesting part; who is in it follows. */
+  async function askSomeone(beatId) {
+    if (!user || !packId) { onSignInClick?.(); return; }
+    setError(null);
+    setBusy("invite");
+    try {
+      const t = await token();
+      const res = await fetch("/api/crew-invite", {
+        method: "POST",
+        headers: { "content-type": "application/json", Authorization: "Bearer " + t },
+        body: JSON.stringify({ packId, styleId: genre, beatId, seats }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) setError(body.error || "We could not open that scene.");
+      else {
+        setCrewId(body.inviteId);
+        setCrew({
+          ...body, host: true, status: "open",
+          style: GENRES.find((g) => g.id === genre) ?? null,
+          beat: BEATS.find((b) => b.id === beatId) ?? null,
+        });
+        setStep("hosting");
+      }
+    } catch (err) {
+      setError(err.message || "We could not open that scene.");
+    }
+    setBusy(null);
+  }
+
+  async function refreshCrew() {
+    if (!crewId) return;
+    setBusy("check");
+    try {
+      const res = await fetch("/api/crew-invite", {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ inviteId: crewId }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (res.ok) setCrew((c) => ({ ...(c ?? {}), ...body, host: true }));
+    } catch { /* a failed check is a check that can be pressed again */ }
+    setBusy(null);
+  }
+
+  async function shootCrew() {
+    setError(null);
+    setBusy("shoot");
+    try {
+      const t = await token();
+      const res = await fetch("/api/generate-video", {
+        method: "POST",
+        headers: { "content-type": "application/json", Authorization: "Bearer " + t },
+        body: JSON.stringify({
+          model: "seedance-2.5", duration: 5, aspectRatio: "16:9", prompt: "cast",
+          cast: { crewInviteId: crewId },
+        }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) setError(body.error || "We could not shoot that scene.");
+      else { notify?.("Shooting \u2014 it appears on your Takes page when it is done."); setPage?.("takes"); }
+    } catch (err) {
+      setError(err.message || "We could not shoot that scene.");
+    }
+    setBusy(null);
+  }
+
+  const inviteLink = crewId ? `${window.location.origin}/cast?crew=${crewId}` : "";
   const waiting = busy === "draw" ? (user ? POSES.length : FREE_SET) : 0;
 
   return (
@@ -307,8 +431,9 @@ export default function CastPage({ user, setPage, notify, onSignInClick }) {
 
       {step === "pack" && pack && (
         <>
-          <h1 className="cast-h">This is you.</h1>
+          <h1 className="cast-h">{crewId ? "Say who you are." : "This is you."}</h1>
           <p className="cast-sub">
+            {crewId ? "Your name goes in the scene, so it has to be yours. " : ""}
             Everything below is locked from here on. It is what keeps you looking like
             yourself in every scene, so it is not editable — only the name is yours to set.
           </p>
@@ -332,8 +457,13 @@ export default function CastPage({ user, setPage, notify, onSignInClick }) {
             </div>
           </div>
           <div className="cast-row">
-            <button className="gen-button" type="button" onClick={() => setStep("look")}>
-              That is me
+            <button
+              className="gen-button"
+              type="button"
+              disabled={busy === "join" || (crewId ? !name.trim() : false)}
+              onClick={() => (crewId ? takeSeat(packId, packToken, name.trim()) : setStep("look"))}
+            >
+              {crewId ? (busy === "join" ? "Taking your seat\u2026" : "That is me \u2014 I am in") : "That is me"}
             </button>
             <button className="btn-ghost" type="button" onClick={() => { setPack(null); setPreview(null); setStep("selfie"); }}>
               Use a different photo
@@ -374,25 +504,164 @@ export default function CastPage({ user, setPage, notify, onSignInClick }) {
 
           {genre && (
             <>
+              <div className="cast-label">Who is in it</div>
+              <div className="cast-grid">
+                {[
+                  { n: 1, l: "Just me", t: "Shoots as soon as you pick what happens." },
+                  { n: 2, l: "Me and one other", t: "You get a link to send. They add their own photo." },
+                  { n: 3, l: "Me and two others", t: "Same, with room for one more." },
+                ].map((o) => (
+                  <button key={o.n} className="cast-opt" data-on={seats === o.n ? "1" : "0"}
+                    type="button" onClick={() => setSeats(o.n)}>
+                    <div className="cast-opt-l">{o.l}</div>
+                    <div className="cast-opt-n">{o.t}</div>
+                  </button>
+                ))}
+              </div>
+
               <div className="cast-label">And what happens</div>
               <div className="cast-grid">
                 {BEATS.map((b) => (
                   <button key={b.id} className="cast-opt" type="button"
-                    disabled={busy === "shoot"} onClick={() => shoot(b.id)}>
+                    disabled={busy === "shoot" || busy === "invite"}
+                    onClick={() => (seats > 1 ? askSomeone(b.id) : shoot(b.id))}>
                     <div className="cast-opt-l">{b.label}</div>
                     <div className="cast-opt-n">{b.note}</div>
                   </button>
                 ))}
               </div>
               <div style={{ ...mono, fontSize: 11, color: "var(--muted)", lineHeight: 1.7, marginTop: 12 }}>
-                {busy === "shoot"
+                {busy === "shoot" || busy === "invite"
                   ? "Starting\u2026"
-                  : user
-                    ? "Eight seconds, and it costs credits. It appears on your Takes page when it is done."
-                    : "Scenes need an account \u2014 the drawings do not."}
+                  : !user
+                    ? "Scenes need an account \u2014 the drawings do not."
+                    : seats > 1
+                      ? "You get a link to send. Nothing is shot, and nothing is charged, until everybody is in."
+                      : "Five seconds, and it costs credits. It appears on your Takes page when it is done."}
               </div>
             </>
           )}
+        </>
+      )}
+
+      {/*
+        Somebody arrived on a link. They were asked by name, by a person, into
+        a specific scene, and all three of those facts go above the fold: they
+        are the reason this person will put their face in.
+      */}
+      {step === "invited" && !crew && !error && (
+        <p className="cast-sub" style={{ marginTop: 40 }}>Opening that invite\u2026</p>
+      )}
+
+      {step === "invited" && crew && !crew.host && (
+        <>
+          <h1 className="cast-h">
+            {joined ? "You are in." : `${crew.hostName || "Somebody"} wants you in a scene.`}
+          </h1>
+          <p className="cast-sub">
+            {joined
+              ? `${crew.hostName || "They"} shoots it once everybody is in. It lands on their Takes page, and you will be in it.`
+              : "One photo of yourself and you are in the scene with them. No account needed."}
+          </p>
+          <div className="cast-card" style={{ display: "block" }}>
+            <div className="cast-field">
+              {crew.style?.label && <div><b>The look</b> {crew.style.label}</div>}
+              {crew.beat?.label && <div><b>What happens</b> {crew.beat.label}</div>}
+              <div>
+                <b>Seats</b>{" "}
+                {crew.seats - (crew.taken ?? 0) > 0
+                  ? `${crew.seats - (crew.taken ?? 0)} of ${crew.seats} still open`
+                  : "full"}
+              </div>
+            </div>
+          </div>
+
+          {!joined && crew.status === "open" && (crew.seats - (crew.taken ?? 0)) > 0 && (
+            <>
+              <div
+                className="cast-drop"
+                data-over={over ? "1" : "0"}
+                role="button"
+                tabIndex={0}
+                onClick={() => fileRef.current?.click()}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileRef.current?.click(); } }}
+                onDragOver={(e) => { e.preventDefault(); setOver(true); }}
+                onDragLeave={() => setOver(false)}
+                onDrop={(e) => { e.preventDefault(); setOver(false); onFile(e.dataTransfer.files?.[0]); }}
+              >
+                <div style={{ ...mono, fontSize: 14, color: "var(--text)" }}>
+                  {busy === "pack" ? "Reading your photo\u2026" : busy === "join" ? "Taking your seat\u2026" : "Take or choose a photo"}
+                </div>
+                <div style={{ ...mono, fontSize: 11, color: "var(--muted)", marginTop: 8, lineHeight: 1.7 }}>
+                  Looking at the camera, just you in frame.
+                </div>
+              </div>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                capture="user"
+                style={{ display: "none" }}
+                onChange={(e) => onFile(e.target.files?.[0])}
+              />
+            </>
+          )}
+
+          {!joined && crew.status !== "open" && (
+            <p className="cast-sub">That scene has already been shot.</p>
+          )}
+          {!joined && crew.status === "open" && (crew.seats - (crew.taken ?? 0)) <= 0 && (
+            <p className="cast-sub">Every seat in that scene is taken.</p>
+          )}
+
+          {joined && (
+            <div className="cast-row">
+              <button className="gen-button" type="button" onClick={() => { setCrewId(null); setCrew(null); setJoined(false); setStep("look"); }}>
+                Make one of your own
+              </button>
+            </div>
+          )}
+        </>
+      )}
+
+      {/*
+        The host's side is a waiting room, and the only honest thing to put in
+        it is the link and a count. Checking is a button rather than a poll:
+        a poll would run for however long this tab stays open, and the person
+        is going to be in a text message, not on this page.
+      */}
+      {step === "hosting" && crew && (
+        <>
+          <h1 className="cast-h">Send this to them.</h1>
+          <p className="cast-sub">
+            Whoever opens it adds their own photo and lands in the scene with you.
+            Nothing is shot, and nothing is charged, until everybody is in.
+          </p>
+          <div className="cast-card" style={{ display: "block" }}>
+            <input className="cast-name" readOnly value={inviteLink} aria-label="Invite link"
+              onFocus={(e) => e.target.select()} />
+            <div className="cast-field" style={{ marginTop: 12 }}>
+              <div><b>In it so far</b> {(crew.taken ?? 1)} of {crew.seats}</div>
+              {crew.beat?.label && <div><b>What happens</b> {crew.beat.label}</div>}
+            </div>
+          </div>
+          <div className="cast-row">
+            <button className="gen-button" type="button"
+              onClick={() => { navigator.clipboard?.writeText(inviteLink); notify?.("Link copied."); }}>
+              Copy the link
+            </button>
+            <button className="btn-ghost" type="button" disabled={busy === "check"} onClick={refreshCrew}>
+              {busy === "check" ? "Checking\u2026" : "Has anybody joined?"}
+            </button>
+          </div>
+          {(crew.taken ?? 1) >= 2 && crew.status === "open" && (
+            <div className="cast-row">
+              <button className="gen-button" type="button" disabled={busy === "shoot"} onClick={shootCrew}>
+                {busy === "shoot" ? "Starting\u2026" : "Shoot it"}
+              </button>
+            </div>
+          )}
+          {crew.status !== "open" && <p className="cast-sub">Already shot. It is on your Takes page.</p>}
         </>
       )}
 

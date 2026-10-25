@@ -263,14 +263,25 @@ export default async function handler(req, res) {
       hold a face.
     */
     if (cast && typeof cast === "object") {
-      const beat = beatById(cast.beatId);
-      if (!beat) return res.status(400).json({ error: "Pick what happens in this scene." });
-
       let packs = [];
       let packIds = [];
       let styleId = cast.styleId;
+      const asCrew = typeof cast.crewInviteId === "string" && !!cast.crewInviteId;
 
-      if (typeof cast.crewInviteId === "string" && cast.crewInviteId) {
+      /*
+        A solo scene is whatever the caller asks for. A crew scene is not: the
+        look and the beat were printed on the invite, and that is what each
+        guest agreed to when they put their face in. So the crew path takes
+        both from the invite row and ignores anything the client sent, or the
+        host could collect faces for one scene and shoot a different one.
+      */
+      let beat = null;
+      if (!asCrew) {
+        beat = beatById(cast.beatId);
+        if (!beat) return res.status(400).json({ error: "Pick what happens in this scene." });
+      }
+
+      if (asCrew) {
         /*
           A crew scene. This is the ONLY place in the product where one
           person's locked identity reaches another person's generation, so
@@ -360,6 +371,10 @@ export default async function handler(req, res) {
           return res.status(409).json({ error: "Nobody else is in that scene yet." });
         }
         styleId = invite.style_id;
+        beat = beatById(invite.beat_id);
+        if (!beat) {
+          return res.status(409).json({ error: "That scene's beat is no longer available." });
+        }
         crewInvite = invite;
       } else {
         packIds = (Array.isArray(cast.packIds) ? cast.packIds : [])
