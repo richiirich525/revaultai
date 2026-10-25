@@ -311,7 +311,7 @@ export function spineGaps(spine) {
     gaps.push({ id: "no_lighting", why: "lighting is unstated, so a change in it cannot be called a change" });
   }
   if (!(c.rendered ?? 0)) {
-    gaps.push({ id: "nothing_rendered", why: "no shot has a chosen take, so there is no output to check against" });
+    gaps.push({ id: "nothing_rendered", why: "nothing made from these plans has been filmed, so there is no output to check against" });
   }
   return gaps;
 }

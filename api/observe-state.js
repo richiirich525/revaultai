@@ -82,35 +82,34 @@ export default async function handler(req, res) {
     let shotsForSpine = [{ id: gen.shot_id, generationId: gen.id, spec }];
     let index = 0;
 
-    if (gen.project_id) {
-      const { data: siblings } = await supabase
-        .from("shots")
-        .select("id, name, selected_generation_id")
-        .eq("project_id", gen.project_id).eq("user_id", user.id)
-        .limit(60);
-      const chosen = (siblings ?? []).map((x) => x.selected_generation_id).filter(Boolean);
-      if (chosen.length) {
-        const { data: gens } = await supabase
-          .from("generations").select("id, film_spec_id").in("id", chosen);
-        const specIds = [...new Set((gens ?? []).map((g) => g.film_spec_id).filter(Boolean))];
-        const { data: specRows } = specIds.length
-          ? await supabase.from("film_specs").select("id, spec").in("id", specIds)
-          : { data: [] };
-        const specById = new Map((specRows ?? []).map((r) => [r.id, r.spec]));
-        const genById = new Map((gens ?? []).map((g) => [g.id, g]));
+    /*
+      The surrounding sequence is the project's OTHER PLANS, in the order they
+      were written — not its shots. A shot is a record of a generation and
+      carries no plan of its own; reading siblings through
+      shots.selected_generation_id found almost nothing, because resolving a
+      shot to a keeper is an occasional act. Measured: two of thirty-five.
 
-        const built = (siblings ?? []).map((x) => {
-          const g = x.selected_generation_id ? genById.get(x.selected_generation_id) : null;
-          return {
-            id: x.id,
-            name: x.name,
-            generationId: x.selected_generation_id ?? null,
-            spec: g?.film_spec_id ? specById.get(g.film_spec_id) ?? null : null,
-          };
-        });
-        const at = built.findIndex((x) => x.generationId === gen.id);
-        if (at >= 0) { shotsForSpine = built; index = at; }
-      }
+      Reading the specs instead is also cheaper, one query rather than three,
+      and it means a fact established in a plan counts as established whether
+      or not that particular shot has been filmed yet.
+    */
+    if (gen.project_id && gen.film_spec_id) {
+      const { data: siblings } = await supabase
+        .from("film_specs")
+        .select("id, title, spec, created_at")
+        .eq("project_id", gen.project_id).eq("user_id", user.id)
+        .order("created_at", { ascending: true })
+        .limit(60);
+      const built = (siblings ?? []).map((row) => ({
+        id: row.id,
+        name: row.title || "Untitled shot",
+        /* Only this take is known to be filmed here; the rest are plans, and
+           planFor cares about their facts rather than their footage. */
+        generationId: row.id === gen.film_spec_id ? gen.id : null,
+        spec: row.spec ?? null,
+      }));
+      const at = built.findIndex((x) => x.id === gen.film_spec_id);
+      if (at >= 0) { shotsForSpine = built; index = at; }
     }
 
     const spine = spineFrom({ shots: shotsForSpine });
