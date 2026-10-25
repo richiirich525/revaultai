@@ -243,6 +243,11 @@ export default async function handler(req, res) {
     const selected = MODELS[model];
     if (!selected) return res.status(400).json({ error: 'Unknown model' });
 
+    /* Set by the crew branch below: the invite being shot, and the reference
+       images it resolved for people who are not this user. */
+    let crewInvite = null;
+    let castRefs = null;
+
     /*
       A Cast Yourself scene: packs, a genre and a beat, compiled here.
 
@@ -258,39 +263,135 @@ export default async function handler(req, res) {
       hold a face.
     */
     if (cast && typeof cast === "object") {
-      const packIds = (Array.isArray(cast.packIds) ? cast.packIds : [])
-        .filter((x) => typeof x === "string" && x).slice(0, MAX_PACKS_IN_FRAME);
-      if (!packIds.length) return res.status(400).json({ error: "Which character is in this scene?" });
-
       const beat = beatById(cast.beatId);
       if (!beat) return res.status(400).json({ error: "Pick what happens in this scene." });
 
-      const { data: packRows, error: packError } = await supabase
-        .from("vault_entries")
-        .select("id, name, description, build, distinguishing, wardrobe, images")
-        .eq("user_id", user.id).eq("kind", "character").in("id", packIds);
-      if (packError) {
-        console.error("generate-video could not read the packs:", packError);
-        return res.status(502).json({ error: "Could not read your characters: " + packError.message });
-      }
-      const ordered = packIds.map((id) => (packRows ?? []).find((r) => r.id === id)).filter(Boolean);
-      if (ordered.length !== packIds.length) {
-        return res.status(404).json({ error: "One of those characters is not in your Vault." });
-      }
+      let packs = [];
+      let packIds = [];
+      let styleId = cast.styleId;
 
-      const packs = ordered.map((r) => ({
-        name: r.name,
-        identity: r.description,
-        build: r.build,
-        distinguishing: r.distinguishing,
-        wardrobe: r.wardrobe,
-        images: Array.isArray(r.images) ? r.images : [],
-      }));
+      if (typeof cast.crewInviteId === "string" && cast.crewInviteId) {
+        /*
+          A crew scene. This is the ONLY place in the product where one
+          person's locked identity reaches another person's generation, so
+          the authorization is narrow and stated rather than inherited:
+
+            - the caller must be the host of this invite
+            - the invite must be full, so nobody is shot into a scene that is
+              still collecting people
+            - the invite must not already have been shot
+            - only packs that joined THIS invite are resolved, by membership,
+              never by a list the client sent
+
+          Joining the invite was the consent, and it was consent to this one
+          scene. It does not make a guest's pack reusable, and it expires
+          with the invite.
+        */
+        const { data: invite, error: inviteError } = await supabase
+          .from("crew_invites")
+          .select("id, host_id, host_pack, style_id, beat_id, seats, status")
+          .eq("id", cast.crewInviteId).maybeSingle();
+        if (inviteError) {
+          console.error("generate-video could not read the invite:", inviteError);
+          return res.status(502).json({ error: "Could not read that scene: " + inviteError.message });
+        }
+        if (!invite) return res.status(404).json({ error: "That scene does not exist any more." });
+        if (invite.host_id !== user.id) return res.status(403).json({ error: "That is not your scene to shoot." });
+        if (invite.status === "shot") return res.status(409).json({ error: "That scene has already been shot." });
+        if (invite.status !== "full") {
+          return res.status(409).json({ error: "That scene is still waiting for people." });
+        }
+
+        const { data: members, error: memberError } = await supabase
+          .from("crew_members")
+          .select("pack_id, pending_token, display_name, joined_at")
+          .eq("invite_id", invite.id).order("joined_at", { ascending: true });
+        if (memberError) {
+          console.error("generate-video could not read the crew:", memberError);
+          return res.status(502).json({ error: "Could not read that crew: " + memberError.message });
+        }
+
+        /* The host first, then guests in the order they joined. The beat
+           gives its action to whoever is first. */
+        const { data: hostPack } = await supabase
+          .from("vault_entries")
+          .select("id, name, description, build, distinguishing, wardrobe, images")
+          .eq("id", invite.host_pack).eq("user_id", user.id).maybeSingle();
+        if (!hostPack) return res.status(404).json({ error: "Your character for that scene is gone." });
+
+        packs.push({
+          name: hostPack.name, identity: hostPack.description, build: hostPack.build,
+          distinguishing: hostPack.distinguishing, wardrobe: hostPack.wardrobe,
+          images: Array.isArray(hostPack.images) ? hostPack.images : [],
+        });
+        packIds.push(hostPack.id);
+
+        for (const m of members ?? []) {
+          if (m.pack_id) {
+            /* Read by id with no owner filter. That is the cross-user read,
+               and it is authorized by the membership row above and nothing
+               else — the id came from the invite, never from the client. */
+            const { data: row } = await supabase
+              .from("vault_entries")
+              .select("id, name, description, build, distinguishing, wardrobe, images")
+              .eq("id", m.pack_id).eq("kind", "character").maybeSingle();
+            if (!row) continue;
+            packs.push({
+              name: row.name, identity: row.description, build: row.build,
+              distinguishing: row.distinguishing, wardrobe: row.wardrobe,
+              images: Array.isArray(row.images) ? row.images : [],
+            });
+            packIds.push(row.id);
+          } else if (m.pending_token) {
+            const { data: pending } = await supabase
+              .from("pending_packs").select("pack").eq("token", m.pending_token).maybeSingle();
+            const p = pending?.pack;
+            if (!p) continue;
+            packs.push({
+              name: m.display_name || p.name, identity: p.identity, build: p.build,
+              distinguishing: p.distinguishing, wardrobe: p.wardrobe,
+              images: Array.isArray(p.images) ? p.images : [],
+            });
+            packIds.push(null);
+          }
+        }
+
+        if (packs.length < 2) {
+          return res.status(409).json({ error: "Nobody else is in that scene yet." });
+        }
+        styleId = invite.style_id;
+        crewInvite = invite;
+      } else {
+        packIds = (Array.isArray(cast.packIds) ? cast.packIds : [])
+          .filter((x) => typeof x === "string" && x).slice(0, MAX_PACKS_IN_FRAME);
+        if (!packIds.length) return res.status(400).json({ error: "Which character is in this scene?" });
+
+        const { data: packRows, error: packError } = await supabase
+          .from("vault_entries")
+          .select("id, name, description, build, distinguishing, wardrobe, images")
+          .eq("user_id", user.id).eq("kind", "character").in("id", packIds);
+        if (packError) {
+          console.error("generate-video could not read the packs:", packError);
+          return res.status(502).json({ error: "Could not read your characters: " + packError.message });
+        }
+        const ordered = packIds.map((id) => (packRows ?? []).find((r) => r.id === id)).filter(Boolean);
+        if (ordered.length !== packIds.length) {
+          return res.status(404).json({ error: "One of those characters is not in your Vault." });
+        }
+        packs = ordered.map((r) => ({
+          name: r.name,
+          identity: r.description,
+          build: r.build,
+          distinguishing: r.distinguishing,
+          wardrobe: r.wardrobe,
+          images: Array.isArray(r.images) ? r.images : [],
+        }));
+      }
 
       const compiled = compileScene({
         packs,
         scene: beatFor(beat, packs),
-        styleId: cast.styleId,
+        styleId,
         seconds: Number(duration) || 8,
       });
       if (!compiled.ok) {
@@ -298,7 +399,33 @@ export default async function handler(req, res) {
       }
 
       prompt = compiled.prompt;
-      vaultRefIds = packIds;
+      /*
+        A solo scene hands its ids to the Vault lookup below, which is scoped
+        to the owner. A crew scene cannot: a guest's pack is not the host's,
+        so that lookup would silently drop them and shoot a two-hander with
+        one person in it. Instead the crew branch hands over the images it
+        already resolved, signed here rather than through the owner-scoped
+        route, so no existing authorization is widened to make this work.
+      */
+      if (crewInvite) {
+        castRefs = [];
+        for (let i = 0; i < packs.length; i++) {
+          const first = packs[i].images.find((u) => typeof u === "string" && u);
+          if (!first) continue;
+          castRefs.push({
+            id: packIds[i],
+            name: packs[i].name,
+            kind: "character",
+            url: await signForFal(first),
+            urls: [await signForFal(first)],
+          });
+        }
+        if (castRefs.length < 2) {
+          return res.status(422).json({ error: "Somebody in that scene has no photo, so we cannot keep them consistent." });
+        }
+      } else {
+        vaultRefIds = packIds;
+      }
     }
 
     /*
@@ -345,7 +472,11 @@ export default async function handler(req, res) {
     const refCap = Math.max(1, (refModel?.maxRefs ?? 3) - (refsAllowed && typeof locationUrl === "string" ? 1 : 0));
     const wantedRefs = Array.isArray(vaultRefIds) ? vaultRefIds.filter((x) => typeof x === "string").slice(0, refCap) : [];
     const refs = [];
-    if (refsAllowed && wantedRefs.length) {
+    if (refsAllowed && castRefs) {
+      /* A crew scene brought its own, already signed and authorized by
+         membership. Capped the same way as any other reference set. */
+      refs.push(...castRefs.slice(0, refCap));
+    } else if (refsAllowed && wantedRefs.length) {
       if (refModel.seconds && seconds !== refModel.seconds) {
         return res.status(400).json({ error: `With reference photos, this model makes ${refModel.seconds}-second clips.` });
       }
@@ -449,6 +580,17 @@ export default async function handler(req, res) {
         p_session_id: null,
       });
       throw insertError;
+    }
+
+    /* A crew scene is shot once. Marked only after the generation row
+       exists, so a failure before this leaves the invite shootable rather
+       than spending everybody's selfies on nothing. */
+    if (crewInvite) {
+      const { error: markError } = await supabase
+        .from("crew_invites")
+        .update({ status: "shot", generation_id: gen.id })
+        .eq("id", crewInvite.id).eq("status", "full");
+      if (markError) console.error("generate-video could not mark the crew scene shot:", markError.message);
     }
 
     // 4b. Group this generation into a shot. A near-identical prompt from the
