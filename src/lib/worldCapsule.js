@@ -97,15 +97,53 @@ export function capsuleFrom({ generation = null, spec = null, vault = [], observ
     if (cast.length >= 8) break;
   }
 
+  /*
+    Characters the Shot Spec names, for a take that referenced no Vault entry
+    at all — which, measured against a real corpus, turned out to be most of
+    them. A spec built from a scene breakdown carries names in
+    subjects.characters and a description for each one in continuityLocks,
+    written as "Name: description". That is thinner than a Vault entry — no
+    reference images, no voice — but a name and a description is somebody you
+    can meet, and the alternative is a world with nobody in it.
+
+    Vault entries win where both exist: they carry wardrobe, images and a
+    voice, and they are the identity the creator locked deliberately.
+  */
+  const lockFor = new Map();
+  for (const lock of Array.isArray(spec?.continuityLocks) ? spec.continuityLocks : []) {
+    const text = String(lock ?? "");
+    const at = text.indexOf(":");
+    if (at > 0) lockFor.set(text.slice(0, at).trim().toLowerCase(), text.slice(at + 1).trim());
+  }
+
+  for (const named of Array.isArray(spec?.subjects?.characters) ? spec.subjects.characters : []) {
+    const name = cut(named, 80);
+    if (!name) continue;
+    const key = name.toLowerCase();
+    if (seen.has(key) || cast.some((c) => c.name.toLowerCase() === key)) continue;
+    seen.add(key);
+    cast.push({
+      vaultId: null,
+      name,
+      description: cut(lockFor.get(key), 700),
+      wardrobe: "",
+      distinguishing: "",
+      images: [],
+      voice: null,
+    });
+    if (cast.length >= 8) break;
+  }
+
   /* ---- Set -------------------------------------------------------------
      A Vault location is the best source. Failing that, the Shot Spec named
      some locations in prose. Failing that, the rehearsal at least knows which
      stage set it was blocked on, which is enough for the 3D stage to load. */
   const vaultSet = of("location")[0] ?? null;
   const specLocations = Array.isArray(spec?.subjects?.locations) ? spec.subjects.locations : [];
+  const setName = cut(vaultSet?.name, 120) || cut(specLocations[0], 120) || cut(rehearsal?.set_id, 120);
   const set = {
-    name: cut(vaultSet?.name, 120) || cut(specLocations[0], 120) || cut(rehearsal?.set_id, 120),
-    description: cut(vaultSet?.description, 700),
+    name: setName,
+    description: cut(vaultSet?.description, 700) || cut(lockFor.get(setName.toLowerCase()), 700),
     images: imageList(vaultSet?.images, 2),
     /* The rehearsal's own set, so the stage can be stood up without a model. */
     stageSetId: cut(rehearsal?.data?.setId ?? rehearsal?.set_id, 60) || null,
@@ -118,6 +156,14 @@ export function capsuleFrom({ generation = null, spec = null, vault = [], observ
     name: cut(p.name, 80),
     description: cut(p.description, 300),
   })).filter((p) => p.name);
+
+  /* And the props the spec names, described by their own continuity lock. */
+  for (const named of Array.isArray(spec?.subjects?.props) ? spec.subjects.props : []) {
+    const name = cut(named, 80);
+    if (!name || props.some((x) => x.name.toLowerCase() === name.toLowerCase())) continue;
+    props.push({ vaultId: null, name, description: cut(lockFor.get(name.toLowerCase()), 300) });
+    if (props.length >= 10) break;
+  }
 
   const vaultLook = of("look")[0] ?? null;
   const look = {
@@ -211,8 +257,17 @@ export function capsuleGaps(capsule) {
   const missing = [];
   const thin = [];
 
-  const speakers = (c.cast ?? []).filter((p) => p.name && p.description);
-  if (!speakers.length) missing.push("nobody in it — the take referenced no Vault character");
+  const named = (c.cast ?? []).filter((p) => p.name);
+  const speakers = named.filter((p) => p.description);
+  if (!named.length) {
+    missing.push("nobody in it — no Vault character and none named by the spec");
+  } else if (!speakers.length) {
+    /* Distinct from having nobody: the take knows who is in the scene but
+       nothing about them, which is one continuity lock away rather than a
+       rebuild. Saying so is the difference between a fixable gap and a
+       dead end. */
+    missing.push("characters are named but not described — no Vault entry and no continuity lock");
+  }
   if (!c.state?.text) missing.push("no world state — the take has neither an observed nor a planned ending");
   if (!c.set?.name && !c.set?.stageSetId) missing.push("nowhere to be — no location and no rehearsal set");
 

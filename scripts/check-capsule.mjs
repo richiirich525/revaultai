@@ -160,5 +160,74 @@ ok("title truncated", huge.title.length === 140);
 ok("the whole capsule stays well under the column ceiling",
   JSON.stringify(huge).length < 60000, JSON.stringify(huge).length);
 
+/*
+  A take that referenced no Vault entry at all.
+
+  This is the common case, not the edge one: measured across a real corpus of
+  71 finished takes, every single one had no Vault reference, and extraction
+  that read only the Vault found nobody in any of them. The cast was in the
+  Shot Spec the whole time — names in subjects.characters, descriptions in
+  continuityLocks as "Name: description".
+*/
+const specOnly = capsuleFrom({
+  generation: { id: "g", prompt: "two of them in the kitchen" },
+  spec: {
+    subjects: { characters: ["Nell", "Theo"], locations: ["The galley kitchen"], props: ["Wine glass"] },
+    action: { endState: "She is at the sink." },
+    continuityLocks: [
+      "Nell: Woman, late 30s, gray cardigan",
+      "The galley kitchen: Narrow, one window",
+      "Wine glass: Half full",
+    ],
+  },
+});
+const sg = capsuleGaps(specOnly);
+ok("a spec-only take is usable", sg.usable === true, sg.missing);
+ok("the cast comes from the spec", specOnly.cast.map((c) => c.name).join(",") === "Nell,Theo", specOnly.cast.map((c) => c.name));
+ok("a continuity lock becomes the description", specOnly.cast[0].description === "Woman, late 30s, gray cardigan", specOnly.cast[0].description);
+ok("a character with no lock is still present, just undescribed",
+  specOnly.cast[1].name === "Theo" && specOnly.cast[1].description === "", specOnly.cast[1]);
+ok("spec characters carry no vault id", specOnly.cast.every((c) => c.vaultId === null));
+ok("and no voice, because a voice is a Vault thing", specOnly.cast.every((c) => c.voice === null));
+ok("the set comes from the spec", specOnly.set.name === "The galley kitchen", specOnly.set.name);
+ok("and its lock describes it", specOnly.set.description === "Narrow, one window", specOnly.set.description);
+ok("props come from the spec too", specOnly.props[0]?.name === "Wine glass" && specOnly.props[0]?.description === "Half full", specOnly.props);
+
+/* Vault entries are richer, so they win where both describe the same person. */
+const both = capsuleFrom({
+  generation: { id: "g", prompt: "p" },
+  spec: {
+    subjects: { characters: ["Nell", "Theo"], locations: ["Somewhere else"] },
+    action: { endState: "dark" },
+    continuityLocks: ["Nell: the spec's thinner description"],
+  },
+  vault: [{ id: "v1", kind: "character", name: "Nell", description: "The Vault's full description.",
+    wardrobe: "Gray cardigan", images: [`${R2}/n.png`], voice_preset: "alice" }],
+});
+ok("the Vault entry wins for a character in both", both.cast[0].description === "The Vault's full description.", both.cast[0].description);
+ok("and keeps its wardrobe, images and voice",
+  !!both.cast[0].wardrobe && both.cast[0].images.length === 1 && !!both.cast[0].voice);
+ok("nobody is duplicated across the two sources",
+  both.cast.filter((c) => c.name === "Nell").length === 1, both.cast.map((c) => c.name));
+ok("and the spec still adds the one the Vault lacks",
+  both.cast.some((c) => c.name === "Theo"), both.cast.map((c) => c.name));
+
+/* Named but undescribed is its own diagnosis, not "nobody in it". */
+const namedOnly = capsuleGaps(capsuleFrom({
+  generation: { id: "g", prompt: "p" },
+  spec: { subjects: { characters: ["Nell"], locations: ["A room"] }, action: { endState: "dark" }, continuityLocks: [] },
+}));
+ok("a named but undescribed cast is not usable", namedOnly.usable === false);
+ok("and says so specifically", namedOnly.missing.some((m) => /named but not described/.test(m)), namedOnly.missing);
+ok("rather than claiming nobody is in it", !namedOnly.missing.some((m) => /nobody in it/.test(m)), namedOnly.missing);
+
+/* A malformed lock must not become a character's description. */
+const weird = capsuleFrom({
+  generation: { id: "g", prompt: "p" },
+  spec: { subjects: { characters: ["Nell"] }, action: { endState: "dark" },
+    continuityLocks: ["no colon here", ": starts with one", "Nell: the right one"] },
+});
+ok("only a well-formed lock is used", weird.cast[0].description === "the right one", weird.cast[0].description);
+
 if (bad) { console.error(`\ncheck-capsule FAILED: ${bad} problem${bad === 1 ? "" : "s"}.`); process.exit(1); }
 console.log("check-capsule: extraction holds — footage over plan, images unsigned, voices by reference, thin takes still walkable.");
