@@ -119,6 +119,7 @@ export default function CastPage({ user, setPage, notify, onSignInClick }) {
   const [crewId, setCrewId] = useState(() => new URLSearchParams(window.location.search).get("crew"));
   const [crew, setCrew] = useState(null);
   const [joined, setJoined] = useState(false);
+  const [mine, setMine] = useState([]);
   const [stills, setStills] = useState([]);
   const [over, setOver] = useState(false);
   const fileRef = useRef(null);
@@ -187,6 +188,31 @@ export default function CastPage({ user, setPage, notify, onSignInClick }) {
       }
     })();
   }, []);
+
+  /*
+    A duet. Somebody who already has a locked character does not need to take
+    another selfie to be in a scene, and asking them to would be the main
+    reason they do not finish: they have already done this part, and the
+    result is the same face.
+
+    Read with the browser client on purpose. RLS scopes vault_entries to the
+    owner, so this returns the viewer's own characters and cannot return
+    anybody else's \u2014 the authorization is the policy, not this query.
+  */
+  useEffect(() => {
+    if (step !== "invited" || !user) return;
+    let live = true;
+    (async () => {
+      const { data } = await supabase
+        .from("vault_entries")
+        .select("id, name, images")
+        .eq("kind", "character")
+        .order("created_at", { ascending: false })
+        .limit(12);
+      if (live) setMine((data ?? []).filter((r) => Array.isArray(r.images) && r.images.length));
+    })();
+    return () => { live = false; };
+  }, [step, user]);
 
   async function token() {
     const { data } = await supabase.auth.getSession();
@@ -561,7 +587,9 @@ export default function CastPage({ user, setPage, notify, onSignInClick }) {
           <p className="cast-sub">
             {joined
               ? `${crew.hostName || "They"} shoots it once everybody is in. It lands on their Takes page, and you will be in it.`
-              : "One photo of yourself and you are in the scene with them. No account needed."}
+              : user && mine.length
+                ? "Pick somebody you have already played, or take a new photo. Either way it is the same face it always was."
+                : "One photo of yourself and you are in the scene with them. No account needed."}
           </p>
           <div className="cast-card" style={{ display: "block" }}>
             <div className="cast-field">
@@ -575,6 +603,24 @@ export default function CastPage({ user, setPage, notify, onSignInClick }) {
               </div>
             </div>
           </div>
+
+          {!joined && crew.status === "open" && (crew.seats - (crew.taken ?? 0)) > 0 && user && mine.length > 0 && (
+            <>
+              <div className="cast-label">Somebody you have already played</div>
+              <div className="cast-grid">
+                {mine.map((m) => (
+                  <button key={m.id} className="cast-opt" type="button" disabled={busy === "join"}
+                    onClick={() => takeSeat(m.id, null, m.name)}>
+                    <div className="cast-opt-l">{m.name}</div>
+                    <div className="cast-opt-n">
+                      {busy === "join" ? "Taking your seat\u2026" : "Same face, no new photo"}
+                    </div>
+                  </button>
+                ))}
+              </div>
+              <div className="cast-label">Or somebody new</div>
+            </>
+          )}
 
           {!joined && crew.status === "open" && (crew.seats - (crew.taken ?? 0)) > 0 && (
             <>
@@ -634,8 +680,9 @@ export default function CastPage({ user, setPage, notify, onSignInClick }) {
         <>
           <h1 className="cast-h">Send this to them.</h1>
           <p className="cast-sub">
-            Whoever opens it adds their own photo and lands in the scene with you.
-            Nothing is shot, and nothing is charged, until everybody is in.
+            Whoever opens it lands in the scene with you \u2014 with a new photo, or with a
+            character they have already played. Nothing is shot, and nothing is charged,
+            until everybody is in.
           </p>
           <div className="cast-card" style={{ display: "block" }}>
             <input className="cast-name" readOnly value={inviteLink} aria-label="Invite link"
