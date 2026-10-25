@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import { createClient } from "@supabase/supabase-js";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { protectedTermIn } from "../src/lib/stylePresets.js";
 
 /*
@@ -65,6 +66,42 @@ Rules for the description:
 
 Return ONLY this JSON object:
 { "faces": 0, "apparentAdult": null, "publicFigure": null, "identity": "", "build": "", "distinguishing": "", "wardrobe": "" }`;
+
+function getR2Client() {
+  return new S3Client({
+    region: "auto",
+    endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: process.env.R2_ACCESS_KEY_ID,
+      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+    },
+  });
+}
+
+/*
+  The selfie is stored here, from the same bytes the vision pass just read.
+
+  Two reasons it is not uploaded by the client. The upload route needs an
+  account, and this flow deliberately has none yet — a stranger with no
+  sign-in still ends up with a reference photo, which is what every later
+  drawing of them is conditioned on.
+
+  And the reference must be the image that was actually checked. If the
+  client supplied the stored URL separately, it could send one face to be
+  gated and described and a different one to be drawn from, which would make
+  every gate in this file decorative.
+*/
+export async function persistSelfie(base64, mediaType) {
+  const ext = mediaType.includes("png") ? "png" : mediaType.includes("webp") ? "webp" : "jpg";
+  const key = `packs/${crypto.randomUUID()}.${ext}`;
+  await getR2Client().send(new PutObjectCommand({
+    Bucket: process.env.R2_BUCKET_NAME,
+    Key: key,
+    Body: Buffer.from(base64, "base64"),
+    ContentType: mediaType,
+  }));
+  return `${(process.env.R2_PUBLIC_URL ?? "").replace(/\/$/, "")}/${key}`;
+}
 
 function hashIp(req) {
   const fwd = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim();
@@ -138,7 +175,7 @@ export default async function handler(req, res) {
   );
 
   try {
-    const { image, mediaType, imageUrl, name } = req.body || {};
+    const { image, mediaType, name } = req.body || {};
 
     if (typeof image !== "string" || image.length < 100) {
       return res.status(400).json({ error: "Send a photo to build a pack from." });
@@ -191,6 +228,17 @@ export default async function handler(req, res) {
     const term = protectedTermIn(chosen);
     if (term) return res.status(422).json({ error: `A pack cannot be named after "${term}". Use your own name, or any name you like that is not somebody else's.` });
 
+    /* Stored only now, after the gates have passed. A refused photo is never
+       written anywhere — a minor's face should not sit in a bucket because
+       the refusal happened a line too late. */
+    let storedUrl;
+    try {
+      storedUrl = await persistSelfie(image, type);
+    } catch (err) {
+      console.error("build-pack could not store the selfie:", err.message);
+      return res.status(502).json({ error: "We read your photo but could not save it. Try again in a moment." });
+    }
+
     const pack = {
       name: chosen,
       kind: "character",
@@ -198,7 +246,7 @@ export default async function handler(req, res) {
       build: cut(read.build, 300),
       distinguishing: cut(read.distinguishing, 300),
       wardrobe: cut(read.wardrobe, 300),
-      images: typeof imageUrl === "string" && /^https?:\/\//.test(imageUrl) ? [imageUrl.slice(0, 600)] : [],
+      images: [storedUrl],
       capture: { source: "phone", plateSet: null, capturedAt: new Date().toISOString() },
       consent: { self: true, duetable: false, grantedAt: new Date().toISOString() },
       locked: LOCKED_FIELDS,
