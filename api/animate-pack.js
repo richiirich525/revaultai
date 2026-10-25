@@ -26,20 +26,38 @@ import { buildStillSet, setIsOnePerson, FREE_SET, POSES } from "../src/lib/still
 */
 
 /*
-  VERIFY this falId in the fal playground before deploying, exactly as
-  api/generate-image.js says of its own.
+  The model. Checked against fal's own schema on 2026-10-24 rather than
+  assumed: endpoint id `fal-ai/nano-banana-2/edit`, category image-to-image,
+  taking `prompt` (required) and `image_urls` (an array of strings).
 
-  What it has to be: an image model that accepts REFERENCE IMAGES, not a
-  text-to-image model. Text alone does not hold a face, and the pack's
-  reference image is the whole reason the set looks like one person. The
-  text-to-image entry in generate-image.js is not a substitute.
+  It has to be image-to-image. Text alone does not hold a face, and the
+  pack's reference photo is the whole reason a set looks like one person —
+  the text-to-image entry in generate-image.js would produce eight strangers
+  who match a description.
+
+  The four options below are set explicitly rather than left to defaults,
+  because a default that changes upstream changes every avatar this product
+  makes without anybody touching this file.
 */
 const ANIMATE_MODEL = {
   falId: "fal-ai/nano-banana-2/edit",
-  /* The input key for reference images. Named here so that changing models
-     is one line rather than a search through the handler. */
+  /* The input key for reference images. Named here so changing models is a
+     line rather than a search through the handler. */
   imageKey: "image_urls",
   creditsPerStill: 1,
+  options: {
+    /* Square, because these are profile pictures. That is what the set is
+       actually for, and a 16:9 avatar gets cropped by whoever displays it. */
+    aspect_ratio: "1:1",
+    /* 1K is plenty for an avatar and a quarter the bytes of 2K. */
+    resolution: "1K",
+    output_format: "jpeg",
+    /* The provider's default is "4". This product generates pictures of real
+       people's faces from their own photographs, which is the case where a
+       permissive setting is least defensible, so it runs stricter than the
+       default deliberately. */
+    safety_tolerance: "2",
+  },
 };
 
 const ANON_SETS_PER_DAY = 3;
@@ -204,7 +222,11 @@ export default async function handler(req, res) {
     for (const still of built.stills) {
       try {
         const result = await fal.subscribe(ANIMATE_MODEL.falId, {
-          input: { prompt: still.prompt, [ANIMATE_MODEL.imageKey]: pack.images.slice(0, 3) },
+          input: {
+            prompt: still.prompt,
+            [ANIMATE_MODEL.imageKey]: pack.images.slice(0, 3),
+            ...ANIMATE_MODEL.options,
+          },
           logs: false,
         });
         const url = result?.data?.images?.[0]?.url;
