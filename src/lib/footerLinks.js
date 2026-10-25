@@ -21,6 +21,8 @@ export const FOOTER_GROUPS = [
   {
     title: "Make something",
     links: [
+      ["cast", "Cast Yourself"],
+      ["memory", "Memory Cinema"],
       ["rehearsal", "Rehearsal Studio"],
       ["tools", "All the tools"],
       ["generate", "Generate"],

@@ -19,6 +19,20 @@ export const DEPARTMENTS = [
     tools: [["Scene Breakdown", "scene-breakdown"]],
   },
   {
+    /*
+      Casting follows the script on a real lot, which is also where it belongs
+      here: these are the two places where the person using the site becomes
+      the person on screen rather than the one directing it.
+    */
+    lead: "The casting office.",
+    name: "Casting",
+    body: "One photograph becomes a locked character \u2014 a fixed description of a face that every later prompt reuses word for word, which is what stops a person drifting between shots. Draw that character as a cartoon, a comic or claymation; put it in a scene with a genre and a beat; send a link and have somebody else land in the same frame with their own face. Several angles, shot from a phone or in the booth, make it hold up when the camera moves. Nobody is ever cast from a photograph somebody else uploaded of them.",
+    tools: [
+      ["Cast Yourself", "cast"],
+      ["Memory Cinema", "memory"],
+    ],
+  },
+  {
     lead: "The first AD.",
     name: "Coverage Planner",
     body: "The setups an editor actually needs to cut the scene — master, singles, over-the-shoulders, reactions, inserts — and an honest read on what is missing.",

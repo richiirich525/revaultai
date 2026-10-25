@@ -4,6 +4,91 @@
 
 export const POSTS = [
   {
+    slug: "be-in-the-movie-cast-yourself-crew-memory-cinema",
+    title: "Be in the Movie: Cast Yourself, Bring Friends, Film a Day",
+    seoTitle: "Cast Yourself in an AI Movie: Locked Character From One Selfie",
+    description:
+      "One photo becomes a character that stays you from shot to shot. Draw it, put it in a scene, send a link and have friends land in the same shot, capture several angles from your phone, and film a day you actually had.",
+    date: "2026-10-25",
+    author: "Richard Garland",
+    category: "News",
+    readingTime: "8 min",
+    faq: [
+      ["Do I need an account to cast myself?", "No. Upload one photo and you get a locked character and four drawings of it without signing in at all. The pack waits under a random token and moves into your Vault the moment you sign up, drawings included. An account is needed for scenes, because a scene spends credits and anonymous spending cannot be metered honestly."],
+      ["How does it keep looking like me across different shots?", "On upload, a vision pass writes a fixed description of your face, build, distinguishing features and clothing. That description is written once and never edited \u2014 not by you, not by us \u2014 and every later prompt reuses it word for word alongside your reference photos. The description is the part that holds; a photo alone drifts."],
+      ["Can somebody put my face in a scene without asking?", "No, and this is the rule the whole thing is built around: nobody is ever cast from a photo somebody else uploaded of them. A friend who wants you in a scene sends you a link; you add your own photo, or pick a character you already have, and that acceptance covers that one scene. Memory Cinema needs a standing pass you grant from your own character, which you can withdraw whenever you like and which lapses on its own in two weeks."],
+      ["Why does Memory Cinema not film my days automatically?", "Because a job that filmed every day overnight would eventually render the worst day of somebody's year while they slept, and spend their credits doing it. A day sits as a draft until you tap to film it. You see what it costs before it is spent, and a day you would rather not keep is a day you simply never film."],
+      ["What is the difference between a phone capture and the booth?", "Coverage. One photo makes a character that holds up from one angle; several make one that survives the camera moving. A phone capture walks you through named angles \u2014 straight on, three-quarters each way, both profiles, chin up and down, head to feet \u2014 shot on your phone while your laptop watches them arrive. The booth on the lot is the same mechanism with an operator and better light, and a pack captured there records that it was."],
+    ],
+    content: `
+<p>Until this week everything on this site helped you make a film about somebody else. Characters you invented, performers you blocked, a scene you wrote. That is still most of what is here and it is not going anywhere.</p>
+
+<p>This week there is a second thing: you, on screen.</p>
+
+<h2>Cast Yourself</h2>
+
+<p>Upload one photo of your face. A vision pass writes a description of what is actually in the photograph &mdash; face, build, distinguishing features, what you are wearing &mdash; and that description becomes a <strong>locked character pack</strong>. Locked means written once and never edited afterwards, by you or by me. Only the name is yours to set.</p>
+
+<p>That sounds like a restriction and it is the whole point. The reason a generated person drifts between shots is that nothing fixes who they are: each prompt describes them slightly differently and the model obliges. A pack that cannot be edited is a description that cannot drift, and every prompt from then on reuses it word for word next to your reference photos. The photos alone are not enough. The words are what hold.</p>
+
+<p>No account needed to do this. The pack waits under a random token and moves into your Vault when you sign up.</p>
+
+<p>Three gates run before a pack exists at all: one face in the frame, an adult, and not somebody well known. Every uncertain answer refuses rather than proceeds. I want to be straight about what those gates are: they are a vision model's judgment, which is a first line of defense and not a sufficient one. Apparent age from a photograph is unreliable in both directions and no model recognizes every public figure. The code is shaped so that putting a dedicated service behind those two checks is changing one function rather than unpicking the route, and that is what happens before any of this is pushed hard.</p>
+
+<h2>Animate Yourself</h2>
+
+<p>The same character, drawn. Six mediums &mdash; cel-shade, comic halftone, Sunday funnies, stop-motion clay, watercolor wash, pencil rough &mdash; each rendering a set of poses that are recognizably one person rather than six loosely related strangers. Four of the set is free without an account; the full eight needs one.</p>
+
+<p>No studio names anywhere in the presets, and none accepted in a prompt. A medium is a medium. "Cel-shade" describes a technique that predates every company that might be named next to it, and a preset that borrowed somebody's house style would be a liability dressed up as a feature.</p>
+
+<p>Output made without an account carries a stamped mark saying what it is and that it was generated. Not C2PA &mdash; a real content credential needs a certificate issued to the company, and claiming provenance without one would be worse than not claiming it. The seam where a proper signer goes is marked in the code and the mark that is there today is honest about being a watermark and nothing more.</p>
+
+<h2>Scenes with other people</h2>
+
+<p>Pick a look and a beat, then choose whether it is just you or two or three of you. Choose more than one and instead of shooting, you get a link.</p>
+
+<p>Whoever opens it sees who asked, what the look is, what happens in the scene, and how many seats are left. They add their own photo and land in the shot. If they already have a character of their own, they pick it instead and skip the camera entirely &mdash; which is the duet: two locked identities, both already in films of their own, in one frame.</p>
+
+<p>Nothing is shot and nothing is charged until everybody is in. The host presses the button.</p>
+
+<p>Here is the rule all of that is built around, and it is worth stating in full: <strong>nobody is ever cast from a photo somebody else uploaded of them.</strong> Not a friend's camera roll, not a group shot, not a tagged photo. Everybody in a scene built their own pack from their own face. It makes the feature slower to feel magical than the alternative, and the alternative is building locked identity packs of people who never agreed to one. The invite is also pinned to the scene people accepted: the look and the beat are read back off the invite when it is shot, so a host cannot collect faces for one scene and then film a different one.</p>
+
+<h2>Several angles, and the booth</h2>
+
+<p>One photo makes a character that holds up from one angle. Several make one that survives the camera moving, which matters most in exactly the scenes where two faces share a frame.</p>
+
+<p>The problem is that the camera is never on the machine you are working at. A laptop has one bad webcam pointing up your nose; the good camera is the phone in your pocket. So a capture is a session with a six-character code. Open it on the laptop, open the link or type the code on your phone, and shoot the angles it names &mdash; straight at the camera, three-quarters each way, both profiles, chin up, chin down, head to feet. The laptop lights each one up as it lands. Four angles including the front one is enough to build from.</p>
+
+<p>The booth on the lot is the same mechanism with an operator at a console and lighting that is not a kitchen window. A pack captured there records that it was, and the database refuses a booth capture that has no operator behind it, because a studio marking that any caller could claim would be worth nothing.</p>
+
+<p>Every frame runs the same three gates, not just the first. A capture that checked one photo and waved seven through would be a seven-frame hole in a one-frame control. What it does <em>not</em> do is verify that the frames are the same person &mdash; nothing here can tell your profile from your brother's, and comparing two prose descriptions would produce a number that looks like a control and is not one. So it is not done and it is not claimed.</p>
+
+<h2>Memory Cinema</h2>
+
+<p>Pick a day. Write one line about what happened. Drop in up to six photos from it. Choose a genre and who plays you, and film it.</p>
+
+<p>The line is the part that matters, and the photos are the set. A picture of a parking structure and a picture of a hospital corridor describe the same afternoon as a triumph or a catastrophe, and nothing in an image tells you which. So the photos are read for where you were, what time the light says it was, what the weather did and what was physically happening &mdash; and the prompt that reads them is told in as many words not to describe any person identifiably. Not their face, not their build, not their clothes, not even how many of them there are. A face in a camera roll is not a casting decision.</p>
+
+<p>Which leaves the thing the obvious version of this feature gets wrong. A life film wants the people in your life in it. The rule above says they cannot be, unless they say so. So: somebody appears as themselves only if they built their own character and handed you a standing pass for it. A pass is a link you send, not a search by email &mdash; a product that can find somebody by their email address is a product that leaks who is on it. They pick which character. They can withdraw it at any moment, it lapses on its own in two weeks, and deleting their character destroys it outright.</p>
+
+<p>That pass is checked on the server at the moment of filming, not when the day was saved, because the moment the face is used is the only moment consent has to be true. If somebody in a day has withdrawn, the day is refused rather than quietly filmed smaller. Being handed a film you have to notice is wrong is worse than being told.</p>
+
+<p>Everybody else stays in the writing. "Lunch with my mother" films as a woman having lunch, from no reference photograph &mdash; a description, not a likeness. There is no third category.</p>
+
+<p>And a day stays a draft until you ask for it. No overnight job, nothing rendered while you sleep, nothing charged until you tap. A nightly premiere would be a better growth mechanic and a worse product: the first morning somebody wakes up to a rendered version of the worst day of their year is the morning that feature ends.</p>
+
+<h2>What is not here</h2>
+
+<p>The brief this came from wanted a life film assembled from your texts, your location history and your voice notes. A web page cannot reach any of that. No browser gets your messages; camera roll and location history need a native app with operating-system permissions. What is here is what you hand over deliberately, which is more work for you and is also the consent.</p>
+
+<p>There is no gallery of life films, no season passes, no nightly premiere. Those are a surface rather than a feature and they are worth building when there are days in the system to put in them. Duetting a stranger's film from the gallery is not here either: nothing currently shows which character a take was shot from, and exposing that would hand out a pointer to somebody's locked face to anybody who can see the take. The link version works today and exposes nothing.</p>
+
+<p>And the honest headline: all of this was verified against local databases and test harnesses rather than in production. Seven migrations and about fifteen endpoints, checked by deliberately breaking them to confirm the checks catch it. That found real problems before anyone met them &mdash; every scene was being sent a duration the model does not accept, so not one of them would have rendered; deleting a character left its capture frames in storage with nothing pointing at them. It will not have found everything. If you hit something, the contact page reaches me directly.</p>
+
+<p><strong>Start here:</strong> <em>Cast Yourself</em> under Be in it yourself, or Memory Cinema if you would rather film today than a genre.</p>
+`,
+  },
+  {
     slug: "get-the-blocking-out-storyboard-animatic-share",
     title: "Getting the Blocking Out: Storyboards, Animatics and a Link",
     seoTitle: "Export AI Previz: Storyboard Frames, Animatic Video, Share Link",

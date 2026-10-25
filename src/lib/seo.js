@@ -92,6 +92,16 @@ export const PAGES = {
     description:
       "Free director-grade video prompts for Seedance 2.5, Veo 3.1, and Kling 3.0. Copy, paste, and generate. No account needed.",
   },
+  cast: {
+    title: "Cast Yourself in a Movie \u2014 One Photo, Free | RevaultAI",
+    description:
+      "Upload one photo and become a character that stays you from shot to shot. Draw yourself as a cartoon, comic or anime, put yourself in a scene, and bring friends into the same shot. Free, no account.",
+  },
+  memory: {
+    title: "Memory Cinema \u2014 Film the Day You Actually Had | RevaultAI",
+    description:
+      "Write a line about your day, add a few photos, and film it as the genre you choose. Photos are read for setting, never for faces. A day stays a draft until you ask for it.",
+  },
   "recording-studio": {
     title: "Voice Over for AI Video — Scene Read-Through | RevaultAI",
     description: "Hear a scene read in your characters' own voices before you generate it. Set a voice once in the Vault and it is used every time that character speaks.",
@@ -102,7 +112,7 @@ export const PAGES = {
   },
   tools: {
     title: "AI Filmmaking Tools — Free Shot Lists & Prompts | RevaultAI",
-    description: "Twenty-two tools for planning, writing and checking an AI film. Scene breakdowns, coverage, blocking, continuity checks and more — most free, no account.",
+    description: "Twenty-five tools for planning, writing and checking an AI film. Scene breakdowns, coverage, blocking, continuity checks and more — most free, no account.",
   },
   pricing: {
     title: "Pricing — Credits for AI Video Generation | RevaultAI",

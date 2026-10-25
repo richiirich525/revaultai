@@ -102,6 +102,28 @@ export const JOBS = [
     ],
   },
   {
+    /*
+      The sixth job, and the only one whose subject is a person rather than a
+      scene. Everything above helps somebody make a film about other people;
+      this is for being in one yourself. It is listed last because it is the
+      newest, not because it matters least \u2014 for most visitors it is the only
+      thing on this page they will ever touch.
+    */
+    id: "star",
+    name: "Be in it yourself",
+    when: "You, on screen, from one photo",
+    tools: [
+      { name: "Cast Yourself", page: "cast", access: "free",
+        give: "One photo of your face",
+        get: "A locked character that is still you in every scene afterwards",
+        blurb: "A photo becomes a character sheet that never changes \u2014 the thing that keeps you looking like yourself shot after shot. Draw it as a cartoon, comic, anime or claymation set; put it in a scene with a genre and a beat; send a link and have friends join the same shot with their own faces, or with a character they already have. Several angles from your phone, or from the booth on the lot, make it hold up when the camera moves. No account needed to start." },
+      { name: "Memory Cinema", page: "memory", access: "account",
+        give: "A line about your day and a few photos",
+        get: "A short film of a day you actually had",
+        blurb: "Write what happened, drop in photos from it, and film it as the genre you choose. The photos are read for where and when, never for faces. A day stays a draft until you ask for it \u2014 nothing renders overnight and nothing is charged until you tap. Other people appear only if they built their own character and handed you a pass for it, which they can withdraw whenever they like." },
+    ],
+  },
+  {
     id: "finish",
     name: "Finish the film",
     when: "From a pile of takes to an edit",

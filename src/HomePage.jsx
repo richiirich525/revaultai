@@ -2,6 +2,7 @@ import BacklotSection from "./BacklotSection.jsx";
 import CreationCard from "./CreationCard.jsx";
 import DiscoveredStrip from "./DiscoveredStrip.jsx";
 import HomeFeatures from "./HomeFeatures.jsx";
+import HomeNew from "./HomeNew.jsx";
 import SpotlightSection from "./SpotlightSection.jsx";
 
 /*
@@ -29,6 +30,10 @@ export default function HomePage({ creations, setPage, setDetailId, user, onSign
         <div className="hero-right"><img src="/hero-vault.png" alt="A filmmaker standing before an illuminated screen inside an open vault" /></div>
       </section>
       <HomeFeatures setPage={setPage} user={user} onSignInClick={onSignInClick} />
+      {/* Directly under what the site does, before the gallery. A visitor who
+          has never seen a post anywhere needs to find out here that the thing
+          they would want was built last week. */}
+      <HomeNew setPage={setPage} />
       <SpotlightSection creations={creations} onView={goDetail} />
 <DiscoveredStrip setPage={setPage} />
       <section className="section">
