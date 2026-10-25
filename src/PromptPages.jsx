@@ -160,7 +160,7 @@ export function PromptModelPage({ slug, setPage, openPromptModel, openPromptGenr
         </div>
         {shown.map((p, i) => (
           <div className="pd-card" key={p.title}>
-            <div className="pd-card-num">Prompt {i + 1} <span className="pd-genre">\u00b7 {p.genre}</span></div>
+            <div className="pd-card-num">Prompt {i + 1} <span className="pd-genre">· {p.genre}</span></div>
             <div className="pd-card-title">{p.title}</div>
             {p.spec && <div className="pd-spec">Set frame and length: {p.spec}</div>}
             <div className="pd-prompt">{p.text}</div>

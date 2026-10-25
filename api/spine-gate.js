@@ -80,6 +80,15 @@ export default async function handler(req, res) {
       });
     }
 
+    /*
+      Where the chain breaks matters more than that it broke. shot ->
+      selected_generation -> film_spec has two joints, and they call for
+      different fixes: shots with no chosen take mean the planning never
+      reached a render, while chosen takes carrying no spec mean the render
+      forgot which plan it came from. Counting only the end of the chain
+      cannot tell those apart, and the first run of this gate could not.
+    */
+    const withTake = shots.filter((s) => s.selected_generation_id).length;
     const genIds = [...new Set(shots.map((s) => s.selected_generation_id).filter(Boolean))];
     const { data: gens, error: genError } = genIds.length
       ? await supabase.from("generations")
@@ -167,6 +176,12 @@ export default async function handler(req, res) {
       usable,
       percent: projects ? Math.round((usable / projects) * 100) : 0,
       minShots: MIN_SHOTS,
+      chain: {
+        shots: shots.length,
+        withAChosenTake: withTake,
+        /* Of the chosen takes, how many recorded the spec they came from. */
+        takesCarryingASpec: (gens ?? []).filter((g) => g.film_spec_id).length,
+      },
       specs: {
         reachableFromAShot: attached,
         inThoseProjects: total,

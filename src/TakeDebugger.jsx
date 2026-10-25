@@ -252,7 +252,7 @@ export default function TakeDebugger({ generation, notify, setGenPrefill, setPag
                 setGenPrefill?.({ prompt: report.repairPrompt, generateModelKey: generation.model, aspectRatio: "16:9" });
                 setPage?.("generate");
               }}
-            >Try again \u2192</button>
+            >Try again →</button>
           </div>
         </>
       )}

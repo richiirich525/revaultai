@@ -615,7 +615,7 @@ export default function CastPage({ user, setPage, notify, onSignInClick }) {
             )}
           </div>
           <div style={{ ...mono, fontSize: 11, color: "var(--muted)", lineHeight: 1.7, marginTop: 10 }}>
-            One photo works. {USABLE_SET} angles or more holds up when the camera moves \u2014
+            One photo works. {USABLE_SET} angles or more holds up when the camera moves —
             that is the only difference, and it is a real one.
           </div>
 
@@ -877,7 +877,7 @@ export default function CastPage({ user, setPage, notify, onSignInClick }) {
         are the reason this person will put their face in.
       */}
       {step === "invited" && !crew && !error && (
-        <p className="cast-sub" style={{ marginTop: 40 }}>Opening that invite\u2026</p>
+        <p className="cast-sub" style={{ marginTop: 40 }}>Opening that invite…</p>
       )}
 
       {step === "invited" && crew && !crew.host && (
@@ -981,7 +981,7 @@ export default function CastPage({ user, setPage, notify, onSignInClick }) {
         <>
           <h1 className="cast-h">Send this to them.</h1>
           <p className="cast-sub">
-            Whoever opens it lands in the scene with you \u2014 with a new photo, or with a
+            Whoever opens it lands in the scene with you — with a new photo, or with a
             character they have already played. Nothing is shot, and nothing is charged,
             until everybody is in.
           </p>

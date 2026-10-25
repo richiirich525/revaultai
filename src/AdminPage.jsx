@@ -531,7 +531,7 @@ export default function AdminPage({ creations, setCreations, notify }) {
             <div style={{ flex: 1, minWidth: 260 }}>
               <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", lineHeight: 1.7 }}>
                 The sequence spine. How many real projects carry enough structure for a continuity check to
-                have anything to say \u2014 two shots or more, specs it can read, and some fact appearing in
+                have anything to say — two shots or more, specs it can read, and some fact appearing in
                 more than one of them. A coat nobody wears twice cannot be inconsistent.
               </div>
               <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--muted)", lineHeight: 1.7, marginTop: 10, opacity: 0.8 }}>
@@ -550,6 +550,12 @@ export default function AdminPage({ creations, setCreations, notify }) {
                         &nbsp;&nbsp;{spine.specs.reachableFromAShot} specs reachable from a shot,{" "}
                         {spine.specs.unattached} sitting unattached
                       </div>
+                      {spine.chain && (
+                        <div>
+                          &nbsp;&nbsp;{spine.chain.withAChosenTake} of {spine.chain.shots} shots have a chosen take,{" "}
+                          {spine.chain.takesCarryingASpec} of those takes recorded a spec
+                        </div>
+                      )}
                       {spine.reasons.map((r) => (
                         <div key={r.id}>&nbsp;&nbsp;{r.count} &times; {r.why}</div>
                       ))}

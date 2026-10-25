@@ -224,9 +224,9 @@ export default function SpecsPage({ user, onSignInClick, setPage, notify, setGen
                           <div className="fs-label" style={{ color: report.safe ? "#4ADE80" : "#E5B769" }}>
                             {report.safe ? "\u2713 Everything transfers to " + report.model : "\u26A0 Some intent doesn't transfer to " + report.model}
                           </div>
-                          {report.carried.map((c, i) => <div className="fs-line" key={"c" + i}><span style={{ color: "#4ADE80" }}>\u2713</span><span className="fs-body" style={{ margin: 0 }}>{c}</span></div>)}
+                          {report.carried.map((c, i) => <div className="fs-line" key={"c" + i}><span style={{ color: "#4ADE80" }}>✓</span><span className="fs-body" style={{ margin: 0 }}>{c}</span></div>)}
                           {report.rewritten.map((c, i) => <div className="fs-line" key={"r" + i}><span style={{ color: "#E5B769" }}>~</span><span className="fs-body" style={{ margin: 0 }}>{c}</span></div>)}
-                          {report.unsupported.map((c, i) => <div className="fs-line" key={"u" + i}><span style={{ color: "#F87171" }}>\u2715</span><span className="fs-body" style={{ margin: 0, color: "#F8A0A0" }}>{c}</span></div>)}
+                          {report.unsupported.map((c, i) => <div className="fs-line" key={"u" + i}><span style={{ color: "#F87171" }}>✕</span><span className="fs-body" style={{ margin: 0, color: "#F8A0A0" }}>{c}</span></div>)}
                           <div className="fs-body" style={{ fontSize: 10, marginTop: 10, opacity: 0.8 }}>
                             Your creative intent hasn't changed — only how it's expressed.
                           </div>
@@ -257,7 +257,7 @@ export default function SpecsPage({ user, onSignInClick, setPage, notify, setGen
                               setGenPrefill?.({ prompt: compiled.prompt, generateModelKey: target, aspectRatio: draft?.timing?.aspectRatio || "16:9", filmSpecId: row.id, filmSpecVersion: row.version });
                               setPage("generate");
                             }}
-                          >Generate this \u2192</button>
+                          >Generate this →</button>
                         )}
                         <button className="btn-ghost" style={{ fontSize: 11 }} onClick={() => save(row)} disabled={saving}>
                           {saving ? "Saving…" : "Save as v" + ((row.version ?? 1) + 1)}
