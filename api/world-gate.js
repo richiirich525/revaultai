@@ -43,13 +43,25 @@ export default async function handler(req, res) {
 
     const limit = Math.min(Number(req.query?.limit ?? req.body?.limit) || 50, MAX_TAKES);
 
-    const { data: takes } = await supabase
+    const { data: takes, error: takesError } = await supabase
       .from("generations")
       .select("id, user_id, prompt, model, status, project_id, film_spec_id, film_spec_version, vault_ref_ids, end_frame_url, end_frame_at, created_at, completed_at")
       .eq("user_id", user.id)
       .eq("status", "complete")
       .order("created_at", { ascending: false })
       .limit(limit);
+
+    /*
+      A failed query must not read as an empty one. The first version of this
+      ignored the error and reported "no finished takes to measure yet", which
+      is what a database with hundreds of takes looks like when one column in
+      the select does not exist. A wrong zero sends you looking in the wrong
+      place; the error says which column.
+    */
+    if (takesError) {
+      console.error("world-gate could not read takes:", takesError);
+      return res.status(502).json({ error: "Could not read your takes: " + takesError.message });
+    }
 
     const rows = takes ?? [];
     if (!rows.length) {
@@ -73,6 +85,18 @@ export default async function handler(req, res) {
       supabase.from("observed_states").select("generation_id, observed_end, differences")
         .eq("user_id", user.id).in("generation_id", takeIds),
     ]);
+
+    /*
+      Same reasoning one level down. A spec or Vault read that quietly failed
+      would not break the measurement — it would make every take look thinner
+      than it is and report a gate number that is simply wrong, which is the
+      most expensive kind of answer to get back.
+    */
+    const readError = specsRes.error ?? vaultRes.error ?? observedRes.error;
+    if (readError) {
+      console.error("world-gate could not read what the takes refer to:", readError);
+      return res.status(502).json({ error: "Could not read what your takes refer to: " + readError.message });
+    }
 
     const specById = new Map((specsRes.data ?? []).map((s) => [s.id, s.spec]));
     const vaultById = new Map((vaultRes.data ?? []).map((v) => [v.id, v]));

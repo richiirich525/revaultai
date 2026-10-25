@@ -46,12 +46,19 @@ export default async function handler(req, res) {
     }
 
     /* ---- The take ------------------------------------------------------ */
-    const { data: gen } = await supabase
+    const { data: gen, error: genError } = await supabase
       .from("generations")
       .select("id, user_id, prompt, model, status, project_id, film_spec_id, film_spec_version, vault_ref_ids, end_frame_url, end_frame_at, created_at, completed_at")
       .eq("id", generationId)
       .maybeSingle();
 
+    /* Distinguish a take that is not there from a query that did not run.
+       Both produce no row, and "that take does not exist" sends you looking
+       for a missing take rather than a missing column. */
+    if (genError) {
+      console.error("lock-world could not read the take:", genError);
+      return res.status(502).json({ error: "Could not read that take: " + genError.message });
+    }
     if (!gen) return res.status(404).json({ error: "That take does not exist." });
     if (gen.user_id !== user.id) return res.status(403).json({ error: "Not your take" });
     if (gen.status !== "complete") {
@@ -88,6 +95,15 @@ export default async function handler(req, res) {
         ? supabase.from("rehearsals").select("id, title, data").eq("id", rehearsalId).eq("user_id", user.id).maybeSingle()
         : Promise.resolve({ data: null }),
     ]);
+
+    /* A read that failed here would not fail the lock — it would lock a
+       thinner world than the creator actually has, or refuse one that was
+       fine. Either is worse than saying so. */
+    const readError = specRes.error ?? vaultRes.error ?? observedRes.error ?? rehearsalRes.error;
+    if (readError) {
+      console.error("lock-world could not read what the take refers to:", readError);
+      return res.status(502).json({ error: "Could not read what this take refers to: " + readError.message });
+    }
 
     /* The Vault rows come back in whatever order Postgres likes. The take
        recorded the order the creator picked them in, and the first character
