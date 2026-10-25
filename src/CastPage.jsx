@@ -369,6 +369,31 @@ export default function CastPage({ user, setPage, notify, onSignInClick }) {
                 <button className="btn-ghost" type="button" onClick={() => setStep("look")}>
                   Another look
                 </button>
+                <button className="btn-ghost" type="button" disabled={busy === "delete"}
+                  onClick={async () => {
+                    if (!window.confirm("Delete this character and every drawing of it? This cannot be undone.")) return;
+                    setBusy("delete");
+                    try {
+                      const t = await token();
+                      const res = await fetch("/api/delete-pack", {
+                        method: "POST",
+                        headers: { "content-type": "application/json", ...(t ? { Authorization: "Bearer " + t } : {}) },
+                        body: JSON.stringify({ packId, packToken }),
+                      });
+                      const body = await res.json().catch(() => ({}));
+                      if (!res.ok) { setError(body.error || "We could not delete that."); }
+                      else {
+                        notify?.("Deleted — the pack and every image of it are gone.");
+                        setPack(null); setPackId(null); setPackToken(null);
+                        setPreview(null); setStills([]); setStep("selfie");
+                      }
+                    } catch (err) {
+                      setError(err.message || "We could not delete that.");
+                    }
+                    setBusy(null);
+                  }}>
+                  {busy === "delete" ? "Deleting\u2026" : "Delete this character"}
+                </button>
                 <button className="btn-ghost" type="button" onClick={() => setPage?.("vault")}>
                   {user ? "Open the Vault" : "What is a pack?"}
                 </button>

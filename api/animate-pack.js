@@ -254,6 +254,9 @@ export default async function handler(req, res) {
 
     await supabase.from("animated_sets").insert({
       user_id: owner,
+      /* Which pack drew it, so deleting that pack can find these images.
+         Null for an anonymous set, which is reached by its token instead. */
+      pack_id: typeof packId === "string" && packId ? packId : null,
       pending_token: owner ? null : packToken,
       ip_hash: ip,
       medium: mediumId,

@@ -87,6 +87,42 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "Could not delete your followers." });
   }
 
+  /*
+    Character packs, and every drawing made from them.
+
+    Collected BEFORE the rows go, because the images live in object storage
+    and the rows are the only record of which files to purge. The urls are
+    added to the same cleanup list the creations use, so the storage pass
+    below removes them with everything else.
+
+    This was missing while packs shipped: deleting an account removed the
+    films and left the face behind.
+  */
+  const packUrls = [];
+  const { data: packRows } = await admin
+    .from("vault_entries").select("images").eq("user_id", userId).eq("kind", "character");
+  for (const row of packRows ?? []) {
+    for (const u of Array.isArray(row.images) ? row.images : []) if (typeof u === "string") packUrls.push(u);
+  }
+  const { data: setRows } = await admin
+    .from("animated_sets").select("stills").eq("user_id", userId);
+  for (const row of setRows ?? []) {
+    for (const st of Array.isArray(row.stills) ? row.stills : []) if (typeof st?.url === "string") packUrls.push(st.url);
+  }
+
+  const { error: delSets } = await admin.from("animated_sets").delete().eq("user_id", userId);
+  if (delSets) {
+    return res.status(500).json({ error: "Could not delete your drawings." });
+  }
+  const { error: delPending } = await admin.from("pending_packs").delete().eq("claimed_by", userId);
+  if (delPending) {
+    return res.status(500).json({ error: "Could not delete your packs." });
+  }
+  const { error: delVault } = await admin.from("vault_entries").delete().eq("user_id", userId);
+  if (delVault) {
+    return res.status(500).json({ error: "Could not delete your Vault." });
+  }
+
   // Your profile row.
   const { error: delProfile } = await admin.from("profiles").delete().eq("id", userId);
   if (delProfile) {
@@ -150,6 +186,28 @@ export default async function handler(req, res) {
           console.error("[delete-account] R2 delete failed for", key, err.message);
           cleanup.r2.push({ key, status: "failed: " + err.message });
         }
+      }
+    }
+  }
+
+  /* The pack photographs and drawings collected above, purged the same way.
+     Their rows are already gone, so this list is the only thing that knows
+     these files exist. */
+  if (r2 && packUrls.length) {
+    const keys = new Set();
+    for (const u of packUrls) {
+      if (u.startsWith(publicUrl + "/")) {
+        const key = decodeURIComponent(u.slice(publicUrl.length + 1).split("?")[0]);
+        if (key) keys.add(key);
+      }
+    }
+    for (const key of keys) {
+      try {
+        await r2.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
+        cleanup.r2.push({ key, status: "deleted" });
+      } catch (err) {
+        console.error("[delete-account] R2 delete failed for", key, err.message);
+        cleanup.r2.push({ key, status: "failed: " + err.message });
       }
     }
   }
