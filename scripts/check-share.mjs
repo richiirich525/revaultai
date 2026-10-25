@@ -3,7 +3,7 @@
 
   A share is a stranger's JSON handed to the studio and then to three.js, so
   the sanitizer is the only thing between a link and the page. It is a
-  whitelist: it builds a new rehearsal from the fields it recognises and drops
+  whitelist: it builds a new rehearsal from the fields it recognizes and drops
   everything else. These cases hold it to that.
 
   Lives in the build chain because the cost of this quietly loosening is a
@@ -74,7 +74,7 @@ ok("beat times non-negative", h.beats.every((b) => b.t >= 0));
 ok("extras capped", h.extras.length <= 64);
 ok("non-numeric coordinates coerced", h.extras.every((e) => Number.isFinite(e.x) && Number.isFinite(e.y)));
 ok("hiddenPieces capped", h.hiddenPieces.length <= 260);
-ok("unrecognised fields dropped", !("nefarious" in h));
+ok("unrecognized fields dropped", !("nefarious" in h));
 ok("no prototype pollution", Object.prototype.polluted === undefined && !("polluted" in h));
 
 const k = sanitize({
