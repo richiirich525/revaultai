@@ -99,7 +99,7 @@ export default function HomeNew({ setPage }) {
         <div className="hn-head">
           <div>
             <div className="hn-eyebrow">Recently added</div>
-            <div className="hn-title">New since you were last here.</div>
+            <div className="hn-title">What&rsquo;s New</div>
             <div className="hn-sub">
               The site changes most weeks. This is what showed up lately, with dates,
               so you can tell what is actually new.
