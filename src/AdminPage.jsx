@@ -33,6 +33,8 @@ export default function AdminPage({ creations, setCreations, notify }) {
   const [due, setDue] = useState(null);
   const [dueBusy, setDueBusy] = useState(false);
   const [sending, setSending] = useState(null);
+  const [gate, setGate] = useState(null);
+  const [gateBusy, setGateBusy] = useState(false);
 
   /*
     What is owed, and why anything owed is not yet payable. This only ever
@@ -87,6 +89,33 @@ export default function AdminPage({ creations, setCreations, notify }) {
     }
     setSending(null);
     loadDue();
+  }
+
+  /*
+    How many finished takes would become a world somebody could walk into.
+
+    This is here for the same reason the checks below are: the measurement
+    exists as a route, and a route reachable only by pasting a session token
+    into curl is a measurement nobody takes. It decides whether the next phase
+    of Story Worlds is worth building, so it needs to be one click.
+
+    Reads only. Nothing is locked and nothing is charged.
+  */
+  async function measureGate() {
+    setGateBusy(true);
+    try {
+      const token = await getSessionToken();
+      const res = await fetch("/api/world-gate", {
+        method: "POST",
+        headers: { "content-type": "application/json", Authorization: "Bearer " + token },
+        body: JSON.stringify({ limit: 200 }),
+      });
+      const body = await res.json().catch(() => ({}));
+      setGate(res.ok ? body : { error: body.error || "The measurement could not run." });
+    } catch (err) {
+      setGate({ error: err.message });
+    }
+    setGateBusy(false);
   }
 
   async function runCheck(route) {
@@ -369,6 +398,77 @@ export default function AdminPage({ creations, setCreations, notify }) {
               <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "var(--muted)", lineHeight: 1.7, marginTop: 18, opacity: 0.8 }}>
                 {due.note}
               </div>
+            </div>
+          )}
+        </div>
+
+        <div style={{ marginBottom: 64 }}>
+          <div className="section-label">Story Worlds — the first gate</div>
+          <p style={{ color: "var(--muted)", fontSize: 11, marginBottom: 24, fontFamily: "'DM Mono', monospace", letterSpacing: "0.1em" }}>
+            Read-only. Runs capsule extraction across finished takes without locking anything.
+          </p>
+          <div style={{ borderTop: "1px solid var(--border)", padding: "20px 0", display: "flex", justifyContent: "space-between", gap: 20, flexWrap: "wrap", alignItems: "flex-start" }}>
+            <div style={{ flex: 1, minWidth: 260 }}>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, color: "var(--muted)", lineHeight: 1.7 }}>
+                How many finished takes carry enough already to become a world somebody could walk into —
+                somebody to meet, somewhere to be, and some condition the place is in. The plan proceeds at
+                seven in ten.
+              </div>
+            </div>
+            <button
+              className="btn-ghost"
+              type="button"
+              onClick={measureGate}
+              disabled={gateBusy}
+              style={{ opacity: gateBusy ? 0.6 : 1, whiteSpace: "nowrap" }}
+            >
+              {gateBusy ? "Measuring..." : "Measure"}
+            </button>
+          </div>
+
+          {gate && (
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, lineHeight: 1.85, paddingBottom: 24, color: "var(--muted)" }}>
+              {gate.error ? (
+                <div style={{ color: "#E5B769" }}>{gate.error}</div>
+              ) : gate.takes === 0 ? (
+                <div>{gate.note}</div>
+              ) : (
+                <>
+                  <div style={{ fontSize: 13, color: gate.passesGate ? "#4ADE80" : "#E5B769", marginBottom: 12 }}>
+                    {gate.usable} of {gate.takes} finished takes would build a world — {Math.round(gate.rate * 100)}%.
+                    {" "}{gate.passesGate ? "That clears the gate." : "That is below the seven in ten the plan asks for."}
+                  </div>
+
+                  {gate.whyNot?.length > 0 && (
+                    <div style={{ marginBottom: 12 }}>
+                      <div style={{ color: "var(--text)" }}>Why the rest fall short</div>
+                      {gate.whyNot.map((r) => (
+                        <div key={r.reason}>&nbsp;&nbsp;{r.count} × {r.reason}</div>
+                      ))}
+                    </div>
+                  )}
+
+                  {gate.thinEvenWhenUsable?.length > 0 && (
+                    <div style={{ marginBottom: 12 }}>
+                      <div style={{ color: "var(--text)" }}>Thin even in the ones that work</div>
+                      {gate.thinEvenWhenUsable.map((r) => (
+                        <div key={r.reason}>&nbsp;&nbsp;{r.count} × {r.reason}</div>
+                      ))}
+                    </div>
+                  )}
+
+                  {gate.examples?.length > 0 && (
+                    <div>
+                      <div style={{ color: "var(--text)" }}>Examples that fell short</div>
+                      {gate.examples.map((e) => (
+                        <div key={e.id} style={{ opacity: 0.85 }}>
+                          &nbsp;&nbsp;&ldquo;{e.prompt}&rdquo; — {e.missing.join("; ")}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           )}
         </div>
