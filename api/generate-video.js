@@ -1,4 +1,6 @@
 import { fal } from '@fal-ai/client';
+import { compileScene, MAX_PACKS_IN_FRAME } from "../src/lib/promptCompiler.js";
+import { beatById, beatFor } from "../src/lib/sceneBeats.js";
 import { createClient } from '@supabase/supabase-js';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -222,7 +224,8 @@ export default async function handler(req, res) {
     }
 
     // 2. Validate input
-    const { prompt, model, duration, imageUrl, endImageUrl, aspectRatio, projectId, filmSpecId, filmSpecVersion, vaultRefIds, coverageSlotId, promotedFrom, locationUrl, locationName } = req.body;
+    let { prompt, vaultRefIds } = req.body;
+    const { model, duration, imageUrl, endImageUrl, aspectRatio, projectId, filmSpecId, filmSpecVersion, coverageSlotId, promotedFrom, locationUrl, locationName, cast } = req.body;
     const pid = typeof projectId === "string" ? projectId : null;
 
     // Normalise a prompt so trivial edits still count as the same shot.
@@ -239,6 +242,64 @@ export default async function handler(req, res) {
     };
     const selected = MODELS[model];
     if (!selected) return res.status(400).json({ error: 'Unknown model' });
+
+    /*
+      A Cast Yourself scene: packs, a genre and a beat, compiled here.
+
+      The client sends ids, never prose. That is the whole point — if the
+      identity arrived as text, a forged request could put words in anyone's
+      description, and the locked pack would be locked in name only. So the
+      packs are read from the Vault under this user, the prompt is compiled
+      from their stored fields, and whatever `prompt` the client sent is
+      replaced rather than merged.
+
+      vaultRefIds is set from the same ids, so the reference photos attach
+      through the machinery that already exists below. Text alone does not
+      hold a face.
+    */
+    if (cast && typeof cast === "object") {
+      const packIds = (Array.isArray(cast.packIds) ? cast.packIds : [])
+        .filter((x) => typeof x === "string" && x).slice(0, MAX_PACKS_IN_FRAME);
+      if (!packIds.length) return res.status(400).json({ error: "Which character is in this scene?" });
+
+      const beat = beatById(cast.beatId);
+      if (!beat) return res.status(400).json({ error: "Pick what happens in this scene." });
+
+      const { data: packRows, error: packError } = await supabase
+        .from("vault_entries")
+        .select("id, name, description, build, distinguishing, wardrobe, images")
+        .eq("user_id", user.id).eq("kind", "character").in("id", packIds);
+      if (packError) {
+        console.error("generate-video could not read the packs:", packError);
+        return res.status(502).json({ error: "Could not read your characters: " + packError.message });
+      }
+      const ordered = packIds.map((id) => (packRows ?? []).find((r) => r.id === id)).filter(Boolean);
+      if (ordered.length !== packIds.length) {
+        return res.status(404).json({ error: "One of those characters is not in your Vault." });
+      }
+
+      const packs = ordered.map((r) => ({
+        name: r.name,
+        identity: r.description,
+        build: r.build,
+        distinguishing: r.distinguishing,
+        wardrobe: r.wardrobe,
+        images: Array.isArray(r.images) ? r.images : [],
+      }));
+
+      const compiled = compileScene({
+        packs,
+        scene: beatFor(beat, packs),
+        styleId: cast.styleId,
+        seconds: Number(duration) || 8,
+      });
+      if (!compiled.ok) {
+        return res.status(422).json({ error: compiled.errors[0], problems: compiled.errors });
+      }
+
+      prompt = compiled.prompt;
+      vaultRefIds = packIds;
+    }
 
     /*
       A closing frame. The Frame Planner has always described the frame a shot

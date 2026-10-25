@@ -21,6 +21,7 @@
 import { compileScene, samePackBlock, MAX_PACKS_IN_FRAME } from "../src/lib/promptCompiler.js";
 import { STYLE_PRESETS, MEDIUMS, GENRES, styleById, protectedTermIn, PROTECTED_TERMS } from "../src/lib/stylePresets.js";
 import { buildStillSet, setIsOnePerson, POSES, FREE_SET } from "../src/lib/stillSet.js";
+import { BEATS, beatById, beatFor } from "../src/lib/sceneBeats.js";
 
 let bad = 0;
 const ok = (name, cond, extra = "") => {
@@ -240,6 +241,37 @@ ok("setIsOnePerson catches a mixed set",
   !setIsOnePerson([{ parts: { pack: "[PACK] A — x" } }, { parts: { pack: "[PACK] B — y" } }]));
 ok("and tolerates a set of one", setIsOnePerson([{ parts: { pack: "[PACK] A — x" } }]));
 ok("and an empty one", setIsOnePerson([]));
+
+/* ---- Cast Yourself: the beats ------------------------------------------ */
+ok("every beat has a unique id", new Set(BEATS.map((b) => b.id)).size === BEATS.length);
+ok("every beat names the character rather than a pronoun",
+  BEATS.every((b) => b.words.includes("{NAME}")), BEATS.filter((b) => !b.words.includes("{NAME}")).map((b) => b.id));
+ok("every beat says what the camera does",
+  BEATS.every((b) => /camera|lens|cut/i.test(b.words)), BEATS.filter((b) => !/camera|lens|cut/i.test(b.words)).map((b) => b.id));
+ok("a beat is one action, not a paragraph", BEATS.every((b) => b.words.length < 220));
+ok("beats resolve by id", BEATS.every((b) => beatById(b.id) === b));
+ok("an unknown beat is null", beatById("nope") === null);
+
+const walk = beatById("walks-in");
+ok("a solo beat names them", beatFor(walk, [nell]).includes("NELL"));
+ok("and uses no pronoun that could be ambiguous later",
+  !/\b(he|she|they|him|her|them)\b/i.test(beatFor(walk, [nell, theo])), beatFor(walk, [nell, theo]));
+ok("a two-hander names both", (() => { const t = beatFor(walk, [nell, theo]); return t.includes("NELL") && t.includes("THEO"); })());
+ok("a three-hander names all three",
+  (() => { const t = beatFor(walk, [nell, theo, { name: "Iris" }]); return ["NELL", "THEO", "IRIS"].every((n) => t.includes(n)); })(),
+  beatFor(walk, [nell, theo, { name: "Iris" }]));
+ok("no cast gives nothing", beatFor(walk, []) === "");
+ok("no beat gives nothing", beatFor(null, [nell]) === "");
+
+/* A beat compiles into a real scene with the pack locked. */
+const shot = compileScene({ packs: [nell, theo], scene: beatFor(walk, [nell, theo]), styleId: "neo-noir", seconds: 8 });
+ok("a beat compiles into a scene", shot.ok, shot.errors);
+ok("with no pronoun warning, because the beats avoid them",
+  !shot.warnings.some((w) => /ambiguous/.test(w)), shot.warnings);
+ok("both packs are mentioned, so neither is invented around",
+  !shot.warnings.some((w) => /never mentions/.test(w)), shot.warnings);
+ok("and it is the same person as their still set",
+  shot.parts.pack.startsWith("[PACK A] NELL"), shot.parts.pack.slice(0, 40));
 
 if (bad) { console.error(`\ncheck-presets FAILED: ${bad} problem${bad === 1 ? "" : "s"}.`); process.exit(1); }
 console.log(`check-presets: ${MEDIUMS.length} mediums, ${GENRES.length} genres, ${POSES.length} poses, nobody imitated, pack blocks deterministic.`);

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { supabase } from "./lib/supabase.js";
 import { MEDIUMS, GENRES } from "./lib/stylePresets.js";
 import { POSES, FREE_SET } from "./lib/stillSet.js";
+import { BEATS } from "./lib/sceneBeats.js";
 
 /*
   CastPage — RevaultAI
@@ -111,6 +112,7 @@ export default function CastPage({ user, setPage, notify, onSignInClick }) {
   const [name, setName] = useState("");
 
   const [choice, setChoice] = useState(null);
+  const [genre, setGenre] = useState(null);
   const [stills, setStills] = useState([]);
   const [over, setOver] = useState(false);
   const fileRef = useRef(null);
@@ -216,6 +218,51 @@ export default function CastPage({ user, setPage, notify, onSignInClick }) {
     setBusy(null);
   }
 
+  /*
+    A scene is a video generation, which means credits, a webhook and a wait
+    measured in minutes rather than seconds. It goes through the generator
+    this site already has \u2014 the same credits, the same refund on failure, the
+    same take that appears on the Takes page \u2014 rather than a second pipeline
+    that would drift from it.
+
+    It needs an account, which is a change from the plan: there the first
+    scene came before sign-up. A still can be anonymous because it costs
+    almost nothing and lives under a token; a video generation is real money
+    against a real queue, and a take has to belong to somebody to be refunded
+    when it fails.
+  */
+  async function shoot(beatId) {
+    if (!user) { onSignInClick?.(); return; }
+    if (!packId) { notify?.("Keep your pack first \u2014 scenes need somewhere to live."); return; }
+    setError(null);
+    setBusy("shoot");
+    try {
+      const t = await token();
+      const res = await fetch("/api/generate-video", {
+        method: "POST",
+        headers: { "content-type": "application/json", Authorization: "Bearer " + t },
+        body: JSON.stringify({
+          model: "seedance-2.5",
+          duration: 8,
+          aspectRatio: "16:9",
+          /* The prompt is compiled on the server from these ids. Nothing
+             about the identity is sent from here. */
+          prompt: "cast",
+          cast: { packIds: [packId], styleId: genre, beatId },
+        }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) setError(body.error || "We could not start that scene.");
+      else {
+        notify?.("Shooting \u2014 it appears on your Takes page when it is done.");
+        setPage?.("takes");
+      }
+    } catch (err) {
+      setError(err.message || "We could not start that scene.");
+    }
+    setBusy(null);
+  }
+
   const waiting = busy === "draw" ? (user ? POSES.length : FREE_SET) : 0;
 
   return (
@@ -317,13 +364,35 @@ export default function CastPage({ user, setPage, notify, onSignInClick }) {
           <div className="cast-label">Be in the movie</div>
           <div className="cast-grid">
             {GENRES.map((g) => (
-              <button key={g.id} className="cast-opt" type="button"
-                onClick={() => notify?.("Scenes are coming next — the drawings work now.")}>
+              <button key={g.id} className="cast-opt" data-on={genre === g.id ? "1" : "0"}
+                type="button" onClick={() => setGenre(genre === g.id ? null : g.id)}>
                 <div className="cast-opt-l">{g.label}</div>
                 <div className="cast-opt-n">{g.note}</div>
               </button>
             ))}
           </div>
+
+          {genre && (
+            <>
+              <div className="cast-label">And what happens</div>
+              <div className="cast-grid">
+                {BEATS.map((b) => (
+                  <button key={b.id} className="cast-opt" type="button"
+                    disabled={busy === "shoot"} onClick={() => shoot(b.id)}>
+                    <div className="cast-opt-l">{b.label}</div>
+                    <div className="cast-opt-n">{b.note}</div>
+                  </button>
+                ))}
+              </div>
+              <div style={{ ...mono, fontSize: 11, color: "var(--muted)", lineHeight: 1.7, marginTop: 12 }}>
+                {busy === "shoot"
+                  ? "Starting\u2026"
+                  : user
+                    ? "Eight seconds, and it costs credits. It appears on your Takes page when it is done."
+                    : "Scenes need an account \u2014 the drawings do not."}
+              </div>
+            </>
+          )}
         </>
       )}
 
