@@ -12,7 +12,8 @@
   copy of the module before it was trusted.
 */
 import {
-  spineFrom, spineGaps, spineIsUsable, factsFor, parseLock, lightingFact, planFor, MIN_SHOTS,
+  spineFrom, spineGaps, spineIsUsable, factsFor, parseLock, lightingFact, planFor,
+  sweepFrom, mentions, MIN_SHOTS,
 } from "../src/lib/sequenceSpine.js";
 
 let pass = 0;
@@ -173,6 +174,79 @@ const RUTH = spec({
 
   ok("an ending state never becomes a carrier",
      !seq.carries.some((c) => /holding the envelope/.test(c.value)));
+}
+
+/* ---- the sweep across a sequence -------------------------------------- */
+{
+  const coat = ["Ruth: soaked jacket"];
+  const seq = spineFrom({ shots: [
+    { spec: spec({ subjects: { characters: ["Ruth"] }, continuityLocks: coat }), generationId: "g1" },
+    { spec: spec({ subjects: { characters: ["Ruth"] }, continuityLocks: coat }), generationId: "g2" },
+    { spec: spec({ subjects: { characters: ["Ruth"] }, continuityLocks: coat }), generationId: "g3" },
+    { spec: spec({ subjects: { characters: ["Ruth"] }, continuityLocks: coat }), generationId: null },
+  ] });
+
+  const clean = sweepFrom({ spine: seq, observations: [
+    { generation_id: "g1", differences: [], resolution: "pending" },
+    { generation_id: "g2", differences: [], resolution: "pending" },
+  ] });
+  ok("a filmed beat with no observation is unchecked", clean.beats[2].status === "unchecked", clean.beats[2].status);
+  ok("an unfilmed beat is not held against the sequence", clean.beats[3].status === "unfilmed");
+  ok("an observed beat with no differences holds", clean.beats[0].status === "held");
+  ok("nothing is reported broken", clean.counts.broken === 0);
+  ok("and the next step is to check the rest", clean.next.some((n) => n.id === "check"));
+
+  const broken = sweepFrom({ spine: seq, observations: [
+    { generation_id: "g1", differences: [], resolution: "pending" },
+    { generation_id: "g2", resolution: "pending", differences: [
+      { aspect: "Ruth's jacket", planned: "soaked jacket", observed: "dry jacket", consequential: true, confidence: "high" },
+    ] },
+  ] });
+  ok("a consequential difference breaks the beat", broken.beats[1].status === "broken");
+  const coatCommitment = broken.commitments.find((c) => /soaked jacket/.test(c.value));
+  ok("the commitment is found", !!coatCommitment, JSON.stringify(broken.commitments.map((c) => c.value)));
+  ok("and is reported at risk in that beat", coatCommitment.likelyBroken.includes(1),
+     JSON.stringify(coatCommitment));
+  ok("the beat that established it is not a commitment", coatCommitment.establishedIn === 0
+     && !coatCommitment.inherited.includes(0));
+  ok("resolving is the first thing to do", broken.next[0]?.id === "resolve", JSON.stringify(broken.next));
+
+  const settled = sweepFrom({ spine: seq, observations: [
+    { generation_id: "g2", resolution: "adopted", differences: [
+      { aspect: "Ruth's jacket", planned: "soaked jacket", observed: "dry jacket", consequential: true },
+    ] },
+  ] });
+  ok("a difference already ruled on stops counting", settled.counts.broken === 0, JSON.stringify(settled.counts));
+  ok("and the commitment is no longer at risk",
+     !settled.commitments.find((c) => /soaked jacket/.test(c.value)).likelyBroken.length);
+
+  const unrelated = sweepFrom({ spine: seq, observations: [
+    { generation_id: "g2", resolution: "pending", differences: [
+      { aspect: "the clock", planned: "reads four", observed: "reads six", consequential: true },
+    ] },
+  ] });
+  ok("a break unrelated to a commitment does not blame it",
+     !unrelated.commitments.find((c) => /soaked jacket/.test(c.value)).likelyBroken.length);
+  ok("but the beat is still broken", unrelated.beats[1].status === "broken");
+
+  ok("word overlap finds the subject", mentions({ aspect: "Ruth is standing" }, "Ruth: soaked jacket"));
+  ok("and does not match on a stopword alone", !mentions({ aspect: "with the and that" }, "Ruth: soaked jacket"));
+  /* The commitment side is where the filter has to hold: a lock made of
+     nothing but common words would otherwise match every difference in the
+     sequence and blame itself for all of them. */
+  ok("a commitment of nothing but common words matches nothing",
+     !mentions({ aspect: "the door and that window" }, "the and with that"));
+  ok("short words do not carry a match", !mentions({ aspect: "a cat sat" }, "a b c"));
+  ok("an empty difference matches nothing", !mentions({}, "Ruth: soaked jacket"));
+
+  const nothing = sweepFrom({ spine: spineFrom({ shots: [] }), observations: [] });
+  ok("an empty project says so", nothing.next.some((n) => n.id === "empty"), JSON.stringify(nothing.next));
+
+  const unshot = sweepFrom({ spine: spineFrom({ shots: [
+    { spec: spec({ subjects: { characters: ["Ruth"] } }), generationId: null },
+    { spec: spec({ subjects: { characters: ["Ruth"] } }), generationId: null },
+  ] }), observations: [] });
+  ok("a wholly unshot project says that instead", unshot.next.some((n) => n.id === "unshot"));
 }
 
 if (fails.length) {

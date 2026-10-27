@@ -9,6 +9,15 @@ import { buildFindings, buildSummary } from "./lib/productionBrain.js";
   can't tell you something about your film that isn't true.
 */
 
+/*
+  Continuity across the whole project, which no other panel can show: a
+  jacket that changes in shot seven is invisible from inside shot seven.
+
+  Fetched on demand rather than with the rest, because it reads every plan
+  and every observation in the project and most visits to this panel are not
+  about continuity. It runs no vision pass and spends nothing — the checking
+  itself stays one take at a time, where somebody can see the frames.
+*/
 const KIND = {
   blocked:  { color: "#F87171", label: "Stuck" },
   waste:    { color: "#E5B769", label: "Costing you" },
@@ -30,6 +39,92 @@ const styles = `
   .pb2-action { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 3px; padding: 6px 12px; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.08em; cursor: pointer; margin-top: 9px; }
   .pb2-action:hover { color: var(--accent); border-color: var(--accent); }
 `;
+
+function Continuity({ projectId, setPage }) {
+  const [sweep, setSweep] = useState(null);
+  const [busy, setBusy] = useState(false);
+
+  async function run() {
+    setBusy(true);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const r = await fetch("/api/sequence-sweep", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + sess?.session?.access_token },
+        body: JSON.stringify({ projectId }),
+      });
+      const j = await r.json().catch(() => ({}));
+      setSweep(r.ok ? j.sweep : { error: j.error || "Could not read this sequence." });
+    } catch (err) {
+      setSweep({ error: err.message });
+    }
+    setBusy(false);
+  }
+
+  if (!sweep) {
+    return (
+      <div className="pb2-find">
+        <div className="pb2-title">Continuity across the sequence</div>
+        <div className="pb2-body">
+          Whether the things established early in this film are still true later on. Reads
+          what has already been observed; it films nothing and spends nothing.
+        </div>
+        <button className="pb2-action" onClick={run} disabled={busy}>
+          {busy ? "Reading…" : "Check the sequence →"}
+        </button>
+      </div>
+    );
+  }
+
+  if (sweep.error) return <div className="pb2-find"><div className="pb2-body">{sweep.error}</div></div>;
+
+  const c = sweep.counts ?? {};
+  const atRisk = (sweep.commitments ?? []).filter((x) => x.likelyBroken.length);
+
+  return (
+    <div className="pb2-find">
+      <div
+        className="pb2-tag"
+        style={{
+          color: c.broken ? "#F87171" : c.unchecked ? "#E5B769" : "#4ADE80",
+          border: `1px solid ${c.broken ? "#F87171" : c.unchecked ? "#E5B769" : "#4ADE80"}55`,
+        }}
+      >
+        {c.broken ? "Continuity" : c.unchecked ? "Unverified" : "Consistent"}
+      </div>
+      <div className="pb2-title">
+        {c.commitments} {c.commitments === 1 ? "thing carries" : "things carry"} between shots
+      </div>
+      <div className="pb2-body">
+        {c.held} filmed {c.held === 1 ? "shot holds" : "shots hold"} to the plan.
+        {c.broken > 0 && ` ${c.broken} ${c.broken === 1 ? "differs" : "differ"} and nobody has decided about it.`}
+        {c.unchecked > 0 && ` ${c.unchecked} filmed ${c.unchecked === 1 ? "shot has" : "shots have"} never been compared.`}
+        {c.unfilmed > 0 && ` ${c.unfilmed} not filmed yet.`}
+      </div>
+
+      {atRisk.length > 0 && (
+        <div className="pb2-body" style={{ paddingTop: 8 }}>
+          {atRisk.slice(0, 4).map((x, i) => (
+            <div key={i}>
+              &bull; <b>{x.value}</b> &mdash; established in shot {x.establishedIn + 1}, looks broken in{" "}
+              {x.likelyBroken.map((b) => b + 1).join(", ")}
+            </div>
+          ))}
+          <div style={{ fontSize: 9, opacity: 0.7, marginTop: 6 }}>
+            Which break belongs to which commitment is matched on wording, so treat it as a
+            pointer rather than a verdict. The per-shot comparison is the reliable part.
+          </div>
+        </div>
+      )}
+
+      {(sweep.next ?? []).slice(0, 1).map((n) => (
+        <div className="pb2-body" key={n.id} style={{ paddingTop: 8 }}>Next: {n.why}.</div>
+      ))}
+
+      <button className="pb2-action" onClick={() => setPage?.("takes")}>Open Takes →</button>
+    </div>
+  );
+}
 
 export default function ProductionBrain({ project, user, setPage, setApPrefill, setGenPrefill }) {
   const [data, setData] = useState(null);
@@ -113,6 +208,8 @@ export default function ProductionBrain({ project, user, setPage, setApPrefill, 
           );
         })
       )}
+
+      <Continuity projectId={project?.id} setPage={setPage} />
 
       <div className="pb2-body" style={{ fontSize: 9, marginTop: 14, opacity: 0.7 }}>
         Read from this project's own records — shots, takes, costs and decisions. Nothing here is inferred.

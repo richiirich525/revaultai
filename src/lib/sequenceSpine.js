@@ -281,6 +281,151 @@ export function planFor(spine, index) {
 }
 
 /*
+  The sweep: a whole sequence at once, rather than one take at a time.
+
+  observe-state compares a single take against its plan. That is the right
+  unit for the work and the wrong unit for the question somebody actually has,
+  which is "is this film consistent" — and the answer to that lives across
+  shots, not inside one. A jacket that changes in shot seven is invisible from
+  inside shot seven.
+
+  WHAT THIS DOES NOT DO: run any vision pass. Frames come off a <video>
+  element in the browser, so nothing here can look at footage. The sweep reads
+  observations that already exist and reports which beats have none, which is
+  honest about the work remaining instead of pretending to have done it.
+
+  ATTRIBUTION IS A HEURISTIC AND IS LABELLED ONE. A beat's verdict comes from
+  its observation and is as good as that observation. Tying a particular
+  broken thing to a particular commitment is word overlap between the
+  difference and the commitment text, nothing cleverer, and it is reported as
+  `likely` rather than as fact. Dressing that up would be the one dishonest
+  thing in a feature whose entire value is telling the truth about footage.
+*/
+
+const STOPWORDS = new Set([
+  "the", "and", "with", "that", "this", "from", "into", "onto", "over",
+  "under", "their", "there", "where", "which", "while", "still", "been",
+  "have", "them", "then", "than", "also", "some", "more", "most", "very",
+]);
+
+function distinctive(value) {
+  return text(value)
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((w) => w.length >= 4 && !STOPWORDS.has(w));
+}
+
+/* Does a reported difference appear to be about this commitment? Word
+   overlap, deliberately shallow. */
+export function mentions(difference, commitment) {
+  const hay = [difference?.aspect, difference?.planned, difference?.observed]
+    .map((x) => text(x).toLowerCase()).join(" ");
+  if (!hay) return false;
+  const words = distinctive(commitment);
+  if (!words.length) return false;
+  return words.some((w) => hay.includes(w));
+}
+
+export function sweepFrom({ spine, observations = [] } = {}) {
+  const byGeneration = new Map();
+  for (const o of observations) {
+    if (o?.generation_id) byGeneration.set(o.generation_id, o);
+  }
+
+  const beats = (spine?.beats ?? []).map((beat) => {
+    const observation = beat.generationId ? byGeneration.get(beat.generationId) ?? null : null;
+    const differences = Array.isArray(observation?.differences) ? observation.differences : [];
+    const consequential = differences.filter((d) => d?.consequential !== false);
+
+    let status;
+    if (!beat.rendered) status = "unfilmed";
+    else if (!observation) status = "unchecked";
+    else if (consequential.length) status = "broken";
+    else status = "held";
+
+    return {
+      index: beat.index,
+      name: beat.name,
+      status,
+      /* A settled difference is one the creator already ruled on, so it stops
+         counting against the sequence. Adopting a filmed change is a decision,
+         not an outstanding problem. */
+      settled: observation ? observation.resolution && observation.resolution !== "pending" : false,
+      differences: consequential.map((d) => ({
+        aspect: text(d?.aspect),
+        planned: text(d?.planned),
+        observed: text(d?.observed),
+        confidence: ["high", "medium", "low"].includes(d?.confidence) ? d.confidence : "medium",
+      })),
+    };
+  });
+
+  /*
+    Each commitment, and how it fared in the beats that inherited it. A
+    carrier's first beat established it; only the later ones are commitments,
+    which is the same rule planFor uses.
+  */
+  const commitments = (spine?.carries ?? []).map((carrier) => {
+    const first = Math.min(...carrier.beats);
+    const inherited = carrier.beats.filter((b) => b > first);
+
+    const held = [];
+    const unchecked = [];
+    const unfilmed = [];
+    const likelyBroken = [];
+
+    for (const index of inherited) {
+      const beat = beats[index];
+      if (!beat) continue;
+      if (beat.status === "unfilmed") { unfilmed.push(index); continue; }
+      if (beat.status === "unchecked") { unchecked.push(index); continue; }
+      if (beat.status === "broken" && !beat.settled
+          && beat.differences.some((d) => mentions(d, carrier.value))) {
+        likelyBroken.push(index);
+        continue;
+      }
+      held.push(index);
+    }
+
+    return {
+      dimension: carrier.dimension,
+      value: carrier.value,
+      establishedIn: first,
+      inherited,
+      held,
+      unchecked,
+      unfilmed,
+      likelyBroken,
+    };
+  }).filter((c) => c.inherited.length);
+
+  const counts = {
+    beats: beats.length,
+    unfilmed: beats.filter((b) => b.status === "unfilmed").length,
+    unchecked: beats.filter((b) => b.status === "unchecked").length,
+    held: beats.filter((b) => b.status === "held").length,
+    broken: beats.filter((b) => b.status === "broken" && !b.settled).length,
+    settled: beats.filter((b) => b.settled).length,
+    commitments: commitments.length,
+    commitmentsAtRisk: commitments.filter((c) => c.likelyBroken.length).length,
+  };
+
+  /* What to do next, in the order it is worth doing. A sequence with ten
+     unchecked beats does not need advice about lighting. */
+  const next = [];
+  if (counts.broken) {
+    next.push({ id: "resolve", why: `${counts.broken} filmed ${counts.broken === 1 ? "beat differs" : "beats differ"} from the plan and nobody has decided about it` });
+  }
+  if (counts.unchecked) {
+    next.push({ id: "check", why: `${counts.unchecked} filmed ${counts.unchecked === 1 ? "beat has" : "beats have"} never been compared against the plan` });
+  }
+  if (!counts.beats) next.push({ id: "empty", why: "nothing planned in this project yet" });
+  else if (counts.unfilmed === counts.beats) next.push({ id: "unshot", why: "none of these plans has been filmed" });
+
+  return { beats, commitments, counts, next };
+}
+
+/*
   Why a spine is not yet usable, named rather than scored, so a bad number
   comes with an instruction. The order matters: the first gap is the one
   worth fixing, and reporting "no locks" about a project with one shot in it
