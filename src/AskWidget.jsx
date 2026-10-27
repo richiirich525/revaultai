@@ -96,7 +96,7 @@ export default function AskWidget({ setPage }) {
       <>
         <style>{css}</style>
         <button className="ask-fab" type="button" onClick={() => setOpen(true)}>
-          Ask about RevaultAI
+          Ask a question
         </button>
       </>
     );
@@ -105,9 +105,12 @@ export default function AskWidget({ setPage }) {
   return (
     <>
       <style>{css}</style>
-      <div className="ask-panel" role="dialog" aria-label="Ask about RevaultAI">
+      <div className="ask-panel" role="dialog" aria-label="Ask a question about RevaultAI">
         <div className="ask-head">
-          <div className="ask-title">Ask about RevaultAI</div>
+          {/* The title has to do the work of saying what this is for. "Ask
+              about RevaultAI" names a subject; it does not tell somebody that
+              a question typed here gets answered. */}
+          <div className="ask-title">Ask anything about RevaultAI</div>
           <button className="ask-x" type="button" aria-label="Close" onClick={() => setOpen(false)}>&times;</button>
         </div>
 
