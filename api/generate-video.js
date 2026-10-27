@@ -159,6 +159,22 @@ const MODELS = {
 // maxRefs counts everything sent as a reference, the location plate included.
 // Seedance 2.5 accepts up to 50; the lower figure here keeps the prompt that
 // names them readable. Kling's elements and Veo's reference mode are narrower.
+/*
+  Every fal endpoint a given model key might have been sent to.
+
+  A row records which model was chosen but not which of its endpoints was
+  used — text-to-video, image-to-video or reference-to-video is decided at
+  submit time from whether a start frame or references were present. A
+  reconciler asking fal about a stuck job needs the endpoint, so it tries
+  these in turn. Exported from here because this is where the mapping lives,
+  and a second copy of it would be a second thing to keep right.
+*/
+export function endpointsFor(modelKey) {
+  const m = MODELS[modelKey];
+  const r = REF_MODELS[modelKey];
+  return [...new Set([m?.falId, m?.imageFalId, r?.falId].filter(Boolean))];
+}
+
 const REF_MODELS = {
   'seedance-2.0': { falId: 'bytedance/seedance-2.0/fast/reference-to-video', named: true, maxRefs: 9 },
   'seedance-2.0-480': { falId: 'bytedance/seedance-2.0/fast/reference-to-video', named: true, maxRefs: 9 },

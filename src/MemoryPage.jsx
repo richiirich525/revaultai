@@ -105,6 +105,9 @@ export default function MemoryPage({ user, setPage, notify, onSignInClick }) {
   const [busy, setBusy] = useState(null);
   const [error, setError] = useState(null);
   const [grantLink, setGrantLink] = useState(null);
+  /* Signed, temporary links for the day's photos. Kept apart from `day` so
+     the stored carrier form in state is never confused for a viewable one. */
+  const [shots, setShots] = useState([]);
   const [grant, setGrant] = useState(null);
   const fileRef = useRef(null);
 
@@ -178,6 +181,32 @@ export default function MemoryPage({ user, setPage, notify, onSignInClick }) {
     })();
     return () => { live = false; };
   }, [user, date, grantId]);
+
+  /*
+    A photo's stored link records where the object lives in a private bucket,
+    so it is not something a browser can load. Every read path in this app
+    turns that back into a key and presigns it; this is that call for a day.
+    Re-run whenever the photo list changes, including right after adding one.
+  */
+  useEffect(() => {
+    const id = day?.id;
+    const count = day?.photos?.length ?? 0;
+    if (!user || !id || !count) { return; }
+    let live = true;
+    (async () => {
+      try {
+        const t = await authToken();
+        const res = await fetch("/api/get-video-url", {
+          method: "POST",
+          headers: { "content-type": "application/json", Authorization: "Bearer " + t },
+          body: JSON.stringify({ type: "memory-day", id }),
+        });
+        const body = await res.json().catch(() => ({}));
+        if (live && res.ok) setShots(body.photos ?? []);
+      } catch { /* the captions still render; a retry comes with the next change */ }
+    })();
+    return () => { live = false; };
+  }, [user, day?.id, day?.photos?.length]);
 
   async function saveDay(patch) {
     if (!user) { onSignInClick?.(); return null; }
@@ -301,7 +330,13 @@ export default function MemoryPage({ user, setPage, notify, onSignInClick }) {
     setBusy(null);
   }
 
-  const photos = day?.photos ?? [];
+  /*
+    The stored list decides how many photos there are and what each one was
+    read for; the signed list decides which can actually be displayed. Keeping
+    them paired by position means the count and the captions are right from
+    the first render, and nothing ever renders a link that cannot load.
+  */
+  const photos = (day?.photos ?? []).map((p, i) => ({ ...p, viewUrl: shots[i]?.url ?? null }));
   const filmed = day?.status === "filmed";
   const ready = !!note.trim() && !!packId && !!styleId;
 
@@ -411,7 +446,9 @@ export default function MemoryPage({ user, setPage, notify, onSignInClick }) {
         <div className="mem-shots">
           {photos.map((p, i) => (
             <figure key={p.url ?? i} className="mem-shot" style={{ margin: 0 }}>
-              <img src={p.url} alt={p.read?.setting || "A photo from the day"} />
+              {p.viewUrl
+                ? <img src={p.viewUrl} alt={p.read?.setting || "A photo from the day"} />
+                : <div style={{ aspectRatio: "4/3", background: "var(--bg2, var(--surface))" }} />}
               <figcaption>{p.read?.setting || "Read for setting"}</figcaption>
             </figure>
           ))}

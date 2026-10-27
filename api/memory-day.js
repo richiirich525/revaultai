@@ -31,6 +31,15 @@ const supabase = createClient(
 
 const MAX_PHOTOS = 6;
 
+/*
+  Up to six photographs, each read by a vision pass and then stored. Done one
+  after another on purpose — they are the person's own day and a burst of six
+  buys nothing — but six round trips outrun any default this platform sets,
+  and animate-pack already showed what that looks like: the function is killed
+  and the browser sees a failed request instead of any error worth reading.
+*/
+export const config = { maxDuration: 60 };
+
 const SYSTEM_PROMPT = `You describe the SETTING of a photograph for a film crew who have to rebuild it.
 
 Report only:

@@ -41,7 +41,7 @@ export default async function handler(req, res) {
     }
 
     const { type, id } = req.body || {};
-    if (type !== "generations" && (!id || !["creation", "generation", "vault", "vault-voice", "voice", "animated"].includes(type))) {
+    if (type !== "generations" && (!id || !["creation", "generation", "vault", "vault-voice", "voice", "animated", "memory-day"].includes(type))) {
       return res.status(400).json({ error: "Invalid request" });
     }
 
@@ -152,6 +152,45 @@ export default async function handler(req, res) {
         });
       }
       return res.status(200).json({ stills });
+    }
+
+    /*
+      The photos attached to one day in Memory Cinema. Same reason again: the
+      row holds carrier links against a private bucket, and a browser cannot
+      fetch one. This is the third place that has been true, which is why
+      every one of them goes through here rather than each page inventing its
+      own signing.
+
+      The `read` travels with each photo because the caption under a photo is
+      what it was read for, and sending the URL without it would mean a second
+      round trip for text already in hand.
+    */
+    if (type === "memory-day") {
+      const { data: day } = await supabase
+        .from("memory_days")
+        .select("user_id, photos")
+        .eq("id", id)
+        .maybeSingle();
+      if (!day || day.user_id !== user.id) {
+        return res.status(403).json({ error: "Not authorized to see that day." });
+      }
+      const publicBase = (process.env.R2_PUBLIC_URL ?? "").replace(/\/$/, "");
+      const r2c = getR2Client();
+      const photos = [];
+      for (const photo of Array.isArray(day.photos) ? day.photos : []) {
+        const stored = photo?.url;
+        if (typeof stored !== "string" || !stored.startsWith(publicBase + "/")) continue;
+        const k = decodeURIComponent(stored.slice(publicBase.length + 1));
+        photos.push({
+          read: photo.read ?? null,
+          url: await getSignedUrl(
+            r2c,
+            new GetObjectCommand({ Bucket: process.env.R2_BUCKET_NAME, Key: k }),
+            { expiresIn: 3600 },
+          ),
+        });
+      }
+      return res.status(200).json({ photos });
     }
 
     let storedUrl = null;

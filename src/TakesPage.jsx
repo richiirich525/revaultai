@@ -172,6 +172,46 @@ export default function TakesPage({ user, onSignInClick, setPage, notify, active
     is. No timer runs on a page of finished takes.
   */
   const waiting = gens.some((g) => g.status !== "complete" && g.status !== "failed");
+
+  /*
+    A take still unfinished ten minutes later is not slow, it is stuck: the
+    webhook that finishes it either never arrived or failed. Nothing else in
+    the system notices, and the person just sees a take that never comes.
+
+    So the page that is already watching asks for a reconcile. Rate-limited to
+    one call every two minutes because the poll runs every eight seconds, and
+    scoped to this person's own takes by the route unless a scheduled caller
+    holds the secret.
+  */
+  /* The oldest thing still in flight, as a timestamp rather than a verdict:
+     reading the clock during render is impure, so the age is worked out in
+     the effect where time is allowed to pass. */
+  const oldestInFlight = gens.reduce(
+    (oldest, g) =>
+      g.status !== "complete" && g.status !== "failed"
+        && (oldest === null || g.created_at < oldest)
+        ? g.created_at
+        : oldest,
+    null,
+  );
+  const lastReconcile = useRef(0);
+  useEffect(() => {
+    if (!user?.id || !oldestInFlight) return;
+    if (Date.now() - new Date(oldestInFlight).getTime() <= 10 * 60 * 1000) return;
+    if (Date.now() - lastReconcile.current < 120000) return;
+    lastReconcile.current = Date.now();
+    (async () => {
+      try {
+        const { data: sess } = await supabase.auth.getSession();
+        const r = await fetch("/api/reconcile-takes", {
+          method: "POST",
+          headers: { Authorization: "Bearer " + sess?.session?.access_token },
+        });
+        if (r.ok) load();
+      } catch { /* the next poll tries again */ }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, oldestInFlight]);
   useEffect(() => {
     if (!user?.id || !waiting) return;
     const id = setInterval(() => { load(); }, 8000);

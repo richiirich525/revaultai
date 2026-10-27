@@ -76,15 +76,80 @@ export function getR2Client() {
   });
 }
 
+/* Built once at module scope: the exported finishers below need it as much
+   as the handler does, and two clients from the same environment are two of
+   the same thing. */
+const supabase = createClient(
+  process.env.VITE_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
+);
+
+/*
+  How a take finishes.
+
+  Both halves are exported because a webhook is not the only thing that can
+  finish one. If fal's callback is ever missed — a deploy mid-generation, a
+  transient 500, a retry that gives up — the take sits in `processing` with
+  the credits gone and nothing notices. api/reconcile-takes.js asks fal
+  directly and finishes it here, through this code rather than a second copy
+  of it: two implementations of "mark it complete and store the video" would
+  eventually disagree about one of them, and the one that disagreed would be
+  the rare path nobody watches.
+*/
+export async function failGeneration(gen, message) {
+  await supabase.rpc("add_credits", {
+    p_user_id: gen.user_id,
+    p_amount: gen.credits_spent,
+    p_reason: "refund",
+    p_session_id: null,
+  });
+  await supabase
+    .from("generations")
+    .update({
+      status: "failed",
+      error_message: String(message || "Generation failed").slice(0, 500),
+      completed_at: new Date().toISOString(),
+    })
+    .eq("id", gen.id)
+    /* Only from an unfinished state: a retry that arrives after a reconcile
+       already settled this take must not refund it twice. */
+    .in("status", ["queued", "processing"]);
+}
+
+export async function completeGeneration(gen, falVideoUrl) {
+  const videoRes = await fetch(falVideoUrl);
+  if (!videoRes.ok) {
+    throw new Error("Could not download video from fal: " + videoRes.status);
+  }
+  const videoBuffer = Buffer.from(await videoRes.arrayBuffer());
+
+  const publicUrl = (process.env.R2_PUBLIC_URL ?? "").replace(/\/$/, "");
+  const key = `generations/${gen.user_id}/${gen.id}.mp4`;
+
+  await getR2Client().send(
+    new PutObjectCommand({
+      Bucket: process.env.R2_BUCKET_NAME,
+      Key: key,
+      Body: videoBuffer,
+      ContentType: "video/mp4",
+    }),
+  );
+
+  await supabase
+    .from("generations")
+    .update({
+      status: "complete",
+      video_url: `${publicUrl}/${key}`,
+      completed_at: new Date().toISOString(),
+    })
+    .eq("id", gen.id)
+    .in("status", ["queued", "processing"]);
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
-
-  const supabase = createClient(
-    process.env.VITE_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  );
 
   try {
     // Read the raw body ourselves (bodyParser is disabled above)
@@ -127,22 +192,7 @@ export default async function handler(req, res) {
 
     // ---- Failure path: refund and record the error ----
     if (status !== "OK") {
-      await supabase.rpc("add_credits", {
-        p_user_id: gen.user_id,
-        p_amount: gen.credits_spent,
-        p_reason: "refund",
-        p_session_id: null,
-      });
-      await supabase
-        .from("generations")
-        .update({
-          status: "failed",
-          // fal sends a structured error here, so the old string-only check
-          // threw the reason away and left "Generation failed" behind.
-          error_message: falErrorText(error) || falErrorText(payload) || "Generation failed",
-          completed_at: new Date().toISOString(),
-        })
-        .eq("id", gen.id);
+      await failGeneration(gen, falErrorText(error) || falErrorText(payload) || "Generation failed");
       return res.status(200).json({ refunded: true });
     }
 
@@ -151,36 +201,7 @@ export default async function handler(req, res) {
     if (!falVideoUrl) {
       throw new Error("No video URL in fal payload");
     }
-
-    const videoRes = await fetch(falVideoUrl);
-    if (!videoRes.ok) {
-      throw new Error("Could not download video from fal: " + videoRes.status);
-    }
-    const videoBuffer = Buffer.from(await videoRes.arrayBuffer());
-
-    const bucket = process.env.R2_BUCKET_NAME;
-    const publicUrl = (process.env.R2_PUBLIC_URL ?? "").replace(/\/$/, "");
-    const key = `generations/${gen.user_id}/${gen.id}.mp4`;
-
-    const r2 = getR2Client();
-    await r2.send(
-      new PutObjectCommand({
-        Bucket: bucket,
-        Key: key,
-        Body: videoBuffer,
-        ContentType: "video/mp4",
-      })
-    );
-
-    await supabase
-      .from("generations")
-      .update({
-        status: "complete",
-        video_url: `${publicUrl}/${key}`,
-        completed_at: new Date().toISOString(),
-      })
-      .eq("id", gen.id);
-
+    await completeGeneration(gen, falVideoUrl);
     return res.status(200).json({ ok: true });
   } catch (err) {
     console.error("generation-webhook error:", err);
