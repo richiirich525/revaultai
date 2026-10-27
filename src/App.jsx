@@ -20,6 +20,7 @@ import RecordingStudioPage from "./RecordingStudioPage.jsx";
 import CastPage from "./CastPage.jsx";
 import MemoryPage from "./MemoryPage.jsx";
 import AskWidget from "./AskWidget.jsx";
+import WorldPage from "./WorldPage.jsx";
 import TakesPage from "./TakesPage.jsx";
 import RehearsalPage from "./RehearsalPage.jsx";
 import { CSS } from "./appCss.js";
@@ -68,6 +69,7 @@ export default function App() {
 const [dbLoaded, setDbLoaded]     = useState(false);
 const [page, setPageState]        = useState("home");
   const [detailId, setDetailIdState] = useState(null);
+  const [worldId, setWorldIdState] = useState(null);
   const [genSubmission, setGenSubmission] = useState(null);
 
   // A generation prefill is single-use: once the user leaves the Submit page,
@@ -92,10 +94,14 @@ const [page, setPageState]        = useState("home");
 
   // ---- URL routing ----
   const detailIdRef = useRef(null);
+  const worldIdRef = useRef(null);
   const creatorUserRef = useRef(null);
-  const KNOWN_PAGES = ["home","explore","creators","feed","generate","settings","admin","submit","set-password","email-confirmed","terms","faq","contact","guidelines","premium-films","about","become-creator","privacy","refunds","dmca","ai-disclaimer","purchase-success","founding-creators","blog","ai-video-generator","prompt-builder","prompts","search","scene-breakdown","which-model","vault","continuity-check","shot-director","coverage","frame-planner","blocking","autopsy","takes","projects","tools","specs","rehearsal","finish","lot","pricing","recording-studio","discovered","cast","animate","memory"];
+  const KNOWN_PAGES = ["home","explore","creators","feed","generate","settings","admin","submit","set-password","email-confirmed","terms","faq","contact","guidelines","premium-films","about","become-creator","privacy","refunds","dmca","ai-disclaimer","purchase-success","founding-creators","blog","ai-video-generator","prompt-builder","prompts","search","scene-breakdown","which-model","vault","continuity-check","shot-director","coverage","frame-planner","blocking","autopsy","takes","projects","tools","specs","rehearsal","finish","lot","pricing","recording-studio","discovered","cast","animate","memory","world"];
 
   function setDetailId(id) { detailIdRef.current = id; setDetailIdState(id); }
+  /* A world is reachable by its id and not otherwise, so the id travels in
+     the path the same way a film's does. */
+  function setWorldId(id) { worldIdRef.current = id; setWorldIdState(id); }
   const blogSlugRef = useRef(null);
   const [blogSlug, setBlogSlugState] = useState(null);
   function openPost(slug) { blogSlugRef.current = slug; setBlogSlugState(slug); setPage("blog-post"); }
@@ -125,6 +131,7 @@ const [page, setPageState]        = useState("home");
   function pathForPage(p) {
     if (p === "home") return "/";
     if (p === "detail") return detailIdRef.current ? "/film/" + detailIdRef.current : "/explore";
+    if (p === "world") return worldIdRef.current ? "/world/" + worldIdRef.current : "/takes";
     if (p === "profile") return creatorUserRef.current ? "/creator/" + creatorUserRef.current : "/creators";
     if (p === "blog-post") return blogSlugRef.current ? "/blog/" + blogSlugRef.current : "/blog";
     if (p === "prompt-model") return promptSlugRef.current ? "/prompts/" + promptSlugRef.current : "/prompts";
@@ -190,6 +197,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       const path = window.location.pathname;
       if (path === "/") { setPageState("home"); return; }
       if (path.startsWith("/film/")) { const id = decodeURIComponent(path.slice(6)); detailIdRef.current = id; setDetailIdState(id); setPageState("detail"); return; }
+      if (path.startsWith("/world/")) { const id = decodeURIComponent(path.slice(7)); worldIdRef.current = id; setWorldIdState(id); setPageState("world"); return; }
       if (path.startsWith("/creator/")) { const u = decodeURIComponent(path.slice(9)); creatorUserRef.current = u; setCreatorUserState(u); setPageState("profile"); return; }
       if (path === "/blog" || path === "/blog/") { setPageState("blog"); return; }
       if (path === "/ai-video-generator" || path === "/ai-video-generator/") { setPageState("ai-video-generator"); return; }
@@ -321,11 +329,12 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       case "pricing": return <PricingPage user={user} setPage={setPage} notify={notify} onSignInClick={() => setAuthOpen(true)} />;
       case "rehearsal": return <RehearsalPage setGenPrefill={setGenPrefill} setPage={setPage} user={user} activeProject={activeProject} notify={notify} onSignInClick={() => setAuthOpen(true)} />;
       case "specs": return <SpecsPage user={user} onSignInClick={() => setAuthOpen(true)} setPage={setPage} notify={notify} setGenPrefill={setGenPrefill} activeProject={activeProject} />;
-      case "takes": return <TakesPage setGenPrefill={setGenPrefill} activeProject={activeProject} user={user} onSignInClick={() => setAuthOpen(true)} setPage={setPage} notify={notify} />;
+      case "takes": return <TakesPage setWorldId={setWorldId} setGenPrefill={setGenPrefill} activeProject={activeProject} user={user} onSignInClick={() => setAuthOpen(true)} setPage={setPage} notify={notify} />;
       case "recording-studio": return <RecordingStudioPage setPage={setPage} user={user} activeProject={activeProject} notify={notify} onSignInClick={() => setAuthOpen(true)} />;
       case "cast": return <CastPage setPage={setPage} user={user} notify={notify} onSignInClick={() => setAuthOpen(true)} />;
       case "animate": return <CastPage mode="animate" setPage={setPage} user={user} notify={notify} onSignInClick={() => setAuthOpen(true)} />;
       case "memory": return <MemoryPage setPage={setPage} user={user} notify={notify} onSignInClick={() => setAuthOpen(true)} />;
+      case "world": return <WorldPage worldId={worldId} setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} />;
       case "autopsy": return <AutopsyPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} setGenPrefill={setGenPrefill} apPrefill={apPrefill} setApPrefill={setApPrefill} />;
       case "blocking": return <BlockingPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} setGenPrefill={setGenPrefill} />;
       case "frame-planner": return <FramePlannerPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} setGenPrefill={setGenPrefill} notify={notify} />;

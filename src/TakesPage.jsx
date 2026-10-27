@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { signGenerationUrls, URL_FRESH_MS } from "./lib/videoUrls.js";
 import { supabase } from "./lib/supabase.js";
 import StateReview from "./StateReview.jsx";
+import WalkIntoThis from "./WalkIntoThis.jsx";
 import EndFrame from "./EndFrame.jsx";
 
 /*
@@ -51,7 +52,7 @@ const REASONS = [
   ["artifact", "Artifact", "Warping, flicker, garbled text"],
 ];
 
-export default function TakesPage({ user, onSignInClick, setPage, notify, activeProject, setGenPrefill }) {
+export default function TakesPage({ user, onSignInClick, setPage, notify, activeProject, setGenPrefill, setWorldId}) {
   const [shots, setShots] = useState([]);
   const [gens, setGens] = useState([]);
   const [urls, setUrls] = useState({});
@@ -481,6 +482,7 @@ export default function TakesPage({ user, onSignInClick, setPage, notify, active
                           {isSel && g.status === "complete" && (
                             <div style={{ marginTop: 10 }}>
                               <StateReview generation={g} notify={notify} />
+                              <WalkIntoThis generation={g} setPage={setPage} setWorldId={setWorldId} notify={notify} />
                               <EndFrame generation={g} notify={notify} setGenPrefill={setGenPrefill} setPage={setPage} />
                             </div>
                           )}
