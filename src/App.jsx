@@ -19,6 +19,7 @@ import AutopsyPage from "./AutopsyPage.jsx";
 import RecordingStudioPage from "./RecordingStudioPage.jsx";
 import CastPage from "./CastPage.jsx";
 import MemoryPage from "./MemoryPage.jsx";
+import AskWidget from "./AskWidget.jsx";
 import TakesPage from "./TakesPage.jsx";
 import RehearsalPage from "./RehearsalPage.jsx";
 import { CSS } from "./appCss.js";
@@ -342,5 +343,5 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
     }
   }
 
-  return (<><style>{CSS}</style><Nav setCreatorUser={setCreatorUser} activeProject={activeProject} page={page} setPage={setPage} user={user} profile={profile} onSignInClick={() => setAuthOpen(true)} onSignOut={handleSignOut} />{renderPage()}{authOpen && <AuthModal onClose={() => setAuthOpen(false)} notify={notify} />}{notifMsg && <Notification key={notifMsg} msg={notifMsg} onClose={() => setNotifMsg(null)} />}</>);
+  return (<><style>{CSS}</style><Nav setCreatorUser={setCreatorUser} activeProject={activeProject} page={page} setPage={setPage} user={user} profile={profile} onSignInClick={() => setAuthOpen(true)} onSignOut={handleSignOut} />{renderPage()}{authOpen && <AuthModal onClose={() => setAuthOpen(false)} notify={notify} />}{notifMsg && <Notification key={notifMsg} msg={notifMsg} onClose={() => setNotifMsg(null)} />}<AskWidget setPage={setPage} /></>);
 }
