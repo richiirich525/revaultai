@@ -1024,7 +1024,9 @@ export default function CastPage({ user, setPage, notify, onSignInClick }) {
           <div className="cast-out">
             {stills.map((s) => (
               <figure key={s.poseId} className="cast-still" style={{ margin: 0 }}>
-                <img src={s.url} alt={`You, ${s.note.toLowerCase()}`} loading="lazy" />
+                {/* viewUrl is signed and temporary; url is where the object
+                    lives and cannot be fetched by a browser. */}
+                <img src={s.viewUrl ?? s.url} alt={`You, ${s.note.toLowerCase()}`} loading="lazy" />
                 <figcaption>{s.note}</figcaption>
               </figure>
             ))}

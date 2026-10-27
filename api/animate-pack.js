@@ -326,6 +326,25 @@ export default async function handler(req, res) {
       return res.status(502).json({ error: "None of the drawings came back. Nothing was charged." });
     }
 
+    /*
+      A second place the stored form cannot be used directly. `drawn` holds
+      R2_PUBLIC_URL carrier links, which is what the row must keep: a presigned
+      link expires, and a durable row holding one is a row that quietly rots.
+      But a browser cannot fetch the carrier form either — the bucket is as
+      private to an <img> tag as it is to fal — so the response carries a
+      signed link beside the stored one.
+
+      Signed here rather than through get-video-url because that route
+      presigns by type and id after its own ownership check, and an animated
+      set has no type there. The ownership check this needs already happened
+      above: the pack was read under this user, or under the pending token
+      that only its holder has.
+    */
+    const shown = [];
+    for (const still of drawn) {
+      shown.push({ ...still, viewUrl: await signForFal(still.url) });
+    }
+
     await supabase.from("animated_sets").insert({
       user_id: owner,
       /* Which pack drew it, so deleting that pack can find these images.
@@ -340,7 +359,9 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       medium: mediumId,
-      stills: drawn,
+      /* The stored form stays in the row above; what goes over the wire is
+         viewable. */
+      stills: shown,
       failed,
       creditsSpent: spent,
       /* What the interface turns into "sign up to keep these". */
