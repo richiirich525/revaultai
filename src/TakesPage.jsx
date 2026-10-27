@@ -160,6 +160,25 @@ export default function TakesPage({ user, onSignInClick, setPage, notify, active
   }
   useEffect(() => { load(); }, [user?.id]);
 
+  /*
+    A take is submitted to fal's queue and finished later by a webhook, so
+    the row changes underneath this page rather than in response to anything
+    the person does here. Loading once meant a generation that completed in
+    two minutes still read as queued until somebody reloaded, which is
+    indistinguishable from it being broken \u2014 and that is exactly how it was
+    reported.
+
+    So: poll while anything is still in flight, and stop the moment nothing
+    is. No timer runs on a page of finished takes.
+  */
+  const waiting = gens.some((g) => g.status !== "complete" && g.status !== "failed");
+  useEffect(() => {
+    if (!user?.id || !waiting) return;
+    const id = setInterval(() => { load(); }, 8000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, waiting]);
+
   async function renameShot(shot, name) {
     const clean = name.trim().slice(0, 120);
     if (clean === (shot.name ?? "")) return;
