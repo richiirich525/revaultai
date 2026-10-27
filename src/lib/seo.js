@@ -97,6 +97,11 @@ export const PAGES = {
     description:
       "Upload one photo and become a character that stays you from shot to shot. Draw yourself as a cartoon, comic or anime, put yourself in a scene, and bring friends into the same shot. Free, no account.",
   },
+  animate: {
+    title: "Turn Your Photo Into a Cartoon — Free, No Account | RevaultAI",
+    description:
+      "Upload one photo and get yourself drawn as a cartoon, comic, anime, claymation, watercolor or pencil — recognizably you in every one. Four drawings free, no account needed.",
+  },
   memory: {
     title: "Memory Cinema \u2014 Film the Day You Actually Had | RevaultAI",
     description:

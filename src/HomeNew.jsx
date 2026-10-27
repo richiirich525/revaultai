@@ -47,7 +47,7 @@ const NEW = [
     date: "2026-10-24",
     title: "Animate Yourself",
     body: "The same character drawn as cel-shade, comic halftone, Sunday funnies, claymation, watercolor or pencil. Four free.",
-    page: "cast",
+    page: "animate",
     cta: "Draw yourself",
   },
   {

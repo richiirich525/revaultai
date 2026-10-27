@@ -29,6 +29,7 @@ export const DEPARTMENTS = [
     body: "One photograph becomes a locked character \u2014 a fixed description of a face that every later prompt reuses word for word, which is what stops a person drifting between shots. Draw that character as a cartoon, a comic or claymation; put it in a scene with a genre and a beat; send a link and have somebody else land in the same frame with their own face. Several angles, shot from a phone or in the booth, make it hold up when the camera moves. Nobody is ever cast from a photograph somebody else uploaded of them.",
     tools: [
       ["Cast Yourself", "cast"],
+      ["Animate Yourself", "animate"],
       ["Memory Cinema", "memory"],
     ],
   },

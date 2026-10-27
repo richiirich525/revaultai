@@ -102,7 +102,19 @@ function readFile(file) {
   });
 }
 
-export default function CastPage({ user, setPage, notify, onSignInClick }) {
+/*
+  `mode` is which door somebody came through. /cast and /animate are the same
+  screen because they are the same first step — a photo becomes a locked
+  character either way — but they are not the same intent. One person wants
+  to be in a film and the other wants a cartoon of themselves, and a page
+  that opens by talking about movies loses the second one before they scroll.
+
+  It changes the copy and nothing else. The flow is identical and both
+  outcomes stay available from the step after, because somebody who came for
+  drawings should still find out a scene is possible.
+*/
+export default function CastPage({ user, setPage, notify, onSignInClick, mode = "cast" }) {
+  const drawingFirst = mode === "animate";
   const [step, setStep] = useState(() => {
     const q = new URLSearchParams(window.location.search);
     if (q.get("crew")) return "invited";
@@ -571,10 +583,11 @@ export default function CastPage({ user, setPage, notify, onSignInClick }) {
 
       {step === "selfie" && (
         <>
-          <h1 className="cast-h">Be in the movie.</h1>
+          <h1 className="cast-h">{drawingFirst ? "Draw yourself." : "Be in the movie."}</h1>
           <p className="cast-sub">
-            One photo of yourself. We build a character you can use again — as a drawing,
-            or as the lead of a scene — and it is the same person every time.
+            {drawingFirst
+              ? "One photo of yourself, drawn as a cartoon, a comic, anime, claymation, watercolor or pencil — and recognizably you in every one of them. Four free, no account."
+              : "One photo of yourself. We build a character you can use again — as a drawing, or as the lead of a scene — and it is the same person every time."}
           </p>
           <div
             className="cast-drop"
