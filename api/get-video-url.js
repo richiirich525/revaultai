@@ -41,7 +41,7 @@ export default async function handler(req, res) {
     }
 
     const { type, id } = req.body || {};
-    if (type !== "generations" && (!id || !["creation", "generation", "vault", "vault-voice", "voice"].includes(type))) {
+    if (type !== "generations" && (!id || !["creation", "generation", "vault", "vault-voice", "voice", "animated"].includes(type))) {
       return res.status(400).json({ error: "Invalid request" });
     }
 
@@ -110,6 +110,48 @@ export default async function handler(req, res) {
         );
       }
       return res.status(200).json({ urls });
+    }
+
+    /*
+      A set of drawings from Animate Yourself. Same shape as "vault" above and
+      for the same reason: the row stores R2_PUBLIC_URL carrier links, which
+      say where an object lives in a private bucket, and a browser can no more
+      fetch one than fal could. Every read path turns the stored form back
+      into a key and presigns it; this is that path for animated sets, which
+      until now had none — the drawings were visible for one minute after they
+      were made and unreachable afterwards.
+
+      Owner only. An anonymous set is reached by its pending token instead,
+      which only its holder has, and that path is not opened here because an
+      unclaimed set has no owner to compare against.
+    */
+    if (type === "animated") {
+      const { data: set } = await supabase
+        .from("animated_sets")
+        .select("user_id, stills")
+        .eq("id", id)
+        .maybeSingle();
+      if (!set || set.user_id !== user.id) {
+        return res.status(403).json({ error: "Not authorized to see those drawings." });
+      }
+      const publicBase = (process.env.R2_PUBLIC_URL ?? "").replace(/\/$/, "");
+      const r2c = getR2Client();
+      const stills = [];
+      for (const still of Array.isArray(set.stills) ? set.stills : []) {
+        const stored = still?.url;
+        if (typeof stored !== "string" || !stored.startsWith(publicBase + "/")) continue;
+        const k = decodeURIComponent(stored.slice(publicBase.length + 1));
+        stills.push({
+          poseId: still.poseId ?? null,
+          note: still.note ?? "",
+          url: await getSignedUrl(
+            r2c,
+            new GetObjectCommand({ Bucket: process.env.R2_BUCKET_NAME, Key: k }),
+            { expiresIn: 3600 },
+          ),
+        });
+      }
+      return res.status(200).json({ stills });
     }
 
     let storedUrl = null;

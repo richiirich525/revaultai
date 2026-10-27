@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import Drawings from "./Drawings.jsx";
 import { supabase } from "./lib/supabase.js";
 import { plainPresets } from "./lib/voiceModels.js";
 
@@ -586,6 +587,8 @@ export default function VaultPage({ user, onSignInClick, setPage, notify, active
                     <div className="vt-body" style={{ opacity: 0.75 }}>{e.notes}</div>
                   </div>
                 )}
+                {e.kind === "character" && <Drawings packId={e.id} name={e.name} />}
+
                 {mutOpen === e.id && (
                   <div style={{ marginTop: 16, paddingTop: 14, borderTop: "1px solid var(--border)" }}>
                     <div className="vt-label">State over time</div>
