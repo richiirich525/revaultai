@@ -1,4 +1,18 @@
-import sharp from "sharp";
+/*
+  sharp is loaded when a mark is actually drawn, not when this module is
+  imported.
+
+  It is a native dependency, so it fails to load on any platform whose
+  prebuilt binary is missing rather than failing at the call site. Imported at
+  the top, that failure took down the whole of animate-pack — including for
+  signed-in creators, whose output is never marked and who therefore never
+  need it. A native binary should only be able to break the one thing it does.
+*/
+let sharpModule = null;
+async function getSharp() {
+  if (!sharpModule) sharpModule = (await import("sharp")).default;
+  return sharpModule;
+}
 
 /*
   watermark — RevaultAI
@@ -85,6 +99,7 @@ export function provenance({ model, medium }) {
  */
 export async function stampStill(buffer, { label = "revaultai.com", model = null, medium = null } = {}) {
   try {
+    const sharp = await getSharp();
     const image = sharp(buffer, { failOn: "none" });
     const { width, height, format } = await image.metadata();
     if (!width || !height) return { buffer, stamped: false, error: "no dimensions" };

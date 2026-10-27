@@ -4,6 +4,16 @@ import { fal } from "@fal-ai/client";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { buildStillSet, setIsOnePerson, FREE_SET, POSES } from "../src/lib/stillSet.js";
 import { stampStill } from "../src/lib/watermark.js";
+import { signForFal } from "./generate-video.js";
+
+/*
+  Eight drawings, each a round trip to an image model. Drawn in parallel
+  below, so this is about one image's latency rather than eight — but the
+  default is far shorter than even one, and without this the function was
+  being killed mid-set and the browser saw a failed request rather than any
+  error the route could explain.
+*/
+export const config = { maxDuration: 60 };
 
 /*
   animate-pack — RevaultAI
@@ -238,31 +248,69 @@ export default async function handler(req, res) {
 
     /* ---- draw ----------------------------------------------------------- */
     const folder = owner ? `animated/${owner}` : `animated/anon/${ip ?? "unknown"}`;
-    const drawn = [];
-    const failed = [];
 
-    for (const still of built.stills) {
+    /*
+      A pack's images are stored in R2_PUBLIC_URL carrier form, which records
+      where an object lives rather than being a link anybody can fetch: the
+      bucket is private. fal fetches reference images itself, from outside,
+      so handing over the stored form hands fal a 403 and every drawing comes
+      back empty.
+
+      This is the same failure generate-video.js had with start frames, in a
+      route written after that was fixed, and it is why signForFal is exported
+      rather than private. Signed once per request because the same three
+      references are used for every pose.
+    */
+    const references = [];
+    for (const image of pack.images.slice(0, 3)) {
+      references.push(await signForFal(image));
+    }
+    if (!references.length) {
+      return res.status(422).json({ error: "That character has no photo to draw from." });
+    }
+
+    async function drawOne(still) {
       try {
         const result = await fal.subscribe(ANIMATE_MODEL.falId, {
           input: {
             prompt: still.prompt,
-            [ANIMATE_MODEL.imageKey]: pack.images.slice(0, 3),
+            [ANIMATE_MODEL.imageKey]: references,
             ...ANIMATE_MODEL.options,
           },
           logs: false,
         });
         const url = result?.data?.images?.[0]?.url;
         if (!url) throw new Error("No image came back");
-        drawn.push({
-          poseId: still.poseId,
-          note: still.note,
-          url: await persistStill(url, folder, { mark: !owner, medium: mediumId }),
-        });
+        return {
+          ok: true,
+          still: {
+            poseId: still.poseId,
+            note: still.note,
+            url: await persistStill(url, folder, { mark: !owner, medium: mediumId }),
+          },
+        };
       } catch (err) {
         console.error(`animate-pack: ${still.poseId} failed:`, err.message);
-        failed.push(still.poseId);
+        return { ok: false, poseId: still.poseId };
       }
     }
+
+    /*
+      In parallel, four at a time. Drawn one after another, eight poses took
+      eight image generations end to end and outran any function timeout this
+      platform offers. Capped rather than all at once so a burst cannot be
+      refused wholesale by a rate limit, which would read to the creator as
+      eight failures rather than one wait.
+    */
+    const results = [];
+    const BATCH = 4;
+    for (let i = 0; i < built.stills.length; i += BATCH) {
+      results.push(...await Promise.all(built.stills.slice(i, i + BATCH).map(drawOne)));
+    }
+
+    /* Order follows the pose set, not whichever finished first. */
+    const drawn = results.filter((r) => r.ok).map((r) => r.still);
+    const failed = results.filter((r) => !r.ok).map((r) => r.poseId);
 
     /* Refund what was not drawn. A partial set is still a set, but nobody
        should pay for a pose that never arrived. */

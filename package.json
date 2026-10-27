@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/check-starters.mjs && node scripts/check-share.mjs && node scripts/check-lot.mjs && node scripts/check-capsule.mjs && node scripts/check-presets.mjs && node scripts/check-spine.mjs && node scripts/check-drift.mjs && node scripts/check-copy.mjs && node scripts/check-links.mjs && vite build && node scripts/prerender.js && node scripts/check-prerender.mjs",
+    "build": "node scripts/check-starters.mjs && node scripts/check-share.mjs && node scripts/check-lot.mjs && node scripts/check-capsule.mjs && node scripts/check-presets.mjs && node scripts/check-spine.mjs && node scripts/check-drift.mjs && node scripts/check-fal.mjs && node scripts/check-copy.mjs && node scripts/check-links.mjs && vite build && node scripts/prerender.js && node scripts/check-prerender.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },
