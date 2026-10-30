@@ -15,6 +15,10 @@ import FinishRender from "./FinishRender.jsx";
 
 const MAX_CLIPS = 12;
 const LENGTHS = [15, 30, 60];
+// Without an active project this page reads every take the creator has.
+// Each one gets a signed URL on load, so the list is bounded: newest
+// first from the server, then flipped back into shooting order.
+const RECENT_LIMIT = 60;
 
 const styles = `
   .fn { max-width: 980px; margin: 0 auto; padding: 0 48px; }
@@ -139,15 +143,26 @@ export default function FinishPage({ user, activeProject, setPage, notify, onSig
   }
 
   useEffect(() => {
-    if (!user?.id || !activeProject?.id) { setLoading(false); return; }
+    if (!user?.id) { setLoading(false); return; }
+    const pid = activeProject?.id ?? null;
+    /*
+      No active project means no project filter — not an empty page. The
+      active project is set in exactly one place, by a button on Projects
+      that most creators never press, so gating these reads on one left
+      Finish permanently blank for anyone who hadn't. Row-level security
+      still scopes all four reads to this creator.
+    */
+    const inProject = (q) => (pid ? q.eq("project_id", pid) : q);
     (async () => {
       const [{ data: g }, { data: s }, { data: b }] = await Promise.all([
-        supabase.from("generations").select("id, prompt, model, status, video_url, take_status, reject_reason, finish_analysis, created_at")
-          .eq("project_id", activeProject.id).eq("status", "complete").order("created_at", { ascending: true }),
-        supabase.from("shots").select("selected_generation_id").eq("project_id", activeProject.id),
-        supabase.from("scene_breakdowns").select("breakdown").eq("project_id", activeProject.id).order("created_at", { ascending: false }).limit(1),
+        inProject(supabase.from("generations").select("id, prompt, model, status, video_url, take_status, reject_reason, finish_analysis, created_at").eq("status", "complete"))
+          .order("created_at", { ascending: false }).limit(RECENT_LIMIT),
+        inProject(supabase.from("shots").select("selected_generation_id")),
+        inProject(supabase.from("scene_breakdowns").select("breakdown")).order("created_at", { ascending: false }).limit(1),
       ]);
-      const list = g ?? [];
+      // Fetched newest-first so the cap keeps the most recent work; the page
+      // itself reads oldest-first, the order the takes were shot in.
+      const list = (g ?? []).slice().reverse();
       setGens(list);
       setKeepers(new Set((s ?? []).map((x) => x.selected_generation_id).filter(Boolean)));
       setPicked(new Set(list.slice(0, MAX_CLIPS).map((x) => x.id)));
@@ -155,7 +170,7 @@ export default function FinishPage({ user, activeProject, setPage, notify, onSig
       if (logline) setScene((cur) => cur || logline);
       setLoading(false);
       for (const one of list) signUrl(one);
-      const { data: c } = await supabase.from("finish_cuts").select("id, cut").eq("project_id", activeProject.id).order("created_at", { ascending: false }).limit(1);
+      const { data: c } = await inProject(supabase.from("finish_cuts").select("id, cut")).order("created_at", { ascending: false }).limit(1);
       setCut(c?.[0]?.cut ?? null);
       setCutId(c?.[0]?.id ?? null);
     })();
@@ -207,7 +222,7 @@ export default function FinishPage({ user, activeProject, setPage, notify, onSig
       const r = await fetch("/api/finish-assemble", {
         method: "POST",
         headers: { Authorization: "Bearer " + sess?.session?.access_token, "Content-Type": "application/json" },
-        body: JSON.stringify({ projectId: activeProject.id, scene, length, clipIds: ids }),
+        body: JSON.stringify({ projectId: activeProject?.id ?? null, scene, length, clipIds: ids }),
       });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) notify?.(j.error || "Couldn't assemble the cut.");
@@ -237,17 +252,6 @@ export default function FinishPage({ user, activeProject, setPage, notify, onSig
     );
   }
 
-  if (!activeProject) {
-    return (
-      <div className="page">{header}
-        <section className="section"><div className="empty-state">
-          <div className="empty-text">Finish works on one project at a time. Choose a project first.</div>
-          <button className="btn-primary" style={{ marginTop: 20 }} onClick={() => setPage("projects")}>Go to Projects</button>
-        </div></section>
-      </div>
-    );
-  }
-
   const chosen = gens.filter((g) => picked.has(g.id));
   const pending = chosen.filter((g) => !g.finish_analysis).length;
   const analyzed = chosen.length - pending;
@@ -261,6 +265,18 @@ export default function FinishPage({ user, activeProject, setPage, notify, onSig
           <div className="fn-body" style={{ maxWidth: 660, marginBottom: 26 }}>
             Choose the takes to work from — including the ones you rejected. A failed clip often hides a usable second or two: a clean reaction before the face drifts, an establishing view before the camera wanders. Finish reads each clip for those moments. Free while it's new.
           </div>
+
+          {!activeProject && (
+            <div className="fn-body" style={{ maxWidth: 660, marginBottom: 26, opacity: 0.75 }}>
+              Showing your most recent takes across everything you&rsquo;ve made.{" "}
+              <button
+                className="fn-btn"
+                style={{ verticalAlign: "baseline" }}
+                onClick={() => setPage("projects")}
+              >Set a project active</button>{" "}
+              to narrow this to one film.
+            </div>
+          )}
 
           <div className="fn-panel">
             <div className="fn-label">The scene</div>
@@ -282,7 +298,7 @@ export default function FinishPage({ user, activeProject, setPage, notify, onSig
 
           <div className="fn-panel">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 10, marginBottom: 6 }}>
-              <div className="fn-label" style={{ marginBottom: 0 }}>Takes in {activeProject.name} — {chosen.length} chosen</div>
+              <div className="fn-label" style={{ marginBottom: 0 }}>{activeProject ? `Takes in ${activeProject.name}` : "All your takes"} — {chosen.length} chosen</div>
               <div className="fn-legend">
                 <span><i style={{ background: QUALITY.strong }} />strong</span>
                 <span><i style={{ background: QUALITY.usable }} />usable</span>
@@ -294,7 +310,7 @@ export default function FinishPage({ user, activeProject, setPage, notify, onSig
             {loading ? (
               <div className="fn-body" style={{ padding: "14px 0" }}>Loading your takes…</div>
             ) : gens.length === 0 ? (
-              <div className="fn-body" style={{ padding: "14px 0" }}>No finished generations in this project yet. Generate some shots under it first.</div>
+              <div className="fn-body" style={{ padding: "14px 0" }}>{activeProject ? "No finished takes in this project yet. Generate some shots under it first." : "No finished takes yet. Generate a shot first and it will show up here."}</div>
             ) : (
               gens.map((g) => {
                 const a = g.finish_analysis;

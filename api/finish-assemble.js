@@ -53,18 +53,23 @@ export default async function handler(req, res) {
     if (!user) return res.status(401).json({ error: "Not signed in" });
 
     const { projectId, scene, length, clipIds } = req.body || {};
-    if (!projectId || !Array.isArray(clipIds) || clipIds.length === 0) return res.status(400).json({ error: "Choose some analyzed clips first." });
+    if (!Array.isArray(clipIds) || clipIds.length === 0) return res.status(400).json({ error: "Choose some analyzed clips first." });
+    // A project is optional. Almost no take on the platform carries one, and
+    // requiring it here meant the clips a creator had just analyzed could not
+    // be cut together. user_id below is what actually keeps this to its owner.
+    const pid = typeof projectId === "string" && projectId ? projectId : null;
     const target = LENGTHS.includes(Number(length)) ? Number(length) : 30;
     const ids = [...new Set(clipIds.map(String))].slice(0, MAX_CLIPS);
 
-    // Only the creator's own clips, in this project, that pass 1 has read.
-    const { data: gens } = await supabase
+    // Only the creator's own clips that pass 1 has read — narrowed to the
+    // project when one is active, and to everything of theirs when not.
+    let clipQuery = supabase
       .from("generations")
       .select("id, prompt, model, take_status, reject_reason, finish_analysis, created_at")
       .in("id", ids)
-      .eq("user_id", user.id)
-      .eq("project_id", projectId)
-      .order("created_at", { ascending: true });
+      .eq("user_id", user.id);
+    if (pid) clipQuery = clipQuery.eq("project_id", pid);
+    const { data: gens } = await clipQuery.order("created_at", { ascending: true });
     const clips = (gens ?? []).filter((g) => g.finish_analysis?.duration);
     if (clips.length === 0) return res.status(400).json({ error: "Analyze at least one chosen clip first." });
 
@@ -78,10 +83,16 @@ export default async function handler(req, res) {
       return res.status(429).json({ error: `You've assembled ${DAILY_LIMIT} cuts in the last day — the limit while Finish is free. Your latest cut is still here.` });
     }
 
-    const [{ data: shots }, { data: bd }] = await Promise.all([
-      supabase.from("shots").select("name, prompt, selected_generation_id").eq("project_id", projectId).eq("user_id", user.id),
-      supabase.from("scene_breakdowns").select("breakdown").eq("project_id", projectId).eq("user_id", user.id).order("created_at", { ascending: false }).limit(1),
-    ]);
+    // Both of these are project-scoped by nature: a shot list and a scene
+    // breakdown belong to a film. With no project there is nothing to read,
+    // so the cut is built from the clips alone rather than from a filter that
+    // would match every row the creator owns.
+    const [{ data: shots }, { data: bd }] = pid
+      ? await Promise.all([
+        supabase.from("shots").select("name, prompt, selected_generation_id").eq("project_id", pid).eq("user_id", user.id),
+        supabase.from("scene_breakdowns").select("breakdown").eq("project_id", pid).eq("user_id", user.id).order("created_at", { ascending: false }).limit(1),
+      ])
+      : [{ data: [] }, { data: [] }];
     const keepers = new Set((shots ?? []).map((s) => s.selected_generation_id).filter(Boolean));
 
     const labeled = clips.map((g, i) => ({ label: "C" + (i + 1), g }));
@@ -153,7 +164,7 @@ export default async function handler(req, res) {
       .from("finish_cuts")
       .insert({
         user_id: user.id,
-        project_id: projectId,
+        project_id: pid,
         scene: str(scene, 1200),
         target_length: target,
         cut,

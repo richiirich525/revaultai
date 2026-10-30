@@ -54,22 +54,29 @@ const styles = `
 export default function LotPage({ user, activeProject, setPage, notify, onSignInClick }) {
   // Keyed by project so a switch never shows the previous project's setups
   // while the new ones are still in flight.
-  const [loaded, setLoaded] = useState({ projectId: null, rows: [] });
+  const [loaded, setLoaded] = useState({ projectId: null, loaded: false, rows: [] });
 
   useEffect(() => {
-    if (!user?.id || !activeProject?.id) return;
+    if (!user?.id) return;
+    const pid = activeProject?.id ?? null;
     let alive = true;
     (async () => {
-      const { data } = await supabase
+      // With no active project this reads every setup the creator owns. RLS
+      // keeps that to them; requiring a project here showed an empty lot to
+      // anyone who had never set one, which is nearly everyone.
+      let q = supabase
         .from("coverage_slots")
-        .select("id, plan_id, plan_label, slug, shot_size, sort, camera_x, camera_y, camera_rotation, lens_mm, camera_height, favors, actors, intent, intent_favors, deliberate_cross, no_master_by_design")
-        .eq("project_id", activeProject.id);
-      if (alive) setLoaded({ projectId: activeProject.id, rows: data ?? [] });
+        .select("id, plan_id, plan_label, slug, shot_size, sort, camera_x, camera_y, camera_rotation, lens_mm, camera_height, favors, actors, intent, intent_favors, deliberate_cross, no_master_by_design");
+      if (pid) q = q.eq("project_id", pid);
+      const { data } = await q;
+      if (alive) setLoaded({ projectId: pid, loaded: true, rows: data ?? [] });
     })();
     return () => { alive = false; };
   }, [user?.id, activeProject?.id]);
 
-  const slots = loaded.projectId && loaded.projectId === activeProject?.id ? loaded.rows : [];
+  // Keyed on the project the rows were fetched for — null included — so a
+  // switch never shows the previous scope's setups while the new ones load.
+  const slots = loaded.loaded && loaded.projectId === (activeProject?.id ?? null) ? loaded.rows : [];
   const blocked = geometricCount(slots);
 
   return (
