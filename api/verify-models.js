@@ -94,7 +94,23 @@ async function probe(id) {
       body: "{}",
     });
     const [verdict, note] = VERDICT[r.status] ?? ["unknown", "Unexpected status."];
-    return { status: r.status, verdict, note };
+
+    /*
+      A status code alone cannot read a 200.
+
+      Nine made-up Kling 4.0 spellings across three namespaces all answered
+      200 to an empty body, which no three real namespaces could. So a 200
+      is ambiguous: fal may be returning a not-found body under an OK
+      status, or the queue may be accepting a submission it has not
+      validated. Those mean opposite things — nothing happened, or a job
+      was queued — so the body is what settles it, and only for the codes
+      where the status is not already conclusive.
+    */
+    let body = null;
+    if (r.status === 200 || r.status === 404) {
+      body = (await r.text().catch(() => "")).slice(0, 300);
+    }
+    return { status: r.status, verdict, note, ...(body === null ? {} : { body }) };
   } catch (err) {
     return { status: null, verdict: "unreachable", note: err.message };
   }
@@ -139,12 +155,14 @@ export default async function handler(req, res) {
     */
     const byVerdict = {};
     for (const c of candidates) (byVerdict[c.verdict] ??= []).push(c.id);
+    const sample = candidates.find((c) => c.body);
     const tail = candidates.length
       ? live.length
         ? " Candidates that exist: " + live.map((c) => c.id).join(", ") + "."
         : " No candidate resolved — " + Object.entries(byVerdict)
-          .map(([v, ids]) => `${v} (${ids.length}): ${ids.join(", ")}`)
+          .map(([v, ids]) => `${v} (${ids.length})`)
           .join(" | ")
+          + (sample ? ` — ${sample.id} answered: ${sample.body}` : "")
       : "";
 
     return res.status(200).json({
