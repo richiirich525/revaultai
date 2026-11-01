@@ -131,10 +131,20 @@ export default async function handler(req, res) {
     const head = missing.length
       ? "Wrong ids: " + missing.map((r) => r.where).join(", ")
       : "Every model id resolves.";
+    /*
+      A candidate that fails is not all one thing, and the difference is the
+      whole answer: 404 means the id does not exist, while 403 means it does
+      and this key may not call it yet. Reporting only the 422s threw that
+      away and left "none resolved" meaning either. Group by verdict instead.
+    */
+    const byVerdict = {};
+    for (const c of candidates) (byVerdict[c.verdict] ??= []).push(c.id);
     const tail = candidates.length
       ? live.length
         ? " Candidates that exist: " + live.map((c) => c.id).join(", ") + "."
-        : " No candidate id resolved — none of the spellings tried are real."
+        : " No candidate resolved — " + Object.entries(byVerdict)
+          .map(([v, ids]) => `${v} (${ids.length}): ${ids.join(", ")}`)
+          .join(" | ")
       : "";
 
     return res.status(200).json({
