@@ -4,14 +4,25 @@ import { createClient } from "@supabase/supabase-js";
   verify-models — RevaultAI
   Asks fal whether every model id this codebase references actually exists.
 
-  It sends each endpoint an empty input. Every one of these models requires a
-  prompt, so validation fails before any work is queued: nothing generates and
-  nothing is charged. What we read is the status code.
+  It sends each endpoint an empty input. A real endpoint has a schema, so fal
+  validates against it and rejects the empty body with a 422 before any work
+  is queued: nothing generates and nothing is charged.
+
+  That holds ONLY for ids that exist. An id fal does not know has no schema
+  to check, so the queue accepts the submission and answers 200 with
+  {"status":"IN_QUEUE","request_id":...} — a real queued job. Probing a
+  speculative id here therefore queues work rather than testing a name, and
+  this file is not the tool for that. To ask whether an id exists, read it:
+  GET https://api.fal.ai/v1/models/pricing?endpoint_id=<id> returns the unit
+  price for a real endpoint and changes nothing.
+
+  Every id below is one this codebase already calls, so every one of them
+  should answer 422. What we read is the status code.
 
     404  the endpoint id is wrong
     422  the endpoint exists and rejected our empty input (what we want)
     401  FAL_KEY is missing or wrong
-    200  unexpected — treat as suspicious and check by hand
+    200  NOT a pass — fal queued a job, which means it does not know this id
 
   Admin only, and safe to re-run whenever a model is added or a provider
   renames something underneath us.
@@ -46,41 +57,15 @@ const ENDPOINTS = [
   ["fal-ai/nano-banana-2",                            "nano-banana-2 image"],
 ];
 
-/*
-  Candidates — ids we are testing, not ids we depend on.
-
-  Kept apart from ENDPOINTS on purpose. ENDPOINTS is a contract: every one
-  of those must resolve, and a single 404 there is a real failure worth
-  turning the check amber for. A candidate is the opposite — most of these
-  are *expected* to 404, because the whole point is to find which spelling
-  is real. Counting them as problems would leave the check permanently
-  failing and teach us to ignore it.
-
-  fal's model pages write Kling 4.0 as `kling/v4/...` with no owner prefix,
-  but its request log strips prefixes from every id it displays, so those
-  pages are not proof. The v3 family we already call lives under
-  `fal-ai/kling-video/v3/...`. Probe all three spellings; the one that
-  answers 422 is real. Once it is wired into generate-video.js, move the
-  winner into ENDPOINTS and delete the rest.
-*/
-const CANDIDATES = [
-  ["kling/v4/text-to-video",                   "Kling 4.0 text — A"],
-  ["fal-ai/kling/v4/text-to-video",            "Kling 4.0 text — B"],
-  ["fal-ai/kling-video/v4/text-to-video",      "Kling 4.0 text — C"],
-  ["kling/v4/image-to-video",                  "Kling 4.0 image — A"],
-  ["fal-ai/kling/v4/image-to-video",           "Kling 4.0 image — B"],
-  ["fal-ai/kling-video/v4/image-to-video",     "Kling 4.0 image — C"],
-  ["kling/v4/reference-to-video",              "Kling 4.0 reference — A"],
-  ["fal-ai/kling/v4/reference-to-video",       "Kling 4.0 reference — B"],
-  ["fal-ai/kling-video/v4/reference-to-video", "Kling 4.0 reference — C"],
-];
-
 const VERDICT = {
   404: ["missing", "This id does not exist on fal."],
   422: ["ok", "Endpoint exists; it rejected the empty input, as expected."],
   401: ["auth", "FAL_KEY is missing or rejected."],
   403: ["auth", "FAL_KEY is not allowed to use this endpoint."],
-  200: ["suspicious", "Accepted an empty input — check this one by hand."],
+  // Measured, not assumed: an unknown id answers 200 with IN_QUEUE and a
+  // request_id, because there is no schema to reject the empty body against.
+  // So a 200 is the same failure as a 404, and queues a job besides.
+  200: ["missing", "fal queued this instead of rejecting it — it does not know this id."],
 };
 
 async function probe(id) {
@@ -133,44 +118,15 @@ export default async function handler(req, res) {
       results.push({ id, where, ...(await probe(id)) });
     }
 
-    const candidates = [];
-    for (const [id, where] of CANDIDATES) {
-      candidates.push({ id, where, ...(await probe(id)) });
-    }
-
     const missing = results.filter((r) => r.verdict === "missing");
-    const live = candidates.filter((c) => c.verdict === "ok");
-
-    // "missing" counts only ENDPOINTS, so a candidate that does not exist
-    // never turns this check amber. The summary is the one line the admin
-    // page shows, so the candidate verdict has to travel in it.
-    const head = missing.length
-      ? "Wrong ids: " + missing.map((r) => r.where).join(", ")
-      : "Every model id resolves.";
-    /*
-      A candidate that fails is not all one thing, and the difference is the
-      whole answer: 404 means the id does not exist, while 403 means it does
-      and this key may not call it yet. Reporting only the 422s threw that
-      away and left "none resolved" meaning either. Group by verdict instead.
-    */
-    const byVerdict = {};
-    for (const c of candidates) (byVerdict[c.verdict] ??= []).push(c.id);
-    const sample = candidates.find((c) => c.body);
-    const tail = candidates.length
-      ? live.length
-        ? " Candidates that exist: " + live.map((c) => c.id).join(", ") + "."
-        : " No candidate resolved — " + Object.entries(byVerdict)
-          .map(([v, ids]) => `${v} (${ids.length})`)
-          .join(" | ")
-          + (sample ? ` — ${sample.id} answered: ${sample.body}` : "")
-      : "";
 
     return res.status(200).json({
       checked: results.length,
       missing: missing.length,
-      summary: head + tail,
+      summary: missing.length
+        ? "Wrong ids: " + missing.map((r) => r.where).join(", ")
+        : "Every model id resolves.",
       results,
-      candidates,
     });
   } catch (err) {
     console.error("verify-models failed:", err);
