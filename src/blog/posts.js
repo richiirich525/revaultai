@@ -4,6 +4,69 @@
 
 export const POSTS = [
   {
+    slug: "kling-4-on-fal-pricing-and-what-shipped",
+    title: "Kling 4.0 Is on fal: What It Costs, and What Actually Shipped",
+    seoTitle: "Kling 4.0 Pricing on fal: Cost Per Second, Real Specs and API Status",
+    description:
+      "Kling 4.0 is live on fal at $0.157 a second. Here is what it costs against Seedance 2.5 and Kling 3.0, which announced features made it into the shipped model, and what we found when we tested whether the API works.",
+    date: "2026-11-01",
+    author: "Richard Garland",
+    category: "News",
+    readingTime: "4 min",
+    faq: [
+      ["Is Kling 4.0 available through an API yet?", "Not as of 1 November 2026. It runs in fal's playground and through fal Agent, but there is no endpoint to call from your own code. We tested this rather than assuming it: a real fal endpoint has an input schema, so an empty request body comes back rejected with a 422. We sent empty bodies to nine plausible Kling 4.0 endpoint names across three naming conventions, and every one of them was accepted into the queue instead of rejected, which is what happens when fal has no schema to check against because the app is not there. Every endpoint we already use returned the 422 in the same run."],
+      ["How much does Kling 4.0 cost?", "On fal, $0.157 per second at 720p and $0.235 per second at 1080p. Reference-to-video with video references costs less per second, $0.094 at 720p and $0.141 at 1080p, but it bills input plus output with a minimum of twice the output length, so a short clip built from long reference footage is not the bargain the per-second figure suggests."],
+      ["Does Kling 4.0 do 4K?", "Kuaishou announced 4K output. fal lists 720p and 1080p only. Either 4K is coming later or it is reserved for a tier fal does not carry; until somebody publishes a 4K generation, treat it as announced rather than shipped."],
+      ["Is Kling 4.0 cheaper than Seedance 2.5?", "Substantially. Seedance 2.5 is billed by token rather than by second, and at 720p in a 16:9 frame that works out to roughly $0.46 a second. Kling 4.0 is $0.157 for the same resolution, with audio included in both. That is close to a third of the price."],
+    ],
+    content: `
+<p>On 30 September we wrote about Kling 4.0 from Kuaishou&rsquo;s announcement and said plainly that nobody outside the beta had used it, ourselves included. It is now on fal. This is the follow-up with numbers instead of claims, including the one number that matters most to anyone planning to build on it: you cannot call it from code yet.</p>
+
+<h2>What it costs</h2>
+
+<p>fal prices Kling 4.0 at <strong>$0.157 per second at 720p</strong> and <strong>$0.235 per second at 1080p</strong>. Reference-to-video with video references is cheaper per second &mdash; $0.094 at 720p, $0.141 at 1080p &mdash; but it bills input alongside output with a floor of twice the output length, so feeding it thirty seconds of reference to get five seconds back is not the saving the headline rate implies.</p>
+
+<p>Set against the alternatives, that is the story of this release:</p>
+
+<ul>
+<li><strong>Seedance 2.5</strong> at 720p costs roughly $0.46 a second. Kling 4.0 is about a third of that, and both generate audio.</li>
+<li><strong>Kling 3.0 Pro</strong> is $0.14 a second. Kling 4.0 is twelve percent more and brings native audio, six times the maximum length and ten keyframes.</li>
+</ul>
+
+<p>A twelve percent premium over the previous generation is unusual. Most model releases cost more than what they replace. This one is close to free, and the thing it undercuts by three times is the model most people reach for when they want a long take with sound.</p>
+
+<h2>What shipped, and what only got announced</h2>
+
+<p>Comparing the September announcement against fal&rsquo;s own model pages is worth doing, because two of the biggest numbers have not survived the trip.</p>
+
+<p><strong>Confirmed:</strong> three to thirty seconds in a single generation. 21:9, 16:9, 1:1 and 9:16. Native stereo audio covering dialogue, singing, sound effects and ambience, with lip sync. Up to ten keyframe images. For reference-to-video, up to ten images, five videos totalling thirty seconds, and seven elements, to a ceiling of fifteen assets, with up to three elements carrying a voice. Image-to-video takes a start frame, middle frames and an end frame.</p>
+
+<p><strong>Not confirmed:</strong> the announcement promised 4K output. fal lists 720p and 1080p. The announcement promised two-minute output through multi-shot continuation; fal describes three to thirty seconds per generation with multi-shot prompts dividing that length between shots, which is a different thing. Neither absence proves the capability is vapor &mdash; a provider carries what a provider carries &mdash; but if you were planning around 4K or around two minutes, plan around 1080p and thirty seconds instead.</p>
+
+<h2>The API is not live, and here is how we know</h2>
+
+<p>fal&rsquo;s Kling 4.0 overview page says API access is coming soon. fal&rsquo;s own announcement said API access is open to all customers. Those cannot both be true, so we measured it.</p>
+
+<p>Every endpoint on fal has an input schema. Send one an empty request body and it rejects you with a 422, because the schema says a prompt is required and there is no prompt. That is the behavior we rely on to check, without spending anything, that the model names in our code still point at something real.</p>
+
+<p>We sent empty bodies to nine candidate names for Kling 4.0 &mdash; text, image and reference endpoints across the three naming conventions fal uses for different model owners. Not one came back rejected. All nine were <em>accepted into the queue</em> and handed back a request id. In the same run, every endpoint we already generate with returned the 422 as expected.</p>
+
+<p>An endpoint with a schema cannot accept an empty body. The only way to be waved through is for there to be no schema to check against, which happens when the application does not exist. Kling 4.0 is real, it runs in fal&rsquo;s playground and through fal Agent, and there is nothing to call from your own code.</p>
+
+<p>One footnote, since we got it wrong before we got it right: that empty-body check is only safe for names that exist. For a name that does not, the queue accepts a job rather than refusing one. We queued twenty-seven of them learning this. If you want to ask whether an endpoint is real without submitting anything, read its price instead &mdash; a GET to fal&rsquo;s pricing API returns a figure for a live endpoint and nothing for an imaginary one, and changes no state at all.</p>
+
+<h2>What to do now</h2>
+
+<p>If you want to see what the model does, fal&rsquo;s playground is open and so is their Agent. That is enough to judge whether its motion and its audio are worth planning a film around.</p>
+
+<p>If you are waiting to generate with it here, so are we. The pricing is already worked out on our side and the wiring is a short job once there is an endpoint; it is not a question of effort, only of fal shipping the API. We check on a schedule and this post gets updated the day it changes.</p>
+
+<p>In the meantime the thing worth absorbing is the price. A model that produces thirty seconds with lip-synced audio for fifteen cents a second changes what is affordable about a long take. Most of the reasons to cut away from a performance in AI video have been technical rather than dramatic &mdash; the model could not hold the shot, or holding it cost too much. That excuse is getting thinner.</p>
+
+<p class="editorial-note">Prices and specifications read from fal&rsquo;s model pages on 1 November 2026 and liable to change. For the capability-by-capability read of what Kuaishou announced, see <a href="/blog/kling-4-what-it-changes-for-filmmakers">Kling 4.0: what it actually changes for filmmakers</a>.</p>
+`,
+  },
+  {
     slug: "be-in-the-movie-cast-yourself-crew-memory-cinema",
     title: "Be in the Movie: Cast Yourself, Bring Friends, Film a Day",
     seoTitle: "Cast Yourself in an AI Movie: Locked Character From One Selfie",
