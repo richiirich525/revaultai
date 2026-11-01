@@ -44,6 +44,26 @@ const ENDPOINTS = [
   ["fal-ai/veo3.1/fast/reference-to-video",           "veo-3.1 reference"],
   ["fal-ai/bytedance/seedream/v5/text-to-image",      "seedream-5.0 image"],
   ["fal-ai/nano-banana-2",                            "nano-banana-2 image"],
+
+  /*
+    Kling 4.0 — candidates, not yet wired into generate-video.js.
+
+    fal's own model pages write these as `kling/v4/...`, with no owner
+    prefix, but its request log strips the prefix from every id it shows,
+    so the pages are not proof. The v3 family we already call lives at
+    `fal-ai/kling-video/v3/...`. All three spellings are probed here
+    rather than guessed at: the one that answers 422 is the real one, and
+    the other two will answer 404. Delete the losers once this has run.
+  */
+  ["kling/v4/text-to-video",                          "kling-4.0 text (candidate A)"],
+  ["fal-ai/kling/v4/text-to-video",                   "kling-4.0 text (candidate B)"],
+  ["fal-ai/kling-video/v4/text-to-video",             "kling-4.0 text (candidate C)"],
+  ["kling/v4/image-to-video",                         "kling-4.0 image (candidate A)"],
+  ["fal-ai/kling/v4/image-to-video",                  "kling-4.0 image (candidate B)"],
+  ["fal-ai/kling-video/v4/image-to-video",            "kling-4.0 image (candidate C)"],
+  ["kling/v4/reference-to-video",                     "kling-4.0 reference (candidate A)"],
+  ["fal-ai/kling/v4/reference-to-video",              "kling-4.0 reference (candidate B)"],
+  ["fal-ai/kling-video/v4/reference-to-video",        "kling-4.0 reference (candidate C)"],
 ];
 
 const VERDICT = {

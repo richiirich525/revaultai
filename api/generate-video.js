@@ -181,7 +181,20 @@ const REF_MODELS = {
   'seedance-2.5': { falId: 'bytedance/seedance-2.5/reference-to-video', named: true, maxRefs: 12, bracketRefs: true },
   'seedance-2.5-480': { falId: 'bytedance/seedance-2.5/reference-to-video', named: true, maxRefs: 12, bracketRefs: true },
   'veo-3.1': { falId: 'fal-ai/veo3.1/fast/reference-to-video', named: false, seconds: 8, maxRefs: 3 },
-  'kling-3.0': { falId: 'fal-ai/kling-video/o3/standard/reference-to-video', named: true, mode: 'elements', extra: { generate_audio: true }, maxRefs: 4 },
+  /*
+    Kling 3.0 references are withdrawn, not forgotten.
+
+    This path ran `kling-video/o3/standard/reference-to-video` with audio
+    on, which fal prices at about $1.12 for five seconds. At 2 credits a
+    second a creator paid between $0.64 and $1.00 for it depending on their
+    pack, so every reference generation lost money, and lost more of it the
+    larger the pack someone had bought. Text-to-video and image-to-video on
+    this model are untouched: they run v3/standard, whose rate is not
+    published anywhere and has not been confirmed.
+
+    GeneratePage already tells a creator "this model cannot use reference
+    photos" when a model is absent here, so nothing else needs changing.
+  */
   // MiniMax names references "Image 1" in plain words, puts them in
   // reference_image_urls rather than image_urls, and — alone in this table —
   // will hold a reference set AND open on an exact first frame. Everywhere
