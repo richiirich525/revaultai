@@ -44,26 +44,35 @@ const ENDPOINTS = [
   ["fal-ai/veo3.1/fast/reference-to-video",           "veo-3.1 reference"],
   ["fal-ai/bytedance/seedream/v5/text-to-image",      "seedream-5.0 image"],
   ["fal-ai/nano-banana-2",                            "nano-banana-2 image"],
+];
 
-  /*
-    Kling 4.0 — candidates, not yet wired into generate-video.js.
+/*
+  Candidates — ids we are testing, not ids we depend on.
 
-    fal's own model pages write these as `kling/v4/...`, with no owner
-    prefix, but its request log strips the prefix from every id it shows,
-    so the pages are not proof. The v3 family we already call lives at
-    `fal-ai/kling-video/v3/...`. All three spellings are probed here
-    rather than guessed at: the one that answers 422 is the real one, and
-    the other two will answer 404. Delete the losers once this has run.
-  */
-  ["kling/v4/text-to-video",                          "kling-4.0 text (candidate A)"],
-  ["fal-ai/kling/v4/text-to-video",                   "kling-4.0 text (candidate B)"],
-  ["fal-ai/kling-video/v4/text-to-video",             "kling-4.0 text (candidate C)"],
-  ["kling/v4/image-to-video",                         "kling-4.0 image (candidate A)"],
-  ["fal-ai/kling/v4/image-to-video",                  "kling-4.0 image (candidate B)"],
-  ["fal-ai/kling-video/v4/image-to-video",            "kling-4.0 image (candidate C)"],
-  ["kling/v4/reference-to-video",                     "kling-4.0 reference (candidate A)"],
-  ["fal-ai/kling/v4/reference-to-video",              "kling-4.0 reference (candidate B)"],
-  ["fal-ai/kling-video/v4/reference-to-video",        "kling-4.0 reference (candidate C)"],
+  Kept apart from ENDPOINTS on purpose. ENDPOINTS is a contract: every one
+  of those must resolve, and a single 404 there is a real failure worth
+  turning the check amber for. A candidate is the opposite — most of these
+  are *expected* to 404, because the whole point is to find which spelling
+  is real. Counting them as problems would leave the check permanently
+  failing and teach us to ignore it.
+
+  fal's model pages write Kling 4.0 as `kling/v4/...` with no owner prefix,
+  but its request log strips prefixes from every id it displays, so those
+  pages are not proof. The v3 family we already call lives under
+  `fal-ai/kling-video/v3/...`. Probe all three spellings; the one that
+  answers 422 is real. Once it is wired into generate-video.js, move the
+  winner into ENDPOINTS and delete the rest.
+*/
+const CANDIDATES = [
+  ["kling/v4/text-to-video",                   "Kling 4.0 text — A"],
+  ["fal-ai/kling/v4/text-to-video",            "Kling 4.0 text — B"],
+  ["fal-ai/kling-video/v4/text-to-video",      "Kling 4.0 text — C"],
+  ["kling/v4/image-to-video",                  "Kling 4.0 image — A"],
+  ["fal-ai/kling/v4/image-to-video",           "Kling 4.0 image — B"],
+  ["fal-ai/kling-video/v4/image-to-video",     "Kling 4.0 image — C"],
+  ["kling/v4/reference-to-video",              "Kling 4.0 reference — A"],
+  ["fal-ai/kling/v4/reference-to-video",       "Kling 4.0 reference — B"],
+  ["fal-ai/kling-video/v4/reference-to-video", "Kling 4.0 reference — C"],
 ];
 
 const VERDICT = {
@@ -108,14 +117,32 @@ export default async function handler(req, res) {
       results.push({ id, where, ...(await probe(id)) });
     }
 
+    const candidates = [];
+    for (const [id, where] of CANDIDATES) {
+      candidates.push({ id, where, ...(await probe(id)) });
+    }
+
     const missing = results.filter((r) => r.verdict === "missing");
+    const live = candidates.filter((c) => c.verdict === "ok");
+
+    // "missing" counts only ENDPOINTS, so a candidate that does not exist
+    // never turns this check amber. The summary is the one line the admin
+    // page shows, so the candidate verdict has to travel in it.
+    const head = missing.length
+      ? "Wrong ids: " + missing.map((r) => r.where).join(", ")
+      : "Every model id resolves.";
+    const tail = candidates.length
+      ? live.length
+        ? " Candidates that exist: " + live.map((c) => c.id).join(", ") + "."
+        : " No candidate id resolved — none of the spellings tried are real."
+      : "";
+
     return res.status(200).json({
       checked: results.length,
       missing: missing.length,
-      summary: missing.length
-        ? "Wrong ids: " + missing.map((r) => r.where).join(", ")
-        : "Every model id resolves.",
+      summary: head + tail,
       results,
+      candidates,
     });
   } catch (err) {
     console.error("verify-models failed:", err);
