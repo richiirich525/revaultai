@@ -4,6 +4,66 @@
 
 export const POSTS = [
   {
+    slug: "shoot-a-conversation-scene-ai-video",
+    title: "How to Shoot a Conversation Scene With AI Video",
+    seoTitle: "Shot Reverse Shot in AI Video: Shoot a Conversation Scene",
+    description:
+      "Shot reverse shot for AI video: block the master, hold the 180-degree line, match lens and height, and plan the reactions so separate generations cut together.",
+    date: "2026-11-02",
+    author: "Richard Garland",
+    category: "Guides",
+    readingTime: "4 min",
+    faq: [
+      ["What is shot reverse shot?", "Alternating singles of two people in conversation, filmed from the same side of the 180-degree line so their eyelines meet across the cut. It is the default grammar of a dialogue scene, and an audience reads it without noticing it is there &mdash; until it breaks."],
+      ["Why don't my AI conversation shots cut together?", "Usually one of three things: the cameras crossed the 180-degree line, so both people appear to look the same way; the lens or camera height changed between the two singles, so the room appears to change size; or something in the set moved between generations. All three are blocking decisions, and all three are cheaper to fix before you generate than after."],
+      ["How many shots does a conversation need?", "At minimum a master that establishes where both people are, a single on each person, and reactions for the lines that land. The reactions are the ones most people skip and editors reach for most."],
+      ["Can I plan this without spending credits?", "Yes. The Rehearsal Studio is free and needs no account. Blocking saves in your browser as you work, and you can export a captioned storyboard sheet or an animatic MP4 without signing in. A share link made without an account lasts 30 days; signing in makes it permanent."],
+    ],
+    content: `
+<p>Two people talking is the first scene most filmmakers write and the last one AI video gets right. Not because a model cannot make a face talk. Because a conversation is never one shot. It is a master, two singles and a handful of reactions, each one its own generation, and nothing in any single generation knows what the others did.</p>
+
+<p>Cut them together and the problems show up at once. She looks screen right, he looks screen right too, and suddenly they are both talking to someone off camera. Her single is on a 35mm, his is on an 85mm, and the room changes size between cuts. The table moves. The wine glass changes hands.</p>
+
+<p>None of that is a model problem. It is a blocking problem, and it gets solved before you generate.</p>
+
+<h2>Block the master first</h2>
+
+<p>Decide where both people are before you write a prompt. Who sits where, who stands, when. The master is the map every other shot is read against. If you cannot draw it on a napkin, the singles will not agree with each other. <a href="/blog/block-a-scene-before-you-generate">How to block a scene before you generate it</a> covers this in full.</p>
+
+<h2>Pick a side of the line and stay there</h2>
+
+<p>Draw a line through both actors. Every camera in the scene stays on one side of it. Then her eyeline goes screen right in her single, and his goes screen left in his, and the cut reads as two people looking at each other. Cross the line and the audience loses the room. More in <a href="/blog/180-degree-rule-ai-video">the 180-degree rule for AI video</a>.</p>
+
+<h2>Match lens and height across the singles</h2>
+
+<p>Singles are a pair. Give them the same lens and the same camera height, and write both into each prompt in the same words. A pair that matches reads as one conversation. A pair that does not reads as two scenes edited together.</p>
+
+<p>The master is exempt from this, and should be. A master can move and reframe &mdash; the dinner argument starter in the studio opens on a 50mm at chest height and rises to a looser 35mm as the man stands, because otherwise he leaves the frame. What has to match is the pair you cut between.</p>
+
+<h2>Keep the performance fixed and move the camera</h2>
+
+<p>Coverage cuts together because the performance does not change between angles. Only the camera does. On a real set that is simply what happens; in AI video you have to engineer it, so hold every other variable still: same wardrobe, same set, same light, same beat in the action. A character held by reference helps here &mdash; see <a href="/blog/ai-video-character-consistency">how to keep characters consistent in AI video</a>.</p>
+
+<h2>Plan the reactions</h2>
+
+<p>The listening shot is the one an editor reaches for most often and the one people forget to generate. For every line that lands, plan the face that hears it. Reactions are short, they are cheap, and they hide almost every cut you are unsure of.</p>
+
+<h2>Sound is its own pass</h2>
+
+<p>Dialogue that has to stay in sync across separate generations is a different problem from blocking, and it does not solve itself. <a href="/blog/ai-video-dialogue-and-sound">How to get usable dialogue and sound out of AI video</a> walks through it.</p>
+
+<h2>Rehearse it before you pay for it</h2>
+
+<p>This is what the <a href="/rehearsal">Rehearsal Studio</a> is for. Open the dinner argument, which is already blocked: two people seated at a table, one of them standing up halfway through. Add up to four cameras to the same performance and switch between them &mdash; the performance stays put, only the angle changes, which is the whole reason coverage cuts together.</p>
+
+<p>Each camera reports its own shot size, lens and subject. The 180-degree line is drawn for you, eyelines are read back in words, and the plan says so the moment a camera crosses to the wrong side. When the blocking is right, take it out as a captioned storyboard sheet, an animatic MP4 rendered in your own browser, or a share link &mdash; see <a href="/blog/get-the-blocking-out-storyboard-animatic-share">getting the blocking out</a>.</p>
+
+<p>It is free, it saves in your browser as you work, and you do not need an account for any of it. A share link made without one lasts 30 days; signing in makes it permanent. Catching a crossed line here costs nothing. Catching it after you have generated both singles costs two generations.</p>
+
+<p><strong>Start here:</strong> <a href="/rehearsal">open the dinner argument in the Rehearsal Studio</a>.</p>
+`,
+  },
+  {
     slug: "kling-4-on-fal-pricing-and-what-shipped",
     title: "Kling 4.0 Is on fal: What It Costs, and What Actually Shipped",
     seoTitle: "Kling 4.0 Pricing on fal: Cost Per Second, Real Specs and API Status",
