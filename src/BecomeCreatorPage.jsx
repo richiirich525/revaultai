@@ -18,8 +18,8 @@ export default function BecomeCreatorPage({ setPage, user, onSignInClick }) {
     ["02", "Complete your creator profile", "Add your display name, username, bio, and avatar. Profiles with complete information receive priority in curation."],
     ["03", "Upload your first creation", "Submit your video directly from the Submit page. Uploads go straight to our secure vault."],
     ["04", "Choose Open or Premium", "Open creations are free for everyone. Premium creations lock the full prompt behind a purchase."],
-    ["05", "Submit for review", "Every creation is reviewed by the RevaultAI team within 48 hours before going live."],
-    ["06", "Grow your audience", "Approved creations are discoverable in Explore. Build your following and earn Spotlight placement."],
+    ["05", "Open goes live, Premium is reviewed", "Open creations appear in Explore the moment you submit them. Premium creations are reviewed by the RevaultAI team first, usually within 48 hours, and appear once approved."],
+    ["06", "Grow your audience", "Your films are discoverable in Explore. Build your following and earn Spotlight placement."],
   ];
   const encouraged = ["Original work", "Complete and detailed prompts", "Strong visual presentation", "Cinematic storytelling", "Experimental creativity"];
   const notAllowed = ["Spam or duplicate submissions", "Stolen or plagiarized content", "Copyright violations", "Hate content or discrimination", "Illegal content of any kind"];
