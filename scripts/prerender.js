@@ -785,7 +785,13 @@ try {
       .limit(2000);
     if (pErr) console.warn("[prerender] profiles query error:", pErr.message);
     const nameById = {};
-    for (const p of profileRows ?? []) nameById[p.id] = p.display_name || p.username;
+    // Username as well as display name: the VideoObject's creator needs a
+    // url, and /creator/<username> is the only profile page there is.
+    const usernameById = {};
+    for (const p of profileRows ?? []) {
+      nameById[p.id] = p.display_name || p.username;
+      usernameById[p.id] = p.username;
+    }
 
     const { data: creations, error: cErr } = await supabase
       .from("creations")
@@ -846,7 +852,14 @@ try {
           uploadDate,
           url: pageUrl,
           genre: kind,
-          creator: { "@type": "Person", name: who },
+          // Search Console flags a creator without a url as a non-critical
+          // issue. Only films by a known creator have a profile page to
+          // point at; "a RevaultAI creator" is the fallback name and has none.
+          creator: {
+            "@type": "Person",
+            name: who,
+            ...(usernameById[c.user_id] ? { url: `${SITE}/creator/${usernameById[c.user_id]}` } : {}),
+          },
           publisher: {
             "@type": "Organization",
             name: "RevaultAI",

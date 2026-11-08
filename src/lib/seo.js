@@ -257,22 +257,63 @@ function setPostSchema(post) {
   document.head.appendChild(script);
 }
 
-// Structured data so Google can show film pages as video results.
+/*
+  Structured data so Google can show film pages as video results.
+
+  This is the second VideoObject a film page can carry. scripts/prerender.js
+  already writes one into the HTML at build time, with the publisher, the
+  embed URL and a guard that emits nothing unless a thumbnail and an upload
+  date both exist. Googlebot runs this file's JavaScript afterwards, so an
+  unconditional block here gave one page two VideoObjects, and this was the
+  weaker of the pair: no url, no publisher, no embedUrl, and an uploadDate
+  of undefined whenever created_at was missing, which JSON.stringify drops
+  from the output entirely. That dropped key is the "Missing field
+  uploadDate" Search Console reports, and the creator without a url is the
+  non-critical one beside it.
+
+  So: stand down when the prerendered block is present, and when it is not
+  — a film published since the last build — emit the same shape it would
+  have, under the same guard. An incomplete VideoObject is worse than none.
+*/
 function setVideoSchema(creation) {
   const existing = document.getElementById("fc-video-schema");
   if (existing) existing.remove();
   if (!creation) return;
+
+  const alreadyPrerendered = [...document.querySelectorAll('script[type="application/ld+json"]')]
+    .some((s) => s.id !== "fc-video-schema" && (s.textContent || "").includes('"VideoObject"'));
+  if (alreadyPrerendered) return;
+
+  const uploadDate = creation.created_at ? new Date(creation.created_at).toISOString() : null;
+  const thumb = creation.thumbnail_image || creation.hero_image || null;
+  if (!thumb || !uploadDate) return;
+
+  const username = creation.creator?.username;
   const data = {
     "@context": "https://schema.org",
     "@type": "VideoObject",
     name: creation.title,
     description: clip(creation.prompt_full || creation.title, 300),
-    thumbnailUrl: creation.thumbnail_image || creation.hero_image || DEFAULT_IMAGE,
-    uploadDate: creation.created_at ? new Date(creation.created_at).toISOString() : undefined,
-    creator: { "@type": "Person", name: creation.creator?.display_name || creation.creator?.username },
+    thumbnailUrl: [thumb],
+    uploadDate,
+    url: SITE + "/film/" + creation.id,
     genre: creation.category,
+    creator: {
+      "@type": "Person",
+      name: creation.creator?.display_name || username,
+      ...(username ? { url: SITE + "/creator/" + username } : {}),
+    },
+    publisher: {
+      "@type": "Organization",
+      name: SITE_NAME,
+      url: SITE,
+      logo: { "@type": "ImageObject", url: DEFAULT_IMAGE },
+    },
     isAccessibleForFree: !creation.is_premium,
   };
+  if (creation.youtube_id) data.embedUrl = `https://www.youtube.com/embed/${creation.youtube_id}`;
+  else if (creation.mux_playback_id) data.contentUrl = `https://stream.mux.com/${creation.mux_playback_id}.m3u8`;
+
   const script = document.createElement("script");
   script.id = "fc-video-schema";
   script.type = "application/ld+json";
