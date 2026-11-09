@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { track } from "./lib/analytics.js";
 import { supabase } from "./lib/supabase.js";
 import { GENRES } from "./lib/stylePresets.js";
 import { DAY_SECONDS } from "./lib/dayScene.js";
@@ -94,6 +95,10 @@ function readFile(file) {
 }
 
 export default function MemoryPage({ user, setPage, notify, onSignInClick }) {
+  // Same reasoning as the other creation tools: one named event on open, so
+  // somebody who arrives and leaves is countable. No automatic capture.
+  useEffect(() => { track("memory_opened", { signed_in: !!user }); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const [date, setDate] = useState(today);
   const [day, setDay] = useState(null);
   const [note, setNote] = useState("");

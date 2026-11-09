@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { track } from "./lib/analytics.js";
 import { supabase } from "./lib/supabase.js";
 import RehearsalStudio from "./RehearsalStudio.jsx";
 import ScenePreview from "./ScenePreview.jsx";
@@ -78,6 +79,16 @@ const FAQ = [
 
 
 export default function RehearsalPage({ user, activeProject, notify, onSignInClick, setGenPrefill, setPage }) {
+  /*
+    One named event when the tool is opened, so a creator who reaches it and
+    leaves can be counted. This is not pageview capture: it is four hand-
+    written events on four creation tools, which is what section 2 of the
+    privacy policy means by an explicitly recorded product event. There is
+    no automatic capture anywhere, and an anonymous visitor still gets no
+    profile, because person_profiles is set to identified_only.
+  */
+  useEffect(() => { track("rehearsal_opened", { signed_in: !!user }); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const [list, setList] = useState([]);
   const [current, setCurrent] = useState({ id: null, data: null, key: "new" });
   const [dirty, setDirty] = useState(false);

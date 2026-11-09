@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { track } from "./lib/analytics.js";
 import { supabase } from "./lib/supabase.js";
 import { freshGenerationUrl } from "./lib/videoUrls.js";
 import FinishCut from "./FinishCut.jsx";
@@ -103,6 +104,16 @@ function ClipTimeline({ a }) {
 }
 
 export default function FinishPage({ user, activeProject, setPage, notify, onSignInClick }) {
+  /*
+    One named event when the tool is opened, so a creator who reaches it and
+    leaves can be counted. This is not pageview capture: it is four hand-
+    written events on four creation tools, which is what section 2 of the
+    privacy policy means by an explicitly recorded product event. There is
+    no automatic capture anywhere, and an anonymous visitor still gets no
+    profile, because person_profiles is set to identified_only.
+  */
+  useEffect(() => { track("finish_opened", { has_project: !!activeProject }); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const [gens, setGens] = useState([]);
   const [keepers, setKeepers] = useState(new Set());
   const [picked, setPicked] = useState(new Set());

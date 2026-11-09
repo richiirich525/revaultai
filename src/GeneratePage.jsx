@@ -5,6 +5,7 @@ import ShotPresets from "./ShotPresets.jsx";
 import TakeDebugger from "./TakeDebugger.jsx";
 import VaultRefPicker from "./VaultRefPicker.jsx";
 import { refsToSend } from "./VaultRefPicker.jsx";
+import { track } from "./lib/analytics.js";
 import { fetchProfile } from "./lib/profiles.js";
 import { getSessionToken } from "./lib/session.js";
 import { GEN_MODELS } from "./lib/genModels.js";
@@ -17,6 +18,16 @@ import { URL_FRESH_MS, signGenerationUrls } from "./lib/videoUrls.js";
 */
 
 export default function GeneratePage({ user, profile, notify, setPage, setGenSubmission, setProfile, genPrefill, setGenPrefill, setApPrefill, activeProject }) {
+  /*
+    One named event when the tool is opened, so a creator who reaches it and
+    leaves can be counted. This is not pageview capture: it is four hand-
+    written events on four creation tools, which is what section 2 of the
+    privacy policy means by an explicitly recorded product event. There is
+    no automatic capture anywhere, and an anonymous visitor still gets no
+    profile, because person_profiles is set to identified_only.
+  */
+  useEffect(() => { track("generate_opened"); }, []);
+
  const IMAGE_MODELS = [
     { key: "seedream-5.0", label: "Seedream 5.0 — Fast", credits: 1 },
     { key: "nano-banana-2", label: "Nano Banana 2 — Consistent characters", credits: 2 },
@@ -496,11 +507,19 @@ export default function GeneratePage({ user, profile, notify, setPage, setGenSub
   })();
 
   async function handleGenerate() {
-    if (!user) { notify("Sign in to generate."); return; }
-    if (!prompt.trim()) { notify("Write a prompt first."); return; }
+    /*
+      Each of these three turns away somebody who meant to generate, and
+      none of them leaves a trace anywhere else: the generations table only
+      ever learns about jobs that were actually submitted. Someone who wrote
+      a prompt and bounced off an empty balance is invisible to SQL and is
+      exactly who we need to be able to count.
+    */
+    if (!user) { track("generation_blocked", { reason: "not_signed_in", model }); notify("Sign in to generate."); return; }
+    if (!prompt.trim()) { track("generation_blocked", { reason: "no_prompt", model }); notify("Write a prompt first."); return; }
     // Only stop when the balance is actually known to be short. An unloaded
     // profile is not an empty wallet, and blocking on it costs a written prompt.
     if (profile && typeof profile.credits === "number" && profile.credits < COST) {
+      track("generation_blocked", { reason: "insufficient_credits", model, cost: COST, balance: profile.credits });
       notify("Not enough credits — top up on your Profile page."); return;
     }
     setSubmitting(true);
@@ -513,6 +532,10 @@ export default function GeneratePage({ user, profile, notify, setPage, setGenSub
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) {
+        // A refusal here writes no generations row either, so this is the
+        // other failure SQL cannot see. A job that WAS submitted needs no
+        // event: it is a row, with its own status.
+        track("generation_refused", { model, duration, status: res.status, reason: String(j.error || "unknown").slice(0, 120) });
         notify(j.error || "Could not start generation.");
         setSubmitting(false);
         return;
@@ -701,7 +724,7 @@ export default function GeneratePage({ user, profile, notify, setPage, setGenSub
 
             <div className="gen-form-row">
               <div className="gen-cost">
-                <select className="gen-model-select" value={model} onChange={(e) => setModel(e.target.value)}>
+                <select className="gen-model-select" value={model} onChange={(e) => { setModel(e.target.value); track("model_selected", { model: e.target.value }); }}>
                   {GEN_MODELS.map((m) => (
                     <option key={m.key} value={m.key}>{m.label} · {m.costPerSecond} cr/s</option>
                   ))}

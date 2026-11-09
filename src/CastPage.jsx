@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { track } from "./lib/analytics.js";
 import { supabase } from "./lib/supabase.js";
 import { MEDIUMS, GENRES } from "./lib/stylePresets.js";
 import { POSES, FREE_SET } from "./lib/stillSet.js";
@@ -114,6 +115,16 @@ function readFile(file) {
   drawings should still find out a scene is possible.
 */
 export default function CastPage({ user, setPage, notify, onSignInClick, mode = "cast" }) {
+  /*
+    One named event when the tool is opened, so a creator who reaches it and
+    leaves can be counted. This is not pageview capture: it is four hand-
+    written events on four creation tools, which is what section 2 of the
+    privacy policy means by an explicitly recorded product event. There is
+    no automatic capture anywhere, and an anonymous visitor still gets no
+    profile, because person_profiles is set to identified_only.
+  */
+  useEffect(() => { track("cast_opened", { mode }); }, [mode]);
+
   const drawingFirst = mode === "animate";
   const [step, setStep] = useState(() => {
     const q = new URLSearchParams(window.location.search);
@@ -247,6 +258,7 @@ export default function CastPage({ user, setPage, notify, onSignInClick, mode = 
     }
     setError(null);
     setBusy("pack");
+    track("cast_photo_uploaded", { mode, signed_in: !!user });
     try {
       const { base64, dataUrl } = await readFile(file);
       setPreview(dataUrl);
