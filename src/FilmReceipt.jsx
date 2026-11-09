@@ -42,7 +42,7 @@ const styles = `
   .rc-scope { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); line-height: 1.75; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); opacity: 0.8; }
 `;
 
-export default function FilmReceipt({ creationId, projectId, isOwner, notify }) {
+export default function FilmReceipt({ creationId, projectId, isOwner, notify, onOpenPermalink }) {
   const [receipt, setReceipt] = useState(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -143,6 +143,17 @@ export default function FilmReceipt({ creationId, projectId, isOwner, notify }) 
         <div className="rc-scope">
           {f.scope} Rights declarations are the creator's own statement. RevaultAI records what happened on this platform and does not verify work made elsewhere.
         </div>
+
+        {/* The receipt's own address. Shown only here, inside the branch that
+            has already established the receipt is published, so the link can
+            never point at a page that would turn a visitor away. */}
+        {onOpenPermalink && (
+          <div style={{ marginTop: 12 }}>
+            <button className="btn-ghost" style={{ fontSize: 11 }} onClick={onOpenPermalink}>
+              Open this receipt on its own page
+            </button>
+          </div>
+        )}
       </div>
     );
   }

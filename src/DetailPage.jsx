@@ -17,7 +17,7 @@ import { youtubeThumb } from "./lib/videoLinks.js";
   Extracted from App.jsx.
 */
 
-export default function DetailPage({ id, creations, setCreations, user, profile, setProfile, purchasedIds, purchasesLoaded, setPage, setCreatorUser, dbLoaded, onSignInClick, notify }) {
+export default function DetailPage({ id, creations, setCreations, user, profile, setProfile, purchasedIds, purchasesLoaded, setPage, setCreatorUser, setReceiptId, dbLoaded, onSignInClick, notify }) {
   // A film opened from a link can't rely on the full catalog having loaded
   // first — if it isn't in the list, fetch it directly.
   const listed = creations.find((c) => c.id === id);
@@ -208,7 +208,13 @@ const purchaseLoading = creation.is_premium && !purchasesLoaded; const priceLabe
 </button></div>
           )}</>}
         </div>
-        <FilmReceipt creationId={creation.id} projectId={creation.project_id ?? null} isOwner={canPin} notify={notify} />
+        <FilmReceipt
+          creationId={creation.id}
+          projectId={creation.project_id ?? null}
+          isOwner={canPin}
+          notify={notify}
+          onOpenPermalink={setReceiptId ? () => { setReceiptId(creation.id); setPage("receipt"); } : undefined}
+        />
         <Comments creation={creation} user={user} isOwner={canDelete} setPage={setPage} setCreatorUser={setCreatorUser} notify={notify} onSignInClick={onSignInClick} />
       </div>
     </div>

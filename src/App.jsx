@@ -55,6 +55,7 @@ import FinishPage from "./FinishPage.jsx";
 import SpecsPage from "./SpecsPage.jsx";
 import ProjectsPage from "./ProjectsPage.jsx";
 import ToolsPage from "./ToolsPage.jsx";
+import ReceiptPage from "./ReceiptPage.jsx";
 import { fetchCreations, fetchPurchasedIds } from "./lib/db.js";
 import { fetchProfile, upsertProfile, defaultProfile } from "./lib/profiles.js";
 
@@ -69,6 +70,7 @@ export default function App() {
 const [dbLoaded, setDbLoaded]     = useState(false);
 const [page, setPageState]        = useState("home");
   const [detailId, setDetailIdState] = useState(null);
+  const [receiptId, setReceiptIdState] = useState(null);
   const [worldId, setWorldIdState] = useState(null);
   const [genSubmission, setGenSubmission] = useState(null);
 
@@ -95,13 +97,18 @@ const [page, setPageState]        = useState("home");
   // ---- URL routing ----
   const detailIdRef = useRef(null);
   const worldIdRef = useRef(null);
+  /* A receipt is addressed by the film it belongs to, not by a key of its
+     own: one film has at most one receipt, and /receipt/<film id> is a
+     guessable sibling of /film/<film id> rather than an opaque token. */
+  const receiptIdRef = useRef(null);
   const creatorUserRef = useRef(null);
-  const KNOWN_PAGES = ["home","explore","creators","feed","generate","settings","admin","submit","set-password","email-confirmed","terms","faq","contact","guidelines","premium-films","about","become-creator","privacy","refunds","dmca","ai-disclaimer","purchase-success","founding-creators","blog","ai-video-generator","prompt-builder","prompts","search","scene-breakdown","which-model","vault","continuity-check","shot-director","coverage","frame-planner","blocking","autopsy","takes","projects","tools","specs","rehearsal","finish","lot","pricing","recording-studio","discovered","cast","animate","memory","world"];
+  const KNOWN_PAGES = ["home","explore","creators","feed","generate","settings","admin","submit","set-password","email-confirmed","terms","faq","contact","guidelines","premium-films","about","become-creator","privacy","refunds","dmca","ai-disclaimer","purchase-success","founding-creators","blog","ai-video-generator","prompt-builder","prompts","search","scene-breakdown","which-model","vault","continuity-check","shot-director","coverage","frame-planner","blocking","autopsy","takes","projects","tools","specs","rehearsal","finish","lot","pricing","recording-studio","discovered","cast","animate","memory","world","receipt"];
 
   function setDetailId(id) { detailIdRef.current = id; setDetailIdState(id); }
   /* A world is reachable by its id and not otherwise, so the id travels in
      the path the same way a film's does. */
   function setWorldId(id) { worldIdRef.current = id; setWorldIdState(id); }
+  function setReceiptId(id) { receiptIdRef.current = id; setReceiptIdState(id); }
   const blogSlugRef = useRef(null);
   const [blogSlug, setBlogSlugState] = useState(null);
   function openPost(slug) { blogSlugRef.current = slug; setBlogSlugState(slug); setPage("blog-post"); }
@@ -132,6 +139,7 @@ const [page, setPageState]        = useState("home");
     if (p === "home") return "/";
     if (p === "detail") return detailIdRef.current ? "/film/" + detailIdRef.current : "/explore";
     if (p === "world") return worldIdRef.current ? "/world/" + worldIdRef.current : "/takes";
+    if (p === "receipt") return receiptIdRef.current ? "/receipt/" + receiptIdRef.current : "/explore";
     if (p === "profile") return creatorUserRef.current ? "/creator/" + creatorUserRef.current : "/creators";
     if (p === "blog-post") return blogSlugRef.current ? "/blog/" + blogSlugRef.current : "/blog";
     if (p === "prompt-model") return promptSlugRef.current ? "/prompts/" + promptSlugRef.current : "/prompts";
@@ -198,6 +206,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       if (path === "/") { setPageState("home"); return; }
       if (path.startsWith("/film/")) { const id = decodeURIComponent(path.slice(6)); detailIdRef.current = id; setDetailIdState(id); setPageState("detail"); return; }
       if (path.startsWith("/world/")) { const id = decodeURIComponent(path.slice(7)); worldIdRef.current = id; setWorldIdState(id); setPageState("world"); return; }
+      if (path.startsWith("/receipt/")) { const id = decodeURIComponent(path.slice(9)); receiptIdRef.current = id; setReceiptIdState(id); setPageState("receipt"); return; }
       if (path.startsWith("/creator/")) { const u = decodeURIComponent(path.slice(9)); creatorUserRef.current = u; setCreatorUserState(u); setPageState("profile"); return; }
       if (path === "/blog" || path === "/blog/") { setPageState("blog"); return; }
       if (path === "/ai-video-generator" || path === "/ai-video-generator/") { setPageState("ai-video-generator"); return; }
@@ -298,7 +307,8 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       case "feed":    return <FollowFeedPage user={user} setPage={setPage} setDetailId={setDetailId} setCreatorUser={setCreatorUser} />;
       case "generate": return <GeneratePage activeProject={activeProject} setApPrefill={setApPrefill} user={user} profile={profile} notify={notify} setPage={setPage} setGenSubmission={setGenSubmission} setProfile={setProfile} genPrefill={genPrefill} setGenPrefill={setGenPrefill} />;
       case "profile": return <ProfilePage username={creatorUser} creations={creations} setPage={setPage} setDetailId={setDetailId} user={user} />;
-      case "detail":  return <DetailPage id={detailId} dbLoaded={dbLoaded} creations={creations} setCreations={setCreations} user={user} profile={profile} setProfile={setProfile} purchasedIds={purchasedIds} purchasesLoaded={purchasesLoaded} setPage={setPage} setCreatorUser={setCreatorUser}onSignInClick={() => setAuthOpen(true)} notify={notify} />;
+      case "receipt": return <ReceiptPage id={receiptId} setPage={setPage} setDetailId={setDetailId} setCreatorUser={setCreatorUser} />;
+      case "detail":  return <DetailPage id={detailId} dbLoaded={dbLoaded} creations={creations} setCreations={setCreations} user={user} profile={profile} setProfile={setProfile} purchasedIds={purchasedIds} purchasesLoaded={purchasesLoaded} setPage={setPage} setCreatorUser={setCreatorUser} setReceiptId={setReceiptId} onSignInClick={() => setAuthOpen(true)} notify={notify} />;
       case "settings": if (!user) return <div className="page"><div className="empty-state"><div className="empty-text">Sign in to access profile settings.</div></div></div>; return <SettingsPage user={user} profile={profile} setProfile={setProfile} notify={notify} setPage={setPage} setCreatorUser={setCreatorUser} />;
       case "admin": if (!isAdmin(user)) return <div className="page"><div className="empty-state"><div className="empty-text">Not authorized.</div></div></div>; return <AdminPage creations={creations} setCreations={setCreations} notify={notify} />;
             case "submit": return <SubmitPage activeProject={activeProject} setCreations={setCreations} notify={notify} setPage={setPage} user={user} profile={profile} prefill={genSubmission} />;
