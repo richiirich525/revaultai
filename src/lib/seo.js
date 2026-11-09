@@ -187,6 +187,7 @@ export const PROMPT_MODEL_PAGES = MODELS.map((m) => ({
 export const NOINDEX = new Set(["settings", "admin", "set-password", "email-confirmed", "purchase-success", "feed", "generate", "search", "vault", "takes", "projects", "specs", "finish", "world"]);
 
 import { POSTS } from "../blog/posts.js";
+import { receiptTitle, receiptSummary } from "./receiptCopy.js";
 
 function clip(text, max) {
   const s = String(text ?? "").replace(/\s+/g, " ").trim();
@@ -319,6 +320,40 @@ function setVideoSchema(creation) {
   script.type = "application/ld+json";
   script.textContent = JSON.stringify(data);
   document.head.appendChild(script);
+}
+
+/*
+  A receipt's metadata, applied once its data has loaded.
+
+  Separate from applySEO because the facts are not in `creations` — the page
+  fetches them itself. Calling this from ReceiptPage after its await is what
+  makes the ordering safe: child effects run before parent effects, so a
+  synchronous write here would be overwritten by App's applySEO on the same
+  pass, while a write after an await lands after it.
+
+  This only matters for in-app navigation. Crawlers and link unfurlers do
+  not run JavaScript, and what they read is the static HTML that
+  scripts/prerender.js writes using the same two helpers.
+*/
+export function applyReceiptSEO(creation, receipt) {
+  if (!creation) return;
+  const who = creation.creator?.display_name || creation.creator?.username || null;
+  const title = clip(receiptTitle(creation.title, who), 65);
+  const description = receiptSummary(receipt?.facts ?? {}, receipt?.visibility ?? {}, receipt?.commentary);
+  const url = SITE + "/receipt/" + creation.id;
+  const image = creation.thumbnail_image || creation.hero_image || DEFAULT_IMAGE;
+
+  document.title = title;
+  setMeta("name", "description", description);
+  setMeta("property", "og:title", title);
+  setMeta("property", "og:description", description);
+  setMeta("property", "og:url", url);
+  setMeta("property", "og:image", image);
+  setMeta("property", "og:type", "article");
+  setMeta("name", "twitter:title", title);
+  setMeta("name", "twitter:description", description);
+  setMeta("name", "twitter:image", image);
+  setLink("canonical", url);
 }
 
 export function applySEO({ page, detailId, creatorUser, creations }) {

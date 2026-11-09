@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import FilmReceipt from "./FilmReceipt.jsx";
 import { fetchCreationById } from "./lib/db.js";
+import { applyReceiptSEO } from "./lib/seo.js";
 import { supabase } from "./lib/supabase.js";
 
 /*
@@ -39,12 +40,14 @@ export default function ReceiptPage({ id, setPage, setDetailId, setCreatorUser }
           reads a receipt; asking here for less than the component needs
           keeps that decision in one place rather than two.
         */
-        supabase.from("film_receipts").select("published").eq("creation_id", id).maybeSingle(),
+        supabase.from("film_receipts").select("published, facts, visibility, commentary").eq("creation_id", id).maybeSingle(),
       ]);
       if (!alive) return;
       setCreation(c ?? null);
       setPublished(!!r?.published);
       setLoading(false);
+      // After the await, so this lands after App's own applySEO pass.
+      if (c && r?.published) applyReceiptSEO(c, r);
     })();
     return () => { alive = false; };
   }, [id]);

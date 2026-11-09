@@ -13,6 +13,10 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+// Shared with src/lib/seo.js on purpose: a link preview must say exactly
+// what the page says, including saying nothing about figures the creator
+// has kept private.
+import { receiptTitle, receiptSummary } from "../src/lib/receiptCopy.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -876,6 +880,63 @@ try {
         + `<h2>Production note</h2>${noteHtml(c.prompt_full)}`;
       html = injectBody(html, body);
       writeRoute("/film/" + c.id, html);
+      count++;
+    }
+
+    /*
+      A page per published receipt.
+
+      Only published ones: the policy in sql/2026-11-08-receipt-public.sql
+      is what stops a stranger reading an unpublished receipt in the app,
+      and a prerendered file would walk straight around it by baking the
+      contents into static HTML that no policy guards. The filter here is
+      the same boundary, enforced a second time because this is the copy
+      that ends up on disk.
+
+      Indexed, unlike the film pages' thumbnails-first framing: a receipt is
+      the page another filmmaker would search for.
+    */
+    const { data: receiptRows, error: rErr } = await supabase
+      .from("film_receipts")
+      .select("creation_id, facts, visibility, commentary, published")
+      .eq("published", true)
+      .limit(2000);
+    if (rErr) console.warn("[prerender] film_receipts query error:", rErr.message);
+
+    const creationById = {};
+    for (const c of creations ?? []) creationById[c.id] = c;
+
+    for (const r of receiptRows ?? []) {
+      const c = creationById[r.creation_id];
+      if (!c) continue; // a receipt whose film is unpublished or gone
+      const who = nameById[c.user_id] || "a RevaultAI creator";
+      const title = clipWords(receiptTitle(c.title, who), 65);
+      const desc = receiptSummary(r.facts ?? {}, r.visibility ?? {}, r.commentary);
+      const pageUrl = `${SITE}/receipt/${c.id}`;
+      const thumb = filmThumb(c);
+
+      let html = template;
+      html = setTitle(html, title);
+      html = setMeta(html, "name", "title", title);
+      html = setMeta(html, "name", "description", desc);
+      html = setMeta(html, "property", "og:title", title);
+      html = setMeta(html, "property", "og:description", desc);
+      html = setMeta(html, "property", "og:url", pageUrl);
+      html = setMeta(html, "property", "og:type", "article");
+      html = setMeta(html, "name", "twitter:url", pageUrl);
+      if (thumb) {
+        html = setMeta(html, "property", "og:image", thumb);
+        html = setMeta(html, "name", "twitter:image", thumb);
+      }
+      html = setCanonical(html, pageUrl);
+      html = setRobots(html, true);
+      html = injectBody(
+        html,
+        `<h1>${esc(`How ${c.title} was made`)}</h1>`
+        + `<p>${esc(desc)}</p>`
+        + `<p>A production receipt by ${esc(who)} on RevaultAI, recording what this film took to make.</p>`
+      );
+      writeRoute("/receipt/" + c.id, html);
       count++;
     }
 
