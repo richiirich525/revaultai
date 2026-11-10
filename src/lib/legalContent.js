@@ -101,7 +101,7 @@ export const LEGAL_CONTENT = {
   },
   privacy: {
     title: "Privacy Policy",
-    updated: "October 2026",
+    updated: "November 2026",
     body: `
       <h2>1. Who We Are</h2>
       <p>RevaultAI is operated by RevaultAI LLC, Los Angeles, California. This policy explains what we collect, why, who we share it with, and how to get rid of it. If anything here is unclear, write to rich@revaultai.com and ask.</p>
@@ -112,7 +112,8 @@ export const LEGAL_CONTENT = {
       <p><strong>Creation inputs.</strong> When you use the creation tools, we process what you give them: prompts, scene text, reference images, blocking and camera settings, and photographs you upload to generate a set.</p>
       <p><strong>Purchase and credit records.</strong> What you bought or sold, when, and for how much. Card details are handled entirely by Stripe and never reach our servers.</p>
       <p><strong>Payout details.</strong> If you sell work, whatever we need in order to pay you: the payout method you choose and the account details for it, together with any tax or identity information we are required to collect before paying you. We use these to pay you and to meet our tax record-keeping obligations, and for nothing else. We do not share them with other users.</p>
-      <p><strong>Usage events.</strong> A small number of explicitly recorded product events, such as a sign-up, a submission, a purchase or a generation. We do not use automatic click or scroll capture, we do not record pageviews, and visitors who are not signed in are not given a profile.</p>
+      <p><strong>Usage events.</strong> A small number of explicitly recorded product events, such as a sign-up, a submission, a purchase or a generation. We do not use automatic click or scroll capture, and visitors who are not signed in are not given a profile.</p>
+      <p><strong>Page views.</strong> We count the pages that are opened, so we can see which parts of the site people actually use. This is handled by Vercel Web Analytics and records the page address, the site that linked to it, and the general type of device and browser. It is aggregate: it is not joined to your account, and it is not used to build a profile of you or to follow you to any other website.</p>
       <p><strong>Server logs.</strong> Standard request logs kept by our hosting provider, including IP address, user agent and timestamps. These are used for security, abuse prevention and debugging.</p>
       <h2>3. What We Do With It</h2>
       <p>We use your information to run the platform: to sign you in, show your work, review submissions, run the creation tools, process payments and payouts, send the notifications you would expect, and diagnose problems. We also use aggregate usage data to decide what to build next.</p>
@@ -140,14 +141,14 @@ export const LEGAL_CONTENT = {
         <li><strong>Stripe</strong> — payments, and creator payouts where a payout is made through Stripe</li>
         <li><strong>Resend</strong> — transactional email</li>
         <li><strong>PostHog</strong> — product analytics</li>
-        <li><strong>Vercel</strong> — hosting and server logs</li>
+        <li><strong>Vercel</strong> — hosting, server logs and page-view analytics</li>
         <li><strong>fal.ai, Anthropic and World Labs</strong> — AI processing, as described in section 5</li>
       </ul>
       <h2>7. Payments</h2>
       <p>All payments are processed by Stripe. RevaultAI never receives or stores your card number, expiry date or security code. We keep a record of the transaction itself: what was bought, when, and the amount.</p>
       <p>Creator payouts work differently, and the honest answer is that they are in transition. Where a payout is made through Stripe, Stripe collects the tax and identity information it is required to collect before paying anyone, and the creator&rsquo;s full account details never reach us. Where a payout is arranged directly instead &mdash; which, as our <a href="/terms" style="color: var(--accent);">Terms of Service</a> explains, is how we currently handle them while volume is small &mdash; the creator gives us the payment details themselves, and we hold them only to send the payment and to keep the records tax law requires. We will update this section as payouts move onto Stripe.</p>
       <h2>8. Cookies and Local Storage</h2>
-      <p>We use cookies and browser local storage to keep you signed in and to remember interface preferences. We use no advertising cookies and no cross-site trackers. Analytics are limited to the explicit product events described in section 2. Clearing your browser storage will sign you out but will not delete your account.</p>
+      <p>We use cookies and browser local storage to keep you signed in and to remember interface preferences. We use no advertising cookies and no cross-site trackers. Analytics are limited to the page views and the explicit product events described in section 2. Clearing your browser storage will sign you out but will not delete your account.</p>
       <h2>9. How Long We Keep Things</h2>
       <p>Your account data is kept until you delete your account. Published films remain in the gallery until you remove them or delete your account. Transaction records and payout details are kept as long as we are required to keep them for tax and accounting purposes, even after an account is closed. Server logs are kept on a short rolling window by our hosting provider.</p>
       <h2>10. Deleting Your Account</h2>
