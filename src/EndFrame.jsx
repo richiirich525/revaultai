@@ -109,7 +109,7 @@ export default function EndFrame({ generation, notify, setGenPrefill, setPage })
   }
 
   function useAsStart() {
-    setGenPrefill?.({ prompt: generation.prompt || "", imageUrl: saved });
+    setGenPrefill?.({ prompt: generation.prompt || "", imageUrl: saved, imageName: "the frame this take ended on" });
     setPage?.("generate");
     notify?.("Loaded as the starting frame for your next shot.");
   }

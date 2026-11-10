@@ -48,6 +48,17 @@ export default function GeneratePage({ user, profile, notify, setPage, setGenSub
     const mapped = genPrefill.generateModelKey || MAP[genPrefill.modelKey];
     if (mapped) setModel(mapped);
     if (genPrefill.aspectRatio) setAspect(genPrefill.aspectRatio);
+    /*
+      A starting frame handed over from another page. This line was missing:
+      EndFrame's "Start the next shot here" has always sent imageUrl, nothing
+      here read it, and the notice below still said the shot was loaded. The
+      next take then generated from the prompt alone, with no error anywhere.
+      The URL is the stored R2 address, the same form the chain scrubber
+      sets, and generate-video signs it before fal sees it.
+    */
+    if (genPrefill.imageUrl) { setImageUrl(genPrefill.imageUrl); setImageName(genPrefill.imageName || "a frame you chose"); }
+    // The cast of the take being continued, so it does not have to be re-picked.
+    if (Array.isArray(genPrefill.vaultRefIds)) setVaultRefIds(genPrefill.vaultRefIds.filter((v) => typeof v === "string"));
     if (genPrefill.endImageUrl) { setEndImageUrl(genPrefill.endImageUrl); setEndImageName(genPrefill.endImageName || "a frame you chose"); }
     specRef.current = genPrefill.filmSpecId ? { id: genPrefill.filmSpecId, version: genPrefill.filmSpecVersion ?? 1 } : null;
     slotRef.current = genPrefill.coverageSlotId ?? null;
