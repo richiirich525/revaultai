@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import BuyCreditsSection from "./BuyCreditsSection.jsx";
 import PromoteDraft from "./PromoteDraft.jsx";
+import PartTwo, { ContinuesLine } from "./PartTwo.jsx";
 import ShotPresets from "./ShotPresets.jsx";
 import TakeDebugger from "./TakeDebugger.jsx";
 import VaultRefPicker from "./VaultRefPicker.jsx";
@@ -63,6 +64,7 @@ export default function GeneratePage({ user, profile, notify, setPage, setGenSub
     specRef.current = genPrefill.filmSpecId ? { id: genPrefill.filmSpecId, version: genPrefill.filmSpecVersion ?? 1 } : null;
     slotRef.current = genPrefill.coverageSlotId ?? null;
     promoRef.current = genPrefill.promotedFrom ?? null;
+    continuesRef.current = genPrefill.continuesFrom ?? null;
     locRef.current = genPrefill.locationUrl ? { url: genPrefill.locationUrl, name: genPrefill.locationName ?? null } : null;
     if (genPrefill.generateModelKey) setModel(genPrefill.generateModelKey);
     if (genPrefill.duration) setDuration(Number(genPrefill.duration));
@@ -73,6 +75,9 @@ export default function GeneratePage({ user, profile, notify, setPage, setGenSub
   const specRef = useRef(null);
   const slotRef = useRef(null);
   const promoRef = useRef(null);
+  // The take a Part 2 continues. Cleared once that shot has been submitted,
+  // so the next unrelated generation is not recorded as a sequel too.
+  const continuesRef = useRef(null);
   const locRef = useRef(null);
   const [pbOpen, setPbOpen] = useState(false);
   const [pbIdea, setPbIdea] = useState("");
@@ -539,7 +544,7 @@ export default function GeneratePage({ user, profile, notify, setPage, setGenSub
       const res = await fetch("/api/generate-video", {
         method: "POST",
         headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: prompt.trim(), model, duration, aspectRatio: aspect, imageUrl: imageUrl || undefined, endImageUrl: endImageUrl || undefined, projectId: activeProject?.id ?? null, filmSpecId: specRef.current?.id ?? null, filmSpecVersion: specRef.current?.version ?? null, vaultRefIds: refsToSend(model, imageUrl, vaultRefIds), coverageSlotId: slotRef.current, promotedFrom: promoRef.current, locationUrl: locRef.current?.url ?? null, locationName: locRef.current?.name ?? null }),
+        body: JSON.stringify({ prompt: prompt.trim(), model, duration, aspectRatio: aspect, imageUrl: imageUrl || undefined, endImageUrl: endImageUrl || undefined, projectId: activeProject?.id ?? null, filmSpecId: specRef.current?.id ?? null, filmSpecVersion: specRef.current?.version ?? null, vaultRefIds: refsToSend(model, imageUrl, vaultRefIds), coverageSlotId: slotRef.current, promotedFrom: promoRef.current, continuesFrom: continuesRef.current, locationUrl: locRef.current?.url ?? null, locationName: locRef.current?.name ?? null }),
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -551,6 +556,7 @@ export default function GeneratePage({ user, profile, notify, setPage, setGenSub
         setSubmitting(false);
         return;
       }
+      continuesRef.current = null;
       notify("Generation started — it usually takes a few minutes.");
       setPrompt("");
       setImageUrl(null);
@@ -823,6 +829,7 @@ export default function GeneratePage({ user, profile, notify, setPage, setGenSub
             {gens.map((g) => (
               <div key={g.id} className="gen-item">
                 <div className="gen-item-prompt">{g.prompt}</div>
+                <ContinuesLine generation={g} all={gens} />
                 {g.status === "complete" && g.video_url ? (
                   <>
                     {videoUrls[g.id]
@@ -857,6 +864,7 @@ export default function GeneratePage({ user, profile, notify, setPage, setGenSub
                           </button>
                           <TakeDebugger generation={g} notify={notify} setGenPrefill={setGenPrefill} setPage={setPage} />
                           <PromoteDraft generation={g} setGenPrefill={setGenPrefill} setPage={setPage} />
+                          <PartTwo generation={g} setGenPrefill={setGenPrefill} setPage={setPage} notify={notify} className="gen-button" />
                           <button className="gen-button" onClick={() => openChain(g)}>
                             {chainFor === g.id ? "Close frame picker" : "Use a frame \u2192"}
                           </button>

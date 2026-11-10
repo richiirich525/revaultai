@@ -255,7 +255,7 @@ export default async function handler(req, res) {
 
     // 2. Validate input
     let { prompt, vaultRefIds } = req.body;
-    const { model, duration, imageUrl, endImageUrl, aspectRatio, projectId, filmSpecId, filmSpecVersion, coverageSlotId, promotedFrom, locationUrl, locationName, cast } = req.body;
+    const { model, duration, imageUrl, endImageUrl, aspectRatio, projectId, filmSpecId, filmSpecVersion, coverageSlotId, promotedFrom, continuesFrom, locationUrl, locationName, cast } = req.body;
     const pid = typeof projectId === "string" ? projectId : null;
 
     // Normalise a prompt so trivial edits still count as the same shot.
@@ -701,6 +701,21 @@ export default async function handler(req, res) {
       return res.status(402).json({ error: 'Not enough credits' });
     }
 
+    /*
+      A Part 2 names the take it continues. Checked against the caller's own
+      takes, because the id arrives from the client and a pointer at somebody
+      else's generation would be a small leak of what exists. A pointer that
+      does not check out is dropped rather than refused: the lineage is a
+      label, and losing a label is not a reason to fail a shot that has
+      already been paid for a few lines above.
+    */
+    let continues = null;
+    if (typeof continuesFrom === "string" && continuesFrom) {
+      const { data: parent } = await supabase
+        .from('generations').select('id').eq('id', continuesFrom).eq('user_id', user.id).maybeSingle();
+      continues = parent?.id ?? null;
+    }
+
     // 4. Record the generation
     const { data: gen, error: insertError } = await supabase
       .from('generations')
@@ -718,6 +733,10 @@ export default async function handler(req, res) {
         coverage_slot_id: typeof coverageSlotId === "string" ? coverageSlotId : null,
         aspect_ratio: ratio,
         promoted_from: typeof promotedFrom === "string" ? promotedFrom : null,
+        // Present only on a continuation. Leaving the key out everywhere else
+        // means an ordinary generation never touches the column, so this
+        // deploys safely ahead of its migration.
+        ...(continues ? { continues_from: continues } : {}),
       })
       .select()
       .single();

@@ -4,6 +4,7 @@ import { supabase } from "./lib/supabase.js";
 import StateReview from "./StateReview.jsx";
 import WalkIntoThis from "./WalkIntoThis.jsx";
 import EndFrame from "./EndFrame.jsx";
+import PartTwo, { ContinuesLine } from "./PartTwo.jsx";
 
 /*
   TakesPage — RevaultAI
@@ -455,6 +456,7 @@ export default function TakesPage({ user, onSignInClick, setPage, notify, active
                               ) : "Preparing playback…"}
                             </div>
                           )}
+                          <ContinuesLine generation={g} all={gens} />
                           <div className="tk-actions">
                             <button className={"tk-btn" + (isSel ? " on" : "")} onClick={() => selectTake(shot, g.id)}>{isSel ? "\u2713 Selected" : "Select"}</button>
                             <button className={"tk-btn" + (isFav ? " on" : "")} onClick={() => setStatus(g, "favorite")}>Star</button>
@@ -484,6 +486,9 @@ export default function TakesPage({ user, onSignInClick, setPage, notify, active
                               <StateReview generation={g} notify={notify} />
                               <WalkIntoThis generation={g} setPage={setPage} setWorldId={setWorldId} notify={notify} />
                               <EndFrame generation={g} notify={notify} setGenPrefill={setGenPrefill} setPage={setPage} />
+                              <div style={{ marginTop: 10 }}>
+                                <PartTwo generation={g} setGenPrefill={setGenPrefill} setPage={setPage} notify={notify} />
+                              </div>
                             </div>
                           )}
                           <textarea
