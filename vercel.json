@@ -5,6 +5,12 @@
       "source": "/premium-prompts",
       "destination": "/premium-films",
       "permanent": true
+    },
+    {
+      "comment": "Browsers and crawlers request /favicon.ico whether or not it is linked. There is no .ico here — the icons are PNG — so every one of those requests was a 404 in the logs. A redirect answers them with the icon that does exist.",
+      "source": "/favicon.ico",
+      "destination": "/favicon-32.png",
+      "permanent": true
     }
   ],
   "rewrites": [

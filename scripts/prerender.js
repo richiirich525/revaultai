@@ -124,7 +124,8 @@ function injectJsonLd(html, obj) {
   markup and a directory listing is not the place to be clever.
 */
 const TAAFT_BADGE =
-  '<a href="https://theresanaiforthat.com/ai/revaultai/?ref=featured&v=12605891" target="_blank" rel="nofollow"><img width="300" src="https://media.theresanaiforthat.com/featured-on-taaft.png?width=600"></a>';
+  '<a href="https://theresanaiforthat.com/ai/revaultai/?ref=featured&v=12605891" target="_blank" rel="nofollow">' +
+  '<img width="300" alt="Featured on There\'s An AI For That" src="https://media.theresanaiforthat.com/featured-on-taaft.png?width=600"></a>';
 
 function injectTaaftBadge(html) {
   const block =
@@ -690,17 +691,39 @@ for (const post of POSTS) {
     "@context": "https://schema.org",
     "@type": "ItemList",
     name: "AI Video Prompt Directory",
-    itemListElement: MODELS.map((m, i) => ({
-      "@type": "ListItem",
-      position: i + 1,
-      name: m.name + " prompts",
-      url: SITE + "/prompts/" + m.slug,
-    })),
+    /*
+      Both halves of the directory, not one. The eight genre pages were
+      written, routed, sitemapped and reachable only by typing their address:
+      the index that exists to point at them listed the three model pages and
+      stopped. A crawler weighs a page by what links to it, and nothing did.
+    */
+    itemListElement: [
+      ...MODELS.map((m, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        name: m.name + " prompts",
+        url: SITE + "/prompts/" + m.slug,
+      })),
+      ...GENRE_PAGES.map((g, i) => ({
+        "@type": "ListItem",
+        position: MODELS.length + i + 1,
+        name: g.genre + " prompts",
+        url: SITE + "/prompts/genre/" + g.slug,
+      })),
+    ],
   });
   const items = MODELS.map((m) =>
     `<li><a href="/prompts/${esc(m.slug)}"><strong>${esc(m.name)}</strong></a> (${esc(m.maker)}) — ${m.prompts.length} prompts built for ${esc(m.strength)}.</li>`
   ).join("");
-  html = injectBody(html, `<h1>AI Video Prompts</h1><p>${esc(meta.description)}</p><ul>${items}</ul>`);
+  const genreItems = GENRE_PAGES.map((g) =>
+    `<li><a href="/prompts/genre/${esc(g.slug)}"><strong>${esc(g.genre)}</strong></a> — ${esc(clipWords(g.description, 110))}</li>`
+  ).join("");
+  html = injectBody(
+    html,
+    `<h1>AI Video Prompts</h1><p>${esc(meta.description)}</p>`
+    + `<h2>By model</h2><ul>${items}</ul>`
+    + `<h2>By genre</h2><ul>${genreItems}</ul>`,
+  );
   writeRoute("/prompts", html);
   count++;
 }

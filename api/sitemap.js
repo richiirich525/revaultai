@@ -41,6 +41,15 @@ const STATIC_PAGES = [
   ["/lot", "0.9", "weekly"],
   ["/pricing", "0.8", "monthly", "2026-10-21"],       // prices render correctly again
   ["/blocking", "0.9", "monthly"],
+  /*
+    Two tool pages that have been live and advertised in the footer for weeks
+    without ever appearing here. Google found them anyway, through the apex
+    domain, which is how they ended up in the Redirect error report — a page
+    reached by a route nobody published is a page reached badly.
+  */
+  ["/cast", "0.9", "monthly", "2026-10-25"],          // Cast Yourself shipped
+  ["/animate", "0.9", "monthly", "2026-10-25"],       // Animate Yourself shipped
+  ["/memory", "0.8", "monthly", "2026-10-25"],        // Memory Cinema shipped
   ["/rehearsal", "0.9", "monthly", "2026-10-21"],     // six new sections, live hero
   ["/recording-studio", "0.9", "monthly", "2026-10-22"],   // new room on the lot
   ["/autopsy", "0.9", "monthly"],
