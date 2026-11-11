@@ -137,6 +137,47 @@ for (const m of GEN_MODELS) {
 }
 
 /*
+  1b. Seedance is billed per thousand tokens, where a token is
+      (width x height x fps) / 1024 per second of output. That makes its
+      cost depend on the ASPECT RATIO as well as the tier: 21:9 at 720p is
+      1680x720, which is 31% more pixels than 16:9 and 31% more expensive.
+      Counting these models as "token-priced" and moving on was the same
+      hole that let Wan 2.6 run at a loss — a model nobody had done the
+      arithmetic for. The widest ratio each tier offers is the one checked,
+      because a creator can pick it.
+*/
+const FPS = 24;
+const HEIGHT = { "seedance-2.0": 720, "seedance-2.5": 720, "seedance-2.0-480": 480, "seedance-2.5-480": 480 };
+const WIDTH_FACTOR = { "21:9": 21 / 9, "16:9": 16 / 9, "1:1": 1, "9:16": 9 / 16 };
+
+for (const m of GEN_MODELS) {
+  const per1k = FAL_COST_PER_1K_TOKENS[m.key];
+  if (per1k === undefined) continue;
+  const height = HEIGHT[m.key];
+  if (!height) {
+    problems.push(`${m.key} is token-priced but no frame height is recorded for it, so its cost cannot be worked out`);
+    continue;
+  }
+  // The dearest shape this tier will produce.
+  const widest = (m.ratios ?? ["16:9"]).reduce(
+    (worst, r) => ((WIDTH_FACTOR[r] ?? 0) > (WIDTH_FACTOR[worst] ?? 0) ? r : worst),
+    (m.ratios ?? ["16:9"])[0],
+  );
+  const width = Math.round(height * (WIDTH_FACTOR[widest] ?? 16 / 9));
+  const tokensPerSecond = (width * height * FPS) / 1024;
+  const costPerSecond = (tokensPerSecond / 1000) * per1k;
+  const revenue = m.costPerSecond * centsPerCredit;
+  const margin = revenue / costPerSecond;
+  if (margin < 1) {
+    problems.push(
+      `${m.key} loses money at ${widest}: ${width}x${height} is ` +
+        `$${costPerSecond.toFixed(3)}/sec on fal, and ${m.costPerSecond} credit/sec earns ` +
+        `$${revenue.toFixed(3)} at the ${floor.pack.key} rate — ${margin.toFixed(2)}x.`,
+    );
+  }
+}
+
+/*
   4. Prose. Each model is named differently in writing than in the table
      ("Wan 2.6 Fast" for wan-2.6), so the mapping is written out. Any claim
      of the form "N credits per second" is checked against the nearest model
@@ -234,7 +275,8 @@ const tokenPriced = GEN_MODELS.filter((m) => m.key in FAL_COST_PER_1K_TOKENS);
 let line =
   `check-margin: ${measured.length} measured models all clear cost at the ` +
   `${floor.pack.key} rate (${(centsPerCredit * 100).toFixed(1)}¢/credit), ` +
-  `${tokenPriced.length} token-priced, both price tables agree, and published copy quotes the same rates.`;
+  `${tokenPriced.length} token-priced models clear it at their widest ratio, ` +
+  `both price tables agree, and published copy quotes the same rates.`;
 if (unknown.length) {
   line += `\n  not measured, so not certified: ${unknown.join(", ")} — run Model ids on the admin page.`;
 }

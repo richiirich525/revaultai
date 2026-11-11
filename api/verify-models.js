@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { FAL_COST_PER_SECOND, MODEL_FOR_ENDPOINT } from "../src/lib/falCosts.js";
+import { FAL_PRICE_PER_SECOND } from "../src/lib/falCosts.js";
 
 /*
   verify-models — RevaultAI
@@ -242,21 +242,24 @@ export default async function handler(req, res) {
     // nothing re-reads is a figure that quietly goes stale.
     for (const r of [...results, ...candidates]) {
       if (r.verdict !== "ok" || !r.price) continue;
-      const key = MODEL_FOR_ENDPOINT[r.id];
-      if (!key) continue;                           // an endpoint nothing is priced from
-      const recorded = FAL_COST_PER_SECOND[key];
-      if (recorded == null) continue;               // never measured, nothing to compare
+      /*
+        Compared per ENDPOINT, not per model. MiniMax serves three tiers from
+        one endpoint and charges $0.035 for its text path against $0.05 for
+        its reference path — comparing a live endpoint price against a
+        model's figure (which is its dearest path) would report drift on
+        every cheaper path, every run, for ever.
+      */
+      const recorded = FAL_PRICE_PER_SECOND[r.id];
+      if (typeof recorded !== "number") continue;   // never measured, or not per-second
       // fal writes the unit as "seconds", not "second". Matching only the
       // singular is how the first version of this comparison silently
-      // matched nothing at all — a drift report that cannot fire reads
-      // exactly like one that found nothing wrong.
+      // matched nothing at all. "compute seconds" is a different unit and
+      // is deliberately not matched.
       const perSecond = r.price.match(/^([\d.]+) \S+\/seconds?$/);
-      if (!perSecond) continue;                     // token-priced, not per-second
+      if (!perSecond) continue;
       const live = Number(perSecond[1]);
       if (Math.abs(live - recorded) > 0.0005) {
-        drift.push(
-          `${key}: recorded $${recorded.toFixed(3)}/sec, fal now charges $${live.toFixed(3)}/sec`,
-        );
+        drift.push(`${r.id}: recorded $${recorded}/sec, fal now charges $${live}/sec`);
       }
     }
     const driftLine = drift.length
