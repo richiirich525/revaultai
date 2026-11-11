@@ -2,27 +2,28 @@ import { createClient } from "@supabase/supabase-js";
 
 /*
   verify-models — RevaultAI
-  Asks fal whether every model id this codebase references actually exists.
+  Asks fal whether every model id this codebase references actually exists,
+  and what fal charges for it.
 
-  It sends each endpoint an empty input. A real endpoint has a schema, so fal
-  validates against it and rejects the empty body with a 422 before any work
-  is queued: nothing generates and nothing is charged.
+  It reads. GET https://api.fal.ai/v1/models/pricing?endpoint_id=<id> answers
+  with a unit price for an endpoint fal knows and a 404 for one it does not.
+  Nothing is submitted, nothing is queued, nothing is charged, and the answer
+  is unambiguous.
 
-  That holds ONLY for ids that exist. An id fal does not know has no schema
-  to check, so the queue accepts the submission and answers 200 with
-  {"status":"IN_QUEUE","request_id":...} — a real queued job. Probing a
-  speculative id here therefore queues work rather than testing a name, and
-  this file is not the tool for that. To ask whether an id exists, read it:
-  GET https://api.fal.ai/v1/models/pricing?endpoint_id=<id> returns the unit
-  price for a real endpoint and changes nothing.
+  It did not always. Two earlier versions posted an empty body to the queue
+  and read the status code, on the reasoning that a real endpoint has a
+  schema and would reject it with a 422. That was true when it was measured
+  and is not true now: fal has moved validation to the worker, so the queue
+  answers 200 IN_QUEUE for every id, real or invented. The check that was
+  built on that difference reported all seventeen working models as wrong
+  ids — and queued seventeen empty jobs saying so. A probe that changes
+  something on the other side is a probe that can bill you for being
+  curious, and this one did, twice.
 
-  Every id below is one this codebase already calls, so every one of them
-  should answer 422. What we read is the status code.
-
-    404  the endpoint id is wrong
-    422  the endpoint exists and rejected our empty input (what we want)
+    200  the endpoint exists; the price comes back with it
+    404  fal does not know this id
     401  FAL_KEY is missing or wrong
-    200  NOT a pass — fal queued a job, which means it does not know this id
+    403  this key may not use that endpoint
 
   Admin only, and safe to re-run whenever a model is added or a provider
   renames something underneath us.
@@ -81,8 +82,9 @@ const CANDIDATES = [
 ];
 
 /*
-  Read-only. A 200 carries the unit price; a 404 means fal does not know the
-  id. Unlike the queue probe, neither outcome changes anything on fal's side.
+  One read per endpoint. Returns the price when fal knows it, so this check
+  doubles as the only automatic record of what each model actually costs —
+  the figure every credit rate should have been set from.
 */
 async function priceOf(id) {
   try {
@@ -90,54 +92,16 @@ async function priceOf(id) {
       "https://api.fal.ai/v1/models/pricing?endpoint_id=" + encodeURIComponent(id),
       { headers: { Authorization: "Key " + process.env.FAL_KEY } },
     );
-    const text = (await r.text().catch(() => "")).slice(0, 200);
-    return { status: r.status, body: text };
+    if (r.status !== 200) return { status: r.status, verdict: r.status === 404 ? "missing" : "auth", price: null };
+    const body = await r.json().catch(() => null);
+    const row = body?.prices?.[0];
+    return {
+      status: 200,
+      verdict: "ok",
+      price: row ? `${row.unit_price} ${row.currency ?? "USD"}/${row.unit ?? "unit"}` : "no price listed",
+    };
   } catch (err) {
-    return { status: null, body: err.message };
-  }
-}
-
-const VERDICT = {
-  404: ["missing", "This id does not exist on fal."],
-  422: ["ok", "Endpoint exists; it rejected the empty input, as expected."],
-  401: ["auth", "FAL_KEY is missing or rejected."],
-  403: ["auth", "FAL_KEY is not allowed to use this endpoint."],
-  // Measured, not assumed: an unknown id answers 200 with IN_QUEUE and a
-  // request_id, because there is no schema to reject the empty body against.
-  // So a 200 is the same failure as a 404, and queues a job besides.
-  200: ["missing", "fal queued this instead of rejecting it — it does not know this id."],
-};
-
-async function probe(id) {
-  try {
-    const r = await fetch("https://queue.fal.run/" + id, {
-      method: "POST",
-      headers: {
-        "Authorization": "Key " + process.env.FAL_KEY,
-        "Content-Type": "application/json",
-      },
-      body: "{}",
-    });
-    const [verdict, note] = VERDICT[r.status] ?? ["unknown", "Unexpected status."];
-
-    /*
-      A status code alone cannot read a 200.
-
-      Nine made-up Kling 4.0 spellings across three namespaces all answered
-      200 to an empty body, which no three real namespaces could. So a 200
-      is ambiguous: fal may be returning a not-found body under an OK
-      status, or the queue may be accepting a submission it has not
-      validated. Those mean opposite things — nothing happened, or a job
-      was queued — so the body is what settles it, and only for the codes
-      where the status is not already conclusive.
-    */
-    let body = null;
-    if (r.status === 200 || r.status === 404) {
-      body = (await r.text().catch(() => "")).slice(0, 300);
-    }
-    return { status: r.status, verdict, note, ...(body === null ? {} : { body }) };
-  } catch (err) {
-    return { status: null, verdict: "unreachable", note: err.message };
+    return { status: null, verdict: "unreachable", price: null, note: err.message };
   }
 }
 
@@ -155,29 +119,39 @@ export default async function handler(req, res) {
 
     const results = [];
     for (const [id, where] of ENDPOINTS) {
-      results.push({ id, where, ...(await probe(id)) });
+      results.push({ id, where, ...(await priceOf(id)) });
     }
 
     const missing = results.filter((r) => r.verdict === "missing");
 
     const candidates = [];
     for (const [id, where] of CANDIDATES) candidates.push({ id, where, ...(await priceOf(id)) });
-    const realOnes = candidates.filter((c) => c.status === 200);
+    const realOnes = candidates.filter((c) => c.verdict === "ok");
 
-    // The summary is the one line the admin page shows, so the answer has to
-    // travel in it rather than only in the JSON below.
+    /*
+      The summary is the one line the admin page shows, so everything worth
+      knowing has to travel in it. Prices included: this is the only place
+      that records what fal charges, and a rate set from a marketing page
+      rather than from here is how the Kling 3.0 reference path came to lose
+      money on every generation.
+    */
+    const head = missing.length
+      ? "Wrong ids: " + missing.map((r) => r.where).join(", ")
+      : `Every model id resolves (${results.length} checked).`;
+    const prices = results
+      .filter((r) => r.verdict === "ok" && r.price)
+      .map((r) => `${r.id} ${r.price}`)
+      .join(" | ");
     const tail = candidates.length
       ? realOnes.length
-        ? " Candidates fal knows: " + realOnes.map((c) => `${c.id} ${c.body}`).join(" | ")
-        : " No candidate is known to fal — " + candidates.map((c) => `${c.id}: HTTP ${c.status}`).join(", ")
+        ? " || Candidates fal knows: " + realOnes.map((c) => `${c.id} ${c.price}`).join(" | ")
+        : " || No candidate is known to fal — " + candidates.map((c) => `${c.id}: HTTP ${c.status}`).join(", ")
       : "";
 
     return res.status(200).json({
       checked: results.length,
       missing: missing.length,
-      summary: (missing.length
-        ? "Wrong ids: " + missing.map((r) => r.where).join(", ")
-        : "Every model id resolves.") + tail,
+      summary: head + (prices ? " || Prices: " + prices : "") + tail,
       results,
       candidates,
     });
