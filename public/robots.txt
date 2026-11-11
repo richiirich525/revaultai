@@ -6,6 +6,11 @@ Disallow: /admin
 Disallow: /set-password
 Disallow: /email-confirmed
 Disallow: /purchase-success
+Disallow: /vault
+Disallow: /takes
+Disallow: /projects
+Disallow: /specs
+Disallow: /finish
 Allow: /api/og
 Disallow: /api/
 

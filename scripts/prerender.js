@@ -529,7 +529,47 @@ function schemasFor(slug, meta, url) {
 }
 
 // ---- Static pages -------------------------------------------------------
-for (const [slug, meta] of Object.entries(PAGES)) {
+/*
+  App routes that are nobody's landing page.
+
+  NOINDEX has listed /vault, /projects, /takes, /specs, /finish, /settings and
+  the rest since it was written, and the rule never fired once: those slugs
+  are not in PAGES, so the loop below never reached them, no file was ever
+  written, and vercel.json's rewrite served /index.html instead. Three of
+  them were returning a byte-identical copy of the homepage — same 12,579
+  bytes, robots "index, follow", and a canonical pointing at the homepage.
+  Google was told that /vault IS the home page.
+
+  So: a shell of their own. No canonical at all, because the honest answer
+  for a signed-in app screen is that it has no canonical address worth
+  indexing, and the homepage's was the whole bug. The body is one line, since
+  React replaces it on load and a crawler should not be invited to read it.
+*/
+const SHELL_ONLY = [...NOINDEX].filter((slug) => !PAGES[slug] && slug !== "home");
+for (const slug of SHELL_ONLY) {
+  let html = template;
+  html = setTitle(html, "RevaultAI");
+  html = setMeta(html, "name", "description", "A signed-in area of RevaultAI.");
+  html = setRobots(html, false);
+  // Strip the template's canonical rather than point it anywhere: these
+  // routes are not a version of some other page, they are not for indexing.
+  html = html.replace(/\s*<link\s+rel=["']canonical["'][^>]*>/i, "");
+  html = injectBody(html, "<p>Loading RevaultAI\u2026</p>");
+  writeRoute("/" + slug, html);
+  count++;
+}
+
+/*
+  One PAGES route, rendered.
+
+  Pulled out of the loop because two of these routes have to be written
+  twice. /explore and /creators are the front doors to every film and every
+  creator page, and the database that holds them is not opened until much
+  further down this file — so the first pass writes them with their copy and
+  no links, and the pass after the data loads writes them again with the
+  links in. `extra` is that second body, appended before the tagline.
+*/
+function renderPagesRoute(slug, meta, extra = "") {
   const routePath = slug === "home" ? "/" : "/" + slug;
   const url = SITE + (routePath === "/" ? "/" : routePath);
   let html = template;
@@ -545,10 +585,14 @@ for (const [slug, meta] of Object.entries(PAGES)) {
   html = setCanonical(html, url);
   html = setRobots(html, !NOINDEX.has(slug));
   for (const schema of schemasFor(slug, meta, url)) html = injectJsonLd(html, schema);
-  html = injectBody(html, bodyFor(slug, meta));
+  html = injectBody(html, bodyFor(slug, meta) + extra);
   // The homepage, and only the homepage.
   if (slug === "home") html = injectTaaftBadge(html);
   writeRoute(routePath, html);
+}
+
+for (const [slug, meta] of Object.entries(PAGES)) {
+  renderPagesRoute(slug, meta);
   count++;
 }
 
@@ -834,6 +878,15 @@ try {
       html = setMeta(html, "property", "og:description", desc);
       html = setMeta(html, "property", "og:url", pageUrl);
       html = setMeta(html, "property", "og:type", "video.other");
+      /*
+        twitter:* has to be set as well as og:*, not instead of it. X reads
+        the twitter tags first and only falls back to og when they are
+        absent — and they were not absent here, they were the template's
+        homepage defaults. Every film shared to X said "RevaultAI — Curated
+        AI Films, Shorts and Animation" whatever film it was.
+      */
+      html = setMeta(html, "name", "twitter:title", title);
+      html = setMeta(html, "name", "twitter:description", desc);
       html = setMeta(html, "name", "twitter:url", pageUrl);
       if (thumb) {
         html = setMeta(html, "property", "og:image", thumb);
@@ -876,7 +929,17 @@ try {
         html = injectJsonLd(html, video);
       }
 
-      const body = `<h1>${esc(c.title)}</h1><p>An AI-generated ${esc(kind)} by ${esc(who)} on RevaultAI.</p>`
+      /*
+        The creator, as a link. The JSON-LD above has carried a creator url
+        for a while, but no crawler follows JSON-LD to discover a page — it
+        follows anchors. Without this, 78 creator pages sat in the sitemap
+        with nothing on the site pointing at them.
+      */
+      const creatorHandle = usernameById[c.user_id];
+      const byline = creatorHandle
+        ? `<p>An AI-generated ${esc(kind)} by <a href="/creator/${esc(creatorHandle)}">${esc(who)}</a> on RevaultAI.</p>`
+        : `<p>An AI-generated ${esc(kind)} by ${esc(who)} on RevaultAI.</p>`;
+      const body = `<h1>${esc(c.title)}</h1>${byline}`
         + `<h2>Production note</h2>${noteHtml(c.prompt_full)}`;
       html = injectBody(html, body);
       writeRoute("/film/" + c.id, html);
@@ -940,6 +1003,47 @@ try {
       count++;
     }
 
+    /*
+      The two front doors, written a second time.
+
+      Both were rendered near the top of this file with their copy and no
+      links, because the database is not opened until here. /explore had 26
+      anchors and not one of them to a film; /creators had 26 and not one to
+      a creator. Sixty-four films and seventy-eight creators were in the
+      sitemap with nothing on the site linking to them, which is a crawler's
+      definition of orphaned.
+
+      Plain lists on purpose. These are for the HTML a crawler reads before
+      any JavaScript runs; React replaces the whole block the moment it
+      mounts, so nobody sees them and they do not need to be pretty.
+    */
+    const linkedFilms = (creations ?? [])
+      .slice()
+      .sort((a, b) => String(b.created_at ?? "").localeCompare(String(a.created_at ?? "")));
+    if (linkedFilms.length && PAGES.explore) {
+      const list = linkedFilms
+        .map((c) => {
+          const who = nameById[c.user_id];
+          return `<li><a href="/film/${esc(c.id)}">${esc(String(c.title || "Untitled"))}</a>${who ? ` &mdash; ${esc(who)}` : ""}</li>`;
+        })
+        .join("");
+      renderPagesRoute("explore", PAGES.explore, `<h2>Every film in the gallery</h2><ul>${list}</ul>`);
+    }
+
+    const linkedCreators = (profileRows ?? []).filter((p) => p.username);
+    if (linkedCreators.length && PAGES.creators) {
+      const counts = {};
+      for (const c of creations ?? []) counts[c.user_id] = (counts[c.user_id] ?? 0) + 1;
+      const list = linkedCreators
+        .map((p) => {
+          const label = p.display_name || p.username;
+          const n = counts[p.id] ?? 0;
+          return `<li><a href="/creator/${esc(p.username)}">${esc(label)}</a>${n ? ` &mdash; ${n} film${n === 1 ? "" : "s"}` : ""}</li>`;
+        })
+        .join("");
+      renderPagesRoute("creators", PAGES.creators, `<h2>Creators on RevaultAI</h2><ul>${list}</ul>`);
+    }
+
     for (const p of profileRows ?? []) {
       const name = p.display_name || p.username;
       const title = `${name} — AI Filmmaker on RevaultAI`;
@@ -953,9 +1057,41 @@ try {
       html = setMeta(html, "property", "og:title", title);
       html = setMeta(html, "property", "og:description", desc);
       html = setMeta(html, "property", "og:url", pageUrl);
+      // Same homepage-default problem as the film pages above.
+      html = setMeta(html, "name", "title", title);
+      html = setMeta(html, "name", "twitter:title", title);
+      html = setMeta(html, "name", "twitter:description", desc);
+      html = setMeta(html, "name", "twitter:url", pageUrl);
       html = setCanonical(html, pageUrl);
       html = setRobots(html, true);
-      html = injectBody(html, `<h1>${esc(name)}</h1><p>@${esc(p.username)}</p><p>${esc(desc)}</p>`);
+      /*
+        Fourteen words was the whole of a creator page: a name, a handle and
+        one sentence. Their films are the reason the page exists and were the
+        one thing missing, so they go in as plain anchors — which is also the
+        only route by which a crawler reaches a film that is not on the
+        sitemap's first screen.
+      */
+      const theirs = (creations ?? []).filter((c) => c.user_id === p.id);
+      const filmList = theirs.length
+        ? `<h2>Films by ${esc(name)}</h2><ul>` + theirs
+          .map((c) => `<li><a href="/film/${esc(c.id)}">${esc(String(c.title || "Untitled"))}</a></li>`)
+          .join("") + `</ul>`
+        : "";
+      html = injectJsonLd(html, {
+        "@context": "https://schema.org",
+        "@type": "ProfilePage",
+        mainEntity: {
+          "@type": "Person",
+          name,
+          alternateName: p.username,
+          url: pageUrl,
+          ...(bio ? { description: bio } : {}),
+        },
+      });
+      html = injectBody(
+        html,
+        `<h1>${esc(name)}</h1><p>@${esc(p.username)}</p><p>${esc(desc)}</p>` + filmList,
+      );
       writeRoute("/creator/" + p.username, html);
       count++;
     }
