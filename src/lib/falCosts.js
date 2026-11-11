@@ -50,6 +50,7 @@ export const FAL_ENDPOINTS = {
     "fal-ai/kling-video/v3/standard/text-to-video",
     "fal-ai/kling-video/v3/standard/image-to-video",
   ],
+  "minimax-h3-480": ["minimax/h3-max/text-to-video", "minimax/h3-max/image-to-video"],
   "kling-4.0": [
     "kling/v4/text-to-video",
     "kling/v4/image-to-video",

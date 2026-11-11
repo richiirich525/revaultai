@@ -51,6 +51,13 @@ const ENDPOINTS = [
   ["bytedance/seedance-2.5/text-to-video",            "seedance-2.5 falId"],
   ["bytedance/seedance-2.5/image-to-video",           "seedance-2.5 imageFalId"],
   ["bytedance/seedance-2.5/reference-to-video",       "seedance-2.5 reference"],
+  // All three MiniMax tiers are served from these three endpoints — the
+  // resolution travels as input, not in the id. They were missing from this
+  // list entirely, so the cheapest model in the catalog (1 credit/sec at
+  // 480p) had never been priced against what it costs.
+  ["minimax/h3-max/text-to-video",                    "minimax-h3 falId"],
+  ["minimax/h3-max/image-to-video",                   "minimax-h3 imageFalId"],
+  ["minimax/h3-max/reference-to-video",               "minimax-h3 reference"],
   ["fal-ai/veo3.1/fast",                              "veo-3.1 (bare path)"],
   ["fal-ai/veo3.1/fast/text-to-video",                "veo-3.1 falId"],
   ["fal-ai/veo3.1/fast/image-to-video",               "veo-3.1 imageFalId"],
@@ -126,7 +133,7 @@ async function priceOf(id, clock) {
       clock.limited += 1;
       // Honor fal's own Retry-After when it sends one, else back off.
       const after = Number(r.headers.get("retry-after"));
-      await sleep(Number.isFinite(after) && after > 0 ? Math.min(after, 10) * 1000 : 1000 * 2 ** attempt);
+      await sleep(Number.isFinite(after) && after > 0 ? Math.min(after, 15) * 1000 : 2000 * 2 ** attempt);
       continue;
     }
 
@@ -157,14 +164,35 @@ export default async function handler(req, res) {
     }
 
     // Paced, because the limit is on how fast the reads arrive rather than
-    // how many. Twenty-one at 150ms is three seconds, well inside the
-    // function timeout.
-    const clock = { deadline: Date.now() + 15_000, limited: 0 };
+    // how many.
+    //
+    // Measured against the real API: eleven reads succeed, then every one
+    // after is refused, and a seven-second backoff does not refill the
+    // bucket. Twenty-one endpoints cannot all be read inside one function
+    // call, and pacing harder does not change that — a per-minute quota is
+    // not something a sixty-second function can wait out.
+    //
+    // So the run ROTATES. Each call starts further along the list than the
+    // last, by the minute, which means two or three runs a minute apart
+    // cover everything. Nothing is cached between runs: a price read ten
+    // minutes ago is not evidence about now, and pretending otherwise is
+    // how a stale figure gets treated as a measurement.
+    const clock = { deadline: Date.now() + 30_000, limited: 0 };
+
+    // The stride is the measured bucket size, not one: advancing a single
+    // place per minute would add one endpoint per run and take six runs to
+    // cover seventeen. Eleven and seventeen are coprime, so successive runs
+    // land on a fresh stretch and two cover the whole list.
+    const BUCKET = 11;
+    const rotate = (list) => {
+      const by = (Math.floor(Date.now() / 60_000) * BUCKET) % Math.max(list.length, 1);
+      return [...list.slice(by), ...list.slice(0, by)];
+    };
 
     const results = [];
-    for (const [id, where] of ENDPOINTS) {
+    for (const [id, where] of rotate(ENDPOINTS)) {
       results.push({ id, where, ...(await priceOf(id, clock)) });
-      await sleep(150);
+      await sleep(250);
     }
 
     const missing = results.filter((r) => r.verdict === "missing");
@@ -174,9 +202,9 @@ export default async function handler(req, res) {
     const unclear = results.filter((r) => r.verdict !== "ok" && r.verdict !== "missing");
 
     const candidates = [];
-    for (const [id, where] of CANDIDATES) {
+    for (const [id, where] of rotate(CANDIDATES)) {
       candidates.push({ id, where, ...(await priceOf(id, clock)) });
-      await sleep(150);
+      await sleep(250);
     }
     const realOnes = candidates.filter((c) => c.verdict === "ok");
     const unclearCandidates = candidates.filter((c) => c.verdict !== "ok" && c.verdict !== "missing");
@@ -191,8 +219,9 @@ export default async function handler(req, res) {
     const head = missing.length
       ? "Wrong ids: " + missing.map((r) => r.where).join(", ")
       : unclear.length
-        ? `No wrong ids, but ${unclear.length} of ${results.length} went unanswered: ` +
-          unclear.map((r) => `${r.where} (${r.verdict}${r.status ? " " + r.status : ""})`).join(", ")
+        ? `${results.length - unclear.length} of ${results.length} read, no wrong ids among them. ` +
+          `Rate-limited, run again in a minute to cover the rest: ` +
+          unclear.map((r) => r.where).join(", ")
         : `Every model id resolves (${results.length} checked).`;
     const prices = results
       .filter((r) => r.verdict === "ok" && r.price)
@@ -217,7 +246,11 @@ export default async function handler(req, res) {
       if (!key) continue;                           // an endpoint nothing is priced from
       const recorded = FAL_COST_PER_SECOND[key];
       if (recorded == null) continue;               // never measured, nothing to compare
-      const perSecond = r.price.match(/^([\d.]+) \S+\/second$/);
+      // fal writes the unit as "seconds", not "second". Matching only the
+      // singular is how the first version of this comparison silently
+      // matched nothing at all — a drift report that cannot fire reads
+      // exactly like one that found nothing wrong.
+      const perSecond = r.price.match(/^([\d.]+) \S+\/seconds?$/);
       if (!perSecond) continue;                     // token-priced, not per-second
       const live = Number(perSecond[1]);
       if (Math.abs(live - recorded) > 0.0005) {
