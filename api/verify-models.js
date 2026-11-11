@@ -57,6 +57,46 @@ const ENDPOINTS = [
   ["fal-ai/nano-banana-2",                            "nano-banana-2 image"],
 ];
 
+/*
+  Candidates — ids we are asking about, read rather than submitted.
+
+  The header above says what the right tool is for a speculative id, and
+  this is it. A GET to the pricing API answers whether fal knows an endpoint
+  and what it charges, without queuing anything, without spending anything,
+  and without the ambiguity that made the last attempt at this enqueue
+  twenty-seven jobs. Nothing here touches the pass/fail verdict: these are
+  questions, not promises.
+
+  Kling 4.0 is the standing question. On 1 November every spelling of it
+  came back unknown; fal's own documentation now carries working code for
+  these four. One run settles which is true, and the prices come back with
+  the answer so the credit rate can be set from fal's own numbers rather
+  than a marketing page.
+*/
+const CANDIDATES = [
+  ["kling/v4/text-to-video",        "Kling 4.0 text-to-video"],
+  ["kling/v4/image-to-video",       "Kling 4.0 image-to-video"],
+  ["kling/v4/reference-to-video",   "Kling 4.0 reference-to-video"],
+  ["kling/v4/video-to-video/edit",  "Kling 4.0 edit"],
+];
+
+/*
+  Read-only. A 200 carries the unit price; a 404 means fal does not know the
+  id. Unlike the queue probe, neither outcome changes anything on fal's side.
+*/
+async function priceOf(id) {
+  try {
+    const r = await fetch(
+      "https://api.fal.ai/v1/models/pricing?endpoint_id=" + encodeURIComponent(id),
+      { headers: { Authorization: "Key " + process.env.FAL_KEY } },
+    );
+    const text = (await r.text().catch(() => "")).slice(0, 200);
+    return { status: r.status, body: text };
+  } catch (err) {
+    return { status: null, body: err.message };
+  }
+}
+
 const VERDICT = {
   404: ["missing", "This id does not exist on fal."],
   422: ["ok", "Endpoint exists; it rejected the empty input, as expected."],
@@ -120,13 +160,26 @@ export default async function handler(req, res) {
 
     const missing = results.filter((r) => r.verdict === "missing");
 
+    const candidates = [];
+    for (const [id, where] of CANDIDATES) candidates.push({ id, where, ...(await priceOf(id)) });
+    const realOnes = candidates.filter((c) => c.status === 200);
+
+    // The summary is the one line the admin page shows, so the answer has to
+    // travel in it rather than only in the JSON below.
+    const tail = candidates.length
+      ? realOnes.length
+        ? " Candidates fal knows: " + realOnes.map((c) => `${c.id} ${c.body}`).join(" | ")
+        : " No candidate is known to fal — " + candidates.map((c) => `${c.id}: HTTP ${c.status}`).join(", ")
+      : "";
+
     return res.status(200).json({
       checked: results.length,
       missing: missing.length,
-      summary: missing.length
+      summary: (missing.length
         ? "Wrong ids: " + missing.map((r) => r.where).join(", ")
-        : "Every model id resolves.",
+        : "Every model id resolves.") + tail,
       results,
+      candidates,
     });
   } catch (err) {
     console.error("verify-models failed:", err);
