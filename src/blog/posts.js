@@ -1240,7 +1240,7 @@ Audio: clean lip-synced speech, close and dry. Room tone of a quiet kitchen, a r
       ["Should I use the same AI model for every shot?", "Not necessarily. Shots in the same film often make very different demands — a dialogue close-up, a chase and a long unbroken camera move don't ask for the same things — so many filmmakers route each shot to the model that fits it and use a cheaper model to block the film first. The trade-off is that different models can render with a slightly different look, so test how your chosen models cut together before committing to a mixed-model scene."],
       ["Which model is best for dialogue?", "Dialogue needs a model with native audio. On RevaultAI that means Veo 3.1 and Seedance 2.0 or 2.5; Wan 2.6 and Kling 3.0 don't generate audio. Veo 3.1 is the strongest fit for a close-up with a spoken line but tops out at 8 seconds, so longer spoken exchanges are a job for Seedance, which supports up to 15 seconds on 2.0 and up to 30 on 2.5. Put the spoken line in quotes in your prompt."],
       ["Which model is best for cinematic camera movement?", "For complex, deliberate camera moves, Seedance is the strongest fit — director-level camera language works on it, and Seedance 2.5 can hold a developing move for up to 30 seconds without a cut. Veo 3.1 responds well to detailed cinematography for shorter shots. If the subject is moving fast, Kling 3.0 works best with a simple camera, because a complex move competes with the subject motion."],
-      ["Does AI video generation cost depend on the model?", "Yes. On RevaultAI credits are charged per second of output, and the rate depends on the model: Wan 2.6 is 1 credit per second, MiniMax H3 Max is 1 at 480p, 2 at 768p and 3 at 1080p, Kling 3.0 is 2, Seedance 2.0 is 3 at draft and 6 at 720p, Veo 3.1 is 4, and Seedance 2.5 is 6 at draft and 12 at 720p. The cost of a take is the rate multiplied by its duration, so an 8-second Veo 3.1 take costs 32 credits and a 30-second Seedance 2.5 take costs 360."],
+      ["Does AI video generation cost depend on the model?", "Yes. On RevaultAI credits are charged per second of output, and the rate depends on the model: MiniMax H3 Max is 1 credit per second at 480p, 2 at 768p and 3 at 1080p, Wan 2.6 is 2, Kling 3.0 is 3, Seedance 2.0 is 3 at draft and 6 at 720p, Veo 3.1 is 4, and Seedance 2.5 is 6 at draft and 12 at 720p. The cost of a take is the rate multiplied by its duration, so an 8-second Veo 3.1 take costs 32 credits and a 30-second Seedance 2.5 take costs 360."],
     ],
     content: `
 <p>The best AI video model for a shot is rarely the model at the top of a ranking. A close-up of someone speaking, a courier sprinting through a crowded market and a thirty-second unbroken camera move each ask for something different, and today's AI video generation models are strong at different things. Pick by the shot, and most of the decision makes itself.</p>
@@ -1333,10 +1333,10 @@ Audio: clean lip-synced speech, close and dry. Room tone of a quiet kitchen, a r
 <p>On RevaultAI, credits are charged per second of output and priced by model, so the cost of any take is the per-second rate multiplied by its duration. The current rates:</p>
 
 <ul>
-<li><strong>Wan 2.6 Fast</strong> — 1 credit per second (a 5-second take is 5 credits)</li>
 <li><strong>MiniMax H3 Max Draft (480p)</strong> — 1 credit per second (5 seconds is 5)</li>
-<li><strong>Kling 3.0 Cinematic</strong> — 2 credits per second (10 seconds is 20)</li>
+<li><strong>Wan 2.6 Fast</strong> — 2 credits per second (a 5-second take is 10 credits)</li>
 <li><strong>MiniMax H3 Max Standard (768p)</strong> — 2 credits per second (10 seconds is 20)</li>
+<li><strong>Kling 3.0 Cinematic</strong> — 3 credits per second (10 seconds is 30)</li>
 <li><strong>Seedance 2.0 Draft (480p)</strong> — 3 credits per second (5 seconds is 15)</li>
 <li><strong>MiniMax H3 Max 1080p</strong> — 3 credits per second (10 seconds is 30)</li>
 <li><strong>Veo 3.1 Native Audio</strong> — 4 credits per second (8 seconds is 32)</li>
@@ -1347,9 +1347,9 @@ Audio: clean lip-synced speech, close and dry. Room tone of a quiet kitchen, a r
 
 <p>The MiniMax H3 Max tiers are worth knowing about when a shot has to match something. They take up to twelve reference files against Kling's four, and they are the only models here that keep a reference set <em>and</em> open on an exact first frame — every other model drops the references when you attach a starting frame. That makes them the natural choice for a chained shot that has to keep a face. At 1, 2 and 3 credits a second they are also the cheapest route to 1080p in the catalog.</p>
 
-<p>The cheapest model and the best value are often different models. The cheapest option is the lowest cost per take; the best value is the lowest cost per <em>usable</em> take. Say a fast chase through a crowd takes six attempts on a model that struggles with crowds, and two on one built for them. Those numbers are illustrative, not measured, but the arithmetic is the point: six takes at 5 credits is 30 credits, and two takes at 10 is 20. The cheap model was more expensive.</p>
+<p>The cheapest model and the best value are often different models. The cheapest option is the lowest cost per take; the best value is the lowest cost per <em>usable</em> take. Say a fast chase through a crowd takes six attempts on a model that struggles with crowds, and two on one built for them. Those numbers are illustrative, not measured, but the arithmetic is the point: six takes at 10 credits is 60 credits, and two takes at 15 is 30. The cheap model was more expensive.</p>
 
-<p>The same logic runs the other way. If a shot is simple — one subject, one clear action, a static camera — paying top-tier rates is waste, and Wan 2.6 at 1 credit per second is a good place to spend most of your takes. A useful habit is to keep track of credits per keeper, not credits per take.</p>
+<p>The same logic runs the other way. If a shot is simple — one subject, one clear action, a static camera — paying top-tier rates is waste, and Wan 2.6 at 2 credits per second is a good place to spend most of your takes. A useful habit is to keep track of credits per keeper, not credits per take.</p>
 
 <p>The draft tiers exist for exactly this. Both Seedance versions have a 480p draft at half the per-second rate of the 720p tier. Draft output is for testing a shot, not for final delivery: prove that a 30-second take holds together at 180 credits, and only then commit 360 to the 720p version. A generation that fails outright is refunded, but one that completes and simply isn't what you wanted still costs what it costs — which is the strongest argument for testing before you spend.</p>
 
@@ -1358,8 +1358,8 @@ Audio: clean lip-synced speech, close and dry. Room tone of a quiet kitchen, a r
 <p>Nothing says a film has to be made on one model. Shots in the same scene make different demands, and AI filmmaking models are strong in different places, so a common workflow is to route each shot to the model that fits it. A single short scene might go like this:</p>
 
 <ul>
-<li><strong>Block it cheap.</strong> Rough out framing, timing and action on Wan 2.6, at 5 credits for a 5-second take, until you know what each shot actually is.</li>
-<li><strong>The chase.</strong> Generate the crowded, fast-moving shot on Kling 3.0, which holds fast action and crowds together (10 seconds is 20 credits).</li>
+<li><strong>Block it cheap.</strong> Rough out framing, timing and action on Wan 2.6, at 10 credits for a 5-second take, until you know what each shot actually is.</li>
+<li><strong>The chase.</strong> Generate the crowded, fast-moving shot on Kling 3.0, which holds fast action and crowds together (10 seconds is 30 credits).</li>
 <li><strong>The spoken line.</strong> Generate the close-up on Veo 3.1, which produces the dialogue with the picture (8 seconds is 32 credits).</li>
 <li><strong>The unbroken reveal.</strong> Prove the long, developing camera move on Seedance 2.5 Draft first, then re-run it at 720p if it holds.</li>
 <li><strong>Everything simple.</strong> Inserts, cutaways and quiet establishing shots stay on the cheapest model that does the job.</li>
@@ -1438,7 +1438,7 @@ Audio: clean lip-synced speech, close and dry. Room tone of a quiet kitchen, a r
 <p>For complex, deliberate camera moves, Seedance is the strongest fit — director-level camera language works on it, and Seedance 2.5 can hold a developing move for up to 30 seconds without a cut. Veo 3.1 responds well to detailed cinematography for shorter shots. If the subject is moving fast, Kling 3.0 works best with a simple camera, because a complex move competes with the subject motion. For more on the moves themselves, see <a href="/blog/ai-video-camera-shots-movements">AI video camera shots and movements</a>.</p>
 
 <h3>Does AI video generation cost depend on the model?</h3>
-<p>Yes. On RevaultAI credits are charged per second of output, and the rate depends on the model: Wan 2.6 is 1 credit per second, MiniMax H3 Max is 1 at 480p, 2 at 768p and 3 at 1080p, Kling 3.0 is 2, Seedance 2.0 is 3 at draft and 6 at 720p, Veo 3.1 is 4, and Seedance 2.5 is 6 at draft and 12 at 720p. The cost of a take is the rate multiplied by its duration, so an 8-second Veo 3.1 take costs 32 credits and a 30-second Seedance 2.5 take costs 360.</p>
+<p>Yes. On RevaultAI credits are charged per second of output, and the rate depends on the model: MiniMax H3 Max is 1 credit per second at 480p, 2 at 768p and 3 at 1080p, Wan 2.6 is 2, Kling 3.0 is 3, Seedance 2.0 is 3 at draft and 6 at 720p, Veo 3.1 is 4, and Seedance 2.5 is 6 at draft and 12 at 720p. The cost of a take is the rate multiplied by its duration, so an 8-second Veo 3.1 take costs 32 credits and a 30-second Seedance 2.5 take costs 360.</p>
 `,
   },
   {

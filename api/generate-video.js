@@ -55,14 +55,19 @@ const MODELS = {
   'wan-2.6': {
     falId: 'wan/v2.6/text-to-video',
     imageFalId: 'wan/v2.6/image-to-video',   // VERIFY on fal
-    creditsPerSecond: 1,
+    // 2 rather than 1: fal charges $0.100/sec, and a Studio credit is worth
+    // $0.064, so 1 credit/sec sold this model at 0.64x cost on the pack most
+    // of its generations are paid from. See src/lib/falCosts.js.
+    creditsPerSecond: 2,
     durationParam: { 5: '5', 10: '10', 15: '15' },
     aspectRatios: ['16:9', '9:16', '1:1'],
   },
   'kling-3.0': {
     falId: 'fal-ai/kling-video/v3/standard/text-to-video',
     imageFalId: 'fal-ai/kling-video/v3/standard/image-to-video',   // VERIFY on fal
-    creditsPerSecond: 2,
+    // 3 rather than 2: fal charges $0.140/sec, which 2 credits/sec covered at
+    // 0.91x on Studio credits. See src/lib/falCosts.js.
+    creditsPerSecond: 3,
     durationParam: { 5: '5', 10: '10' },
     aspectRatios: ['16:9', '9:16', '1:1'],
     // Kling v3 image-to-video infers ratio from the start image and ignores this field.

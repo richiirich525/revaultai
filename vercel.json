@@ -1,5 +1,10 @@
 {
   "trailingSlash": false,
+  "functions": {
+    "api/verify-models.js": {
+      "maxDuration": 60
+    }
+  },
   "redirects": [
     {
       "source": "/premium-prompts",

@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { FAL_COST_PER_SECOND, MODEL_FOR_ENDPOINT } from "../src/lib/falCosts.js";
 
 /*
   verify-models — RevaultAI
@@ -86,13 +87,53 @@ const CANDIDATES = [
   doubles as the only automatic record of what each model actually costs —
   the figure every credit rate should have been set from.
 */
-async function priceOf(id) {
-  try {
-    const r = await fetch(
-      "https://api.fal.ai/v1/models/pricing?endpoint_id=" + encodeURIComponent(id),
-      { headers: { Authorization: "Key " + process.env.FAL_KEY } },
-    );
-    if (r.status !== 200) return { status: r.status, verdict: r.status === 404 ? "missing" : "auth", price: null };
+const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
+
+/*
+  fal rate-limits the pricing API, and twenty-one reads in a row trips it.
+  A 429 is not a wrong id — it is "ask again in a moment" — so it gets its
+  own verdict and three retries. Conflating the two cost a whole run: four
+  live Kling 4.0 endpoints were reported as unknown to fal when they had
+  returned real prices thirty minutes earlier.
+*/
+async function priceOf(id, clock) {
+  for (let attempt = 0; ; attempt += 1) {
+    let r;
+    try {
+      r = await fetch(
+        "https://api.fal.ai/v1/models/pricing?endpoint_id=" + encodeURIComponent(id),
+        { headers: { Authorization: "Key " + process.env.FAL_KEY } },
+      );
+    } catch (err) {
+      return { status: null, verdict: "unreachable", price: null, note: err.message };
+    }
+
+    if (r.status === 429) {
+      if (attempt >= 3) {
+        return { status: 429, verdict: "limited", price: null, note: "rate-limited after 4 tries" };
+      }
+      /*
+        Retries are bounded by one clock for the whole run rather than per
+        endpoint. Four tries each is seven seconds, and twenty-one endpoints
+        all being limited would be two and a half minutes — a rate limit
+        turning itself into a gateway timeout. Once the budget is spent every
+        remaining read gives up without sleeping, and the summary reports them
+        as unanswered. Slower news, but true news.
+      */
+      if (Date.now() > clock.deadline) {
+        return { status: 429, verdict: "limited", price: null, note: "rate-limited, retry budget spent" };
+      }
+      clock.limited += 1;
+      // Honor fal's own Retry-After when it sends one, else back off.
+      const after = Number(r.headers.get("retry-after"));
+      await sleep(Number.isFinite(after) && after > 0 ? Math.min(after, 10) * 1000 : 1000 * 2 ** attempt);
+      continue;
+    }
+
+    if (r.status !== 200) {
+      return { status: r.status, verdict: r.status === 404 ? "missing" : "auth", price: null };
+    }
+
     const body = await r.json().catch(() => null);
     const row = body?.prices?.[0];
     return {
@@ -100,8 +141,6 @@ async function priceOf(id) {
       verdict: "ok",
       price: row ? `${row.unit_price} ${row.currency ?? "USD"}/${row.unit ?? "unit"}` : "no price listed",
     };
-  } catch (err) {
-    return { status: null, verdict: "unreachable", price: null, note: err.message };
   }
 }
 
@@ -117,16 +156,30 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: "FAL_KEY is not set in this environment." });
     }
 
+    // Paced, because the limit is on how fast the reads arrive rather than
+    // how many. Twenty-one at 150ms is three seconds, well inside the
+    // function timeout.
+    const clock = { deadline: Date.now() + 15_000, limited: 0 };
+
     const results = [];
     for (const [id, where] of ENDPOINTS) {
-      results.push({ id, where, ...(await priceOf(id)) });
+      results.push({ id, where, ...(await priceOf(id, clock)) });
+      await sleep(150);
     }
 
     const missing = results.filter((r) => r.verdict === "missing");
+    // Anything that is neither a price nor a 404 is an unanswered question,
+    // not a pass. Counting only 404s as failure is how eight rate-limited
+    // endpoints were reported as resolving.
+    const unclear = results.filter((r) => r.verdict !== "ok" && r.verdict !== "missing");
 
     const candidates = [];
-    for (const [id, where] of CANDIDATES) candidates.push({ id, where, ...(await priceOf(id)) });
+    for (const [id, where] of CANDIDATES) {
+      candidates.push({ id, where, ...(await priceOf(id, clock)) });
+      await sleep(150);
+    }
     const realOnes = candidates.filter((c) => c.verdict === "ok");
+    const unclearCandidates = candidates.filter((c) => c.verdict !== "ok" && c.verdict !== "missing");
 
     /*
       The summary is the one line the admin page shows, so everything worth
@@ -137,21 +190,60 @@ export default async function handler(req, res) {
     */
     const head = missing.length
       ? "Wrong ids: " + missing.map((r) => r.where).join(", ")
-      : `Every model id resolves (${results.length} checked).`;
+      : unclear.length
+        ? `No wrong ids, but ${unclear.length} of ${results.length} went unanswered: ` +
+          unclear.map((r) => `${r.where} (${r.verdict}${r.status ? " " + r.status : ""})`).join(", ")
+        : `Every model id resolves (${results.length} checked).`;
     const prices = results
       .filter((r) => r.verdict === "ok" && r.price)
       .map((r) => `${r.id} ${r.price}`)
       .join(" | ");
+
+    /*
+      Drift. src/lib/falCosts.js is what every credit rate was set from, and
+      check-margin fails the build against it — but that file is a snapshot
+      typed in by hand, and fal can raise a price any day without telling
+      anybody. This is the only place that sees both numbers, so it is the
+      only place that can notice. A rise reported here is a rate to revisit;
+      silence means the recorded figures still hold.
+    */
+    const drift = [];
+    // Candidates included: Kling 4.0's price is recorded but it is not wired
+    // yet, so its endpoints are read as candidates. A recorded figure that
+    // nothing re-reads is a figure that quietly goes stale.
+    for (const r of [...results, ...candidates]) {
+      if (r.verdict !== "ok" || !r.price) continue;
+      const key = MODEL_FOR_ENDPOINT[r.id];
+      if (!key) continue;                           // an endpoint nothing is priced from
+      const recorded = FAL_COST_PER_SECOND[key];
+      if (recorded == null) continue;               // never measured, nothing to compare
+      const perSecond = r.price.match(/^([\d.]+) \S+\/second$/);
+      if (!perSecond) continue;                     // token-priced, not per-second
+      const live = Number(perSecond[1]);
+      if (Math.abs(live - recorded) > 0.0005) {
+        drift.push(
+          `${key}: recorded $${recorded.toFixed(3)}/sec, fal now charges $${live.toFixed(3)}/sec`,
+        );
+      }
+    }
+    const driftLine = drift.length
+      ? " || PRICE DRIFT, revisit the credit rates — " + [...new Set(drift)].join("; ")
+      : "";
     const tail = candidates.length
       ? realOnes.length
         ? " || Candidates fal knows: " + realOnes.map((c) => `${c.id} ${c.price}`).join(" | ")
-        : " || No candidate is known to fal — " + candidates.map((c) => `${c.id}: HTTP ${c.status}`).join(", ")
+        : unclearCandidates.length
+          ? " || Candidates went unanswered, nothing proved either way — " +
+            candidates.map((c) => `${c.id}: ${c.verdict}${c.status ? " " + c.status : ""}`).join(", ")
+          : " || No candidate is known to fal — " + candidates.map((c) => `${c.id}: HTTP ${c.status}`).join(", ")
       : "";
 
     return res.status(200).json({
       checked: results.length,
       missing: missing.length,
-      summary: head + (prices ? " || Prices: " + prices : "") + tail,
+      unanswered: unclear.length,
+      drift,
+      summary: head + (prices ? " || Prices: " + prices : "") + driftLine + tail,
       results,
       candidates,
     });

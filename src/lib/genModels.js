@@ -17,8 +17,8 @@
 // here does, so that is what it is called; "flagship" was a claim about rank
 // that stopped being true the moment a cheaper model did more.
 export const GEN_MODELS = [
-  { key: "wan-2.6", label: "Wan 2.6 — Fast", costPerSecond: 1, durations: [5, 10, 15], ratios: ["16:9", "9:16", "1:1"] },
-  { key: "kling-3.0", label: "Kling 3.0 — Cinematic", costPerSecond: 2, durations: [5, 10], ratios: ["16:9", "9:16", "1:1"], ratioFromImage: true },
+  { key: "wan-2.6", label: "Wan 2.6 — Fast", costPerSecond: 2, durations: [5, 10, 15], ratios: ["16:9", "9:16", "1:1"] },
+  { key: "kling-3.0", label: "Kling 3.0 — Cinematic", costPerSecond: 3, durations: [5, 10], ratios: ["16:9", "9:16", "1:1"], ratioFromImage: true },
   { key: "seedance-2.0-480", label: "Seedance 2.0 — Draft (480p)", costPerSecond: 3, durations: [5, 10, 15], ratios: ["16:9", "9:16", "1:1", "21:9"] },
   { key: "seedance-2.0", label: "Seedance 2.0 — 720p", costPerSecond: 6, durations: [5, 10, 15], ratios: ["16:9", "9:16", "1:1", "21:9"] },
   { key: "seedance-2.5-480", label: "Seedance 2.5 — Long take, draft (480p, up to 30s)", costPerSecond: 6, durations: [5, 10, 15, 30], ratios: ["16:9", "9:16", "1:1", "21:9"] },
