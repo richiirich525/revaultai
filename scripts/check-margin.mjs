@@ -187,6 +187,10 @@ const PROSE_NAMES = {
   "Wan 2.6": "wan-2.6",
   "Kling 3.0": "kling-3.0",
   "Kling 4.0": "kling-4.0",
+  // Only names that identify ONE model belong here. A family name like
+  // "MiniMax H3 Max" or "Seedance 2.5" covers several tiers, and mapping it
+  // to one of them makes this check misread an accurate sentence that lists
+  // all three rates in a row. Prose that states a rate has to name the tier.
   "Seedance 2.0 Draft (480p)": "seedance-2.0-480",
   "Seedance 2.0 (720p)": "seedance-2.0",
   "Seedance 2.5 Long take, draft (480p)": "seedance-2.5-480",
@@ -208,10 +212,12 @@ for (const rel of COPY_FILES) {
     // The nearest model name before the claim is the one it is about.
     let nearest = null;
     let nearestAt = -1;
+    let nearestLen = 0;
     for (const [name, key] of Object.entries(PROSE_NAMES)) {
       const at = before.lastIndexOf(name);
-      if (at > nearestAt) {
+      if (at > nearestAt || (at === nearestAt && at !== -1 && name.length > nearestLen)) {
         nearestAt = at;
+        nearestLen = name.length;
         nearest = key;
       }
     }
@@ -245,10 +251,12 @@ for (const rel of COPY_FILES) {
       const before = text.slice(Math.max(0, found.index - 220), found.index);
       let nearest = null;
       let nearestAt = -1;
+      let nearestLen = 0;
       for (const [name, key] of Object.entries(PROSE_NAMES)) {
         const at = before.lastIndexOf(name);
-        if (at > nearestAt) {
+        if (at > nearestAt || (at === nearestAt && at !== -1 && name.length > nearestLen)) {
           nearestAt = at;
+          nearestLen = name.length;
           nearest = key;
         }
       }

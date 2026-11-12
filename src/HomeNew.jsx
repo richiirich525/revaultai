@@ -16,25 +16,32 @@
 
 const NEW = [
   {
+    date: "2026-11-11",
+    title: "Kling 4.0",
+    body: "Thirty seconds in a single take, at 1080p, for 120 credits. The only other way to get thirty seconds costs three times that, at lower resolution.",
+    page: "generate",
+    cta: "Try the model",
+  },
+  {
+    date: "2026-11-09",
+    title: "Part 2",
+    body: "Continue a shot from the frame it ended on. The cast, model and framing carry over, and the prompt comes with it, so you change the action rather than the whole scene.",
+    page: "takes",
+    cta: "Continue a shot",
+  },
+  {
+    date: "2026-10-26",
+    title: "Story Worlds",
+    body: "Walk into a take you already made. It becomes a place you can move around in and speak to, with nothing to set up first.",
+    page: "takes",
+    cta: "Walk into one",
+  },
+  {
     date: "2026-10-25",
     title: "Memory Cinema",
     body: "Write a line about your day, drop in a few photos, and film it as the genre you pick. It stays a draft until you ask for it.",
     page: "memory",
     cta: "Film a day",
-  },
-  {
-    date: "2026-10-25",
-    title: "Several angles, from your phone",
-    body: "Open a capture on your laptop, shoot the angles on your phone. More angles means your face holds up when the camera moves.",
-    page: "cast",
-    cta: "Try a capture",
-  },
-  {
-    date: "2026-10-25",
-    title: "Scenes with other people",
-    body: "Send a link and somebody lands in the same shot — with their own photo, or with a character they already have.",
-    page: "cast",
-    cta: "Open a scene",
   },
   {
     date: "2026-10-24",
@@ -49,13 +56,6 @@ const NEW = [
     body: "The same character drawn as cel-shade, comic halftone, Sunday funnies, claymation, watercolor or pencil. Four free.",
     page: "animate",
     cta: "Draw yourself",
-  },
-  {
-    date: "2026-10-22",
-    title: "The Recording Studio",
-    body: "A scene read aloud in your characters' own voices, cloned from a recording and locked in the Vault like their wardrobe.",
-    page: "recording-studio",
-    cta: "Hear a scene",
   },
 ];
 

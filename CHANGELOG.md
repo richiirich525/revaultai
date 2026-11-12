@@ -17,7 +17,7 @@ claims the site was making that were not true, as well as code that misbehaved.
 
 ## v34 — November 11, 2026
 
-Twenty-four commits since v33. The headline is uncomfortable: almost everything in this
+Forty-five commits since v33. The headline is uncomfortable: almost everything in this
 release was already written. Casting Call, published receipts and Part 2 had
 all shipped, all passed their checks, and none of them worked. A casting call
 404'd before the app loaded. A receipt link did the same. Part 2 wrote to a
@@ -39,6 +39,20 @@ its neighbour. Each passed while proving nothing.
 
 ### Added
 
+- **Story Worlds, after all.** v33 measured it at 41% against a 70% bar and
+  parked it. What the gate actually said was not *build it better* but *the
+  problem is upstream*, and the upstream work was the rest of that release.
+  A finished take now becomes a place somebody can walk into and speak to, at
+  `/world/<id>`, compiled from the generation, the Shot Spec, the Vault
+  entries and what the footage observed. No authoring step.
+- **The site answers questions from its own data** — every price, model and
+  tool read from the real catalog rather than a prose summary that drifts.
+  `check-help` holds it to 43 properties on every build, and the questions it
+  cannot answer are recorded.
+- **Takes the webhook missed are finished anyway.** A generation whose webhook
+  never arrived used to sit at *processing* for ever. A reconciler asks fal
+  what happened and completes them, and Takes refreshes itself while something
+  is still being made.
 - **Part 2.** One press continues a take: the next shot opens on the frame
   the last one ended on, with the same cast, model, framing and length, and
   the previous prompt carried over as editable text. The frame is the one

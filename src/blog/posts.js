@@ -4,6 +4,70 @@
 
 export const POSTS = [
   {
+    slug: "long-take-or-second-shot-ai-video",
+    title: "Long Take or Second Shot: Keeping a Scene Going",
+    seoTitle: "Long Takes in AI Video: 30 Seconds, or Continue the Shot",
+    description: "Two ways to make an AI video scene run past five seconds: one long take, or a shot continued from the frame the last one ended on. What each costs, what carries over, and when to pick which.",
+    date: "2026-11-11",
+    author: "Richard Garland",
+    category: "Guides",
+    readingTime: "4 min",
+    faq: [
+      ["How long can a single AI video take be?", "On RevaultAI, Kling 4.0 and Seedance 2.5 both run up to thirty seconds in one generation. Most other models cap at five, ten or fifteen seconds. Anything longer than the cap has to be built from more than one take."],
+      ["Is one long take cheaper than several short ones?", "No. Credits are charged per second of output, so thirty seconds costs the same whether it arrives as one take or three. The difference is what a mistake costs: re-running a ten-second shot costs a third of re-running a thirty-second one."],
+      ["Can I continue a shot from where the last one ended?", "Yes. Part 2 opens the next shot on the frame the last one ended on and carries the cast, model, framing and length across, with the previous prompt as editable text."],
+      ["Why did my character change when I continued a shot?", "Most models drop reference photos when a starting frame is attached, so the frame is kept and the locked character is not. The MiniMax H3 Max tiers are the exception and hold both at once, which is why a chained shot that has to keep a face belongs on those."],
+    ],
+    content: `
+<p>A scene that runs longer than five seconds used to mean cutting, whether you wanted a cut or not. That is no longer true, and there are now two ways to keep going. They cost the same and they fail in completely different ways, which is the part worth understanding before you spend anything.</p>
+
+<h2>What one long take actually buys you</h2>
+
+<p>Inside a single generation, continuity is free. The face does not drift, the coat does not change color, the light does not jump, because nothing is being decided twice. Every frame comes out of one pass. That is the whole argument for the long take, and it is a strong one: the problems that make AI filmmaking hard are almost all continuity problems between generations.</p>
+
+<p>Kling 4.0 runs up to thirty seconds in one take at 1080p, at 4 credits per second. Seedance 2.5 Long take (720p) also reaches thirty seconds, at 12 credits per second, with camera control and reference handling that Kling 4.0 does not have. Everything else in the catalog stops at five, ten or fifteen seconds.</p>
+
+<h2>Where thirty seconds goes wrong</h2>
+
+<p>A long take asks the model to hold an idea for a long time, and models drift. Thirty seconds is six times as much opportunity for a hand to go wrong, a background figure to walk through a wall, or the camera to do something you did not ask for.</p>
+
+<p>It is also the expensive way to be wrong. On Kling 4.0 a 30-second take is 120 credits. Three ten-second takes come to the same 120 credits in total, but when one of them fails you re-run that one for 40 and keep the other two. Fail a thirty-second take at second twenty-six and you pay the whole 120 again.</p>
+
+<p>That is the real trade. Not cost, which is identical per second, but the size of the unit you are gambling.</p>
+
+<h2>The other way: continue from the last frame</h2>
+
+<p>Part 2 takes a finished take and opens the next one on the frame it ended on. The cast, the model, the framing and the length all carry across, and the prompt comes with it as editable text, so you change the action rather than retyping the scene.</p>
+
+<p>The frame is what makes this work. A starting frame is a much stronger instruction than any description: the room, the light, the wardrobe and the position in the shot are all simply there, because the model is looking at them rather than reading about them. Two shots joined on a shared frame match in a way that two independently generated shots almost never do.</p>
+
+<h2>What carries, and the one thing that does not</h2>
+
+<p>There is a catch worth knowing before you build a sequence this way. Most models drop reference photos when a starting frame is attached. The frame is kept, the locked character is not, and from the model's point of view the person in the next shot is whoever happens to be in that first frame.</p>
+
+<p>Often that is enough, because the frame shows the face. It is not enough when the character turns, or starts off screen, or the shot opens on their back. The MiniMax H3 Max tiers are the exception here: they hold a reference set and an exact opening frame at the same time, at one, two and three credits per second across 480p, 768p and 1080p. If a chained shot has to keep a face, that is where it belongs.</p>
+
+<h2>Picking one</h2>
+
+<p>Use a long take when the shot is one continuous thing and a cut would be a lie: an unbroken camera move, a single action playing out, a performance that needs to breathe. The reason to hold it in one generation is that any join would be visible.</p>
+
+<p>Use continued shots when the scene changes its mind. A new beat, a reframe, a reaction, anything you might want to re-roll on its own. You are buying the ability to be wrong cheaply, and to stop and look before committing to the next piece.</p>
+
+<p>Most scenes want both. Hold the thing that must not be cut in one take, then continue out of it for whatever comes next.</p>
+
+<h2>Plan the frame you are going to leave on</h2>
+
+<p>If you already know a shot is going to continue, the last frame stops being an afterthought and becomes the handover. A take that ends mid-gesture, or on motion blur, or with the subject half out of frame, hands the next shot a bad opening. One that ends on a held, readable frame hands it a good one.</p>
+
+<p>The End Frame panel lets you choose that frame rather than accept whatever the final instant happened to be, and Part 2 uses your choice when there is one. It is a small habit that costs nothing and saves re-running the shot after it.</p>
+
+<h2>Before you spend anything</h2>
+
+<p>Both approaches reward knowing what the shot is before you pay for it. Block it in the Rehearsal Studio, where positions, camera and timing cost nothing to change, and the question stops being whether a long take will hold and becomes whether this particular scene needs one.</p>
+`,
+  },
+
+  {
     slug: "shoot-a-conversation-scene-ai-video",
     title: "How to Shoot a Conversation Scene With AI Video",
     seoTitle: "Shot Reverse Shot in AI Video: Shoot a Conversation Scene",
@@ -84,7 +148,9 @@ export const POSTS = [
 
 <h2>What it costs</h2>
 
-<p>fal prices Kling 4.0 at <strong>$0.157 per second at 720p</strong> and <strong>$0.235 per second at 1080p</strong>. Reference-to-video with video references is cheaper per second &mdash; $0.094 at 720p, $0.141 at 1080p &mdash; but it bills input alongside output with a floor of twice the output length, so feeding it thirty seconds of reference to get five seconds back is not the saving the headline rate implies.</p>
+<p><strong>Corrected November 11, 2026.</strong> This paragraph originally gave a 720p and 1080p price split, and a lower rate for reference-to-video, taken from the documentation page. Reading fal's own pricing API for each endpoint gives a different answer, and that is the one below.</p>
+
+<p>fal prices Kling 4.0 at <strong>$0.157 per second, flat</strong>. The same rate applies to all four endpoints, text-to-video, image-to-video, reference-to-video and the edit path, and it does not change between 720p and 1080p. There is no premium for the higher resolution, which makes 1080p the sensible default rather than an upgrade to weigh. Reference-to-video still bills input alongside output with a floor of twice the output length, so feeding it thirty seconds of reference to get five seconds back costs more than the per-second rate suggests.</p>
 
 <p>Set against the alternatives, that is the story of this release:</p>
 
