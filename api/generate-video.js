@@ -146,6 +146,36 @@ const MODELS = {
     // 1080P is a latent refinement of a native 768P render, not a native one.
     extraInput: { resolution: '1080P', prompt_expansion_mode: 'disabled' },
   },
+  /*
+    Kling 4.0. Read from fal's own OpenAPI schema rather than its docs page,
+    which was wrong about the price and wrong about the resolution tiers.
+
+      duration      an INTEGER of seconds, 3 to 30 — not the string enum
+                    Kling 3.0 takes. Sending '10' where 10 is expected is a
+                    schema error, so the map below holds numbers.
+      resolution    720p or 1080p, and fal charges $0.157/sec for EITHER.
+                    1080p is their default and costs nothing extra, so it is
+                    set explicitly here: a change to their default must not
+                    be able to quietly downgrade what a creator paid for.
+      aspect_ratio  ignored on the image route — fal's schema says the output
+                    follows the input frames.
+
+    4 credits/sec is 1.63x at the Studio rate. Not in REF_MODELS: v4's
+    reference endpoint takes named @Element tokens, voices and reference
+    VIDEOS, which is a different mechanism from both Kling o3's elements and
+    MiniMax's plain array, and wiring it to Vault packs is its own job. Until
+    then this model simply offers no references, which is how a model absent
+    from REF_MODELS already behaves.
+  */
+  'kling-4.0': {
+    falId: 'kling/v4/text-to-video',
+    imageFalId: 'kling/v4/image-to-video',
+    creditsPerSecond: 4,
+    durationParam: { 5: 5, 10: 10, 15: 15, 30: 30 },   // an integer, not an enum
+    aspectRatios: ['16:9', '9:16', '1:1', '21:9'],
+    aspectIgnoredWithImage: true,
+    extraInput: { resolution: '1080p' },
+  },
   'veo-3.1': {
     falId: 'fal-ai/veo3.1/fast/text-to-video',
     imageFalId: 'fal-ai/veo3.1/fast/image-to-video',   // VERIFY on fal

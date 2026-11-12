@@ -58,6 +58,8 @@ const ENDPOINTS = [
   ["minimax/h3-max/text-to-video",                    "minimax-h3 falId"],
   ["minimax/h3-max/image-to-video",                   "minimax-h3 imageFalId"],
   ["minimax/h3-max/reference-to-video",               "minimax-h3 reference"],
+  ["kling/v4/text-to-video",                          "kling-4.0 falId"],
+  ["kling/v4/image-to-video",                         "kling-4.0 imageFalId"],
   ["fal-ai/veo3.1/fast",                              "veo-3.1 (bare path)"],
   ["fal-ai/veo3.1/fast/text-to-video",                "veo-3.1 falId"],
   ["fal-ai/veo3.1/fast/image-to-video",               "veo-3.1 imageFalId"],
@@ -83,8 +85,6 @@ const ENDPOINTS = [
   than a marketing page.
 */
 const CANDIDATES = [
-  ["kling/v4/text-to-video",        "Kling 4.0 text-to-video"],
-  ["kling/v4/image-to-video",       "Kling 4.0 image-to-video"],
   ["kling/v4/reference-to-video",   "Kling 4.0 reference-to-video"],
   ["kling/v4/video-to-video/edit",  "Kling 4.0 edit"],
 ];

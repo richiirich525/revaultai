@@ -186,6 +186,7 @@ for (const m of GEN_MODELS) {
 const PROSE_NAMES = {
   "Wan 2.6": "wan-2.6",
   "Kling 3.0": "kling-3.0",
+  "Kling 4.0": "kling-4.0",
   "Seedance 2.0 Draft (480p)": "seedance-2.0-480",
   "Seedance 2.0 (720p)": "seedance-2.0",
   "Seedance 2.5 Long take, draft (480p)": "seedance-2.5-480",

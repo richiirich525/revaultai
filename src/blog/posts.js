@@ -1339,6 +1339,7 @@ Audio: clean lip-synced speech, close and dry. Room tone of a quiet kitchen, a r
 <li><strong>Kling 3.0 Cinematic</strong> — 3 credits per second (10 seconds is 30)</li>
 <li><strong>Seedance 2.0 Draft (480p)</strong> — 3 credits per second (5 seconds is 15)</li>
 <li><strong>MiniMax H3 Max 1080p</strong> — 3 credits per second (10 seconds is 30)</li>
+<li><strong>Kling 4.0</strong> — 4 credits per second (a 30-second take at 1080p is 120 credits)</li>
 <li><strong>Veo 3.1 Native Audio</strong> — 4 credits per second (8 seconds is 32)</li>
 <li><strong>Seedance 2.0 (720p)</strong> — 6 credits per second (5 seconds is 30)</li>
 <li><strong>Seedance 2.5 Long take, draft (480p)</strong> — 6 credits per second (10 seconds is 60)</li>
