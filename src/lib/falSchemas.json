@@ -1,0 +1,294 @@
+{
+  "fetched": "2026-11-12",
+  "endpoints": {
+    "kling/v4/text-to-video": {
+      "accepts": [
+        "aspect_ratio",
+        "duration",
+        "multi_prompt",
+        "prompt",
+        "resolution"
+      ],
+      "required": []
+    },
+    "kling/v4/image-to-video": {
+      "accepts": [
+        "duration",
+        "end_image_url",
+        "middle_image_urls",
+        "multi_prompt",
+        "prompt",
+        "resolution",
+        "start_image_url"
+      ],
+      "required": [
+        "start_image_url"
+      ]
+    },
+    "bytedance/seedance-2.0/fast/image-to-video": {
+      "accepts": [
+        "aspect_ratio",
+        "bitrate_mode",
+        "codec",
+        "duration",
+        "end_image_url",
+        "end_user_id",
+        "generate_audio",
+        "image_url",
+        "prompt",
+        "resolution"
+      ],
+      "required": [
+        "image_url",
+        "prompt"
+      ]
+    },
+    "bytedance/seedance-2.0/fast/reference-to-video": {
+      "accepts": [
+        "aspect_ratio",
+        "audio_urls",
+        "bitrate_mode",
+        "codec",
+        "duration",
+        "end_user_id",
+        "generate_audio",
+        "image_urls",
+        "prompt",
+        "resolution",
+        "video_urls"
+      ],
+      "required": [
+        "prompt"
+      ]
+    },
+    "bytedance/seedance-2.0/fast/text-to-video": {
+      "accepts": [
+        "aspect_ratio",
+        "bitrate_mode",
+        "codec",
+        "duration",
+        "end_user_id",
+        "generate_audio",
+        "prompt",
+        "resolution"
+      ],
+      "required": [
+        "prompt"
+      ]
+    },
+    "bytedance/seedance-2.5/image-to-video": {
+      "accepts": [
+        "aspect_ratio",
+        "bitrate_mode",
+        "codec",
+        "draft",
+        "duration",
+        "end_image_url",
+        "end_user_id",
+        "generate_audio",
+        "image_url",
+        "prompt",
+        "resolution"
+      ],
+      "required": [
+        "image_url"
+      ]
+    },
+    "bytedance/seedance-2.5/reference-to-video": {
+      "accepts": [
+        "aspect_ratio",
+        "audio_urls",
+        "bitrate_mode",
+        "codec",
+        "draft",
+        "duration",
+        "end_user_id",
+        "generate_audio",
+        "image_urls",
+        "prompt",
+        "resolution",
+        "seed",
+        "task",
+        "video_urls"
+      ],
+      "required": []
+    },
+    "bytedance/seedance-2.5/text-to-video": {
+      "accepts": [
+        "aspect_ratio",
+        "bitrate_mode",
+        "codec",
+        "draft",
+        "duration",
+        "end_user_id",
+        "generate_audio",
+        "prompt",
+        "resolution"
+      ],
+      "required": [
+        "prompt"
+      ]
+    },
+    "fal-ai/kling-video/v3/standard/image-to-video": {
+      "accepts": [
+        "cfg_scale",
+        "duration",
+        "elements",
+        "enable_safety_checker",
+        "end_image_url",
+        "generate_audio",
+        "multi_prompt",
+        "negative_prompt",
+        "prompt",
+        "shot_type",
+        "start_image_url"
+      ],
+      "required": [
+        "start_image_url"
+      ]
+    },
+    "fal-ai/kling-video/v3/standard/text-to-video": {
+      "accepts": [
+        "aspect_ratio",
+        "cfg_scale",
+        "duration",
+        "enable_safety_checker",
+        "generate_audio",
+        "multi_prompt",
+        "negative_prompt",
+        "prompt",
+        "shot_type"
+      ],
+      "required": []
+    },
+    "fal-ai/veo3.1/fast/image-to-video": {
+      "accepts": [
+        "aspect_ratio",
+        "auto_fix",
+        "duration",
+        "generate_audio",
+        "image_url",
+        "negative_prompt",
+        "prompt",
+        "resolution",
+        "safety_tolerance",
+        "seed"
+      ],
+      "required": [
+        "image_url",
+        "prompt"
+      ]
+    },
+    "fal-ai/veo3.1/fast/reference-to-video": {
+      "accepts": [
+        "aspect_ratio",
+        "auto_fix",
+        "duration",
+        "generate_audio",
+        "image_urls",
+        "prompt",
+        "resolution",
+        "safety_tolerance"
+      ],
+      "required": [
+        "image_urls",
+        "prompt"
+      ]
+    },
+    "minimax/h3-max/image-to-video": {
+      "accepts": [
+        "duration",
+        "enable_safety_checker",
+        "end_image_url",
+        "image_url",
+        "prompt",
+        "prompt_expansion_mode",
+        "resolution",
+        "seed",
+        "sync_mode",
+        "target_audio_url"
+      ],
+      "required": [
+        "prompt",
+        "prompt_expansion_mode"
+      ]
+    },
+    "minimax/h3-max/reference-to-video": {
+      "accepts": [
+        "aspect_ratio",
+        "duration",
+        "enable_safety_checker",
+        "end_image_url",
+        "image_url",
+        "middle_frame_time",
+        "middle_image_url",
+        "prompt",
+        "prompt_expansion_mode",
+        "reference_audio_urls",
+        "reference_conditions",
+        "reference_image_urls",
+        "reference_video_urls",
+        "resolution",
+        "seed",
+        "sync_mode",
+        "target_audio_url"
+      ],
+      "required": [
+        "prompt",
+        "prompt_expansion_mode"
+      ]
+    },
+    "minimax/h3-max/text-to-video": {
+      "accepts": [
+        "aspect_ratio",
+        "duration",
+        "enable_safety_checker",
+        "prompt",
+        "prompt_expansion_mode",
+        "resolution",
+        "seed",
+        "sync_mode",
+        "target_audio_url"
+      ],
+      "required": [
+        "prompt",
+        "prompt_expansion_mode"
+      ]
+    },
+    "wan/v2.6/image-to-video": {
+      "accepts": [
+        "audio_url",
+        "duration",
+        "enable_prompt_expansion",
+        "enable_safety_checker",
+        "image_url",
+        "multi_shots",
+        "negative_prompt",
+        "prompt",
+        "resolution",
+        "seed"
+      ],
+      "required": [
+        "image_url",
+        "prompt"
+      ]
+    },
+    "wan/v2.6/text-to-video": {
+      "accepts": [
+        "aspect_ratio",
+        "audio_url",
+        "duration",
+        "enable_prompt_expansion",
+        "enable_safety_checker",
+        "multi_shots",
+        "negative_prompt",
+        "prompt",
+        "resolution",
+        "seed"
+      ],
+      "required": [
+        "prompt"
+      ]
+    }
+  }
+}
