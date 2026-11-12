@@ -12,6 +12,24 @@
 -- and the feature is invisible without ever erroring. This opens exactly the
 -- rows a creator has chosen to publish, and nothing else.
 --
+-- CORRECTION, 2026-11-11, written after running this against production.
+--
+-- It was not needed. A policy named "published receipts are public" —
+-- select to public, using (published = true) — already existed and had done
+-- the whole job since before this file was written. Step 3 below looked for
+-- its OWN policy name, did not find it, and created a second policy doing
+-- the same thing. The duplicate has since been dropped.
+--
+-- The mistake worth remembering is the shape of it: the check asked "is my
+-- artifact here?" when the question was "is this capability present?" A
+-- migration verified only against a local fixture cannot answer the second
+-- one, because the fixture contains whatever its author thought production
+-- contained. Step 3 now tests for the capability.
+--
+-- What actually kept receipts unused was having no URL to send anybody. The
+-- /receipt/<id> route and the OG tags fixed that. The database was never in
+-- the way.
+--
 -- Four changes, and two things deliberately NOT changed:
 --
 --   published column     — ensured to exist, default false. The component
@@ -86,12 +104,18 @@ end $$;
 -- 3. The opening itself.
 do $$
 begin
+  -- Tests for the CAPABILITY, not for this file's own policy name: any
+  -- permissive select policy that lets a non-owner read published rows
+  -- already does the job, whatever it is called. Checking for the name is
+  -- what produced a duplicate the first time this ran.
   if exists (
     select 1 from pg_policies
     where schemaname = 'public' and tablename = 'film_receipts'
-      and policyname = 'film_receipts_published_readable'
+      and cmd = 'SELECT'
+      and (roles && array['anon', 'authenticated', 'public']::name[])
+      and qual ilike '%published%'
   ) then
-    insert into mig_log values (3, 'public read', 'policy already present');
+    insert into mig_log values (3, 'public read', 'a policy already lets anyone read published receipts — left alone');
   else
     create policy film_receipts_published_readable
       on public.film_receipts
