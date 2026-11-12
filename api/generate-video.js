@@ -55,6 +55,10 @@ const MODELS = {
   'wan-2.6': {
     falId: 'wan/v2.6/text-to-video',
     imageFalId: 'wan/v2.6/image-to-video',   // VERIFY on fal
+    // wan's image endpoint has no aspect_ratio field — the output follows
+    // the frame. Sending one did not fail, it was ignored, which is worse:
+    // a creator picked 9:16, got whatever their still was, and nothing said so.
+    aspectIgnoredWithImage: true,
     // 2 rather than 1: fal charges $0.100/sec, and a Studio credit is worth
     // $0.064, so 1 credit/sec sold this model at 0.64x cost on the pack most
     // of its generations are paid from. See src/lib/falCosts.js.
@@ -65,6 +69,11 @@ const MODELS = {
   'kling-3.0': {
     falId: 'fal-ai/kling-video/v3/standard/text-to-video',
     imageFalId: 'fal-ai/kling-video/v3/standard/image-to-video',   // VERIFY on fal
+    // v3/standard requires start_image_url exactly as v4 does. This sent
+    // image_url, which that endpoint does not have, so every Kling 3.0
+    // generation with an opening frame was a 422. Found by check-payload on
+    // its first run against fal's real schemas, not by anyone using it.
+    startFrameParam: 'start_image_url',
     // 3 rather than 2: fal charges $0.140/sec, which 2 credits/sec covered at
     // 0.91x on Studio credits. See src/lib/falCosts.js.
     creditsPerSecond: 3,
@@ -182,8 +191,12 @@ const MODELS = {
     extraInput: { resolution: '1080p' },
   },
   'veo-3.1': {
-    falId: 'fal-ai/veo3.1/fast/text-to-video',
-    imageFalId: 'fal-ai/veo3.1/fast/image-to-video',   // VERIFY on fal
+    // The bare path IS the text-to-video endpoint — fal's own document gives
+    // it category "text-to-video" and schema Veo31TextToVideoInput. The id
+    // with /text-to-video on the end 404s, so every Veo 3.1 text generation
+    // was being submitted to an endpoint that does not exist.
+    falId: 'fal-ai/veo3.1/fast',
+    imageFalId: 'fal-ai/veo3.1/fast/image-to-video',
     creditsPerSecond: 4,
     durationParam: { 4: '4s', 6: '6s', 8: '8s' },
     aspectRatios: ['16:9', '9:16'],

@@ -69,11 +69,23 @@ for (const id of endpoints) {
       failed += 1;
       continue;
     }
+    /* Enums as well as names. A field name can be right and its value still
+       wrong — '480P' where the endpoint says '480p', or an aspect ratio a
+       model offers that the endpoint has never heard of. Both are a 422,
+       and neither is visible from the field name alone. */
+    const enums = {};
+    for (const [field, spec] of Object.entries(schema.properties)) {
+      const values = spec?.enum ?? spec?.anyOf?.find((a) => a?.enum)?.enum;
+      if (Array.isArray(values)) enums[field] = values;
+    }
     out[id] = {
       accepts: Object.keys(schema.properties).sort(),
       required: [...(schema.required ?? [])].sort(),
+      ...(Object.keys(enums).length ? { enums } : {}),
     };
-    console.log(`${out[id].accepts.length} fields, ${out[id].required.length} required`);
+    console.log(
+      `${out[id].accepts.length} fields, ${out[id].required.length} required, ${Object.keys(enums).length} with fixed values`,
+    );
   } catch (err) {
     console.log("unreachable: " + err.message);
     failed += 1;

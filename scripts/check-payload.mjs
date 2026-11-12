@@ -27,7 +27,14 @@
     3. A required opening frame is not left to chance — if a route can be
        entered with only a closing frame, the opening frame cannot be
        required.
-    4. Every endpoint the generator can submit to has a recorded schema.
+    4. Every value the generator can send for a field with fixed choices is
+       one of those choices — the durations offered, the aspect ratios
+       offered, and anything in extraInput. A right field name carrying a
+       wrong value is the same 422 as a wrong name, and Veo 3.1's duration
+       being '8s' rather than 8 is exactly the kind of thing nobody
+       remembers per model.
+
+    5. Every endpoint the generator can submit to has a recorded schema.
        An endpoint with no schema is NOT a pass: it is an unchecked one, and
        saying so out loud is the whole lesson of the week.
 */
@@ -92,6 +99,32 @@ for (const modelKey of Object.keys(MODELS)) {
         `${modelKey} can reach ${route.endpoint} with only an end frame, but that endpoint ` +
           `requires "${route.startParam}" — an end-frame-only generation would be rejected`,
       );
+    }
+
+    /*
+      4. Values, where the endpoint fixes them. Only enums are checked, not
+         types: fal's validator coerces a numeric string to a number, so
+         flagging that would be a false alarm, and a check that cries wolf
+         is a check somebody turns off.
+    */
+    const enums = schema.enums ?? {};
+    const model = MODELS[modelKey];
+    const values = [
+      ["duration", Object.values(model.durationParam ?? {})],
+      ["aspect_ratio", sends.has("aspect_ratio") ? (model.aspectRatios ?? []) : []],
+      ...Object.entries(model.extraInput ?? {}).map(([k, v]) => [k, [v]]),
+    ];
+    for (const [field, sent] of values) {
+      const allowed = enums[field];
+      if (!allowed || !sent.length) continue;
+      for (const value of sent) {
+        if (!allowed.includes(value)) {
+          problems.push(
+            `${modelKey} on its ${route.route} route can send ${field}=${JSON.stringify(value)}, ` +
+              `which ${route.endpoint} does not allow. It allows: ${allowed.map((v) => JSON.stringify(v)).join(", ")}`,
+          );
+        }
+      }
     }
   }
 }
