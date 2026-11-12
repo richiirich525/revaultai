@@ -12,6 +12,139 @@ claims the site was making that were not true, as well as code that misbehaved.
 
 ---
 
+## v33 — November 11, 2026
+
+Twenty-four commits. The headline is uncomfortable: almost everything in this
+release was already written. Casting Call, published receipts and Part 2 had
+all shipped, all passed their checks, and none of them worked. A casting call
+404'd before the app loaded. A receipt link did the same. Part 2 wrote to a
+column that did not exist. Three models were submitting to fal endpoints that
+rejected them. And the default model had been sold for less than it cost to
+run since the day its rate was set.
+
+Not one of these was reported by anybody. Every one was found by building
+something that compares two things nobody had compared: what we charge
+against what fal charges, what we send against what fal accepts, and what the
+router claims to serve against what the host will actually hand it.
+
+So the second theme is the durable one. Four new build checks, and the rule
+they share is that **an unverified thing is never reported as a passing
+thing.** Three bugs this week were hidden by checks that looked for the
+author's own artifact rather than for the capability — a policy by name, a
+price unit in a hand-written fixture, one endpoint's schema generalized to
+its neighbour. Each passed while proving nothing.
+
+### Added
+
+- **Part 2.** One press continues a take: the next shot opens on the frame
+  the last one ended on, with the same cast, model, framing and length, and
+  the previous prompt carried over as editable text. The frame is the one
+  saved in End Frame if there is one, otherwise the clip's last frame, read
+  in the browser and uploaded. `generations.continues_from` records the link,
+  and a take that continues another says so above it.
+- **Casting Call.** A role anyone can audition for with their own face.
+  Whoever opens the link sees the role, the brief, who is casting and how
+  many have turned up — never who they are. Most people who audition are not
+  cast, which is the point: they leave holding a locked character pack of
+  themselves. Casting does not shoot. Picking somebody creates an ordinary
+  crew invite showing the actual scene, so being cast is a second and
+  specific consent.
+- **Published receipts have a page.** `/receipt/<id>` renders the same
+  component the owner sees, in public mode, with its own title, snippet and
+  link preview. A receipt is the one artifact here a filmmaker would rather
+  show another filmmaker than show off.
+- **Kling 4.0** at 4 credits a second — 1080p, and up to thirty seconds in a
+  single take, for a third of what the same length costs on Seedance 2.5. Its
+  schema was read from fal's own OpenAPI document rather than its docs page,
+  which was wrong about both the price and the resolution tiers.
+- **Vercel Web Analytics**, and the privacy policy now says so.
+- **Four build checks.** `check-vercel` validates vercel.json against
+  Vercel's schema and requires a rewrite for every route that carries an id.
+  `check-margin` refuses to build when any model earns less than it costs at
+  the deepest-discount pack, when the two price tables disagree, or when
+  published copy quotes a rate the server does not charge. `check-payload`
+  compares every field the generator can send against what each fal endpoint
+  accepts and requires, offline. `npm run fal:schemas` refreshes what those
+  last two compare against.
+
+### Fixed
+
+- **The default model was sold at a loss.** Wan 2.6 cost $0.100 a second on
+  fal and earned $0.064 at the Studio rate — 0.64x, on every generation, for
+  as long as the rate had existed. Kling 3.0 was underwater at the same pack.
+  Both rates were raised. Nothing in the build had ever compared the two
+  numbers because one of them lived on fal.
+- **Every Kling 3.0 generation with a starting frame was rejected.** The
+  endpoint requires `start_image_url`; we sent `image_url`. Found by a check
+  on its first run against fal's real schemas, not by anyone using it.
+- **Every Veo 3.1 text generation was submitted to an endpoint that does not
+  exist.** `fal-ai/veo3.1/fast/text-to-video` 404s — the bare
+  `fal-ai/veo3.1/fast` is the text-to-video endpoint. The id had been
+  assumed from the pattern of its siblings.
+- **Wan 2.6 silently discarded the aspect ratio** on its image route, which
+  has no such field. A creator picked 9:16, got whatever shape their still
+  was, and nothing said otherwise.
+- **A casting call and a published receipt both 404'd.** Neither
+  `/casting/<id>` nor `/receipt/<id>` had a rewrite to index.html, so Vercel
+  looked for a static file, did not find one, and served the 404 page — the
+  app never loaded and its router never saw the path. `/world/<id>` was the
+  same. Prerendering hid it for `/film/` and `/blog/`, whose pages exist at
+  build time, which is the worst way for a bug to behave: it works when you
+  test with old data and fails for every real link.
+- **Part 2 failed on insert** until its migration was run. Credits were
+  refunded automatically, and ordinary generations were never affected,
+  because the column is only written on a continuation.
+- **`/vault`, `/projects` and `/settings` served the homepage**, byte for
+  byte, with `index, follow` and a homepage canonical. The noindex rule had
+  been right all along and never ran, because the loop that writes those
+  pages only covers routes in `PAGES`.
+- **Two deployments failed over a `"comment"` key** added to vercel.json to
+  explain a redirect. JSON has no comments. Nothing in the build read that
+  file; Vercel was the first thing to validate it.
+- **A second, incomplete VideoObject** was being emitted client-side, which
+  is what Search Console was reporting as a missing `uploadDate`.
+- **`/explore` had no links to any film** and `/creators` none to any
+  creator, so the two index pages a crawler is most likely to follow led
+  nowhere. Creator pages ran to fourteen words.
+- **The End Frame panel said it had attached a frame** to the next generation
+  and had not — it sent a field the prefill never read.
+- **The blog quoted the old credit rates in nine places**, two of them inside
+  FAQ answers that become structured data on live pages. Published prices now
+  fail the build if they disagree with what the server charges.
+- **A check that asked fal what exists by submitting to it** queued
+  twenty-seven real jobs. It reads the pricing API now, and submits nothing.
+
+### Changed
+
+- Wan 2.6 goes from 1 credit a second to 2, Kling 3.0 from 2 to 3. These are
+  the smallest whole numbers that clear cost at the Studio rate, and they
+  still clear it after payment fees. For most work the catalog got cheaper
+  the same day, because Kling 4.0 does thirty seconds at 1080p for 120
+  credits where the only previous thirty-second option was 360.
+- What fal charges is recorded per endpoint, measured rather than
+  remembered, and the admin check reports when a live price has drifted from
+  it. A model's floor is its dearest path: MiniMax costs more through
+  references than through text, and the dearer figure is the one its rate is
+  held to.
+- `robots.txt` disallows the app's own routes; the sitemap gained the tool
+  pages that had shipped without it.
+
+### Known limitations
+
+- **Casting Call has no front door.** There is no UI to post a call — one is
+  created by hand — and no scene picker, so casting somebody is API-only.
+  Auditioning, which is the part a stranger does, works.
+- **Kling 4.0 is wired for text and image only.** Its reference endpoint
+  takes named `@Element` tokens, voices and reference videos, which is a
+  different mechanism from anything else here. Its multi-shot prompts and its
+  eight intermediate keyframes are also unused, and the second of those is a
+  natural home for what the Frame Planner already produces.
+- **Seedance 2.5 is still called "Long take"** though thirty seconds in one
+  take is no longer what distinguishes it. Renaming a model creators have
+  been buying is a decision, not a tidy-up.
+
+---
+
 ## v28 — October 25, 2026
 
 Seventy-one commits. The headline is that the site now does something it has
