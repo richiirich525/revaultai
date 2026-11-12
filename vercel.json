@@ -37,6 +37,26 @@
     {
       "source": "/(settings|admin|set-password|email-confirmed|purchase-success|vault|takes|projects|specs|finish)",
       "destination": "/index.html"
+    },
+    {
+      "source": "/world/(.*)",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/receipt/(.*)",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/casting/(.*)",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/blog/(.*)",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/prompts/(.*)",
+      "destination": "/index.html"
     }
   ]
 }

@@ -22,7 +22,16 @@
     3. Every one has the properties it needs.
     4. Every rewrite destination that points at a local path points at
        something this repo can actually serve.
-    5. Every "functions" entry names a route file that exists, and sets
+    5. Every route in App.jsx that carries an id in its path has a rewrite
+       to index.html. Without one Vercel looks for a static file, does not
+       find it, and serves 404.html — the app never runs and the router
+       never sees the path. /casting/<id> shipped like that and every
+       casting call 404'd; so did /receipt/<id>, which is the shareable
+       link the whole receipt feature is built on. Both passed check-links,
+       because the three wiring points inside the app were all correct. The
+       page was never reached to use them.
+
+    6. Every "functions" entry names a route file that exists, and sets
        only properties Vercel accepts within the limits it allows. A
        maxDuration above the plan ceiling, or on a path matching no file,
        is refused at deploy time the same way the stray key was.
@@ -77,6 +86,31 @@ for (const [key, shape] of Object.entries(SHAPES)) {
       if (!(prop in entry)) problems.push(`${where} is missing "${prop}"`);
     }
   });
+}
+
+/*
+  Routes that carry an id — /film/<id>, /casting/<id> — exist only inside
+  the app's own router. Vercel knows nothing about them, so unless a rewrite
+  hands the request to index.html, the app is never loaded to do the
+  routing. Prerendering hides this for content that exists at build time and
+  not for anything made afterwards, which is the worst way for a bug to
+  behave: the feature works when you test it with old data and fails for
+  every real user.
+*/
+const APP = path.join(ROOT, "src", "App.jsx");
+if (fs.existsSync(APP)) {
+  const app = fs.readFileSync(APP, "utf8");
+  const prefixes = [...new Set([...app.matchAll(/path\.startsWith\("(\/[a-z-]+\/)"\)/g)].map((m) => m[1]))];
+  const sources = (config.rewrites ?? []).map((r) => String(r?.source ?? ""));
+  for (const prefix of prefixes) {
+    if (!sources.some((src) => src.startsWith(prefix))) {
+      problems.push(
+        `src/App.jsx routes "${prefix}<id>" but vercel.json has no rewrite for it — ` +
+          `Vercel would serve 404.html and the app would never run. ` +
+          `Add { "source": "${prefix}(.*)", "destination": "/index.html" }`,
+      );
+    }
+  }
 }
 
 /*
@@ -148,6 +182,10 @@ const counts = Object.keys(SHAPES)
   .map((k) => `${(config[k] ?? []).length} ${k}`)
   .join(", ");
 const fnCount = Object.keys(config.functions ?? {}).length;
+const idRoutes = fs.existsSync(APP)
+  ? new Set([...fs.readFileSync(APP, "utf8").matchAll(/path\.startsWith\("(\/[a-z-]+\/)"\)/g)].map((m) => m[1])).size
+  : 0;
 console.log(
-  `check-vercel: ${counts}, ${fnCount} configured functions — every entry uses properties Vercel accepts.`,
+  `check-vercel: ${counts}, ${fnCount} configured functions — every entry uses properties Vercel accepts, ` +
+    `and all ${idRoutes} id-carrying routes can reach the app.`,
 );
