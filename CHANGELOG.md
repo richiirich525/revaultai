@@ -2,19 +2,22 @@
 
 What changed in RevaultAI, newest first.
 
-A version exists once it has a heading here. Nothing else marks one — there are
-no git tags and `package.json` stays at `0.0.0`, because nobody pins a release
-of a site that deploys continuously. This file answers the only question the
-version number was ever standing in for: what changed since I last looked.
+Versions are numbered by the release notes, which are the record; there are no
+git tags and `package.json` stays at `0.0.0`, because nobody pins a release of
+a site that deploys continuously. The notes carry the full account of each
+release — what was measured, what was found while shipping, what is still
+open. This file is the short form of the same history, and answers the only
+question the version number was ever standing in for: what changed since I
+last looked.
 
 Entries are grouped as **Added**, **Fixed** and **Changed**. "Fixed" covers
 claims the site was making that were not true, as well as code that misbehaved.
 
 ---
 
-## v33 — November 11, 2026
+## v34 — November 11, 2026
 
-Twenty-four commits. The headline is uncomfortable: almost everything in this
+Twenty-four commits since v33. The headline is uncomfortable: almost everything in this
 release was already written. Casting Call, published receipts and Part 2 had
 all shipped, all passed their checks, and none of them worked. A casting call
 404'd before the app loaded. A receipt link did the same. Part 2 wrote to a
@@ -142,6 +145,314 @@ its neighbour. Each passed while proving nothing.
 - **Seedance 2.5 is still called "Long take"** though thirty seconds in one
   take is no longer what distinguishes it. Renaming a model creators have
   been buying is a decision, not a tidy-up.
+
+---
+
+## v33 — October 25, 2026
+
+Twenty-three commits. An idea from v32 was built, measured against real data,
+and parked at 41% of a 70% bar. The measurement pointed upstream, and what it
+found upstream turned out to be the product: nothing at generation time was
+asking who is in the shot.
+
+One rule decided the shape of five of these, so it is worth stating first:
+**nobody is ever cast from a photograph somebody else uploaded of them.**
+Every face in every scene belongs to somebody who built their own locked pack
+from their own photograph. It made the friends-in-a-scene path slower to
+build and the life-film path considerably slower, and the alternative was
+manufacturing locked identities of people who never agreed to one.
+
+### Added
+
+- **Cast Yourself.** One photograph becomes a locked character pack — face,
+  build, distinguishing features, wardrobe — written once, never edited
+  afterwards by anyone, reused word for word by every later prompt alongside
+  the reference images. The locking is the feature: a generated person drifts
+  between shots because nothing fixes who they are. Three gates run before a
+  pack exists — one face, an adult, not a public figure — and every uncertain
+  answer refuses. No account needed; a stranger's pack waits in
+  `pending_packs` under a random token and moves into the Vault on sign-up.
+- **Animate Yourself.** The same locked character, drawn. Six mediums —
+  cel-shade, ink halftone, Sunday funnies, stop-motion clay, watercolor wash,
+  pencil rough — each rendering a set of poses that is recognizably one
+  person. No studio, franchise or director names in the presets, and 34
+  protected terms refused in a prompt.
+- **Cast Your Crew, and Duets.** A scene with two or three people. The host
+  picks look and beat and gets a link; whoever opens it sees who asked, what
+  the scene is and how many seats remain, then adds their own photograph. If
+  they already have a character they pick it instead and skip the camera —
+  two locked identities, each already in films of their own, in one frame.
+  Nothing is shot and nothing charged until everybody is in.
+- **Lot Booth and Phone Remote.** One photograph holds up from one angle;
+  several survive the camera moving. A capture is a session with a
+  six-character code, drawn from an alphabet without O, 0, I or 1 because
+  somebody reads it off a screen and types it on a phone in bad light. Eight
+  named angles, four including the front builds a pack. Named rather than
+  "upload some photos" for a measurable reason: left alone, people shoot six
+  forward-facing frames and only the first is worth anything downstream.
+- **Memory Cinema.** A day, one line about what happened, up to six
+  photographs, a genre and who plays you. The photographs are read for where
+  you were, what the light said, what the weather did — by a prompt told in
+  as many words not to describe any person identifiably. A face in a camera
+  roll is not a casting decision.
+
+### Fixed
+
+- **Not one Cast Yourself scene would have rendered.** The page sent
+  `duration: 8` and Seedance 2.5 accepts 5, 10, 15 or 30. Every scene from
+  Cast Yourself and every crew scene would have come back *Invalid duration*
+  on the first real click. Found by a test harness checking something else.
+- **A host could swap a crew scene's beat after people joined.** The beat
+  came from the request body, so faces collected for a stakeout could have
+  been filmed doing something else entirely. Look and beat are now read off
+  the invite row at shoot time and whatever the client sends is ignored.
+- **Deleting a character left the face behind** in four places: deleting an
+  account never touched packs, `animated_sets` had no `pack_id`, capture
+  frames outlived the pack with a dangling pointer, and an anonymous capture
+  had nothing to link to. Files first, then rows, throughout.
+
+### Measured and parked
+
+- **Story Worlds.** Lock a finished take into a place somebody can walk into
+  and speak to, with no authoring step. A gate run against every finished
+  take in the database asked how many would produce a world worth walking
+  into. Three bugs sat in front of the real answer, each looking like the
+  answer: a failed query treated as an empty result, a measurement of an
+  account that owns no takes, and extraction reading only Vault entries while
+  the cast sat in the prompt. The honest figure is 41% against a 70% bar, so
+  it stays off. The gate cost an evening instead of a month, and the answer
+  it gave was not *build it better* but *the problem is upstream* — takes
+  fail because nothing in the product has ever asked who is in a shot.
+
+---
+
+## v32 — October 22, 2026
+
+Eighteen commits. A run at the outstanding test items from v31, a
+conversation about what else belongs on a studio lot, and a third outside
+brief on the Rehearsal Studio. The first of those found a bug that had
+nothing to do with what was being tested.
+
+### Fixed
+
+- **Every start-frame generation was broken, on every model.** Attaching a
+  start frame made `get-upload-url.js` return an `R2_PUBLIC_URL` link — how
+  this app records where an object lives, not a link anyone can fetch. The
+  bucket is private. Every read path presigns; `generate-video.js` skipped
+  that step and handed the stored form to fal, which got a 403. It looked
+  like a MiniMax problem only because MiniMax is the one family that keeps
+  reference photos when a start frame is present. About 75¢ of failed
+  generations before the cause turned up.
+- **Both failure paths were throwing away fal's explanation.** The submit
+  path replaced a 422 with "Generation service rejected the job", and the
+  webhook collapsed a structured error to "Generation failed". Both now share
+  one extractor that flattens whatever shape arrives and redacts URLs,
+  because reference links are presigned and carry credentials in the query.
+- **A repeat sale overwrote the first one.** Both writers to `purchases`
+  upserted on `(user_id, creation_id)`, so a buyer purchasing the same film
+  twice overwrote their first row, session id included, orphaning that sale's
+  payout. Sales are one row each now, keyed on the Stripe session, verified
+  against PostgreSQL 16 by replaying the exact case.
+- **Submissions were credited to the wrong model.** A ternary meant every
+  Veo, Seedance and MiniMax film reached the archive labeled as Wan.
+
+### Added
+
+- **The Recording Studio.** Lip sync had shipped for months with nowhere on
+  the lot to make the audio it consumes. A scene read aloud in up to four
+  voices, one credit per thousand characters. Voices live in the Vault: a
+  character gets a locked voice the way they get a locked description. The
+  turn order is the order you wrote, because Performance & Blocking groups
+  lines by character and keeps no record of who speaks when.
+- **The Lot is an honest inventory.** Three separate lists of what this
+  platform contains disagreed — the meta description named six rooms,
+  `LotPage.jsx` five different ones, and `toolCatalog.js` twenty-two. Only
+  "script supervisor" appeared in all three. Thirteen departments now cover
+  all twenty-three tools, and `check-lot.mjs` fails the build if a tool has
+  no room or a door points nowhere.
+- **Sharing a rehearsal needs no account.** Without one: a link that works at
+  once, lasts 30 days, three a day, counted per caller using a salted hash
+  and never an address. Signed in: no expiry, no limit, listed and
+  deletable.
+
+### Changed
+
+- The Rehearsal Studio's type floor rose to 12px and `--accent` used as text
+  became `--accent-text`, from 3.0:1 up to 8.65:1. The brief said the small
+  text was low-contrast gray; measuring found `--muted` already passed and
+  the accent color did not.
+- `check-links.mjs` guards 177 link targets and every sitemap entry, after a
+  dead route turned up: `/discovered` was in the nav, the router and the
+  sitemap, but missing from `KNOWN_PAGES`, so a direct visit fell through to
+  the home page.
+
+---
+
+## v31 — October 21, 2026
+
+Eighteen commits. Two outside briefs drove most of it: one on the Rehearsal
+Studio's usability, one on turning it into the flagship.
+
+### Added
+
+- **The studio has a front door.** Three starter scenes — a walk-and-talk, a
+  dinner argument, a standoff — each with real multi-keyframe blocking,
+  directed actions and a camera that does something. Hand-authored
+  coordinates look right in a diff and wrong on screen, so
+  `check-starters.mjs` runs them through the real engine on every build. It
+  caught three errors during authoring, including a camera placed 1.7 metres
+  from its subjects.
+- **Work survives a refresh.** Blocking is kept in the browser as you go.
+  Seventeen test cases cover private windows, blocked storage, quota
+  exceeded and six kinds of corrupted payload, because this storage fails in
+  more ways than it works.
+- **Three ways to get work out.** A storyboard sheet, one captioned frame per
+  camera with shot size, lens, subject and timecode. An animatic — the
+  timeline as a playable MP4, encoded in the browser by the ffmpeg build the
+  Finish tool already carries, nothing uploaded and no credits. And a share
+  link that opens the scene for anyone, with no account at the far end.
+- The share table has **no select policy at all**; reads go through a
+  security-definer function that takes an id and returns the title and the
+  scene, never the owner. The obvious design — a public `using (true)` —
+  would have let anyone holding the anon key list every scene ever shared.
+  A shared scene is a stranger's JSON going into three.js, so the sanitizer
+  is a whitelist, runs before writing and again after reading, and
+  `check-share.mjs` holds it to fifty hostile cases on every build.
+
+### Fixed
+
+- **The pricing page served two of its three prices as rubbish** — "$15"
+  arrived as `<div id="root">5` and "$32" as `</div>2`. The prerendered body
+  was injected with a replacement string built as `$1${html}$3`, so "$1" in
+  our own copy was read as a capture group. "$5" survived because there was
+  no group 5. Six more injection sites had the same flaw.
+- **The secondary text color failed accessibility everywhere** — 3.16–3.53:1
+  against the four page backgrounds, across 408 usages in 70 files. Raised to
+  the lightest value on the same hue that passes.
+- **Image generation returned 500 on every call.** One route read
+  `SUPABASE_URL` where the other 51 read `VITE_SUPABASE_URL`, so
+  `createClient(undefined)` threw at module load and the route failed before
+  seeing a request.
+- **The generate page stated a price for a video nobody was making** —
+  fifteen seconds of Seedance 2.5 read as "180 credits per 5-second video".
+- **The Journal told readers blocking required an account.** It never has.
+  Four calls to action said so, on the pages most likely to convert a reader.
+- Seven British spellings, six of them recent. `us-spelling.mjs` existed and
+  was not being run.
+
+### Changed
+
+- `/rehearsal` gained six sections of real indexable copy with hand-drawn SVG
+  diagrams, taking the page from about 140 words to 489. The copy lives in
+  one module that both the page and the prerenderer read, because the page is
+  prerendered from a separate catalog and headings added in React would have
+  been invisible to every crawler.
+
+---
+
+## v30 — October 15, 2026
+
+Two commits, the same evening as v29. Both came out of looking at fal's
+current catalog rather than from the backlog.
+
+### Added
+
+- **MiniMax H3 Max, in three tiers.** Twelve references against Kling's four,
+  and the only model here that holds a reference set *and* opens on an exact
+  first frame at the same time — every other model drops the Vault photos
+  when a starting frame is attached, so a chained shot keeps its faces for
+  the first time. It also takes a middle keyframe and a last frame, which is
+  the model the Frame Planner has been waiting for.
+- **More than two people in a scene,** up to six, with editable names. Never
+  a limit in the engine — performers are an array and every part of the
+  system maps over it — only an absence: there was no button anywhere in the
+  codebase. The names matter more than they sound, because three people
+  called A, B and C is a diagram rather than a scene.
+
+### Fixed
+
+- **Two cameras added in the same millisecond shared an id.** `addCamera`
+  built ids from `Date.now()`, which is not unique inside a tick. Found by
+  writing `addActor` the same way and watching six performers come back with
+  three ids — removing one removed four.
+- The plan and the studio disagreed about color past the fourth performer.
+
+### Changed
+
+- `prompt_expansion_mode` is pinned to `disabled` on all three MiniMax tiers
+  and is not a creator-facing option. fal's default rewrites the prompt
+  before the model sees it, which would quietly undo the framing, eyelines,
+  declared intent and Vault wording this platform exists to put there.
+
+---
+
+## v29 — October 15, 2026
+
+Fourteen commits, ten of them that day and all ten the Rehearsal Studio.
+
+### Added
+
+- **A performer can be directed, not only placed.** Blocking answered where
+  somebody stands and could not say what they were doing. There are now 37
+  directed actions across 10 categories, each naming a clip and the words
+  that reach the prompt. The clips were already there — `animations.glb` has
+  had 43 since September, of which six were in use. Two entries can share a
+  clip and still be different directions: listening and waiting stand equally
+  still, but the shot is not the same shot and the model should not be told
+  it is.
+- **The camera moves through a shot, not only between shots.** Thirteen moves
+  in six groups, each writing two marks on the active camera and nothing
+  else, so a move can be nudged, re-timed or half-deleted afterwards like
+  anything set by hand. Crane and zoom needed height and lens to become
+  keyframable, which they now are.
+- **Nobody walks through the kitchen island.** Performers and extras stop at
+  walls and furniture and slide along them. The camera deliberately passes
+  through walls — taking one out to shoot into a room is how sets are built —
+  but not through furniture.
+- **A full-bleed stage,** with the plan floating over it as a live overlay and
+  every camera as a button. Both layouts render from one shared set of props,
+  so the split view and the stage cannot drift apart.
+- **Walking the camera.** WASD to move, Q and E for height, drag to look, R to
+  face the subject. It flies the shot camera rather than a scouting one, and
+  every change lands as a mark at the playhead exactly as a drag does.
+- **Cameras you can see.** Cameras were objects in the data but the 3D view
+  only ever rendered through the active one. Each now stands in the room with
+  a body, a lens barrel, a stand and the cone it actually covers — real
+  optics, not decoration: at 3.2 metres a 35mm throws 3.3m across and an 85mm
+  throws 1.4m, which match full-frame fields of view.
+
+### Fixed
+
+All eight were faults introduced by this release's own code, found by testing
+it rather than by reading it.
+
+- The stage controls could not be seen, at 3.53:1 over a near-black viewport.
+- The exit button sat underneath the site nav, which had a higher z-index.
+- **Collision treated every prop as an obstacle,** including roads and
+  pavements, which are things you walk on. Footprints covered 87–136% of the
+  floor on exteriors; a shopfront fell from 87% blocked to 8%.
+- **Every camera would have been drawn aiming away from its own shot.** Rigs
+  were built pointing local +Z; under `yawFromBearing`, forward is −Z.
+- A 30-degree arc was described as a track one way and an arc the other.
+- Three React advisories introduced by the walk loop.
+
+### Still open
+
+- A performer still walks through furniture between two legal marks. It is
+  reported, not solved: solving it means pathfinding, and rerouting a
+  performance the director set is the wrong default. The report may be the
+  right permanent answer.
+
+---
+
+## Earlier notes, written to a different scheme
+
+The two entries below predate this file matching the numbered release notes.
+They were written independently and more coarsely: what they call v28 covers
+material released as v32 and v33, and what they call v27 describes a payout
+arrangement that v29 onward supersedes. They are kept because they say things
+the numbered notes do not, and left unrenumbered because the correspondence
+is not one to one.
 
 ---
 
