@@ -173,7 +173,12 @@ const MODELS = {
     creditsPerSecond: 4,
     durationParam: { 5: 5, 10: 10, 15: 15, 30: 30 },   // an integer, not an enum
     aspectRatios: ['16:9', '9:16', '1:1', '21:9'],
-    aspectIgnoredWithImage: true,
+    aspectIgnoredWithImage: true,   // v4's image route has no aspect_ratio field at all
+    // v4 calls the opening frame start_image_url, and REQUIRES it — where
+    // every other model here takes an optional image_url. Sending the wrong
+    // name is a 422 with both faults at once: an unknown field and a missing
+    // required one. Found by a Part 2 that failed twice before this existed.
+    startFrameParam: 'start_image_url',
     extraInput: { resolution: '1080p' },
   },
   'veo-3.1': {
@@ -877,7 +882,7 @@ export default async function handler(req, res) {
           prompt: refPrompt,
           duration: selected.durationParam[seconds],
           ...(usingImageRoute && selected.aspectIgnoredWithImage ? {} : { aspect_ratio: ratio }),
-          ...(imageUrl ? { image_url: startFrame } : {}),
+          ...(imageUrl ? { [selected.startFrameParam || "image_url"]: startFrame } : {}),
           ...(endFrame ? { end_image_url: endFrame } : {}),
           ...(refs.length && refModel.mode !== "elements"
             ? { [refModel.refsParam || "image_urls"]: refs.map((r) => r.url) }
