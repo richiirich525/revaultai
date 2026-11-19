@@ -4,6 +4,96 @@
 
 export const POSTS = [
   {
+    slug: "what-an-ai-short-film-actually-costs",
+    title: "What an AI Short Film Actually Costs",
+    seoTitle: "AI Short Film Cost: What 90 Seconds Really Costs to Generate",
+    description: "The real cost of an AI short is not the finished footage, it is the attempts. Worked numbers for a 96-second scene, and the one habit that halves the bill.",
+    date: "2026-11-18",
+    author: "Richard Garland",
+    category: "Guides",
+    readingTime: "5 min",
+    faq: [
+      ["How much does it cost to make an AI short film?", "Less than people expect for the footage you keep, and more than they expect for the footage you throw away. On RevaultAI a finished 96-second scene costs between roughly 35 and 75 dollars in credits, depending on whether you draft first. The spread comes almost entirely from how many attempts each shot takes."],
+      ["Is it cheaper to generate at a lower resolution first?", "Usually, yes. Drafting finds the shots that do not work at a fraction of the price, so the expensive tier only ever runs on shots you already know are good. The worked example in this article comes to about half the cost that way."],
+      ["What is the cheapest model on RevaultAI?", "MiniMax H3 Max Draft (480p), at 1 credit per second. A five-second test on it is five credits, which is around thirty cents. It is the right place to find out whether a shot reads before paying for the version you keep."],
+      ["Do failed generations cost credits?", "A generation that fails outright is refunded automatically. One that completes and simply is not what you wanted still costs what it costs, which is the real argument for testing cheaply first."],
+    ],
+    content: `
+<p>Ask what an AI short film costs and you usually get the price of one clip, which is the least useful number available. The clip you keep is never the expense. The expense is the eleven you did not keep, and nobody budgets for those because nobody plans to make them.</p>
+
+<p>Here is the arithmetic as it actually works out.</p>
+
+<h2>The unit is the second, not the clip</h2>
+
+<p>Credits are charged per second of output, at a rate that depends on the model. Nothing else is billed: no render fees, no per-project charge, no subscription. A ten-second shot costs exactly twice a five-second one on the same model.</p>
+
+<p>That makes a single shot easy to price and a film surprisingly hard to, because the length of the finished film tells you almost nothing about what it cost to arrive at.</p>
+
+<h2>One shot, four ways</h2>
+
+<p>Take one eight-second shot and run it on different models:</p>
+
+<ul>
+<li><strong>MiniMax H3 Max Draft (480p)</strong> at 1 credit per second: 8 credits, roughly 51 cents.</li>
+<li><strong>Wan 2.6 Fast</strong> at 2 credits per second: 16 credits, roughly a dollar.</li>
+<li><strong>Kling 4.0</strong> at 4 credits per second: 32 credits, about two dollars.</li>
+<li><strong>Seedance 2.5 Long take (720p)</strong> at 12 credits per second: 96 credits, about six dollars.</li>
+</ul>
+
+<p>Those are at the Studio pack rate, where a credit is 6.4 cents. On the smallest pack a credit is 10 cents, so everything is roughly half again as much.</p>
+
+<p>None of those numbers is frightening. The film is still expensive, and the reason is the multiplier nobody writes down.</p>
+
+<h2>Attempts per keeper</h2>
+
+<p>This is the number that decides your budget. Not the model, not the resolution, not the length. How many times you generate a shot before one of them is good enough to cut.</p>
+
+<p>Three is a reasonable working figure for a shot you have planned properly. Six or more is normal for a shot you have not: a crowded frame, a complicated camera move, two people interacting, anything where you are hoping rather than specifying.</p>
+
+<p>Multiply it out. A twelve-shot scene at eight seconds a shot is 96 seconds of finished film. On Kling 4.0 that is 384 credits for one attempt at every shot. At three attempts each it is 1,152 credits, which is about 74 dollars.</p>
+
+<h2>The habit that halves it</h2>
+
+<p>Now run the same scene differently. Do the first two attempts at every shot on the cheapest tier, purely to find out which framings and actions actually work. Then run one final pass on the good model, only on the shots you have already proven.</p>
+
+<ul>
+<li>Two draft passes: 12 shots, 8 seconds, 1 credit per second, twice over, is 192 credits.</li>
+<li>One final pass on Kling 4.0: 384 credits.</li>
+<li><strong>Total: 576 credits, about 37 dollars.</strong></li>
+</ul>
+
+<p>Half the cost, same finished film, and you saw every shot twice before committing to it. The draft tiers exist for this and almost nothing else. Both Seedance versions have a 480p draft at half the rate of their 720p tier for the same reason.</p>
+
+<p>Draft output is not for delivery. It is for answering one question: does this shot read? A shot that fails at 480p will fail at 1080p more expensively.</p>
+
+<h2>The cost that does not show up on the bill</h2>
+
+<p>Everything above assumes you knew what you were shooting. The largest avoidable expense in AI filmmaking is generating in order to decide, rather than generating because you have decided.</p>
+
+<p>Breaking the scene into shots, planning coverage, staging the blocking, checking continuity across prompts and picking the model for each shot are all free, with no account needed for most of them. They are free deliberately. Every decision you make before the first paid generation is a decision you are not paying a model to make badly on your behalf.</p>
+
+<p>A filmmaker who blocks a scene first and generates second typically needs two or three attempts a shot. One who opens the generator with a sentence and an intention needs a lot more, and the difference lands entirely on the card.</p>
+
+<h2>Budgeting a real project</h2>
+
+<p>A workable rule for a planned scene, at the Studio rate:</p>
+
+<ul>
+<li>Work out your finished seconds. Twelve shots at eight seconds is 96.</li>
+<li>Price one full pass on the model you intend to deliver on.</li>
+<li>Double it for drafts and re-runs. Triple it if the scene is crowded, fast, or has several people interacting.</li>
+<li>Add about 1 credit per thousand characters if you are recording dialogue in locked voices.</li>
+</ul>
+
+<p>For most short scenes that lands somewhere between thirty and eighty dollars. A five-minute film made of such scenes is a few hundred, not a few thousand, and the variance within that range is almost entirely about preparation rather than about which model you chose.</p>
+
+<h2>One last thing worth knowing</h2>
+
+<p>A generation that fails outright is refunded automatically. A generation that completes and is merely disappointing is not, because the model did the work. That asymmetry is the whole argument for the free tools: the expensive mistakes are the ones that succeed technically and fail creatively, and those are caught by thinking, not by spending.</p>
+`,
+  },
+
+  {
     slug: "long-take-or-second-shot-ai-video",
     title: "Long Take or Second Shot: Keeping a Scene Going",
     seoTitle: "Long Takes in AI Video: 30 Seconds, or Continue the Shot",
