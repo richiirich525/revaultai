@@ -145,6 +145,44 @@ function injectBody(html, inner) {
   );
 }
 
+/*
+  The exact player DetailPage renders. Declared in one place so the JSON-LD
+  embedUrl and the prerendered iframe can never drift apart again: Google
+  matches one against the other, and a difference as small as the domain is
+  enough for it to decide the page has no player.
+*/
+function youtubeEmbed(id) {
+  return `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1`;
+}
+
+/*
+  A real player in the prerendered HTML.
+
+  Everything injectBody writes lives inside <div id="root">, so React throws
+  it away the moment it mounts and no visitor ever sees this. Crawlers do see
+  it, and for video indexing that is the difference between a page that is a
+  watch page and a page that merely claims to be one. lazy loading keeps the
+  browser from fetching a frame it is about to discard.
+
+  Mux is given a <video> with its HLS source rather than an mp4: static mp4
+  renditions are not enabled on the account, and pointing Google at an mp4
+  that answers 404 would be worse than the manifest.
+*/
+function playerHtml(c, thumb, title) {
+  if (c.youtube_id) {
+    return `<iframe width="560" height="315" src="${esc(youtubeEmbed(c.youtube_id))}"`
+      + ` title="${esc(title)}" frameborder="0" loading="lazy"`
+      + ` allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"`
+      + ` allowfullscreen></iframe>`;
+  }
+  if (c.mux_playback_id) {
+    return `<video controls preload="none" width="560"${thumb ? ` poster="${esc(thumb)}"` : ""}>`
+      + `<source src="https://stream.mux.com/${esc(c.mux_playback_id)}.m3u8" type="application/x-mpegURL">`
+      + `</video>`;
+  }
+  return "";
+}
+
 function writeRoute(routePath, html) {
   const outDir = routePath === "/" ? DIST : path.join(DIST, routePath.replace(/^\//, ""));
   fs.mkdirSync(outDir, { recursive: true });
@@ -947,7 +985,15 @@ try {
             logo: { "@type": "ImageObject", url: SITE + "/og-image.png" },
           },
         };
-        if (c.youtube_id) video.embedUrl = `https://www.youtube.com/embed/${c.youtube_id}`;
+      /*
+        The embed URL must be the player the page actually loads. DetailPage
+        renders youtube-nocookie.com, and this declared youtube.com, so Google
+        could not match the markup to any player on the page. That mismatch is
+        half of why Search Console reported "Video isn't on a watch page"; the
+        other half was that no player existed in the HTML at all until React
+        had run.
+      */
+      if (c.youtube_id) video.embedUrl = youtubeEmbed(c.youtube_id);
         else if (c.mux_playback_id) video.contentUrl = `https://stream.mux.com/${c.mux_playback_id}.m3u8`;
         html = injectJsonLd(html, video);
       }
@@ -962,7 +1008,7 @@ try {
       const byline = creatorHandle
         ? `<p>An AI-generated ${esc(kind)} by <a href="/creator/${esc(creatorHandle)}">${esc(who)}</a> on RevaultAI.</p>`
         : `<p>An AI-generated ${esc(kind)} by ${esc(who)} on RevaultAI.</p>`;
-      const body = `<h1>${esc(c.title)}</h1>${byline}`
+      const body = `<h1>${esc(c.title)}</h1>${playerHtml(c, thumb, c.title ?? "Untitled")}${byline}`
         + `<h2>Production note</h2>${noteHtml(c.prompt_full)}`;
       html = injectBody(html, body);
       writeRoute("/film/" + c.id, html);
@@ -1142,6 +1188,19 @@ try {
       html = setCanonical(html, pageUrl);
       html = setRobots(html, true);
 
+      /*
+        A list of links, not a list of videos.
+
+        This used to describe all fifty entries as VideoObjects, which told
+        Google that this page is the watch page for fifty films that are
+        hosted on YouTube and made by other people. It is not: it is a
+        curated index, the films play in a lightbox on click, and each one's
+        real watch page belongs to its director. Search Console reported it
+        as "Video isn't on a watch page", which was correct.
+
+        Pointing each item at the film's own YouTube URL says what is
+        actually true, and leaves the video rich result where it belongs.
+      */
       html = injectJsonLd(html, {
         "@context": "https://schema.org",
         "@type": "ItemList",
@@ -1149,14 +1208,8 @@ try {
         itemListElement: discovered.map((f, i) => ({
           "@type": "ListItem",
           position: i + 1,
-          item: {
-            "@type": "VideoObject",
-            name: f.title,
-            description: f.note || `An AI-generated film by ${f.director_name}.`,
-            thumbnailUrl: `https://i.ytimg.com/vi/${f.youtube_id}/hqdefault.jpg`,
-            embedUrl: `https://www.youtube-nocookie.com/embed/${f.youtube_id}`,
-            creator: { "@type": "Person", name: f.director_name },
-          },
+          name: f.title,
+          url: `https://www.youtube.com/watch?v=${f.youtube_id}`,
         })),
       });
 

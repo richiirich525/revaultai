@@ -312,7 +312,10 @@ function setVideoSchema(creation) {
     },
     isAccessibleForFree: !creation.is_premium,
   };
-  if (creation.youtube_id) data.embedUrl = `https://www.youtube.com/embed/${creation.youtube_id}`;
+  // Must be the player this page actually loads, which DetailPage renders
+  // from youtube-nocookie. Declaring youtube.com here left Google unable to
+  // match the markup to the embed and reporting no watch page.
+  if (creation.youtube_id) data.embedUrl = `https://www.youtube-nocookie.com/embed/${creation.youtube_id}?rel=0&modestbranding=1`;
   else if (creation.mux_playback_id) data.contentUrl = `https://stream.mux.com/${creation.mux_playback_id}.m3u8`;
 
   const script = document.createElement("script");
