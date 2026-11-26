@@ -10,11 +10,22 @@
   longer than that stops being news and becomes a second features section,
   and the Journal and the changelog already exist for the full record.
 
+  An entry carries either `page` (a page key, routed through setPage) or
+  `href` (a real URL, for anything setPage cannot reach, such as a journal
+  post, which needs a slug the page key does not carry).
+
   Dates are the point. "New" with no date is a claim that goes stale quietly
   and is still sitting there in March.
 */
 
 const NEW = [
+  {
+    date: "2026-11-25",
+    title: "Sound",
+    body: "A cut that feels flat is usually a cut with no score. What music does that generated audio cannot, where to find it cleared for publishing, and which way round to cut.",
+    href: "/blog/how-to-score-an-ai-short-film",
+    cta: "Read the guide",
+  },
   {
     date: "2026-11-11",
     title: "Kling 4.0",
@@ -49,13 +60,6 @@ const NEW = [
     body: "One photo becomes a character that stays you from shot to shot. Then put it in a scene: a genre, a beat, five seconds.",
     page: "cast",
     cta: "Be in the movie",
-  },
-  {
-    date: "2026-10-24",
-    title: "Animate Yourself",
-    body: "The same character drawn as cel-shade, comic halftone, Sunday funnies, claymation, watercolor or pencil. Four free.",
-    page: "animate",
-    cta: "Draw yourself",
   },
 ];
 
@@ -113,9 +117,15 @@ export default function HomeNew({ setPage }) {
               <div className="hn-date">{pretty(item.date)}</div>
               <h3>{item.title}</h3>
               <p>{item.body}</p>
-              <button className="hn-link" type="button" onClick={() => setPage(item.page)}>
-                {item.cta} &rarr;
-              </button>
+              {item.href ? (
+                <a className="hn-link" href={item.href} style={{ textDecoration: "none" }}>
+                  {item.cta} &rarr;
+                </a>
+              ) : (
+                <button className="hn-link" type="button" onClick={() => setPage(item.page)}>
+                  {item.cta} &rarr;
+                </button>
+              )}
             </div>
           ))}
         </div>
