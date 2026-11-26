@@ -6,8 +6,13 @@ import { supabase } from "./lib/supabase.js";
   Extracted from App.jsx.
 */
 
-export default function AuthModal({ onClose, notify }) {
-  const [tab, setTab] = useState("signin");
+const TABS = ["signin", "signup", "forgot"];
+
+export default function AuthModal({ onClose, notify, initialTab = "signin" }) {
+  // Which tab opens depends on why the modal was opened. Someone clicking a
+  // "join" call to action does not have an account yet, and asking them to
+  // sign in to one is how you lose them.
+  const [tab, setTab] = useState(TABS.includes(initialTab) ? initialTab : "signin");
   const [email, setEmail] = useState(""); const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false); const [error, setError] = useState(null); const [success, setSuccess] = useState(null);
   const siteUrl = window.location.hostname === "localhost" ? window.location.origin : "https://revaultai.com";
@@ -30,8 +35,8 @@ export default function AuthModal({ onClose, notify }) {
             </div>
           </div>
           <div className="auth-body">
-            {tab === "signin" && (<form onSubmit={handleSignIn}><div className="auth-field"><label className="auth-label">Email</label><input className="auth-input" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus /></div><div className="auth-field"><label className="auth-label">Password</label><input className="auth-input" type="password" placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;" value={password} onChange={(e) => setPassword(e.target.value)} required /></div>{error && <div className="auth-error">{error}</div>}{success && <div className="auth-success">{success}</div>}<button className="auth-submit" type="submit" disabled={loading}>{loading ? "Signing in..." : "Sign In"}</button><div className="auth-link" onClick={() => { setTab("forgot"); reset(); }}>Forgot password?</div></form>)}
-            {tab === "signup" && (<form onSubmit={handleSignUp}><div className="auth-field"><label className="auth-label">Email</label><input className="auth-input" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus /></div><div className="auth-field"><label className="auth-label">Password</label><input className="auth-input" type="password" placeholder="Min. 6 characters" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} /></div>{error && <div className="auth-error">{error}</div>}{success && <div className="auth-success">{success}</div>}<button className="auth-submit" type="submit" disabled={loading || !!success}>{loading ? "Creating..." : "Create Account"}</button></form>)}
+            {tab === "signin" && (<form onSubmit={handleSignIn}><div className="auth-field"><label className="auth-label">Email</label><input className="auth-input" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus /></div><div className="auth-field"><label className="auth-label">Password</label><input className="auth-input" type="password" placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;" value={password} onChange={(e) => setPassword(e.target.value)} required /></div>{error && <div className="auth-error">{error}</div>}{error && <div className="auth-link" onClick={() => { setTab("signup"); reset(); }}>No account yet? Create one</div>}{success && <div className="auth-success">{success}</div>}<button className="auth-submit" type="submit" disabled={loading}>{loading ? "Signing in..." : "Sign In"}</button><div className="auth-link" onClick={() => { setTab("forgot"); reset(); }}>Forgot password?</div></form>)}
+            {tab === "signup" && (<form onSubmit={handleSignUp}><div className="auth-field"><label className="auth-label">Email</label><input className="auth-input" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus /></div><div className="auth-field"><label className="auth-label">Password</label><input className="auth-input" type="password" placeholder="Min. 6 characters" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} /></div>{error && <div className="auth-error">{error}</div>}{success && <div className="auth-success">{success}</div>}<button className="auth-submit" type="submit" disabled={loading || !!success}>{loading ? "Creating..." : "Create Account"}</button>{!success && <div className="auth-link" onClick={() => { setTab("signin"); reset(); }}>Already have an account? Sign in</div>}</form>)}
             {tab === "forgot" && (<form onSubmit={handleForgotPassword}><div className="auth-field"><label className="auth-label">Email</label><input className="auth-input" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus /></div>{error && <div className="auth-error">{error}</div>}{success && <div className="auth-success">{success}</div>}<button className="auth-submit" type="submit" disabled={loading || !!success}>{loading ? "Sending..." : "Send Reset Link"}</button><div className="auth-link" onClick={() => { setTab("signin"); reset(); }}>Back to sign in</div></form>)}
           </div>
         </div>

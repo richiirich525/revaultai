@@ -176,6 +176,9 @@ const [page, setPageState]        = useState("home");
     })();
   }, [user?.id]);
   const [authOpen, setAuthOpen]     = useState(false);
+  const [authTab, setAuthTab]       = useState("signin");
+  // Open the modal on the tab that matches why it was opened.
+  const openAuth = (tab = "signin") => { setAuthTab(tab); setAuthOpen(true); };
   const [purchasedIds, setPurchasedIds] = useState(new Set());
 const [purchasesLoaded, setPurchasesLoaded] = useState(false);
 
@@ -329,7 +332,7 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
       case "guidelines": return <GuidelinesPage setPage={setPage} />;
       case "premium-films": return <PremiumFilmsPage setPage={setPage} />;
       case "about": return <AboutPage setPage={setPage} />;
-      case "become-creator": return <BecomeCreatorPage setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} />;
+      case "become-creator": return <BecomeCreatorPage setPage={setPage} user={user} onSignInClick={() => openAuth("signup")} />;
       case "prompt-builder": return <PromptBuilderPage setGenPrefill={setGenPrefill} activeProject={activeProject} setPage={setPage} user={user} onSignInClick={() => setAuthOpen(true)} />;
       case "privacy":   return <LegalPage setPage={setPage} page="privacy" />;
       case "refunds":   return <LegalPage setPage={setPage} page="refunds" />;
@@ -371,5 +374,5 @@ if (session?.user) { identifyUser(session.user.id, session.user.email); } else {
     }
   }
 
-  return (<><style>{CSS}</style><Nav setCreatorUser={setCreatorUser} activeProject={activeProject} page={page} setPage={setPage} user={user} profile={profile} onSignInClick={() => setAuthOpen(true)} onSignOut={handleSignOut} />{renderPage()}{authOpen && <AuthModal onClose={() => setAuthOpen(false)} notify={notify} />}{notifMsg && <Notification key={notifMsg} msg={notifMsg} onClose={() => setNotifMsg(null)} />}<AskWidget setPage={setPage} /></>);
+  return (<><style>{CSS}</style><Nav setCreatorUser={setCreatorUser} activeProject={activeProject} page={page} setPage={setPage} user={user} profile={profile} onSignInClick={() => setAuthOpen(true)} onSignOut={handleSignOut} />{renderPage()}{authOpen && <AuthModal onClose={() => setAuthOpen(false)} notify={notify} initialTab={authTab} />}{notifMsg && <Notification key={notifMsg} msg={notifMsg} onClose={() => setNotifMsg(null)} />}<AskWidget setPage={setPage} /></>);
 }
