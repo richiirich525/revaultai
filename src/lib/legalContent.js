@@ -120,7 +120,7 @@ export const LEGAL_CONTENT = {
       <h2>4. What We Do Not Do</h2>
       <ul>
         <li>We do not sell your personal data, and we never have.</li>
-        <li>We do not run advertising on RevaultAI and we do not use advertising or cross-site tracking cookies.</li>
+        <li>We do not run advertising on RevaultAI and we do not use advertising or cross-site tracking cookies. Some outbound links to tools we recommend are affiliate links: if you follow one and subscribe, we may earn a commission at no extra cost to you. They are marked wherever they appear, and nothing is tracked unless you choose to click one.</li>
         <li>We do not train AI models. RevaultAI builds no models of its own and does not submit your films, prompts or images to anyone for training purposes.</li>
         <li>We do not share your email address with other users. Creator contact happens through the platform or through links you publish yourself.</li>
       </ul>

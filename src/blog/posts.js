@@ -1,8 +1,84 @@
+import { PARTNERS, AFFILIATE_NOTE } from "../lib/partners.js";
+
 // src/blog/posts.js — blog content lives here as plain data.
 // To publish a new post: add an object to POSTS (newest first), push. The
 // blog index, post pages, SEO tags, and sitemap all pick it up automatically.
 
 export const POSTS = [
+  {
+    slug: "how-to-score-an-ai-short-film",
+    title: "How to Score an AI Short Film",
+    seoTitle: "How to Score an AI Short Film: Music, Temp Tracks and Sound",
+    description: "Your picture is cut and it still feels flat. Usually that is the silence, not the shots. How to choose music for an AI short, when to cut to it, and how to license it properly.",
+    date: "2026-11-25",
+    author: "Richard Garland",
+    category: "Guides",
+    readingTime: "5 min",
+    faq: [
+      ["Can I use any music in an AI short film?", "No. Commercial recordings are licensed for listening, not for publishing over your pictures, and using one will usually get the film claimed or muted on YouTube and can get it removed from festivals. You need music that is cleared for synchronization, which means either a library with a license that covers it, something in the public domain, or a piece you commissioned."],
+      ["Should I cut to the music or score to the cut?", "Cut to the music when the sequence is rhythmic and has no dialogue, such as a montage or a title sequence, because matching picture to an existing beat is far easier than bending music to an existing edit. Score to the cut when the scene has performance in it, because reshaping a performance to fit a track will always look like the tail wagging the dog."],
+      ["Does AI video generate its own audio?", "Some models do. Veo 3.1 generates audio along with the picture, which gives you diegetic sound, meaning the sound that belongs to the world of the shot. That is a different job from score, and you will usually want both."],
+      ["Where do I get music I can legally use?", "A subscription library is the normal answer for short films, because one fee covers everything you publish while the subscription is live. We use Epidemic Sound and recommend it, and that link pays us a commission if you subscribe."],
+    ],
+    content: `
+<p>You finish the cut, you watch it back, and it is flat. The shots are the ones you planned, the continuity holds, the performances are as good as the model gave you. It still feels like a slideshow.</p>
+
+<p>Nine times out of ten that is the silence. Picture carries about half of what an audience experiences, and an AI short tends to arrive with none of the other half, because nothing in the generation pipeline is thinking about sound.</p>
+
+<h2>Two different jobs, often confused</h2>
+
+<p>There are two kinds of audio in a film and they solve different problems.</p>
+
+<p><strong>Diegetic sound</strong> belongs to the world of the shot: footsteps, rain, a door, the room itself. Some models now produce this for you. Veo 3.1 generates audio along with the picture, which is often the reason to pick it for a shot. What you get is the sound of the thing you asked for.</p>
+
+<p><strong>Score</strong> does not belong to the world. Nobody in the scene can hear it. Its job is to tell the audience how to feel about what they are seeing, and no video model will ever produce it for you, because it is a decision about the film rather than about the shot.</p>
+
+<p>Generated audio will not give you a score, and a score will not fix a scene that has no room tone. You want both, and they come from different places.</p>
+
+<h2>Lay a temp track early, and distrust it</h2>
+
+<p>Put music under the edit as early as you can stand. A sequence that reads as disjointed in silence will often turn out to be fine once there is something holding it together, and you will stop re-rolling shots that were never the problem.</p>
+
+<p>The danger is real though, and it has a name. Temp love is what happens when you have heard a piece under your pictures forty times and nothing else sounds right afterward. Professional editors get caught by it constantly. The defense is simple: try two or three completely different pieces early, so you learn what the scene wants rather than what you happened to drop in first.</p>
+
+<h2>Which way round to work</h2>
+
+<p>If the sequence is rhythmic and has no dialogue, a montage, a title sequence, a transformation, cut the picture to the music. Find the track first, mark its accents, and place your cuts on them. This is enormously easier than the reverse, and it is where AI shorts tend to look their best anyway, because short rhythmic shots hide the weaknesses that long takes expose.</p>
+
+<p>If the scene has performance in it, do the opposite. Lock the picture, then find music that fits it. Reshaping a performance to fit a track always shows.</p>
+
+<h2>The licensing part, which is not optional</h2>
+
+<p>You cannot use a commercial recording. Not a short piece of one, not with credit, not because the film is free. A recording is licensed for listening, not for publishing underneath your pictures, and the practical consequences arrive quickly: the film gets claimed or muted on YouTube, festivals will not accept it, and if you ever sell it you have sold something you did not have the right to.</p>
+
+<p>What you need is music cleared for synchronization. In practice that means a subscription library, something genuinely in the public domain, or a piece you commissioned.</p>
+
+<p>For a short film a subscription library is almost always the right answer, because one fee covers everything you publish while it is live, and you are not negotiating per track for a film that might make nothing. We use <a href="${PARTNERS['epidemic-sound'].href}" target="_blank" rel="noopener noreferrer nofollow sponsored">Epidemic Sound</a> and recommend it: the catalog is large enough that you can audition several directions for one scene, the license covers the places films actually get published, and the sound effects library matters as much as the music, which brings us to the next part.</p>
+
+<p style="font-size:0.85em;opacity:0.7">${AFFILIATE_NOTE}</p>
+
+<h2>Sound effects do more work than the score</h2>
+
+<p>If you only have time for one pass, do effects rather than music. A shot with the right footsteps, the right room, and air in it reads as real. The same shot with a beautiful score and no room tone reads as a screensaver with a soundtrack.</p>
+
+<p>Three things carry most of the weight. Room tone, which is the sound of the space with nobody doing anything, laid under everything so the silence between sounds is not digital silence. Movement, which is footsteps and clothing and anything a body does. And transitions, where a sound that starts before the cut or carries over it will join two generated shots more convincingly than any amount of matching in the picture.</p>
+
+<h2>Three rules worth keeping</h2>
+
+<ul>
+<li><strong>Do not score everything.</strong> Music that never stops stops meaning anything. Silence before a cue is what gives the cue its force.</li>
+<li><strong>Let dialogue breathe.</strong> If you have recorded lines, the score comes down under them, every time, no exceptions.</li>
+<li><strong>Start the cue early or late, never on the cut.</strong> Music that begins exactly on a picture edit announces itself. A beat before or after and it feels inevitable instead.</li>
+</ul>
+
+<h2>Putting it together</h2>
+
+<p>The Recording Studio handles the dialogue side: a scene read aloud in your characters' own voices, with a voice locked in the Vault the same way a face is. Finish assembles the picture and hands you an edit that opens in your own editor, which is where the music and effects passes belong, because that is the work no browser tool should be pretending to do for you.</p>
+
+<p>Score last, effects first, and lay something under the cut long before you think you are ready. The flat version of your film is usually three sound passes away from the one you imagined.</p>
+`,
+  },
+
   {
     slug: "what-an-ai-short-film-actually-costs",
     title: "What an AI Short Film Actually Costs",

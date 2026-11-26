@@ -6,6 +6,7 @@ import FinishCut from "./FinishCut.jsx";
 import CutPreview from "./CutPreview.jsx";
 import FinishExport from "./FinishExport.jsx";
 import FinishRender from "./FinishRender.jsx";
+import { PARTNERS, PARTNER_LINK_PROPS, AFFILIATE_NOTE } from "./lib/partners.js";
 
 /*
   FinishPage — RevaultAI (pass 1: choose and analyze)
@@ -358,6 +359,43 @@ export default function FinishPage({ user, activeProject, setPage, notify, onSig
           {cut && <FinishRender cut={cut} urls={urls} title={activeProject?.name} />}
           {cut && <FinishExport cut={cut} urls={urls} gens={gens} title={activeProject?.name} scene={scene} />}
           {cut && <FinishCut cut={cut} gens={gens} urls={urls} notify={notify} onChange={saveCut} />}
+          {/*
+            Only once a cut exists. Somebody who has just watched their own
+            footage play as a sequence is the one person on the site with a
+            music problem; anyone earlier is being sold something they do not
+            need yet. The note sits next to the link rather than on the
+            privacy page, because a disclosure a reader cannot see while
+            deciding whether to click is decoration.
+          */}
+          {cut && (
+            <div style={{ marginTop: 28, paddingTop: 18, borderTop: "1px solid var(--border)", maxWidth: 520 }}>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--accent)", marginBottom: 8 }}>
+                Now it needs sound
+              </div>
+              <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 11, lineHeight: 1.8, color: "var(--muted)", margin: "0 0 10px" }}>
+                A cut that feels flat is usually missing score and room tone rather
+                than better shots. Music for a film you publish has to be cleared for
+                it, which a commercial recording is not.{" "}
+                <a
+                  href={PARTNERS["epidemic-sound"].href}
+                  {...PARTNER_LINK_PROPS}
+                  onClick={() => track("affiliate_link_clicked", { partner: "epidemic-sound", where: "finish" })}
+                  style={{ color: "var(--accent-text, var(--accent))" }}
+                >
+                  {PARTNERS["epidemic-sound"].name} &#8599;
+                </a>{" "}
+                is what we use.{" "}
+                {/* A real href rather than setPage: this page is given no way to
+                    carry a slug, and a crawler can follow an anchor. */}
+                <a href="/blog/how-to-score-an-ai-short-film" style={{ color: "var(--accent-text, var(--accent))" }}>
+                  How to score a short &#8594;
+                </a>
+              </p>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: "var(--muted)", letterSpacing: "0.06em", lineHeight: 1.5 }}>
+                {AFFILIATE_NOTE}
+              </div>
+            </div>
+          )}
         </div>
       </section>
     </div>
