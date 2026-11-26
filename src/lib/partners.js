@@ -38,8 +38,15 @@ export const AFFILIATE_NOTE =
 
 export const partnerHref = (key) => PARTNERS[key]?.href ?? null;
 
+/*
+  The rel every paid outbound link carries, ours and the creators' alike. One
+  definition, because a link that pays someone and does not say so is the same
+  problem whether the money comes to us or to the creator who listed the tool.
+*/
+export const AFFILIATE_REL = "noopener noreferrer nofollow sponsored";
+
 /* The attributes every partner link must carry. Spread rather than retyped. */
 export const PARTNER_LINK_PROPS = {
   target: "_blank",
-  rel: "noopener noreferrer nofollow sponsored",
+  rel: AFFILIATE_REL,
 };

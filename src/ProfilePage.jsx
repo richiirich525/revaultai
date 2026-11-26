@@ -4,6 +4,7 @@ import CreatorAvatar from "./CreatorAvatar.jsx";
 import { track } from "./lib/analytics.js";
 import { fetchCreationsByUser } from "./lib/db.js";
 import { SOCIAL_ICONS, SOCIAL_PLATFORMS, normalizeContactUrl, normalizeTipUrl } from "./lib/links.js";
+import { AFFILIATE_REL } from "./lib/partners.js";
 import { fetchCreatorStats, fetchFollowerCount, fetchIsFollowing, fetchProfileByUsername, followCreator, unfollowCreator } from "./lib/profiles.js";
 import { getSessionToken } from "./lib/session.js";
 
@@ -204,7 +205,7 @@ export default function ProfilePage({ username, creations: allCreations, setPage
               <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, letterSpacing: "0.14em", color: "var(--muted)", textTransform: "uppercase", marginBottom: 10 }}>Tools I Use</div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                 {tools.map((t, i) => (
-                  <a key={i} href={t.url} target="_blank" rel="noopener noreferrer nofollow" onClick={() => track("affiliate_link_clicked", { creator_username: profileData.username, tool: t.name })} className="detail-tool-tag detail-tool-tag-video" style={{ textDecoration: "none" }}>{t.name} &#8599;</a>
+                  <a key={i} href={t.url} target="_blank" rel={AFFILIATE_REL} onClick={() => track("affiliate_link_clicked", { creator_username: profileData.username, tool: t.name })} className="detail-tool-tag detail-tool-tag-video" style={{ textDecoration: "none" }}>{t.name} &#8599;</a>
                 ))}
               </div>
               <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 9, color: "var(--muted)", letterSpacing: "0.06em", marginTop: 10, lineHeight: 1.5, maxWidth: 360 }}>Some links are affiliate links; the creator may earn a commission.</div>
